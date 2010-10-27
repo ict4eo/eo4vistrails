@@ -23,38 +23,11 @@
 ## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ##
 ############################################################################
-"""This module provides an OGC Web Feature Service Client via owslib.
+"""This module provides spatial and temporal selection widgetry for configuring geoinf modules.
 """
 
-from owslib.wfs import WFS
-from datamodels.Feature import FeatureModel
-from SpatialTemporalConfigurationWidget import SpatialTemporalConfigurationWidget
-#need to import the configuration widget we develop
-class WFS(FeatureModel):
+class SpatialTemporalConfigurationWidget():
     def __init__(self):
         pass
         
-    def compute(self):
-        pass
-
-
-class WFSConfigurationWidget(SpatialTemporalConfigurationWidget):
-    
-    def __init__(self):
-        pass
-
-def initialize(*args, **keywords):
-    '''sets everything up'''
-    
-    # We'll first create a local alias for the module_registry so that
-    # we can refer to it in a shorter way.
-    reg = core.modules.module_registry.get_module_registry()
-    
-    reg.add_module(WFS)
-    #input ports
-   
-    #reg.add_input_port(FeatureModel, "service_version", (core.modules.basic_modules.String, 'Web Map Service version - default 1.1.1'))   
-    #output ports
-    #reg.add_output_port(FeatureModel, "OGRDataset", (ogr.Dataset, 'Feature data in OGR Dataset'))
-
         
