@@ -2,7 +2,7 @@
 ##
 ## Copyright (C) 2010 CSIR Meraka Institute. All rights reserved.
 ##
-## eo4vistrails extends VisTrails, providing GIS/Earth Observation 
+## This full package extends VisTrails, providing GIS/Earth Observation 
 ## ingestion, pre-processing, transformation, analytic and visualisation 
 ## capabilities . Included is the abilty to run code transparently in 
 ## OpenNebula cloud environments. There are various software 
@@ -23,11 +23,13 @@
 ## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ##
 ############################################################################
-"""This package provides code for connecting eo4vistrails code transparently to 
-OpenNebula cloud resources. Notably, provides capability for executing code on 
-the cloud, but to user appears local.
+"""This full package extends VisTrails, providing GIS/Earth Observation 
+ingestion, pre-processing, transformation, analytic and visualisation 
+capabilities . Included is the abilty to run code transparently in 
+OpenNebula cloud environments.
 """
 
-identifier = 'za.co.csir.eo4vistrails.opennebula'
-name = 'eo4vistrails.opennebula'
+identifier = 'za.co.csir.eo4vistrails'
+name = 'eo4vistrails'
 version = '0.0.1'
+
