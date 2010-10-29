@@ -28,7 +28,7 @@
 
 from owslib.wfs import WFS
 from datamodels.Feature import FeatureModel
-from SpatialTemporalConfigurationWidget import SpatialTemporalConfigurationWidget
+from OgcConfigurationWidget import OgcConfigurationWidget
 #need to import the configuration widget we develop
 class WFS(FeatureModel):
     def __init__(self):
@@ -38,7 +38,7 @@ class WFS(FeatureModel):
         pass
 
 
-class WFSConfigurationWidget(SpatialTemporalConfigurationWidget):
+class WFSConfigurationWidget(OgcConfigurationWidget):
     
     def __init__(self):
         pass

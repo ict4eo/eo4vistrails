@@ -25,8 +25,13 @@
 ############################################################################
 """This module provides spatial and temporal selection widgetry for configuring geoinf modules.
 """
+from PyQt4 import QtCore, QtGui
+from core.modules.module_configure import StandardModuleConfigurationWidget
+from core.modules.module_registry import get_module_registry
+from core.utils import PortAlreadyExists
 
-class SpatialTemporalConfigurationWidget():
+
+class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
     def __init__(self):
         pass
         
