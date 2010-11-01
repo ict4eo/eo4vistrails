@@ -23,8 +23,10 @@
 ## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ##
 ############################################################################
-"""This module provides an abstract,  generic session object for connecting to cloud environments, 
-GIS environments and statistical environments. Primarily organisational in nature.
+"""This module provides an abstract,  generic session object for connecting to
+cloud environments,  GIS environments and statistical environments.
+
+It is primarily organisational in nature.
 """
 
 import core.modules.module_registry
@@ -32,12 +34,12 @@ from core.modules.vistrails_module import Module, ModuleError
 
 
 class Session(Module):
-    '''an abstract class describing a session'''
+    '''An abstract class describing a session'''
     def compute(self):
         pass
         
 def initialize(*args, **keywords):
-    '''sets everything up'''
+    '''Set everything up'''
     
     # We'll first create a local alias for the module_registry so that
     # we can refer to it in a shorter way.
