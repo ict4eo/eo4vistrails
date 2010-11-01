@@ -28,6 +28,10 @@ ingestion, pre-processing, transformation, analytic and visualisation
 capabilities . Included is the abilty to run code transparently in 
 OpenNebula cloud environments.
 """
+#Authors:
+    #Terence van Zyl
+    #Graeme Mcferren
+
 
 identifier = 'za.co.csir.eo4vistrails'
 name = 'eo4vistrails'
