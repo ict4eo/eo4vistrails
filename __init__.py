@@ -31,6 +31,7 @@ OpenNebula cloud environments.
 #Authors:
     #Terence van Zyl
     #Graeme Mcferren
+    # Bolelang Sibolla
 
 
 identifier = 'za.co.csir.eo4vistrails'
