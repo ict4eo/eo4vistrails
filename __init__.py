@@ -32,6 +32,7 @@ OpenNebula cloud environments.
     #Terence van Zyl
     #Graeme Mcferren
     # Bolelang Sibolla
+    # Petrus Shabangu
 
 
 identifier = 'za.co.csir.eo4vistrails'
