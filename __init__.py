@@ -34,6 +34,7 @@ OpenNebula cloud environments.
     # Bolelang Sibolla
     # Derek Hohls
     # Petrus Shabangu
+    # Bheki C'wele
 
 identifier = 'za.co.csir.eo4vistrails'
 name = 'eo4vistrails'
