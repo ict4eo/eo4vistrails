@@ -29,10 +29,11 @@
 from owslib.wfs import WFS
 from datamodels.Feature import FeatureModel
 from OgcConfigurationWidget import OgcConfigurationWidget
+from Common import OgcService
 #need to import the configuration widget we develop
-class WFS(FeatureModel):
-    def __init__(self):
-        pass
+class WFS(FeatureModel,  OgcService):
+    def __init__(self,  url,  version):
+        OgcService.__init__(self,  url,  "wfs",  version)
         
     def compute(self):
         pass
