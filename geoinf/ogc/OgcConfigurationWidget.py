@@ -28,17 +28,37 @@ This refers primarily to GetCapabilities requests
 """
 
 from SpatialTemporalConfigurationWidget import SpatialTemporalConfigurationWidget
+from owslib import wfs,  sos,  wcs
+
 
 class OgcCommonWidget(QtGui.QtWidget):
     
-    def __init__(self,  parent=None):
+    def __init__(self,  url, service_id_dict, provider_id_dict,  parent=None):
         QtGui.QtWidget.__init__(self, parent)
-
+        
+        self_service_url = url
+        self.setServiceIdentification(service_id_dict)
+        self.setProviderIdentification(provider_id_dict)
+    
+    def setServiceIdentification(self,  service_dict):
+        self.service_type = service_dict['service']
+        self.service_version = service_dict['version']
+        self.service_title = service_dict['title']
+        self.service_title = service_dict['fees']
+        self.service_title = service_dict['keywords']       
+        
+        
+        
+    def setProviderIdentification(self,  provider_dict):
+        pass
+        #self.service_type = service_type
+        #self.service_version=version       
+        
 class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
-    def __init__(self,  parent=None):
+    def __init__(self, metadata_dict,  parent=None):
         SpatialTemporalConfigurationWidget.__init__(self, parent)
 
-        self.ogc_common_widget = OgcCommonWidget()
+        self.ogc_common_widget = OgcCommonWidget(ogc_service_type)
 
         self.tabs.addTab(self.ogc_common_widget, "")
         
