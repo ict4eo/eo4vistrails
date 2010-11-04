@@ -91,11 +91,11 @@ class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
         create and polulate with widgets the necessary 
         tabs for spatial and temporal paramaterisation
         '''
-        self.spatial_temporal_tabs = SpatioTemporalConfigurationWidgetTabs()
+        self.tabs = SpatioTemporalConfigurationWidgetTabs()
         self.spatial_widget = SpatialWidget()
         self.temporal_widget = TemporalWidget()
-        self.spatial_temporal_tabs.addTab(self.spatial_widget, "")
-        self.spatial_temporal_tabs.addTab(self.temporal_widget, "")
+        self.tabs.addTab(self.spatial_widget, "")
+        self.tabs.addTab(self.temporal_widget, "")
         
     def createButtons(self):
         """ createButtons() -> None

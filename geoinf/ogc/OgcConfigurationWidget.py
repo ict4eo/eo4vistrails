@@ -29,7 +29,17 @@ This refers primarily to GetCapabilities requests
 
 from SpatialTemporalConfigurationWidget import SpatialTemporalConfigurationWidget
 
+class OgcCommonWidget(QtGui.QtWidget):
+    
+    def __init__(self,  parent=None):
+        QtGui.QtWidget.__init__(self, parent)
+
 class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
-    def __init__(self):
-        pass
+    def __init__(self,  parent=None):
+        SpatialTemporalConfigurationWidget.__init__(self, parent)
+
+        self.ogc_common_widget = OgcCommonWidget()
+
+        self.tabs.addTab(self.ogc_common_widget, "")
         
+
