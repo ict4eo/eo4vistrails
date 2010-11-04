@@ -126,13 +126,13 @@ class OgcService():
                         tg = tg.split('}')[1].lower()
                     except:
                         pass
-                    if tg == "name":
-                    if tg == "title":
-                    if tg == "abstract":
-                    if tg == "keywords":
-                    if tg == "onlineresource":
-                    if tg == "fees":
-                    if tg == "accessconstraints":
+                    if tg == "name":pass
+                    if tg == "title":pass
+                    if tg == "abstract":pass
+                    if tg == "keywords":pass
+                    if tg == "onlineresource":pass
+                    if tg == "fees":pass
+                    if tg == "accessconstraints":pass
         
         
         
