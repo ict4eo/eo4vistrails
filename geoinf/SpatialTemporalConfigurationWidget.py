@@ -42,11 +42,11 @@ class SpatioTemporalConfigurationWidgetTabs(QtGui.QTabWidget):
         self.setElideMode(QtCore.Qt.ElideNone)
         self.setObjectName("SpatioTemporalConfigurationWidgetTabsInstance")
         
-class SpatialWidget(QtGui.QtWidget):
+class SpatialWidget(QtGui.QWidget):
     '''designed to gather coordinates of a bounding box, 
     or in the case of GRASS, a location'''
     def __init__(self,  parent=None):
-        QtGui.QtWidget.__init__(self, parent)
+        QtGui.QWidget.__init__(self, parent)
         
         self.setObjectName("SpatialWidget")
         self.gridLayout = QtGui.QGridLayout()
@@ -64,10 +64,10 @@ class SpatialWidget(QtGui.QtWidget):
         self.bbox_bry = QtGui.QLineEdit('-35.0') 
         self.gridLayout.addWidget(self.bbox_bry, 1, 3)
         
-class TemporalWidget(QtGui.QtWidget):
+class TemporalWidget(QtGui.QWidget):
     
     def __init__(self,  parent=None):
-        QtGui.QtWidget.__init__(self, parent)
+        QtGui.QWidget.__init__(self, parent)
         
         self.setObjectName("TemporalWidget")
 

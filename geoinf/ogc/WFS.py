@@ -41,8 +41,8 @@ class WFS(FeatureModel,  OgcService):
 
 class WFSConfigurationWidget(OgcConfigurationWidget):
     
-    def __init__(self):
-        pass
+    def __init__(self,  module, controller, parent=None):
+        OgcConfigurationWidget.__init__(self,  module, controller, parent)
 
 def initialize(*args, **keywords):
     '''sets everything up'''

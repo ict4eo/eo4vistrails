@@ -31,16 +31,17 @@ from SpatialTemporalConfigurationWidget import SpatialTemporalConfigurationWidge
 from owslib import wfs,  sos,  wcs
 
 
-class OgcCommonWidget(QtGui.QtWidget):
+class OgcCommonWidget(QtGui.QWidget):
     
-    def __init__(self,  parent=None):
-        QtGui.QtWidget.__init__(self, parent)
+    def __init__(self,  module, parent=None):
+        '''parses modules attributes to fetch parameters'''
+        QtGui.QWidget.__init__(self, parent)
         
         self.setObjectName("OgcCommonWidget")
         
 class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
-    def __init__(self, metadata_dict,  parent=None):
-        SpatialTemporalConfigurationWidget.__init__(self, parent)
+    def __init__(self, module, controller,  parent=None):
+        SpatialTemporalConfigurationWidget.__init__(self, module, controller, parent)
 
         self.ogc_common_widget = OgcCommonWidget(ogc_service_type)
 
