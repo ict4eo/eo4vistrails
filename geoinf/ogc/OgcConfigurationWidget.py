@@ -36,7 +36,7 @@ class OgcCommonWidget(QtGui.QtWidget):
     def __init__(self,  parent=None):
         QtGui.QtWidget.__init__(self, parent)
         
-
+        self.setObjectName("OgcCommonWidget")
         
 class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
     def __init__(self, metadata_dict,  parent=None):
@@ -46,4 +46,5 @@ class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
 
         self.tabs.addTab(self.ogc_common_widget, "")
         
-
+        self.tabs.setTabText(self.tabs.indexOf(self.ogc_common_widget), QtGui.QApplication.translate("OgcConfigurationWidget", "Service Metadata", None, QtGui.QApplication.UnicodeUTF8))
+        self.tabs.setTabToolTip(self.tabs.indexOf(self.ogc_common_widget), QtGui.QApplication.translate("OgcConfigurationWidget", "Inspect basic service metadata for your chosen OGC service", None, QtGui.QApplication.UnicodeUTF8))
