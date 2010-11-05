@@ -27,7 +27,7 @@
 This refers primarily to GetCapabilities requests
 """
 
-rom SpatialTemporalConfigurationWidget import SpatialTemporalConfigurationWidget
+from SpatialTemporalConfigurationWidget import SpatialTemporalConfigurationWidget
 from owslib import wfs,  sos,  wcs
 
 
@@ -40,12 +40,15 @@ class OgcCommonWidget(QtGui.QWidget):
         self.setObjectName("OgcCommonWidget")
         
 class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
-    def __init__(self, module, controller,  parent=None):
-        SpatialTemporalConfigurationWidget.__init__(self, module, controller, parent)
+	
+		def __init__(self, module, controller,  parent=None):
+			SpatialTemporalConfigurationWidget.__init__(self, module, controller, parent)
 
-        self.ogc_common_widget = OgcCommonWidget(ogc_service_type)
+			self.ogc_common_widget = OgcCommonWidget(ogc_service_type)
 
-        self.tabs.addTab(self.ogc_common_widget, "")
-        
-        self.tabs.setTabText(self.tabs.indexOf(self.ogc_common_widget), QtGui.QApplication.translate("OgcConfigurationWidget", "Service Metadata", None, QtGui.QApplication.UnicodeUTF8))
-        self.tabs.setTabToolTip(self.tabs.indexOf(self.ogc_common_widget), QtGui.QApplication.translate("OgcConfigurationWidget", "Inspect basic service metadata for your chosen OGC service", None, QtGui.QApplication.UnicodeUTF8))
+			self.tabs.addTab(self.ogc_common_widget, "")
+
+	
+	
+			self.tabs.setTabText(self.tabs.indexOf(self.ogc_common_widget), QtGui.QApplication.translate("OgcConfigurationWidget", "Service Metadata", None, QtGui.QApplication.UnicodeUTF8))
+			self.tabs.setTabToolTip(self.tabs.indexOf(self.ogc_common_widget), QtGui.QApplication.translate("OgcConfigurationWidget", "Inspect basic service metadata for your chosen OGC service", None, QtGui.QApplication.UnicodeUTF8))
