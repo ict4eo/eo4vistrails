@@ -29,5 +29,5 @@ visualisation capabilities through the QGIS API.
 """
 
 identifier = 'za.co.csir.eo4vistrails.geoinf'
-name = 'eo4vistrails.geoinf'
+#name = 'eo4vistrails.geoinf'
 version = '0.0.1'

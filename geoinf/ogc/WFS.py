@@ -51,7 +51,7 @@ def initialize(*args, **keywords):
     # we can refer to it in a shorter way.
     reg = core.modules.module_registry.get_module_registry()
     
-    reg.add_module(WFS)
+    reg.add_module(WFS,configureWidgetType=OgcConfigurationWidget)
     #input ports
    
     #reg.add_input_port(FeatureModel, "service_version", (core.modules.basic_modules.String, 'Web Map Service version - default 1.1.1'))   

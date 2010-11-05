@@ -27,7 +27,7 @@
 This refers primarily to GetCapabilities requests
 """
 
-from SpatialTemporalConfigurationWidget import SpatialTemporalConfigurationWidget
+rom SpatialTemporalConfigurationWidget import SpatialTemporalConfigurationWidget
 from owslib import wfs,  sos,  wcs
 
 
