@@ -36,7 +36,8 @@ class SpatioTemporalConfigurationWidgetTabs(QtGui.QTabWidget):
     '''Geoinf Configuration Tab Widgets are added vis the addTab method of the QTabWidget '''
     def __init__(self, parent=None):
         QtGui.QTabWidget.__init__(self,  parent)
-        self.setGeometry(QtCore.QRect(20, 20, 990, 740))
+        #self.setGeometry(QtCore.QRect(20, 20, 990, 740))
+        self.setGeometry(QtCore.QRect(20, 20, 790, 540))        
         self.setTabShape(QtGui.QTabWidget.Rounded)
         self.setElideMode(QtCore.Qt.ElideNone)
         self.setObjectName("SpatioTemporalConfigurationWidgetTabsInstance")
@@ -119,17 +120,18 @@ class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
         """
         
         self.buttonLayout = QtGui.QHBoxLayout()
-        self.buttonLayout.setGeometry(QtCore.QRect(10, 765, 980, 32))
+        #self.buttonLayout.setGeometry(QtCore.QRect(10, 765, 980, 32))
+        self.buttonLayout.setGeometry(QtCore.QRect(300, 500, 780, 680))
         self.buttonLayout.setMargin(5)
-        self.okButton = QtGui.QPushButton('&OK', self)
-        self.okButton.setAutoDefault(False)
-        self.okButton.setFixedWidth(100)
-        self.buttonLayout.addWidget(self.okButton)
         self.cancelButton = QtGui.QPushButton('&Cancel', self)
         self.cancelButton.setAutoDefault(False)
         self.cancelButton.setShortcut('Esc')
         self.cancelButton.setFixedWidth(100)
-        self.buttonLayout.addWidget(self.cancelButton)        
+        self.buttonLayout.addWidget(self.cancelButton)  
+        self.okButton = QtGui.QPushButton('&OK', self)
+        self.okButton.setAutoDefault(False)
+        self.okButton.setFixedWidth(100)
+        self.buttonLayout.addWidget(self.okButton)
         self.connect(self.okButton, QtCore.SIGNAL('clicked(bool)'),
                      self.okTriggered)
         self.connect(self.cancelButton, QtCore.SIGNAL('clicked(bool)'),
@@ -140,7 +142,7 @@ class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
         Return the recommended size of the configuration window
         
         """
-        return QtCore.QSize(512, 256)
+        return QtCore.QSize(800, 600)
 
     def okTriggered(self, checked = False):
         """ okTriggered(checked: bool) -> None

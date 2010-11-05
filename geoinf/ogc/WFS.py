@@ -27,18 +27,17 @@
 """
 
 #from owslib.wfs import WFS
-#from datamodels.Feature import FeatureModel
+from packages.eo4vistrails.geoinf.datamodels.Feature import FeatureModel
 from OgcConfigurationWidget import OgcConfigurationWidget
-#from Common import OgcService
 from core.modules.vistrails_module import Module, new_module, NotCacheable, ModuleError
 
 #need to import the configuration widget we develop
-#class WFS(FeatureModel,  OgcService):
-#    def __init__(self,  url,  version):
-#        OgcService.__init__(self,  url,  "wfs",  version)
-#        
-#    def compute(self):
-#        pass
+class WFS(FeatureModel):
+    def __init__(self):
+        FeatureModel.__init__(self)
+        
+    def compute(self):
+        pass
 
 class WFSed(NotCacheable, Module):
     def __init__(self):
