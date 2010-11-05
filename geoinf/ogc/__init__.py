@@ -38,3 +38,4 @@ def package_requirements():
     import core.requirements
     if not core.requirements.python_module_exists('owslib'):
         raise core.requirements.MissingRequirement('owslib')
+

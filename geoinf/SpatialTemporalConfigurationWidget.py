@@ -77,9 +77,13 @@ class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
         #initialise the setup necessary for all geoinf widgets that follow
         self.setWindowTitle('Spatial and Temporal parameter setup ')
         self.setToolTip("Setup spatial and temporal paramaters for working with a geoinf module")
-        
+                
         self.createTabs()
         self.createButtons()
+        self.setLayout(QtGui.QVBoxLayout())
+        self.layout().addLayout(self.tabLayout)
+        self.layout().addLayout(self.buttonLayout)
+        #self.create_config_window()
         
         
     def updateVistrail(self):
@@ -91,6 +95,7 @@ class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
         create and polulate with widgets the necessary 
         tabs for spatial and temporal paramaterisation
         '''
+        
         self.tabs = SpatioTemporalConfigurationWidgetTabs()
         self.spatial_widget = SpatialWidget()
         self.temporal_widget = TemporalWidget()
@@ -99,10 +104,11 @@ class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
         
         self.tabs.setTabText(self.tabs.indexOf(self.spatial_widget), QtGui.QApplication.translate("SpatialTemporalConfigurationWidget", "Bounding Coordinates", None, QtGui.QApplication.UnicodeUTF8))
         self.tabs.setTabToolTip(self.tabs.indexOf(self.spatial_widget), QtGui.QApplication.translate("SpatialTemporalConfigurationWidget", "Gather coordinates of a bounding box, or in the case of GRASS, a location", None, QtGui.QApplication.UnicodeUTF8))
-        self.tabs.setTabText(self.tabs.indexOf(temporal_widget), QtGui.QApplication.translate("SpatialTemporalConfigurationWidget", "Temporal Bounds and Intervals", None, QtGui.QApplication.UnicodeUTF8))
-        self.tabs.setTabToolTip(self.tabs.indexOf(temporal_widget), QtGui.QApplication.translate("SpatialTemporalConfigurationWidget", "Choose and set temporal bounds and interval paramaters", None, QtGui.QApplication.UnicodeUTF8))       
+        self.tabs.setTabText(self.tabs.indexOf(self.temporal_widget), QtGui.QApplication.translate("SpatialTemporalConfigurationWidget", "Temporal Bounds and Intervals", None, QtGui.QApplication.UnicodeUTF8))
+        self.tabs.setTabToolTip(self.tabs.indexOf(self.temporal_widget), QtGui.QApplication.translate("SpatialTemporalConfigurationWidget", "Choose and set temporal bounds and interval paramaters", None, QtGui.QApplication.UnicodeUTF8))       
         
-        
+        self.tabLayout = QtGui.QHBoxLayout()
+        self.tabLayout.addWidget(self.tabs)        
         self.tabs.setCurrentIndex(0)
         self.tabs.setVisible(True)
         
@@ -111,6 +117,7 @@ class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
         Create and connect signals to Ok & Cancel button
         
         """
+        
         self.buttonLayout = QtGui.QHBoxLayout()
         self.buttonLayout.setGeometry(QtCore.QRect(10, 765, 980, 32))
         self.buttonLayout.setMargin(5)
@@ -122,8 +129,7 @@ class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
         self.cancelButton.setAutoDefault(False)
         self.cancelButton.setShortcut('Esc')
         self.cancelButton.setFixedWidth(100)
-        self.buttonLayout.addWidget(self.cancelButton)
-        self.layout().addLayout(self.buttonLayout)
+        self.buttonLayout.addWidget(self.cancelButton)        
         self.connect(self.okButton, QtCore.SIGNAL('clicked(bool)'),
                      self.okTriggered)
         self.connect(self.cancelButton, QtCore.SIGNAL('clicked(bool)'),
@@ -144,3 +150,5 @@ class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
         if self.updateVistrail():
             self.emit(QtCore.SIGNAL('doneConfigure()'))
             self.close()    
+
+    

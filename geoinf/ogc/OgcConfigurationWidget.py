@@ -27,55 +27,54 @@
 This refers primarily to GetCapabilities requests
 """
 
-from SpatialTemporalConfigurationWidget import SpatialTemporalConfigurationWidget
-from owslib import wfs,  sos,  wcs
+from PyQt4 import QtCore, QtGui
+from packages.eo4vistrails.geoinf.SpatialTemporalConfigurationWidget import SpatialTemporalConfigurationWidget
+#from owslib import wfs,  sos,  wcs
 
 
 class OgcCommonWidget(QtGui.QWidget):
     
     def __init__(self,  module, parent=None):
         '''parses modules attributes to fetch parameters'''
-	    
-	QtGui.QWidget.__init__(self, parent)
-	self.setGeometry(0,0, 200,300) 
-	self.setWindowTitle("General OGC Configuration Widget")         
-	self.resize(800,300) 
-	self.setMinimumSize(800,300) 
-	self.setObjectName("OgcCommonWidget")
-	self.center()   
-	ogc_config_window()		
-	
-    def ogc_config_window(self):  # method name here need to change to ogc_service_type??
-		
-	tab_widget = QtGui.QTabWidget() 	
-	ogc_get_capabilities_general_tab = QtGui.QWidget()                  
-	label_OGC_url = QtGui.QLabel('OGC WebService url:', ogc_get_capabilities_general_tab)  
-	label_OGC_url.setGeometry(QtCore.QRect(5, 20, 142, 27))
-	line_edit_OGC_url = QtGui.QLineEdit("", ogc_get_capabilities_general_tab)
-	setGeometry(QtCore.QRect(146, 20, 530, 27))
-
-	#tab_widget.addTab(ogc_get_capabilities_general_tab, "OGC GetCapabilities")  
-		
-	vbox = QtGui.QVBoxLayout()      
-	vbox.addWidget(tab_widget)     
-	self.setLayout(vbox)     
-	
+        QtGui.QWidget.__init__(self, parent)
+        
+        self.setObjectName("OgcCommonWidget")
+        self.create_config_window()
+        
+    def create_config_window(self):
+        self.setGeometry(0,0, 200,300) 
+        self.setWindowTitle("General OGC Configuration Widget")         
+        self.resize(800,300) 
+        self.setMinimumSize(800,300) 
+        self.center()         
+             
+        #tab_widget = QtGui.QTabWidget() 
+    	
+        #ogc_get_capabilities_general_tab = QtGui.QWidget() 
+                     
+        label_OGC_url = QtGui.QLabel('OGC WebService url:', self)  
+        label_OGC_url.setGeometry(QtCore.QRect(5, 20, 142, 27))
+    
+        line_edit_OGC_url = QtGui.QLineEdit("", self)
+        line_edit_OGC_url.setGeometry(QtCore.QRect(146, 20, 530, 27))
+    
+        #self.tabs.addTab(ogc_get_capabilities_general_tab, "OGC GetCapabilities") 
+    		
+        #vbox = QtGui.QVBoxLayout()   
+        #vbox.addWidget(tab_widget)     
+        #self.setLayout(vbox)     
+       
     def center(self): 
-
-	screen = QtGui.QDesktopWidget().screenGeometry() 
-	size = self.geometry() 
-	self.move((screen.width()-size.width())/2, (screen.height()-size.height())/2)
-
-		
+        screen = QtGui.QDesktopWidget().screenGeometry() 
+        size = self.geometry() 
+        self.move((screen.width()-size.width())/2, (screen.height()-size.height())/2)
+        
 class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
-	
-		def __init__(self, module, controller,  parent=None):
-			SpatialTemporalConfigurationWidget.__init__(self, module, controller, parent)
+    def __init__(self, module, controller,  parent=None):
+        SpatialTemporalConfigurationWidget.__init__(self, module, controller, parent)
 
-			self.ogc_common_widget = OgcCommonWidget(ogc_service_type)
+        self.ogc_common_widget = OgcCommonWidget(module)
 
-			self.tabs.addTab(self.ogc_common_widget, "OGC GetCapabilities")
-	
-	
-			self.tabs.setTabText(self.tabs.indexOf(self.ogc_common_widget), QtGui.QApplication.translate("OgcConfigurationWidget", "Service Metadata", None, QtGui.QApplication.UnicodeUTF8))
-			self.tabs.setTabToolTip(self.tabs.indexOf(self.ogc_common_widget), QtGui.QApplication.translate("OgcConfigurationWidget", "Inspect basic service metadata for your chosen OGC service", None, QtGui.QApplication.UnicodeUTF8))
+        self.tabs.addTab(self.ogc_common_widget, "")
+        self.tabs.setTabText(self.tabs.indexOf(self.ogc_common_widget), QtGui.QApplication.translate("OgcConfigurationWidget", "Service Metadata", None, QtGui.QApplication.UnicodeUTF8))
+        self.tabs.setTabToolTip(self.tabs.indexOf(self.ogc_common_widget), QtGui.QApplication.translate("OgcConfigurationWidget", "Inspect basic service metadata for your chosen OGC service", None, QtGui.QApplication.UnicodeUTF8))

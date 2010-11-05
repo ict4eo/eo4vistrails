@@ -26,36 +26,30 @@
 """This module provides an OGC Web Feature Service Client via owslib.
 """
 
-from owslib.wfs import WFS
-from datamodels.Feature import FeatureModel
+#from owslib.wfs import WFS
+#from datamodels.Feature import FeatureModel
 from OgcConfigurationWidget import OgcConfigurationWidget
-from Common import OgcService
+#from Common import OgcService
+from core.modules.vistrails_module import Module, new_module, NotCacheable, ModuleError
+
 #need to import the configuration widget we develop
-class WFS(FeatureModel,  OgcService):
-    def __init__(self,  url,  version):
-        OgcService.__init__(self,  url,  "wfs",  version)
+#class WFS(FeatureModel,  OgcService):
+#    def __init__(self,  url,  version):
+#        OgcService.__init__(self,  url,  "wfs",  version)
+#        
+#    def compute(self):
+#        pass
+
+class WFSed(NotCacheable, Module):
+    def __init__(self):
+        Module.__init__(self)
         
     def compute(self):
         pass
-
 
 class WFSConfigurationWidget(OgcConfigurationWidget):
     
     def __init__(self,  module, controller, parent=None):
         OgcConfigurationWidget.__init__(self,  module, controller, parent)
 
-def initialize(*args, **keywords):
-    '''sets everything up'''
-    
-    # We'll first create a local alias for the module_registry so that
-    # we can refer to it in a shorter way.
-    reg = core.modules.module_registry.get_module_registry()
-    
-    reg.add_module(WFS,configureWidgetType=OgcConfigurationWidget)
-    #input ports
-   
-    #reg.add_input_port(FeatureModel, "service_version", (core.modules.basic_modules.String, 'Web Map Service version - default 1.1.1'))   
-    #output ports
-    #reg.add_output_port(FeatureModel, "OGRDataset", (ogr.Dataset, 'Feature data in OGR Dataset'))
 
-        

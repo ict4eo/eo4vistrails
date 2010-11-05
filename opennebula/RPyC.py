@@ -30,7 +30,6 @@
 #"""
 
 import core.modules.module_registry
-from core.modules.vistrails_module import Module, ModuleError
 import core.cache.hasher
 from core.modules import module_configure
 from core.modules.module_registry import get_module_registry
