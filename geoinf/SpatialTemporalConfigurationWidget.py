@@ -46,7 +46,6 @@ class SpatialWidget(QtGui.QWidget):
     or in the case of GRASS, a location'''
     def __init__(self,  parent=None):
         QtGui.QWidget.__init__(self, parent)
-        
         self.setObjectName("SpatialWidget")
         self.gridLayout = QtGui.QGridLayout()
         self.setLayout(self.gridLayout)
