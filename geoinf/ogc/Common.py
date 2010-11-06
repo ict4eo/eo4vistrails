@@ -27,7 +27,14 @@
 OGC Web Service Metadata common to the various services (via owslib).
 """
 
-from owslib import wfs,  wcs,  sos
+try:
+    from owslib import wfs as wfs
+    from owslib import wcs as wcs
+    from owslib import sos as sos
+except:
+    import owslib.wfs as wfs
+    import owslib.sos as sos
+    import owslib.wcs as wcs
 
 class OgcService():
     #########

@@ -1,4 +1,6 @@
 import core
+from geoinf.datamodels.Feature import FeatureModel
+from geoinf.ogc.Common import OgcService
 from geoinf.ogc.WFS import WFSed
 from geoinf.ogc.WFS import WFS
 from opennebula.RPyC import RPyC
@@ -14,6 +16,8 @@ def initialize(*args, **keywords):
     
     #reg.add_module(WFS)
     #input ports
+    reg.add_module(FeatureModel) #abstract
+    
     reg.add_module(WFSed, configureWidgetType=OgcConfigurationWidget)
     reg.add_module(WFS, configureWidgetType=OgcConfigurationWidget)
     

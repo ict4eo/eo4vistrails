@@ -29,12 +29,16 @@ All eo4vistrails modules dealing with feature data must extend this class.
 import core.modules.module_registry
 from core.modules.vistrails_module import Module, ModuleError
 import gui.application
-from osgeo import ogr
+try:
+    from osgeo import ogr
+except:
+    import ogr
 
 class FeatureModel(Module):
     
     def __init__(self):
-        pass
+        Module.__init__(self)
+        
     
     def compute(self):
         pass
