@@ -55,8 +55,13 @@ class OgcService():
             raise ValueError,  "Please provide an OGC Service Type e.g. 'wfs', 'sos','wcs'"
         self.service_url = service_url
         self.ini_service_type = service_type.lower()
-        self.setServiceIdentification(self.service.__dict__['identification'].__dict__)
-        self.setProviderIdentification(self.service.__dict__['provider'].__dict__)
+        self.ini_service_version = service_version
+        if service_type.lower() == "wfs" and service_version =="1.0.0":#this looks bizzare, but it is true...
+            self.setServiceIdentification(self.service.__dict__['provider'].__dict__)
+            self.setProviderIdentification(self.service.__dict__['provider'].__dict__)            
+        else:
+            self.setServiceIdentification(self.service.__dict__['identification'].__dict__)
+            self.setProviderIdentification(self.service.__dict__['provider'].__dict__)
     
     def setServiceIdentification(self,  service_dict):
         ''' service identification metadata is structured differently for the different services - parse appropriately'''
@@ -64,7 +69,7 @@ class OgcService():
             if service_dict.has_key('service'):
                 self.service_type = service_dict['service'] #we actually know this, but rebuild anyway
             if service_dict.has_key('version'):            
-                self.service_version = service_dict['version']
+                self.service_version = service_dict['version']#we actually know this, but rebuild anyway
             if service_dict.has_key('title'):            
                 self.service_title = service_dict['title']
             if service_dict.has_key('abstract'):            
@@ -77,7 +82,25 @@ class OgcService():
                 self.service_accessconstraints = service_dict['accessconstraints']    
         
         elif self.ini_service_type == "wfs":
-            pass
+            if self.ini_service_version == '1.0.0':
+                #got to dive into the elements of _root key of service_dict (in this case the provider_dict )to get anything useful.Odd.
+                for elem in service_dict['_root'].__dict__['_children']:
+                    if elem.__dict__.has_key('tag') and elem.__dict__.has_key('text'):#we have a kvp, so process
+                        tg = elem.__dict__['tag']
+                        tx = elem.__dict__['text']
+                        try:#check for {http://www.opengis.net/wfs} prefix
+                            tg = tg.split('}')[1].lower()
+                        except:
+                            pass
+                        if tg == "name":pass
+                        if tg == "title":pass
+                        if tg == "abstract":pass
+                        if tg == "keywords":pass
+                        if tg == "onlineresource":pass
+                        if tg == "fees":pass
+                        if tg == "accessconstraints":pass     
+            else:
+                pass
         
         elif self.ini_service_type == "wcs":
             pass        
@@ -125,22 +148,8 @@ class OgcService():
                     self.provider_contact_instructions = provider_dict['contact'].__dict__['instructions']        
         
         elif self.ini_service_type == "wfs":
-            #got to dive into the elements of _root key to get anything useful
-            for elem in provider_dict['_root'].__dict__['_children']:
-                if elem.__dict__.has_key('tag') and elem.__dict__.has_key('text'):#we have a kvp, so process
-                    tg = elem.__dict__['tag']
-                    tx = elem.__dict__['text']
-                    try:#check for {http://www.opengis.net/wfs} prefix
-                        tg = tg.split('}')[1].lower()
-                    except:
-                        pass
-                    if tg == "name":pass
-                    if tg == "title":pass
-                    if tg == "abstract":pass
-                    if tg == "keywords":pass
-                    if tg == "onlineresource":pass
-                    if tg == "fees":pass
-                    if tg == "accessconstraints":pass
+            pass
+
         
         
         

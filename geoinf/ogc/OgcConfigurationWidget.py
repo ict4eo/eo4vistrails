@@ -37,7 +37,8 @@ class OgcCommonWidget(QtGui.QWidget):
     def __init__(self,  module, parent=None):
         '''parses modules attributes to fetch parameters'''
         QtGui.QWidget.__init__(self, parent)
-        
+        self.launchtype = str(module).split(" ")[1].split(":")[1][0:3].lower()
+        #self.module = module
         self.setObjectName("OgcCommonWidget")
         self.create_config_window()
         
@@ -49,30 +50,47 @@ class OgcCommonWidget(QtGui.QWidget):
         self.center()         
         
         self.mainLayout = QtGui.QVBoxLayout()
-        #self.mainLayout.setGeometry(QtCore.QRect(1, 15, 799, 298))
+
         self.setLayout(self.mainLayout)
 
+        if self.launchtype == "sos":
+            self.urlGroupBox = QtGui.QGroupBox("OGC Sensor Observation Service:")
+        elif self.launchtype == "wfs":
+            self.urlGroupBox = QtGui.QGroupBox("OGC Web Feature Service:")
+        elif self.launchtype == "wcs":
+            self.urlGroupBox = QtGui.QGroupBox("OGC Web Coverage Service:")
+        else:
+            self.urlGroupBox = QtGui.QGroupBox("OGC Service:")
         
-        self.urlGroupBox = QtGui.QGroupBox("Service URL:")
+        #self.urlGroupBox = QtGui.QGroupBox("OGC Service:")
         self.urlGroupBox.setGeometry(QtCore.QRect(4, 19, 530, 45))
         
         self.fetchUrlLayout = QtGui.QHBoxLayout()
 
-        self.label_OGC_url = QtGui.QLabel('OGC WebService url:')  
-        #self.label_OGC_url.setGeometry(QtCore.QRect(5, 20, 142, 27))
+        self.label_OGC_url = QtGui.QLabel('url + version:')  
         self.label_OGC_url.setFixedSize(140,  25)
         
         self.line_edit_OGC_url = QtGui.QLineEdit("")
-        #self.line_edit_OGC_url.setGeometry(QtCore.QRect(146, 20, 530, 27))
         self.line_edit_OGC_url.setFixedSize(500, 25 )
         
+        self.launchversion = QtGui.QComboBox()
+        if self.launchtype == "sos":
+            self.launchversion.addItems(['1.0.0',])
+        elif self.launchtype == "wfs":
+            self.launchversion.addItems(['1.0.0','1.1.0'])
+        elif self.launchtype == "wcs":
+            self.launchversion.addItems(['1.0.0','1.1.0'])
+        else:
+            self.launchversion.addItems(['1.0.0',])
+            
         self.fetchButton = QtGui.QPushButton('&Fetch')
         self.fetchButton.setAutoDefault(False)
         self.fetchButton.setFixedSize(100, 25)
-        #self.fetchButton.setGeometry(QtCore.QRect(680, 20, 690, 27))
+
 
         self.fetchUrlLayout.addWidget(self.label_OGC_url)
         self.fetchUrlLayout.addWidget(self.line_edit_OGC_url)
+        self.fetchUrlLayout.addWidget(self.launchversion)
         self.fetchUrlLayout.addWidget(self.fetchButton)
 
         self.urlGroupBox.setLayout(self.fetchUrlLayout)
@@ -81,7 +99,7 @@ class OgcCommonWidget(QtGui.QWidget):
         
         self.connect(self.fetchButton, QtCore.SIGNAL('clicked(bool)'),
                      self.fetchTriggered)
-        #self.fetchUrlLayout.setGeometry(QtCore.QRect(4, 19, 530, 28))
+
 
         self.metaLayout = QtGui.QHBoxLayout()
         self.metaGroupBox = QtGui.QGroupBox("Service Metadata")
@@ -141,36 +159,6 @@ class OgcCommonWidget(QtGui.QWidget):
         self.metaLayout.addWidget(self.servicePublisherGroupBox)        
         
         
-        #self.metaLayout.setGeometry(QtCore.QRect(4, 25, 530, 600))     
-        
-  
-
-        #tab_widget = QtGui.QTabWidget() 
-    	
-        #ogc_get_capabilities_general_tab = QtGui.QWidget() 
-                     
-
-                     
-        
-        
-    
-#        self.label_service_meta = QtGui.QLabel('Service Identification:')
-#        self.label_service_meta.setGeometry(QtCore.QRect(5, 20, 142, 27))
-#        
-#        self.label_provider_meta = QtGui.QLabel('Provider Identification:')
-#        self.label_provider_meta.setGeometry(QtCore.QRect(146, 20, 530, 27))
-    
-
-        
-        #self.metaLayout.addWidget(self.label_service_meta)
-        #self.metaLayout.addWidget(self.label_provider_meta)
-
-
-        #self.tabs.addTab(ogc_get_capabilities_general_tab, "OGC GetCapabilities") 
-    		
-        #vbox = QtGui.QVBoxLayout()   
-        #vbox.addWidget(tab_widget)     
-        #self.setLayout(vbox)     
        
     def center(self): 
         screen = QtGui.QDesktopWidget().screenGeometry() 
@@ -179,12 +167,12 @@ class OgcCommonWidget(QtGui.QWidget):
         
     def fetchTriggered(self):
         if  self.line_edit_OGC_url.text()  != "":
-            self.service = OgcService(self.line_edit_OGC_url.text(), 'sos','1.0.0')
-            
+            print "lvct" + str(self.launchversion.currentText())
+            self.service = OgcService(self.line_edit_OGC_url.text(), self.launchtype, str(self.launchversion.currentText()))
             #populate metadata!
             if self.service:
                 #service id metadata first
-                #'service','version','title','abstract','keywords','fees','access constraints'
+
                 self.serviceIDServiceTable.clearContents()
                 service_id_dict = ['service_type', 'service_version','service_title', 
                'service_abstract',  'service_keywords',  'service_fees', 'service_accessconstraints']
@@ -194,41 +182,25 @@ class OgcCommonWidget(QtGui.QWidget):
                        qtwi = QtGui.QTableWidgetItem(str(self.service.__dict__[service_id_dict_item]))
                        self.serviceIDServiceTable.setItem (row_count, 0, qtwi)
                     row_count = row_count + 1
-#               if self.service.__dict__.has_key('service_type'):
-#                    qtwi = QtGui.QTableWidgetItem(str(self.service.__dict__['service_type']))
-#                    self.serviceIDServiceTable.setItem (0, 0, qtwi)
-#               if self.service.__dict__.has_key('service_version'):
-#                    qtwi = QtGui.QTableWidgetItem(str(self.service.__dict__['service_version']))
-#                    self.serviceIDServiceTable.setItem (1, 0, qtwi)  
-#               if self.service.__dict__.has_key('service_title'):
-#                    qtwi = QtGui.QTableWidgetItem(str(self.service.__dict__['service_title']))
-#                    self.serviceIDServiceTable.setItem (2, 0, qtwi)  
-#               if self.service.__dict__.has_key('service_abstract'):
-#                    qtwi = QtGui.QTableWidgetItem(str(self.service.__dict__['service_abstract']))
-#                    self.serviceIDServiceTable.setItem (3, 0, qtwi)  
-#               if self.service.__dict__.has_key('service_keywords'):
-#                    qtwi = QtGui.QTableWidgetItem(str(self.service.__dict__['service_keywords']))
-#                    self.serviceIDServiceTable.setItem (4, 0, qtwi)  
-#               if self.service.__dict__.has_key('service_fees'):
-#                    qtwi = QtGui.QTableWidgetItem(str(self.service.__dict__['service_fees']))
-#                    self.serviceIDServiceTable.setItem (5, 0, qtwi)  
-#               if self.service.__dict__.has_key('service_accessconstraints'):
-#                    qtwi = QtGui.QTableWidgetItem(str(self.service.__dict__['service_accessconstraints']))
-#                    self.serviceIDServiceTable.setItem (6, 0, qtwi)  
+ 
                 #now provider metadata
-                self.servicePublisherTable.clearContents()                
-                provider_dict = ['provider_url','provider_contact_fax','provider_contact_name', 
-                'provider_contact_country', 'provider_contact_phone', 'provider_contact_region', 
-                'provider_contact_city', 'provider_name', 'provider_contact_address', 
-                'provider_contact_postcode', 'provider_contact_email', 'provider_contact_role', 
-                'provider_contact_position', 'provider_contact_site', 'provider_contact_organization', 
-                'provider_contact_instructions', 'provider_contact_hours']
-                row_count = 0
-                for provider_dict_item in provider_dict:
-                    if self.service.__dict__.has_key(provider_dict_item):
-                       qtwi = QtGui.QTableWidgetItem(str(self.service.__dict__[provider_dict_item]))
-                       self.servicePublisherTable.setItem (row_count, 0, qtwi)
-                    row_count = row_count + 1                
+                #OGC WFS 1.0.0 does not have provider metadata in this form
+                self.servicePublisherTable.clearContents() 
+                if self.launchtype == "wfs" and self.launchversion.currentText() == "1.0.0":
+                    pass
+                else:
+                    provider_dict = ['provider_url','provider_contact_fax','provider_contact_name', 
+                    'provider_contact_country', 'provider_contact_phone', 'provider_contact_region', 
+                    'provider_contact_city', 'provider_name', 'provider_contact_address', 
+                    'provider_contact_postcode', 'provider_contact_email', 'provider_contact_role', 
+                    'provider_contact_position', 'provider_contact_site', 'provider_contact_organization', 
+                    'provider_contact_instructions', 'provider_contact_hours']
+                    row_count = 0
+                    for provider_dict_item in provider_dict:
+                        if self.service.__dict__.has_key(provider_dict_item):
+                           qtwi = QtGui.QTableWidgetItem(str(self.service.__dict__[provider_dict_item]))
+                           self.servicePublisherTable.setItem (row_count, 0, qtwi)
+                        row_count = row_count + 1                
                 
         
         
