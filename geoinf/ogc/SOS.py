@@ -31,15 +31,18 @@ from packages.eo4vistrails.geoinf.datamodels.Feature import FeatureModel
 from OgcConfigurationWidget import OgcConfigurationWidget
 from core.modules.vistrails_module import Module, new_module, NotCacheable, ModuleError
 
+
 #need to import the configuration widget we develop
 class SOS(FeatureModel):
+    """TO DO - add docstring"""
     def __init__(self):
         FeatureModel.__init__(self)
-        
+
     def compute(self):
         pass
 
+
 class SOSConfigurationWidget(OgcConfigurationWidget):
-    
+    """TO DO - add docstring"""
     def __init__(self,  module, controller, parent=None):
         OgcConfigurationWidget.__init__(self,  module, controller, parent)
