@@ -32,19 +32,13 @@ from OgcConfigurationWidget import OgcConfigurationWidget
 from core.modules.vistrails_module import Module, new_module, NotCacheable, ModuleError
 
 #need to import the configuration widget we develop
-class WFS(FeatureModel):
+class WFS(NotCacheable,  FeatureModel):
     def __init__(self):
         FeatureModel.__init__(self)
         
     def compute(self):
         pass
 
-class WFSed(NotCacheable, Module):
-    def __init__(self):
-        Module.__init__(self)
-        
-    def compute(self):
-        pass
 
 class WFSConfigurationWidget(OgcConfigurationWidget):
     
