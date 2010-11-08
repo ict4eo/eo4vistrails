@@ -26,4 +26,33 @@
 """This module provides an generic Coverage/Raster data model via GDAL. 
 All eo4vistrails modules dealing with raster data must extend this class.
 """
+import core.modules.module_registry
+from core.modules.vistrails_module import Module, ModuleError
+import gui.application
+try:
+    from osgeo import gdal
+except:
+    import gdal
 
+class RasterModel(Module):
+    
+    def __init__(self):
+        Module.__init__(self)
+        
+    
+    def compute(self):
+        pass
+    
+def initialize(*args, **keywords):
+    '''sets everything up'''
+    
+    # We'll first create a local alias for the module_registry so that
+    # we can refer to it in a shorter way.
+    reg = core.modules.module_registry.get_module_registry()
+    
+    reg.add_module(RasterModel)
+    #input ports
+   
+    #reg.add_input_port(FeatureModel, "service_version", (core.modules.basic_modules.String, 'Web Map Service version - default 1.1.1'))   
+    #output ports
+    reg.add_output_port(RasterModel, "GDALDataset", (gdal.Dataset, 'Raster data as GDAL'))

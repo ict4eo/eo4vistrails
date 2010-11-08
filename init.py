@@ -1,7 +1,9 @@
 import core
 from geoinf.datamodels.Feature import FeatureModel
+from geoinf.datamodels.Raster import RasterModel
 from geoinf.ogc.Common import OgcService
 from geoinf.ogc.WFS import WFS,  WFSConfigurationWidget
+from geoinf.ogc.WCS import WCS,  WCSConfigurationWidget
 from geoinf.ogc.SOS import SOS,  SOSConfigurationWidget
 from opennebula.RPyC import RPyC
 from geoinf.ogc.OgcConfigurationWidget import OgcConfigurationWidget
@@ -17,9 +19,11 @@ def initialize(*args, **keywords):
     #reg.add_module(WFS)
     #input ports
     reg.add_module(FeatureModel) #abstract
+    reg.add_module(RasterModel) #abstract
     
     reg.add_module(WFS, configureWidgetType=WFSConfigurationWidget)
     reg.add_module(SOS, configureWidgetType=SOSConfigurationWidget)
+    reg.add_module(WCS, configureWidgetType=WCSConfigurationWidget)
     
     #reg.add_input_port(FeatureModel, "service_version", (core.modules.basic_modules.String, 'Web Map Service version - default 1.1.1'))   
     #output ports
