@@ -81,7 +81,6 @@ class OgcCommonWidget(QtGui.QWidget):
         
         self.connect(self.fetchButton, QtCore.SIGNAL('clicked(bool)'),
                      self.fetchTriggered)
-        print "done first layout"
         #self.fetchUrlLayout.setGeometry(QtCore.QRect(4, 19, 530, 28))
 
         self.metaLayout = QtGui.QHBoxLayout()
@@ -98,6 +97,20 @@ class OgcCommonWidget(QtGui.QWidget):
         
         self.serviceIDGroupBox.setLayout(self.serviceIDLayout)
         
+        self.serviceIDServiceTable = QtGui.QTableWidget()
+        self.serviceIDServiceTable.setRowCount(7)
+        self.serviceIDServiceTable.setColumnCount(1)
+        service_id_list = ['service','version','title','abstract','keywords','fees','access constraints']
+        
+        row_position = 0
+        for service_id_list_item in service_id_list:
+            qtwi = QtGui.QTableWidgetItem(service_id_list_item)
+            self.serviceIDServiceTable.setVerticalHeaderItem(row_position,  qtwi)
+            row_position = row_position + 1
+        self.serviceIDServiceTable.setHorizontalHeaderLabels (['Service Value', ])
+        self.serviceIDServiceTable.setAutoScroll(True)
+        self.serviceIDServiceTable.setWordWrap(True)
+        self.serviceIDLayout.addWidget(self.serviceIDServiceTable)
         self.metaLayout.addWidget(self.serviceIDGroupBox)
         
                
@@ -107,6 +120,24 @@ class OgcCommonWidget(QtGui.QWidget):
         
         self.servicePublisherGroupBox.setLayout(self.servicePublisherLayout)
         
+        self.servicePublisherTable = QtGui.QTableWidget()
+        self.servicePublisherTable.setRowCount(17)
+        self.servicePublisherTable.setColumnCount(1)
+        
+        provider_id_list =['provider name','provider url','contact name','contact position',
+        'contact role','contact organization','contact address','contact city','contact region',
+        'contact postcode','contact country','contact phone','contact fax','contact site',
+        'contact email','contact hours','contact instructions']  
+        
+        row_position = 0
+        for provider_id_list_item in provider_id_list:
+            qtwi = QtGui.QTableWidgetItem(provider_id_list_item)
+            self.servicePublisherTable.setVerticalHeaderItem(row_position,  qtwi)
+            row_position = row_position + 1
+        self.servicePublisherTable.setHorizontalHeaderLabels (['Provider Value', ])
+        self.servicePublisherTable.setAutoScroll(True)
+        self.servicePublisherTable.setWordWrap(True)
+        self.servicePublisherLayout.addWidget(self.servicePublisherTable)        
         self.metaLayout.addWidget(self.servicePublisherGroupBox)        
         
         
@@ -149,6 +180,56 @@ class OgcCommonWidget(QtGui.QWidget):
     def fetchTriggered(self):
         if  self.line_edit_OGC_url.text()  != "":
             self.service = OgcService(self.line_edit_OGC_url.text(), 'sos','1.0.0')
+            
+            #populate metadata!
+            if self.service:
+                #service id metadata first
+                #'service','version','title','abstract','keywords','fees','access constraints'
+                self.serviceIDServiceTable.clearContents()
+                service_id_dict = ['service_type', 'service_version','service_title', 
+               'service_abstract',  'service_keywords',  'service_fees', 'service_accessconstraints']
+                row_count = 0
+                for service_id_dict_item in service_id_dict:
+                    if self.service.__dict__.has_key(service_id_dict_item):
+                       qtwi = QtGui.QTableWidgetItem(str(self.service.__dict__[service_id_dict_item]))
+                       self.serviceIDServiceTable.setItem (row_count, 0, qtwi)
+                    row_count = row_count + 1
+#               if self.service.__dict__.has_key('service_type'):
+#                    qtwi = QtGui.QTableWidgetItem(str(self.service.__dict__['service_type']))
+#                    self.serviceIDServiceTable.setItem (0, 0, qtwi)
+#               if self.service.__dict__.has_key('service_version'):
+#                    qtwi = QtGui.QTableWidgetItem(str(self.service.__dict__['service_version']))
+#                    self.serviceIDServiceTable.setItem (1, 0, qtwi)  
+#               if self.service.__dict__.has_key('service_title'):
+#                    qtwi = QtGui.QTableWidgetItem(str(self.service.__dict__['service_title']))
+#                    self.serviceIDServiceTable.setItem (2, 0, qtwi)  
+#               if self.service.__dict__.has_key('service_abstract'):
+#                    qtwi = QtGui.QTableWidgetItem(str(self.service.__dict__['service_abstract']))
+#                    self.serviceIDServiceTable.setItem (3, 0, qtwi)  
+#               if self.service.__dict__.has_key('service_keywords'):
+#                    qtwi = QtGui.QTableWidgetItem(str(self.service.__dict__['service_keywords']))
+#                    self.serviceIDServiceTable.setItem (4, 0, qtwi)  
+#               if self.service.__dict__.has_key('service_fees'):
+#                    qtwi = QtGui.QTableWidgetItem(str(self.service.__dict__['service_fees']))
+#                    self.serviceIDServiceTable.setItem (5, 0, qtwi)  
+#               if self.service.__dict__.has_key('service_accessconstraints'):
+#                    qtwi = QtGui.QTableWidgetItem(str(self.service.__dict__['service_accessconstraints']))
+#                    self.serviceIDServiceTable.setItem (6, 0, qtwi)  
+                #now provider metadata
+                self.servicePublisherTable.clearContents()                
+                provider_dict = ['provider_url','provider_contact_fax','provider_contact_name', 
+                'provider_contact_country', 'provider_contact_phone', 'provider_contact_region', 
+                'provider_contact_city', 'provider_name', 'provider_contact_address', 
+                'provider_contact_postcode', 'provider_contact_email', 'provider_contact_role', 
+                'provider_contact_position', 'provider_contact_site', 'provider_contact_organization', 
+                'provider_contact_instructions', 'provider_contact_hours']
+                row_count = 0
+                for provider_dict_item in provider_dict:
+                    if self.service.__dict__.has_key(provider_dict_item):
+                       qtwi = QtGui.QTableWidgetItem(str(self.service.__dict__[provider_dict_item]))
+                       self.servicePublisherTable.setItem (row_count, 0, qtwi)
+                    row_count = row_count + 1                
+                
         
         
 class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
