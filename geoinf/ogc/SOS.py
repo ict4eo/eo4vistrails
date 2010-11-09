@@ -27,6 +27,7 @@
 """
 
 #from owslib.wfs import WFS
+from PyQt4 import QtCore, QtGui
 from packages.eo4vistrails.geoinf.datamodels.Feature import FeatureModel
 from OgcConfigurationWidget import OgcConfigurationWidget
 from core.modules.vistrails_module import Module, new_module, NotCacheable, ModuleError
@@ -42,7 +43,47 @@ class SOS(FeatureModel):
         pass
 
 
-class SOSConfigurationWidget(OgcConfigurationWidget):
+class SosCommonWidget(QtGui.QWidget):
     """TO DO - add docstring"""
+    def __init__(self,  module, parent=None):
+        '''parses modules attributes to fetch parameters'''
+        QtGui.QWidget.__init__(self, parent)
+        self.launchtype = str(module).split(" ")[1].split(":")[1][0:3].lower()
+        #self.module = module
+        self.setObjectName("SosCommonWidget")
+        self.create_config_window()
+
+    def create_config_window(self):
+        """TO DO - add docstring"""
+        self.setWindowTitle("SOS Configuration Widget")
+        self.setMinimumSize(800, 300) 
+        self.mainLayout = QtGui.QVBoxLayout()
+        self.setLayout(self.mainLayout)
+
+
+class SOSConfigurationWidget(OgcConfigurationWidget):
+    """makes use of code style from OgcConfigurationWidget"""
     def __init__(self,  module, controller, parent=None):
         OgcConfigurationWidget.__init__(self,  module, controller, parent)
+        
+        self.sos_common_widget = SosCommonWidget(module)
+        
+        self.tabs.addTab(self.sos_common_widget, "")
+        self.tabs.setTabText(
+            self.tabs.indexOf(self.sos_common_widget),
+            QtGui.QApplication.translate(
+                "OgcConfigurationWidget",
+                "SOS Specific Metadata",
+                None,
+                QtGui.QApplication.UnicodeUTF8
+            )
+        )
+        self.tabs.setTabToolTip(
+            self.tabs.indexOf(self.sos_common_widget),
+            QtGui.QApplication.translate(
+                "OgcConfigurationWidget",
+                "Stuff for SOS",
+                None,
+                QtGui.QApplication.UnicodeUTF8
+            )
+        )

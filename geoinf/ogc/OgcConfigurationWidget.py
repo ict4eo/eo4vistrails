@@ -94,13 +94,11 @@ class OgcCommonWidget(QtGui.QWidget):
         
         self.metaLayout = QtGui.QHBoxLayout()
         self.metaGroupBox = QtGui.QGroupBox("Service Metadata")
-        self.metaGroupBox.setGeometry(QtCore.QRect(4, 50, 530, 290))
         self.metaGroupBox.setLayout(self.metaLayout)
         self.mainLayout.addWidget(self.metaGroupBox)
         
         self.serviceIDLayout = QtGui.QVBoxLayout()
         self.serviceIDGroupBox = QtGui.QGroupBox("Service Identification")
-        self.serviceIDGroupBox.setGeometry(QtCore.QRect(16, 60, 250, 285))
         self.serviceIDGroupBox.setLayout(self.serviceIDLayout)
         
         self.serviceIDServiceTable = QtGui.QTableWidget()
@@ -119,12 +117,12 @@ class OgcCommonWidget(QtGui.QWidget):
         self.serviceIDServiceTable.setHorizontalHeaderLabels (['Service Value', ])
         self.serviceIDServiceTable.setAutoScroll(True)
         self.serviceIDServiceTable.setWordWrap(True)
+        self.serviceIDServiceTable.horizontalHeader().setStretchLastSection(True)
         self.serviceIDLayout.addWidget(self.serviceIDServiceTable)
         self.metaLayout.addWidget(self.serviceIDGroupBox)
         
         self.servicePublisherLayout = QtGui.QVBoxLayout()
         self.servicePublisherGroupBox = QtGui.QGroupBox("Publisher Details")
-        self.servicePublisherGroupBox.setGeometry(QtCore.QRect(260, 60, 494, 285))
         self.servicePublisherGroupBox.setLayout(self.servicePublisherLayout)
         
         self.servicePublisherTable = QtGui.QTableWidget()
@@ -146,6 +144,7 @@ class OgcCommonWidget(QtGui.QWidget):
         self.servicePublisherTable.setHorizontalHeaderLabels (['Provider Value',])
         self.servicePublisherTable.setAutoScroll(True)
         self.servicePublisherTable.setWordWrap(True)
+        self.servicePublisherTable.horizontalHeader().setStretchLastSection(True)
         self.servicePublisherLayout.addWidget(self.servicePublisherTable)
         self.metaLayout.addWidget(self.servicePublisherGroupBox)
 
@@ -158,15 +157,15 @@ class OgcCommonWidget(QtGui.QWidget):
     def fetchTriggered(self):
         """TO DO - add docstring"""
         if  self.line_edit_OGC_url.text() != "":
-            print "lvct" + str(self.launchversion.currentText())
+            #print "lvct" + str(self.launchversion.currentText())
             self.service = OgcService(
                 self.line_edit_OGC_url.text(),
                 self.launchtype,
                 str(self.launchversion.currentText())
             )
-            #populate metadata!
+            # populate metadata!
             if self.service:
-                #service id metadata first
+                # service id metadata first
                 
                 self.serviceIDServiceTable.clearContents()
                 service_id_dict = [
@@ -182,8 +181,8 @@ class OgcCommonWidget(QtGui.QWidget):
                        self.serviceIDServiceTable.setItem (row_count, 0, qtwi)
                     row_count = row_count + 1
                 
-                #now provider metadata
-                #OGC WFS 1.0.0 does not have provider metadata in this form
+                # now provide metadata
+                # OGC WFS 1.0.0 does not have provider metadata in this form
                 self.servicePublisherTable.clearContents() 
                 if self.launchtype == "wfs" and self.launchversion.currentText() == "1.0.0":
                     pass

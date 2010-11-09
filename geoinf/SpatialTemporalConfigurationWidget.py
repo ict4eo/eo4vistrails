@@ -102,7 +102,7 @@ class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
 
     def updateVistrail(self):
         """TO DO - add docstring"""
-        msg = "Must implement updateVistrail in subclass"
+        msg = "updateVistrail() is not yet implemented in this subclass"
         raise VistrailsInternalError(msg)
 
     def createTabs(self):
@@ -188,7 +188,7 @@ class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
 
     def okTriggered(self, checked = False):
         """ okTriggered(checked: bool) -> None
-        Update vistrail controller and module when the user click Ok
+        Update vistrail controller and module when the user clicks Ok
         
         """
         if self.updateVistrail():
