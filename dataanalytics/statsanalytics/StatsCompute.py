@@ -37,26 +37,27 @@ from core.modules.vistrails_module import Module, ModuleError
 
 # We'll first create a local alias for the module_registry so that
 # we can refer to it in a shorter way. This right?
-    reg = core.modules.module_registry.get_module_registry()
-    reg.add_module(statsCompute)
+reg = core.modules.module_registry.get_module_registry()
+reg.add_module(statsCompute)
 
 
 class statsCompute (Module):
+    """TO DO - add docstring"""
     def __init__(self):
-    # Is this the python constructor?'''
+        # Is this the python constructor?
         pass
-    
+
     def compute(self):
-    # Starts with a big switch statement usually, to parse the input port args'''
-    ''' Below, to be done by classes that inherit this one
-      case library call (numpy/scipy, whatever...)
-      case R: Have to figure out how to inherit a Session class in python
-         if R session running
-            send to it
-         else // instantiate a Session
-            statsSession =  Session(); So easy in C++, sigh...
-    '''
-       pass
+        # Starts with a big switch statement usually, to parse input port args
+        """Below, to be done by classes that inherit this one
+        case library call (numpy/scipy, whatever...)
+        case R: Have to figure out how to inherit a Session class in python
+             if R session running
+                send to it
+             else // instantiate a Session
+                statsSession =  Session(); So easy in C++, sigh...
+        """
+        pass
 
     #Set up input ports for arguments
     #reg.add_input_port(statsModule, bla, bla)
