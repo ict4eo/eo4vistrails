@@ -25,6 +25,9 @@
 #############################################################################
 """This module provides a small api for fetching the service and dealing with 
 OGC Web Service Metadata common to the various services (via owslib).
+
+Requirements:
+    owslib 0.3.4 or higher
 """
 
 try:
@@ -62,9 +65,10 @@ class OgcService():
         else:
             self.setServiceIdentification(self.service.__dict__['identification'].__dict__)
             self.setProviderIdentification(self.service.__dict__['provider'].__dict__)
-    
+
     def setServiceIdentification(self,  service_dict):
-        ''' service identification metadata is structured differently for the different services - parse appropriately'''
+        """service identification metadata is structured differently
+        for the different services - parse appropriately"""""
         if self.ini_service_type == "sos":
             if service_dict.has_key('service'):
                 self.service_type = service_dict['service'] #we actually know this, but rebuild anyway
@@ -107,9 +111,10 @@ class OgcService():
         
         else:
             pass
-            
+
     def setProviderIdentification(self,  provider_dict):
-        '''provider metadata is structured differently for the different services - parse appropriately'''
+        """provider metadata is structured differently
+        for the different services - parse appropriately"""
         if self.ini_service_type == "sos":
             if provider_dict.has_key('name'):
                 self.provider_name = provider_dict['name']
@@ -149,13 +154,9 @@ class OgcService():
         
         elif self.ini_service_type == "wfs":
             pass
-
-        
-        
         
         elif self.ini_service_type == "wcs":
             pass       
             
         else:
             pass
-                         

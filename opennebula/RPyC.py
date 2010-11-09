@@ -35,7 +35,8 @@ from core.modules import module_configure
 from core.modules.module_registry import get_module_registry
 from core.modules import port_configure
 from core.modules import vistrails_module
-from core.modules.vistrails_module import Module, new_module, NotCacheable, ModuleError
+from core.modules.vistrails_module import Module, new_module, NotCacheable, \
+    ModuleError
 from core.modules.python_source_configure import PythonSourceConfigurationWidget
 from core.modules.tuple_configuration import TupleConfigurationWidget, \
     UntupleConfigurationWidget
@@ -64,9 +65,10 @@ import urllib
 import sys
 
 class OneAbstract(NotCacheable, Module):
+    """TO DO - add docstring"""
     def __init__(self):
         Module.__init__(self)
-    
+
     def runcmd(self, operation):
         import paramiko   
         client = paramiko.SSHClient()
@@ -74,7 +76,7 @@ class OneAbstract(NotCacheable, Module):
         self.username = self.getInputFromPort("username")
         self.password = self.getInputFromPort("password")
         self.server = self.getInputFromPort("server")
-        client.connect(self.server,username=self.username,password=self.password)        
+        client.connect(self.server,username=self.username,password=self.password)
         i,o,e = client.exec_command(operation)
         self.setResult("stdout", o.readlines())
         self.setResult("stderr", e.readlines())
@@ -82,31 +84,36 @@ class OneAbstract(NotCacheable, Module):
     def compute(self):
         return
 
+
 class OneCmd(OneAbstract):
+    """TO DO - add docstring"""
     # This constructor is strictly unnecessary. However, some modules
     # might want to initialize per-object data. When implementing your
     # own constructor, remember that it must not take any extra
     # parameters.
     def __init__(self):
         OneAbstract.__init__(self)
-        
+
     def compute(self):
+        """TO DO - add docstring"""
         operation = self.getInputFromPort("operation")
         self.runcmd(operation)
 
+
 class OneVM_List(OneAbstract):
+    """TO DO - add docstring"""
     def __init__(self):
         OneAbstract.__init__(self)
-    
+
     def compute(self):
+        """TO DO - add docstring"""
         self.runcmd("source .one-env; onevm list")
         for i in t:
             if i.find('missr')>=0:
                 int(i[0:i.find('missr')])
-        
-        
 
-###############################################################################
+
+################################################################################
 # RPyC
 #
 # A VisTrails name, globals, locals, fromlist, level))
@@ -117,6 +124,7 @@ class OneVM_List(OneAbstract):
 # Extra helper methods can be defined, as usual. In this case, we're
 # using a helper method op(self, v1, v2) that performs the right
 # operations.
+################################################################################
 class RPyCDiscover(NotCacheable, Module):
     """RPyCDiscover is a Module that allow onbe to discover RPyC
     servers
@@ -151,7 +159,6 @@ class RPyC(NotCacheable, Module):
     def __init__(self):
         Module.__init__(self)
 
-
     def run_code(self, code_str,
                  use_input=False,
                  use_output=False):
@@ -161,18 +168,18 @@ class RPyC(NotCacheable, Module):
         execution."""
         import core.packagemanager
         import rpyc
+
         def fail(msg):
             raise ModuleError(self, msg)
+
         def cache_this():
             self.is_cacheable = lambda *args, **kwargs: True
-        
-        conn = rpyc.classic.connect(self.getInputFromPort('rPyCServer'))
 
+        conn = rpyc.classic.connect(self.getInputFromPort('rPyCServer'))
         if use_input:
             inputDict = dict([(k, self.getInputFromPort(k))
                               for k in self.inputPorts])
             conn.namespace.update(inputDict)
-            
         if use_output:
             outputDict = dict([(k, None)
                                for k in self.outputPorts])
@@ -188,17 +195,16 @@ class RPyC(NotCacheable, Module):
         del conn.namespace['source']
 
         conn.modules.sys.stdout = sys.stdout
-        
         conn.execute(code_str)
         #exec code_str in locals_, locals_
-        
         if use_output:
             for k in outputDict.iterkeys():
                 if conn.namespace[k] != None:
                     self.setResult(k, conn.namespace[k])
 
     def compute(self):
-        s = core.modules.basic_modules.urllib.unquote(str(self.forceGetInputFromPort('source', '')))
+        """TO DO - add docstring"""
+        s = core.modules.basic_modules.urllib.unquote(
+            str(self.forceGetInputFromPort('source', ''))
+        )
         self.run_code(s, use_input=True, use_output=True)
-
-
