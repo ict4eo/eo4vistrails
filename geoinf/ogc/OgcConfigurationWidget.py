@@ -166,7 +166,6 @@ class OgcCommonWidget(QtGui.QWidget):
             # populate metadata!
             if self.service:
                 # service id metadata first
-                
                 self.serviceIDServiceTable.clearContents()
                 service_id_dict = [
                     'service_type','service_version','service_title',
@@ -180,7 +179,6 @@ class OgcCommonWidget(QtGui.QWidget):
                         )
                        self.serviceIDServiceTable.setItem (row_count, 0, qtwi)
                     row_count = row_count + 1
-                
                 # now provide metadata
                 # OGC WFS 1.0.0 does not have provider metadata in this form
                 self.servicePublisherTable.clearContents() 
@@ -205,6 +203,7 @@ class OgcCommonWidget(QtGui.QWidget):
                             )
                            self.servicePublisherTable.setItem (row_count, 0, qtwi)
                         row_count = row_count + 1
+                # TODO - fire a "done" event
 
 
 class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
