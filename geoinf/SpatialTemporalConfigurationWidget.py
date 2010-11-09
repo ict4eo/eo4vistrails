@@ -46,32 +46,41 @@ class SpatioTemporalConfigurationWidgetTabs(QtGui.QTabWidget):
 
 
 class SpatialWidget(QtGui.QWidget):
-    """designed to gather coordinates of a bounding box, 
-    or in the case of GRASS, a location
+    """Father coordinates of a bounding box, or in the case of GRASS, a location
     
     """
-    def __init__(self,  parent=None):
+    def __init__(self, parent=None):
         QtGui.QWidget.__init__(self, parent)
         self.setObjectName("SpatialWidget")
+        # set holding boxes
+        self.metaLayout = QtGui.QHBoxLayout()
         self.gridLayout = QtGui.QGridLayout()
-        self.setLayout(self.gridLayout)
-        self.gridLayout.addWidget(QtGui.QLabel('BBox Top Left X'), 0, 0)
+        self.bbox = QtGui.QGroupBox("Bounding Box")
+        self.bbox.setLayout(self.gridLayout)
+        self.metaLayout.addWidget(self.bbox)
+        self.verticalBox = QtGui.QVBoxLayout()
+        self.verticalBox.addLayout(self.metaLayout)
+        self.verticalBox.insertStretch(-1, 1)  # negative index => space at end
+        # overall layout
+        self.setLayout(self.verticalBox)
+        # add widgets
+        self.gridLayout.addWidget(QtGui.QLabel('Top Left X'), 0, 0)
         self.bbox_tlx = QtGui.QLineEdit('15.0') 
         self.gridLayout.addWidget(self.bbox_tlx, 0, 1)
-        self.gridLayout.addWidget(QtGui.QLabel('BBox Top Left Y'), 0, 2)
+        self.gridLayout.addWidget(QtGui.QLabel('Top Left Y'), 0, 2)
         self.bbox_tly = QtGui.QLineEdit('-22.0') 
         self.gridLayout.addWidget(self.bbox_tly, 0, 3)
-        self.gridLayout.addWidget(QtGui.QLabel('BBox Bottom Right X'), 1, 0)
+        self.gridLayout.addWidget(QtGui.QLabel('Bottom Right X'), 1, 0)
         self.bbox_brx = QtGui.QLineEdit('33.0') 
         self.gridLayout.addWidget(self.bbox_brx, 1, 1)
-        self.gridLayout.addWidget(QtGui.QLabel('BBox Bottom Right Y'), 1, 2)
+        self.gridLayout.addWidget(QtGui.QLabel('Bottom Right Y'), 1, 2)
         self.bbox_bry = QtGui.QLineEdit('-35.0') 
         self.gridLayout.addWidget(self.bbox_bry, 1, 3)
 
 
 class TemporalWidget(QtGui.QWidget):
     """TO DO - add docstring"""
-    def __init__(self,  parent=None):
+    def __init__(self, parent=None):
         QtGui.QWidget.__init__(self, parent)
         self.setObjectName("TemporalWidget")
 
@@ -80,9 +89,9 @@ class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
     """makes use of code style from TupleConfigurationWidget"""
     def __init__(self, module, controller, parent=None):
         StandardModuleConfigurationWidget.__init__(self, module, controller, parent)
-        #initialise the setup necessary for all geoinf widgets that follow
-        self.setWindowTitle('Spatial and Temporal parameter setup ')
-        self.setToolTip("Setup spatial and temporal paramaters for working with a geoinf module")
+        # initialise the setup necessary for all geoinf widgets that follow
+        self.setWindowTitle('Spatial and Temporal Parameters')
+        self.setToolTip("Setup spatial and temporal parameters for working with a geoinf module")
         self.createTabs()
         self.createButtons()
         self.setLayout(QtGui.QVBoxLayout())
@@ -129,11 +138,12 @@ class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
         self.cancelButton = QtGui.QPushButton('&Cancel', self)
         self.cancelButton.setAutoDefault(False)
         self.cancelButton.setShortcut('Esc')
-        self.cancelButton.setFixedWidth(100)
+        self.buttonLayout.addStretch(1)  # force buttons to the right
+        #self.cancelButton.setFixedWidth(100)
         self.buttonLayout.addWidget(self.cancelButton)  
         self.okButton = QtGui.QPushButton('&OK', self)
         self.okButton.setAutoDefault(False)
-        self.okButton.setFixedWidth(100)
+        #self.okButton.setFixedWidth(100)
         self.buttonLayout.addWidget(self.okButton)
         self.connect(self.okButton, QtCore.SIGNAL('clicked(bool)'),
                      self.okTriggered)
