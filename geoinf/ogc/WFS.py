@@ -32,6 +32,8 @@ from packages.eo4vistrails.geoinf.datamodels.Feature import FeatureModel
 from OgcConfigurationWidget import OgcConfigurationWidget
 from core.modules.vistrails_module import Module, new_module, NotCacheable, ModuleError
 
+from owslib.wfs import WebFeatureService
+   
 
 #need to import the configuration widget we develop
 
@@ -45,17 +47,122 @@ class WFS(NotCacheable,  FeatureModel):
 
 class WFS2(QtGui.QWidget):
     
-    def __init__(self,  module, parent=None):
+    def __init__(self, module, parent=None):
 
 	'''sets parameters for wfs request '''
 
 	QtGui.QWidget.__init__(self, parent)
-	
 	self.setObjectName("WFSConfigurationWidget")
 	self.create_wfs_config_window()
-		
+	
+	
     def create_wfs_config_window(self):
+			
+	gridLayout = QtGui.QGridLayout()
+	self.setLayout(gridLayout)
+	gridLayout.addWidget(QtGui.QLabel('wfs Url'), 0, 0)
+	gridLayout.addWidget(QtGui.QLabel('Available Operations'), 1, 0)
+	gridLayout.addWidget(QtGui.QLabel('TypeNames'), 2, 0)
+	gridLayout.addWidget(QtGui.QLabel('bbox:'), 3, 0)
+	gridLayout.addWidget(QtGui.QLabel('                             min  x'), 3, 1)
+	gridLayout.addWidget(QtGui.QLabel('                     min  y'), 3, 3)
+	gridLayout.addWidget(QtGui.QLabel('                             max  x'), 4, 1)
+	gridLayout.addWidget(QtGui.QLabel('                     max y'), 4, 3)
+	gridLayout.addWidget(QtGui.QLabel('ESPG/SRS Code'), 5, 0)
+	gridLayout.addWidget(QtGui.QLabel('maxFeatures'), 6, 0)
+	#gridLayout.addWidget(QtGui.QLabel('GetFeature'), 7, 0)
+	self.wfsUrlEdit = QtGui.QLineEdit('http://localhost:8080/geoserver/wfs')
+	
+	self.minXEdit = QtGui.QLineEdit('0.0')
+	self.ESPGEdit = QtGui.QLineEdit('Null')
+	self.maxFeaturesEdit = QtGui.QLineEdit('0')
 
+	self.minYEdit = QtGui.QLineEdit('0.0')
+	self.maxXEdit = QtGui.QLineEdit('0.0')
+	self.maxYEdit = QtGui.QLineEdit('0.0')
+	#self.DescribeFeatureTypeEdit = QtGui.QLineEdit('http://')
+	#self.GetFeatureEdit = QtGui.QLineEdit('http://')
+
+	gridLayout.addWidget(self.wfsUrlEdit, 0, 1)
+	gridLayout.addWidget(self.minXEdit, 3,2)
+	gridLayout.addWidget(self.ESPGEdit, 5,1)
+	gridLayout.addWidget(self.maxFeaturesEdit, 6,1)
+	gridLayout.addWidget(self.minYEdit, 3, 4)
+	gridLayout.addWidget(self.maxXEdit, 4, 2)
+	gridLayout.addWidget(self.maxYEdit, 4, 4)
+	#gridLayout.addWidget(self.DescribeFeatureTypeEdit, 6, 1)
+	#gridLayout.addWidget(self.GetFeatureEdit, 7, 1)
+	self.opComboAvailableOperations = QtGui.QComboBox()
+	#self.opComboAvailableOperations.addItems(['Null'])
+	gridLayout.addWidget(self.opComboAvailableOperations, 1, 1)
+	self.opComboLayerNames = QtGui.QComboBox()
+	#self.opComboLayerNames.addItems(['Null'])
+	gridLayout.addWidget(self.opComboLayerNames, 2, 1)
+
+	#self.opComboSRS = QtGui.QComboBox()
+	#self.opComboSRS.addItems(['4326', '', ''])
+	#gridLayout.addWidget(self.opComboSRS, 5, 1)
+
+	self.loadRequestButton = QtGui.QPushButton('load')
+			
+	gridLayout.addWidget(self.loadRequestButton, 7, 1)
+	self.connect(self.loadRequestButton, QtCore.SIGNAL('clicked()'), self.loadRequest)
+	
+	self.resetRequestButton = QtGui.QPushButton('reset')		
+	gridLayout.addWidget(self.resetRequestButton, 7, 2)
+	self.connect(self.resetRequestButton, QtCore.SIGNAL('clicked()'), self.clearRequest)
+		
+	self.saveRequestButton = QtGui.QPushButton('save')		
+	gridLayout.addWidget(self.saveRequestButton, 7, 3)
+	self.connect(self.saveRequestButton, QtCore.SIGNAL('clicked()'), self.saveRequest)
+		
+		
+    def	clearRequest(self):
+	"""TO-DO Implement clear fields	"""
+	pass
+
+
+	
+    def saveRequest(self):
+	"""TO-DO implement read set parameters, assign to wfs input ports """
+	pass
+
+		
+    def loadRequest(self):
+
+	""" loadRequest() -> None        
+	use given url to read wfs file, populates the config widget populate fields
+
+	"""
+	#result = str(self.wfsUrlEdit.text()
+
+	defaultUrl = str(self.wfsUrlEdit.text())    
+
+	wfs = WebFeatureService(defaultUrl)
+
+	layers = list(wfs.contents)
+
+	
+	self.opComboAvailableOperations.addItems([op.name for op in wfs.operations])
+
+	for elem in layers:            
+
+	  self.opComboLayerNames.addItems([elem])
+
+	  crsCode = wfs[str(self.opComboLayerNames.currentText())].crsOptions
+
+
+	for elemen in crsCode:
+	
+	  self.ESPGEdit.setText(elemen)	
+	  coordinates = wfs[str(self.opComboLayerNames.currentText())].boundingBoxWGS84
+
+	  self.minXEdit.setText(str(coordinates[0]))
+	  self.minYEdit.setText(str(coordinates[1]))
+	  self.maxXEdit.setText(str(coordinates[2]))
+	  self.maxYEdit.setText(str(coordinates[3]))	
+	
+	''''		
 		label_wfs_url = QtGui.QLabel('OGC WebFeatureService url:', self)  # should make use of the one from OgcConfigrationWidget instead.
 		label_wfs_url.setGeometry(QtCore.QRect(5, 20, 192, 27))
 		line_edit_wfs_url = QtGui.QLineEdit("", self)
@@ -154,6 +261,8 @@ class WFS2(QtGui.QWidget):
 		saveButton.setText(QtGui.QApplication.translate("QTConfigurationWidget", "Save", None, QtGui.QApplication.UnicodeUTF8))
 		resetButton.setText(QtGui.QApplication.translate("QTConfigurationWidget", "Reset", None, QtGui.QApplication.UnicodeUTF8))
 
+		'''
+		
 class WFSConfigurationWidget(OgcConfigurationWidget):
     
     def __init__(self,  module, controller, parent=None):
