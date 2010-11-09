@@ -37,18 +37,17 @@ from core.modules.vistrails_module import Module, new_module, NotCacheable, Modu
 
 class WFS(NotCacheable,  FeatureModel):  
    
-   def __init__(self, module, parent=None):
-
-     FeatureModel.__init__(self)
-
-    #def compute(self):
-     #pass
+    def __init__(self):
+	FeatureModel.__init__(self)
+		
+    def compute(self):
+	pass
 
 class WFS2(QtGui.QWidget):
     
     def __init__(self,  module, parent=None):
 
-	'''parses modules attributes to fetch parameters'''
+	'''sets parameters for wfs request '''
 
 	QtGui.QWidget.__init__(self, parent)
 	
