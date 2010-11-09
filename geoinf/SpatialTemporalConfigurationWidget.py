@@ -31,9 +31,11 @@ from core.modules.module_registry import get_module_registry
 from core.utils import PortAlreadyExists
 
 
-
 class SpatioTemporalConfigurationWidgetTabs(QtGui.QTabWidget):
-    '''Geoinf Configuration Tab Widgets are added vis the addTab method of the QTabWidget '''
+    """Geoinf Configuration Tab Widgets
+    are added vis the addTab method of the QTabWidget
+    
+    """
     def __init__(self, parent=None):
         QtGui.QTabWidget.__init__(self,  parent)
         #self.setGeometry(QtCore.QRect(20, 20, 990, 740))
@@ -41,10 +43,13 @@ class SpatioTemporalConfigurationWidgetTabs(QtGui.QTabWidget):
         self.setTabShape(QtGui.QTabWidget.Rounded)
         self.setElideMode(QtCore.Qt.ElideNone)
         self.setObjectName("SpatioTemporalConfigurationWidgetTabsInstance")
-        
+
+
 class SpatialWidget(QtGui.QWidget):
-    '''designed to gather coordinates of a bounding box, 
-    or in the case of GRASS, a location'''
+    """designed to gather coordinates of a bounding box, 
+    or in the case of GRASS, a location
+    
+    """
     def __init__(self,  parent=None):
         QtGui.QWidget.__init__(self, parent)
         self.setObjectName("SpatialWidget")
@@ -62,41 +67,40 @@ class SpatialWidget(QtGui.QWidget):
         self.gridLayout.addWidget(QtGui.QLabel('BBox Bottom Right Y'), 1, 2)
         self.bbox_bry = QtGui.QLineEdit('-35.0') 
         self.gridLayout.addWidget(self.bbox_bry, 1, 3)
-        
+
+
 class TemporalWidget(QtGui.QWidget):
-    
+    """TO DO - add docstring"""
     def __init__(self,  parent=None):
         QtGui.QWidget.__init__(self, parent)
-        
         self.setObjectName("TemporalWidget")
 
+
 class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
-    '''makes use of code style from TupleConfigurationWidget'''
+    """makes use of code style from TupleConfigurationWidget"""
     def __init__(self, module, controller, parent=None):
         StandardModuleConfigurationWidget.__init__(self, module, controller, parent)
-        
         #initialise the setup necessary for all geoinf widgets that follow
         self.setWindowTitle('Spatial and Temporal parameter setup ')
         self.setToolTip("Setup spatial and temporal paramaters for working with a geoinf module")
-                
         self.createTabs()
         self.createButtons()
         self.setLayout(QtGui.QVBoxLayout())
         self.layout().addLayout(self.tabLayout)
         self.layout().addLayout(self.buttonLayout)
         #self.create_config_window()
-        
-        
+
     def updateVistrail(self):
+        """TO DO - add docstring"""
         msg = "Must implement updateVistrail in subclass"
         raise VistrailsInternalError(msg)
-        
+
     def createTabs(self):
-        ''' createTabs() -> None
+        """ createTabs() -> None
         create and polulate with widgets the necessary 
         tabs for spatial and temporal paramaterisation
-        '''
         
+        """
         self.tabs = SpatioTemporalConfigurationWidgetTabs()
         self.spatial_widget = SpatialWidget()
         self.temporal_widget = TemporalWidget()
@@ -112,13 +116,12 @@ class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
         self.tabLayout.addWidget(self.tabs)        
         self.tabs.setCurrentIndex(0)
         self.tabs.setVisible(True)
-        
+
     def createButtons(self):
         """ createButtons() -> None
         Create and connect signals to Ok & Cancel button
         
         """
-        
         self.buttonLayout = QtGui.QHBoxLayout()
         #self.buttonLayout.setGeometry(QtCore.QRect(10, 765, 980, 32))
         self.buttonLayout.setGeometry(QtCore.QRect(300, 500, 780, 680))
@@ -152,5 +155,3 @@ class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
         if self.updateVistrail():
             self.emit(QtCore.SIGNAL('doneConfigure()'))
             self.close()    
-
-    
