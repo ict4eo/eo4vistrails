@@ -34,26 +34,27 @@ try:
 except:
     import ogr
 
+
 class FeatureModel(Module):
-    
+    """TO DO - add docstring"""
     def __init__(self):
         Module.__init__(self)
-        
-    
+
     def compute(self):
         pass
-    
+
 def initialize(*args, **keywords):
-    '''sets everything up'''
-    
+    """sets everything up"""
     # We'll first create a local alias for the module_registry so that
     # we can refer to it in a shorter way.
     reg = core.modules.module_registry.get_module_registry()
-    
     reg.add_module(FeatureModel)
     #input ports
-   
+    
     #reg.add_input_port(FeatureModel, "service_version", (core.modules.basic_modules.String, 'Web Map Service version - default 1.1.1'))   
     #output ports
-    reg.add_output_port(FeatureModel, "OGRDataset", (ogr.Dataset, 'Feature data in OGR Dataset'))
-
+    reg.add_output_port(
+        FeatureModel,
+        "OGRDataset",
+        (ogr.Dataset, 'Feature data in OGR Dataset')
+    )
