@@ -41,41 +41,46 @@ http://grass.osgeo.org/wiki/GRASS_and_Python
 from utils.session import Session
 from SpatialTemporalConfigurationWidget import SpatialTemporalConfigurationWidget
 
+
 class GrassSession(Session):
+    """TO DO - add docstring"""
     def __init__(self):
         self.layers={'vector':[],  'raster':[]}
+
     def compute(self):
         pass
-        
+
     def updateLayers(self,  layername,  layertype):    
-        '''Updates info on layers available in current GRASS location
+        """Updates info on layers available in current GRASS location
         requires a string for the layername and a string, one of{'v', 'r'} 
-        to denote the type'''
+        to denote the type"""
         if layername.lower() == 'v':
             self.layers['vector'].append(layername)
         if layername.lower() == 'r':
             self.layers['raster'].append(layername)
-            
+
     def readLayers(self,  layertype):
-        '''Reads info on layers available in current GRASS location
+        """Reads info on layers available in current GRASS location
         requires a string for the layername and a string, one of{'v', 'r'} 
-        to denote the type'''
+        to denote the type"""
         if layername.lower() == 'v':
            return tuple(self.layers['vector'])
         if layername.lower() == 'r':
-            return tuple(self.layers['raster'])        
-        
-class GrassSessionConfigurationWidget(SpatialTemporalConfigurationWidget):    
+            return tuple(self.layers['raster'])
 
+
+class GrassSessionConfigurationWidget(SpatialTemporalConfigurationWidget):
+    """TO DO - add docstring"""
+    def __init__(self):
+        pass
+
+    """TO DO - add docstring"""
     def compute(self):
         pass
-        
-        
+
 def initialize(*args, **keywords):
-    '''sets everything up'''
-    
+    """sets everything up"""
     # We'll first create a local alias for the module_registry so that
     # we can refer to it in a shorter way.
     reg = core.modules.module_registry.get_module_registry()
-    
     reg.add_module(GrassSession)
