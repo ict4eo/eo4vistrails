@@ -34,15 +34,13 @@ from core.modules.vistrails_module import Module, ModuleError
 
 
 class Session(Module):
-    '''An abstract class describing a session'''
+    """An abstract class describing a session"""
     def compute(self):
         pass
-        
+
 def initialize(*args, **keywords):
-    '''Set everything up'''
-    
+    """Set everything up"""
     # We'll first create a local alias for the module_registry so that
     # we can refer to it in a shorter way.
     reg = core.modules.module_registry.get_module_registry()
-    
     reg.add_module(Session)
