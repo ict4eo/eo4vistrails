@@ -32,8 +32,7 @@ This refers primarily to GetCapabilities requests
 from PyQt4 import QtCore, QtGui
 from packages.eo4vistrails.geoinf.SpatialTemporalConfigurationWidget \
     import SpatialTemporalConfigurationWidget
-#from owslib import wfs,  sos,  wcs
-from Common import OgcService
+from Common import OgcService  # include owslib .wfs, .sos, .wcs
 
 class OgcCommonWidget(QtGui.QWidget):
     """TO DO - add docstring"""
@@ -47,9 +46,7 @@ class OgcCommonWidget(QtGui.QWidget):
 
     def create_config_window(self):
         """TO DO - add docstring"""
-        self.setGeometry(0, 0, 200,300) 
         self.setWindowTitle("General OGC Configuration Widget")
-        self.resize(800, 300) 
         self.setMinimumSize(800, 300) 
         self.center()
         self.mainLayout = QtGui.QVBoxLayout()
@@ -63,17 +60,11 @@ class OgcCommonWidget(QtGui.QWidget):
             self.urlGroupBox = QtGui.QGroupBox("OGC Web Coverage Service:")
         else:
             self.urlGroupBox = QtGui.QGroupBox("OGC Service:")
-        
-        #self.urlGroupBox = QtGui.QGroupBox("OGC Service:")
-        self.urlGroupBox.setGeometry(QtCore.QRect(4, 19, 530, 45))
-        
         self.fetchUrlLayout = QtGui.QHBoxLayout()
 
-        self.label_OGC_url = QtGui.QLabel('url + version:')  
-        self.label_OGC_url.setFixedSize(140, 25)
+        self.label_OGC_url = QtGui.QLabel('URL & Version:')
         
         self.line_edit_OGC_url = QtGui.QLineEdit("")
-        self.line_edit_OGC_url.setFixedSize(500, 25 )
         
         self.launchversion = QtGui.QComboBox()
         if self.launchtype == "sos":
@@ -87,7 +78,6 @@ class OgcCommonWidget(QtGui.QWidget):
             
         self.fetchButton = QtGui.QPushButton('&Fetch')
         self.fetchButton.setAutoDefault(False)
-        self.fetchButton.setFixedSize(100, 25)
         
         self.fetchUrlLayout.addWidget(self.label_OGC_url)
         self.fetchUrlLayout.addWidget(self.line_edit_OGC_url)
@@ -98,7 +88,8 @@ class OgcCommonWidget(QtGui.QWidget):
         
         self.mainLayout.addWidget(self.urlGroupBox)
         
-        self.connect(self.fetchButton, QtCore.SIGNAL('clicked(bool)'),
+        self.connect(self.fetchButton,
+                     QtCore.SIGNAL('clicked(bool)'),
                      self.fetchTriggered)
         
         self.metaLayout = QtGui.QHBoxLayout()
@@ -123,7 +114,7 @@ class OgcCommonWidget(QtGui.QWidget):
         row_position = 0
         for service_id_list_item in service_id_list:
             qtwi = QtGui.QTableWidgetItem(service_id_list_item)
-            self.serviceIDServiceTable.setVerticalHeaderItem(row_position,  qtwi)
+            self.serviceIDServiceTable.setVerticalHeaderItem(row_position, qtwi)
             row_position = row_position + 1
         self.serviceIDServiceTable.setHorizontalHeaderLabels (['Service Value', ])
         self.serviceIDServiceTable.setAutoScroll(True)
@@ -150,7 +141,7 @@ class OgcCommonWidget(QtGui.QWidget):
         row_position = 0
         for provider_id_list_item in provider_id_list:
             qtwi = QtGui.QTableWidgetItem(provider_id_list_item)
-            self.servicePublisherTable.setVerticalHeaderItem(row_position,  qtwi)
+            self.servicePublisherTable.setVerticalHeaderItem(row_position, qtwi)
             row_position = row_position + 1
         self.servicePublisherTable.setHorizontalHeaderLabels (['Provider Value',])
         self.servicePublisherTable.setAutoScroll(True)
@@ -166,7 +157,7 @@ class OgcCommonWidget(QtGui.QWidget):
 
     def fetchTriggered(self):
         """TO DO - add docstring"""
-        if  self.line_edit_OGC_url.text()  != "":
+        if  self.line_edit_OGC_url.text() != "":
             print "lvct" + str(self.launchversion.currentText())
             self.service = OgcService(
                 self.line_edit_OGC_url.text(),
@@ -179,7 +170,7 @@ class OgcCommonWidget(QtGui.QWidget):
                 
                 self.serviceIDServiceTable.clearContents()
                 service_id_dict = [
-                    'service_type','service_version','service_title', 
+                    'service_type','service_version','service_title',
                     'service_abstract','service_keywords','service_fees',
                     'service_accessconstraints']
                 row_count = 0

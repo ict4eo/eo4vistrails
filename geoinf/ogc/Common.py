@@ -28,6 +28,11 @@ OGC Web Service Metadata common to the various services (via owslib).
 
 Requirements:
     owslib 0.3.4 or higher
+    
+NOTE: As at 2010-11-09, you will need to patch version 0.3.4b for owslib sos.py:
+        self.filters=filter.Filter_Capabilities(val)
+    should be:
+        self.filters=filter.FilterCapabilities(val)
 """
 
 try:
@@ -55,13 +60,13 @@ class OgcService():
             if service_type.lower() == "wcs":
                 self.service = wfs.WebCoverageService(service_url,  service_version)
         else:
-            raise ValueError,  "Please provide an OGC Service Type e.g. 'wfs', 'sos','wcs'"
+            raise ValueError, "Please provide an OGC Service Type e.g. 'wfs', 'sos', 'wcs'"
         self.service_url = service_url
         self.ini_service_type = service_type.lower()
         self.ini_service_version = service_version
         if service_type.lower() == "wfs" and service_version =="1.0.0":#this looks bizzare, but it is true...
             self.setServiceIdentification(self.service.__dict__['provider'].__dict__)
-            self.setProviderIdentification(self.service.__dict__['provider'].__dict__)            
+            self.setProviderIdentification(self.service.__dict__['provider'].__dict__)
         else:
             self.setServiceIdentification(self.service.__dict__['identification'].__dict__)
             self.setProviderIdentification(self.service.__dict__['provider'].__dict__)
@@ -72,18 +77,18 @@ class OgcService():
         if self.ini_service_type == "sos":
             if service_dict.has_key('service'):
                 self.service_type = service_dict['service'] #we actually know this, but rebuild anyway
-            if service_dict.has_key('version'):            
+            if service_dict.has_key('version'):
                 self.service_version = service_dict['version']#we actually know this, but rebuild anyway
-            if service_dict.has_key('title'):            
+            if service_dict.has_key('title'):
                 self.service_title = service_dict['title']
-            if service_dict.has_key('abstract'):            
+            if service_dict.has_key('abstract'):
                 self.service_abstract = service_dict['abstract']
-            if service_dict.has_key('keywords'):            
-                self.service_keywords = service_dict['keywords']       
-            if service_dict.has_key('fees'):            
-                self.service_fees = service_dict['fees']       
-            if service_dict.has_key('accessconstraints'):            
-                self.service_accessconstraints = service_dict['accessconstraints']    
+            if service_dict.has_key('keywords'):
+                self.service_keywords = service_dict['keywords']
+            if service_dict.has_key('fees'):
+                self.service_fees = service_dict['fees']
+            if service_dict.has_key('accessconstraints'):
+                self.service_accessconstraints = service_dict['accessconstraints']
         
         elif self.ini_service_type == "wfs":
             if self.ini_service_version == '1.0.0':
@@ -102,7 +107,7 @@ class OgcService():
                         if tg == "keywords":pass
                         if tg == "onlineresource":pass
                         if tg == "fees":pass
-                        if tg == "accessconstraints":pass     
+                        if tg == "accessconstraints":pass
             else:
                 pass
         
@@ -118,45 +123,45 @@ class OgcService():
         if self.ini_service_type == "sos":
             if provider_dict.has_key('name'):
                 self.provider_name = provider_dict['name']
-            if provider_dict.has_key('url'):            
+            if provider_dict.has_key('url'):
                 self.provider_url = provider_dict['url']
             if provider_dict.has_key('contact'): 
                 if provider_dict['contact'].__dict__.has_key('name'):
                     self.provider_contact_name = provider_dict['contact'].__dict__['name']
-                if provider_dict['contact'].__dict__.has_key('position'):            
+                if provider_dict['contact'].__dict__.has_key('position'):
                     self.provider_contact_position = provider_dict['contact'].__dict__['position']
-                if provider_dict['contact'].__dict__.has_key('role'):            
+                if provider_dict['contact'].__dict__.has_key('role'):
                     self.provider_contact_role =  provider_dict['contact'].__dict__['role']
-                if provider_dict['contact'].__dict__.has_key('organization'):            
+                if provider_dict['contact'].__dict__.has_key('organization'):
                     self.provider_contact_organization = provider_dict['contact'].__dict__['organization']
-                if provider_dict['contact'].__dict__.has_key('address'):            
+                if provider_dict['contact'].__dict__.has_key('address'):
                     self.provider_contact_address =  provider_dict['contact'].__dict__['address']
-                if provider_dict['contact'].__dict__.has_key('city'):            
+                if provider_dict['contact'].__dict__.has_key('city'):
                     self.provider_contact_city = provider_dict['contact'].__dict__['city']
-                if provider_dict['contact'].__dict__.has_key('region'):           
+                if provider_dict['contact'].__dict__.has_key('region'):
                     self.provider_contact_region = provider_dict['contact'].__dict__['region']
-                if provider_dict['contact'].__dict__.has_key('postcode'):           
+                if provider_dict['contact'].__dict__.has_key('postcode'):
                     self.provider_contact_postcode = provider_dict['contact'].__dict__['postcode']
-                if provider_dict['contact'].__dict__.has_key('country'):            
+                if provider_dict['contact'].__dict__.has_key('country'):
                     self.provider_contact_country = provider_dict['contact'].__dict__['country']
-                if provider_dict['contact'].__dict__.has_key('phone'):           
+                if provider_dict['contact'].__dict__.has_key('phone'):
                     self.provider_contact_phone = provider_dict['contact'].__dict__['phone']
-                if provider_dict['contact'].__dict__.has_key('fax'):            
+                if provider_dict['contact'].__dict__.has_key('fax'):
                     self.provider_contact_fax = provider_dict['contact'].__dict__['fax']
-                if provider_dict['contact'].__dict__.has_key('site'):            
+                if provider_dict['contact'].__dict__.has_key('site'):
                     self.provider_contact_site = provider_dict['contact'].__dict__['site']
-                if provider_dict['contact'].__dict__.has_key('email'):            
+                if provider_dict['contact'].__dict__.has_key('email'):
                     self.provider_contact_email = provider_dict['contact'].__dict__['email']
-                if provider_dict['contact'].__dict__.has_key('hours'):            
+                if provider_dict['contact'].__dict__.has_key('hours'):
                     self.provider_contact_hours = provider_dict['contact'].__dict__['hours']
                 if provider_dict['contact'].__dict__.has_key('instructions'):
-                    self.provider_contact_instructions = provider_dict['contact'].__dict__['instructions']        
+                    self.provider_contact_instructions = provider_dict['contact'].__dict__['instructions']
         
         elif self.ini_service_type == "wfs":
             pass
         
         elif self.ini_service_type == "wcs":
-            pass       
+            pass
             
         else:
             pass

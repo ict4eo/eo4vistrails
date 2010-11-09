@@ -29,6 +29,7 @@ from PyQt4 import QtCore, QtGui
 from core.modules.module_configure import StandardModuleConfigurationWidget
 from core.modules.module_registry import get_module_registry
 from core.utils import PortAlreadyExists
+from core.utils import VistrailsInternalError
 
 
 class SpatioTemporalConfigurationWidgetTabs(QtGui.QTabWidget):
@@ -39,14 +40,14 @@ class SpatioTemporalConfigurationWidgetTabs(QtGui.QTabWidget):
     def __init__(self, parent=None):
         QtGui.QTabWidget.__init__(self,  parent)
         #self.setGeometry(QtCore.QRect(20, 20, 990, 740))
-        self.setGeometry(QtCore.QRect(20, 20, 790, 540))        
+        self.setGeometry(QtCore.QRect(20, 20, 790, 540))
         self.setTabShape(QtGui.QTabWidget.Rounded)
         self.setElideMode(QtCore.Qt.ElideNone)
         self.setObjectName("SpatioTemporalConfigurationWidgetTabsInstance")
 
 
 class SpatialWidget(QtGui.QWidget):
-    """Father coordinates of a bounding box, or in the case of GRASS, a location
+    """Gather coordinates of a bounding box, or in the case of GRASS, a location
     
     """
     def __init__(self, parent=None):
@@ -116,13 +117,44 @@ class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
         self.tabs.addTab(self.spatial_widget, "")
         self.tabs.addTab(self.temporal_widget, "")
         
-        self.tabs.setTabText(self.tabs.indexOf(self.spatial_widget), QtGui.QApplication.translate("SpatialTemporalConfigurationWidget", "Bounding Coordinates", None, QtGui.QApplication.UnicodeUTF8))
-        self.tabs.setTabToolTip(self.tabs.indexOf(self.spatial_widget), QtGui.QApplication.translate("SpatialTemporalConfigurationWidget", "Gather coordinates of a bounding box, or in the case of GRASS, a location", None, QtGui.QApplication.UnicodeUTF8))
-        self.tabs.setTabText(self.tabs.indexOf(self.temporal_widget), QtGui.QApplication.translate("SpatialTemporalConfigurationWidget", "Temporal Bounds and Intervals", None, QtGui.QApplication.UnicodeUTF8))
-        self.tabs.setTabToolTip(self.tabs.indexOf(self.temporal_widget), QtGui.QApplication.translate("SpatialTemporalConfigurationWidget", "Choose and set temporal bounds and interval paramaters", None, QtGui.QApplication.UnicodeUTF8))       
+        self.tabs.setTabText(
+            self.tabs.indexOf(self.spatial_widget),
+            QtGui.QApplication.translate(
+                "SpatialTemporalConfigurationWidget",
+                "Bounding Coordinates",
+                None,
+                QtGui.QApplication.UnicodeUTF8
+            )
+        )
+        self.tabs.setTabToolTip(
+            self.tabs.indexOf(self.spatial_widget),
+            QtGui.QApplication.translate(
+                "SpatialTemporalConfigurationWidget",
+                "Gather coordinates of a bounding box, or in the case of GRASS, a location",
+                None,
+                QtGui.QApplication.UnicodeUTF8
+            )
+        )
+        self.tabs.setTabText(
+            self.tabs.indexOf(self.temporal_widget),
+            QtGui.QApplication.translate(
+                "SpatialTemporalConfigurationWidget",
+                "Temporal Bounds and Intervals",
+                None, QtGui.QApplication.UnicodeUTF8
+            )
+        )
+        self.tabs.setTabToolTip(
+            self.tabs.indexOf(self.temporal_widget),
+            QtGui.QApplication.translate(
+                "SpatialTemporalConfigurationWidget",
+                "Choose and set temporal bounds and interval paramaters",
+                None,
+                QtGui.QApplication.UnicodeUTF8
+            )
+        )
         
         self.tabLayout = QtGui.QHBoxLayout()
-        self.tabLayout.addWidget(self.tabs)        
+        self.tabLayout.addWidget(self.tabs)
         self.tabs.setCurrentIndex(0)
         self.tabs.setVisible(True)
 
@@ -132,23 +164,20 @@ class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
         
         """
         self.buttonLayout = QtGui.QHBoxLayout()
-        #self.buttonLayout.setGeometry(QtCore.QRect(10, 765, 980, 32))
         self.buttonLayout.setGeometry(QtCore.QRect(300, 500, 780, 680))
         self.buttonLayout.setMargin(5)
         self.cancelButton = QtGui.QPushButton('&Cancel', self)
         self.cancelButton.setAutoDefault(False)
         self.cancelButton.setShortcut('Esc')
         self.buttonLayout.addStretch(1)  # force buttons to the right
-        #self.cancelButton.setFixedWidth(100)
-        self.buttonLayout.addWidget(self.cancelButton)  
+        self.buttonLayout.addWidget(self.cancelButton)
         self.okButton = QtGui.QPushButton('&OK', self)
         self.okButton.setAutoDefault(False)
-        #self.okButton.setFixedWidth(100)
         self.buttonLayout.addWidget(self.okButton)
         self.connect(self.okButton, QtCore.SIGNAL('clicked(bool)'),
                      self.okTriggered)
         self.connect(self.cancelButton, QtCore.SIGNAL('clicked(bool)'),
-                     self.close)        
+                     self.close)
 
     def sizeHint(self):
         """ sizeHint() -> QSize
@@ -164,4 +193,4 @@ class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
         """
         if self.updateVistrail():
             self.emit(QtCore.SIGNAL('doneConfigure()'))
-            self.close()    
+            self.close()
