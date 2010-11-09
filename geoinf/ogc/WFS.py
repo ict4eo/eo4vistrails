@@ -45,7 +45,7 @@ class WFS(NotCacheable,  FeatureModel):
     def compute(self):
 	pass
 
-class WFS2(QtGui.QWidget):
+class WFSCommonWidget(QtGui.QWidget):
     
     def __init__(self, module, parent=None):
 
@@ -269,7 +269,7 @@ class WFSConfigurationWidget(OgcConfigurationWidget):
 
 		OgcConfigurationWidget.__init__(self,  module, controller, parent)
 
-		self.wfs_config = WFS2(module)
+		self.wfs_config = WFSCommonWidget(module)
 		self.tabs.addTab(self.wfs_config,  "")
 		
 		self.tabs.setTabText(self.tabs.indexOf(self.wfs_config), QtGui.QApplication.translate("WFSConfigurationWidget", "WFS", None, QtGui.QApplication.UnicodeUTF8))
