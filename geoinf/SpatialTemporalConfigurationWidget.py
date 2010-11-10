@@ -2,10 +2,10 @@
 ##
 ## Copyright (C) 2010 CSIR Meraka Institute. All rights reserved.
 ##
-## eo4vistrails extends VisTrails, providing GIS/Earth Observation 
-## ingestion, pre-processing, transformation, analytic and visualisation 
-## capabilities . Included is the abilty to run code transparently in 
-## OpenNebula cloud environments. There are various software 
+## eo4vistrails extends VisTrails, providing GIS/Earth Observation
+## ingestion, pre-processing, transformation, analytic and visualisation
+## capabilities . Included is the abilty to run code transparently in
+## OpenNebula cloud environments. There are various software
 ## dependencies, but all are FOSS.
 ##
 ## This file may be used under the terms of the GNU General Public
@@ -35,7 +35,7 @@ from core.utils import VistrailsInternalError
 class SpatioTemporalConfigurationWidgetTabs(QtGui.QTabWidget):
     """Geoinf Configuration Tab Widgets
     are added vis the addTab method of the QTabWidget
-    
+
     """
     def __init__(self, parent=None):
         QtGui.QTabWidget.__init__(self,  parent)
@@ -48,7 +48,7 @@ class SpatioTemporalConfigurationWidgetTabs(QtGui.QTabWidget):
 
 class SpatialWidget(QtGui.QWidget):
     """Gather coordinates of a bounding box, or in the case of GRASS, a location
-    
+
     """
     def __init__(self, parent=None):
         QtGui.QWidget.__init__(self, parent)
@@ -66,16 +66,16 @@ class SpatialWidget(QtGui.QWidget):
         self.setLayout(self.verticalBox)
         # add widgets
         self.gridLayout.addWidget(QtGui.QLabel('Top Left X'), 0, 0)
-        self.bbox_tlx = QtGui.QLineEdit('15.0') 
+        self.bbox_tlx = QtGui.QLineEdit('15.0')
         self.gridLayout.addWidget(self.bbox_tlx, 0, 1)
         self.gridLayout.addWidget(QtGui.QLabel('Top Left Y'), 0, 2)
-        self.bbox_tly = QtGui.QLineEdit('-22.0') 
+        self.bbox_tly = QtGui.QLineEdit('-22.0')
         self.gridLayout.addWidget(self.bbox_tly, 0, 3)
         self.gridLayout.addWidget(QtGui.QLabel('Bottom Right X'), 1, 0)
-        self.bbox_brx = QtGui.QLineEdit('33.0') 
+        self.bbox_brx = QtGui.QLineEdit('33.0')
         self.gridLayout.addWidget(self.bbox_brx, 1, 1)
         self.gridLayout.addWidget(QtGui.QLabel('Bottom Right Y'), 1, 2)
-        self.bbox_bry = QtGui.QLineEdit('-35.0') 
+        self.bbox_bry = QtGui.QLineEdit('-35.0')
         self.gridLayout.addWidget(self.bbox_bry, 1, 3)
 
 
@@ -86,51 +86,51 @@ class TemporalWidget(QtGui.QWidget):
 
         QtGui.QWidget.__init__(self, parent)
         self.setObjectName("TemporalWidget")
-	self.create_temp_config_window()
-		
-    def create_temp_config_window(self):  # method: will allow us to make method call in future when we need this window 
+        self.create_temp_config_window()
 
-	# adding labels and their positiions to the main window
-	self.gridLayout = QtGui.QGridLayout()
-	self.setLayout(self.gridLayout)
-	self.gridLayout.addWidget(QtGui.QLabel('Start date'), 0, 0)
-	self.gridLayout.addWidget(QtGui.QLabel('End date'), 1, 0)
+    def create_temp_config_window(self):  # method: will allow us to make method call in future when we need this window
 
-	#setting input text boxes to hold the date fields
-	self.StartDateEdit = QtGui.QLineEdit('yyyy-mm-dd')
-	self.EndDateEdit = QtGui.QLineEdit('yyyy-mm-dd')
-	# put input text boxes on the main window
-	self.gridLayout.addWidget(self.StartDateEdit, 0, 1)
-	self.gridLayout.addWidget(self.EndDateEdit, 1, 1)
+        # adding labels and their positiions to the main window
+        self.gridLayout = QtGui.QGridLayout()
+        self.setLayout(self.gridLayout)
+        self.gridLayout.addWidget(QtGui.QLabel('Start date'), 0, 0)
+        self.gridLayout.addWidget(QtGui.QLabel('End date'), 1, 0)
 
-	#setting and adding the operation pushbutton, that will activate the calendar widget to the main window
-	self.startDateButton = QtGui.QPushButton('Start Date')
-	self.gridLayout.addWidget(self.startDateButton, 0, 2)
+        #setting input text boxes to hold the date fields
+        self.StartDateEdit = QtGui.QLineEdit('yyyy-mm-dd')
+        self.EndDateEdit = QtGui.QLineEdit('yyyy-mm-dd')
+        # put input text boxes on the main window
+        self.gridLayout.addWidget(self.StartDateEdit, 0, 1)
+        self.gridLayout.addWidget(self.EndDateEdit, 1, 1)
 
-	#setting the button signal such that when the button is clicked, the getCalendar function is performed
-	self.connect(self.startDateButton, QtCore.SIGNAL('clicked()'), self.getCalendar)
+        #setting and adding the operation pushbutton, that will activate the calendar widget to the main window
+        self.startDateButton = QtGui.QPushButton('Start Date')
+        self.gridLayout.addWidget(self.startDateButton, 0, 2)
 
-	'''next-step - as improvement: 
-		it would be a nice idea if we can make the StartDateEdit & EndDateEdit fields to listen to mouse-events e.g. mouse-clicked, then pop-up a calendar (i.e. 		   	call the caledar method/widget) '''
+        #setting the button signal such that when the button is clicked, the getCalendar function is performed
+        self.connect(self.startDateButton, QtCore.SIGNAL('clicked()'), self.getCalendar)
 
-	#setting and adding the end date operation pushbutton, that will activate the calendar widget to the main window
-	self.endDateButton = QtGui.QPushButton('End Date')
+        '''next-step - as improvement:
+            it would be a nice idea if we can make the StartDateEdit & EndDateEdit fields to listen to mouse-events e.g. mouse-clicked, then pop-up a calendar (i.e.            call the caledar method/widget) '''
+
+        #setting and adding the end date operation pushbutton, that will activate the calendar widget to the main window
+        self.endDateButton = QtGui.QPushButton('End Date')
         self.gridLayout.addWidget(self.endDateButton, 1, 2)
-        self.connect(self.endDateButton, QtCore.SIGNAL('clicked()'),
-                     self.getCalendar)
+        self.connect(self.endDateButton, QtCore.SIGNAL('clicked()'), self.getCalendar)
 
-	"""IN PROGRESS adding a calender Widget from which start and end dates will be selected 
-		and populated to the appropriate locations"""
+        """IN PROGRESS adding a calender Widget from which start and end dates will be selected
+            and populated to the appropriate locations"""
 
 
-	# in the mean-time: since the self.getCalendar action is there already, let's create its method and set "pass"
+        # in the mean-time: since the self.getCalendar action is there already, let's create its method and set "pass"
 
     def getCalendar(self): # when calendar wiget is ready, remove replace "pass" by calender widget
 
-	pass
+        pass
 
-	#Calendar declaration
-	self.cal = QtGui.QCalendarWidget(self)
+
+    #Calendar declaration
+        self.cal = QtGui.QCalendarWidget(self)
         self.cal.setGridVisible(True)
         self.cal.move(20, 20)
 
@@ -156,16 +156,16 @@ class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
 
     def createTabs(self):
         """ createTabs() -> None
-        create and polulate with widgets the necessary 
+        create and polulate with widgets the necessary
         tabs for spatial and temporal paramaterisation
-        
+
         """
         self.tabs = SpatioTemporalConfigurationWidgetTabs()
         self.spatial_widget = SpatialWidget()
         self.temporal_widget = TemporalWidget()
         self.tabs.addTab(self.spatial_widget, "")
         self.tabs.addTab(self.temporal_widget, "")
-        
+
         self.tabs.setTabText(
             self.tabs.indexOf(self.spatial_widget),
             QtGui.QApplication.translate(
@@ -201,7 +201,7 @@ class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
                 QtGui.QApplication.UnicodeUTF8
             )
         )
-        
+
         self.tabLayout = QtGui.QHBoxLayout()
         self.tabLayout.addWidget(self.tabs)
         self.tabs.setCurrentIndex(0)
@@ -210,7 +210,7 @@ class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
     def createButtons(self):
         """ createButtons() -> None
         Create and connect signals to Ok & Cancel button
-        
+
         """
         self.buttonLayout = QtGui.QHBoxLayout()
         self.buttonLayout.setGeometry(QtCore.QRect(300, 500, 780, 680))
@@ -231,14 +231,14 @@ class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
     def sizeHint(self):
         """ sizeHint() -> QSize
         Return the recommended size of the configuration window
-        
+
         """
         return QtCore.QSize(800, 600)
 
     def okTriggered(self, checked = False):
         """ okTriggered(checked: bool) -> None
         Update vistrail controller and module when the user clicks Ok
-        
+
         """
         if self.updateVistrail():
             self.emit(QtCore.SIGNAL('doneConfigure()'))
