@@ -88,10 +88,6 @@ class OgcCommonWidget(QtGui.QWidget):
         
         self.mainLayout.addWidget(self.urlGroupBox)
         
-        self.connect(self.fetchButton,
-                     QtCore.SIGNAL('clicked(bool)'),
-                     self.fetchTriggered)
-        
         self.metaLayout = QtGui.QHBoxLayout()
         self.metaGroupBox = QtGui.QGroupBox("Service Metadata")
         self.metaGroupBox.setLayout(self.metaLayout)
@@ -147,6 +143,13 @@ class OgcCommonWidget(QtGui.QWidget):
         self.servicePublisherTable.horizontalHeader().setStretchLastSection(True)
         self.servicePublisherLayout.addWidget(self.servicePublisherTable)
         self.metaLayout.addWidget(self.servicePublisherGroupBox)
+        # cursors
+        self.waitCursor = QtGui.QCursor(QtCore.Qt.WaitCursor)
+        self.arrowCursor = QtGui.QCursor(QtCore.Qt.ArrowCursor)
+        # signals
+        self.connect(self.fetchButton,
+                     QtCore.SIGNAL('clicked(bool)'),
+                     self.fetchTriggered)
 
     def center(self):
         """TO DO - add docstring"""
@@ -156,47 +159,37 @@ class OgcCommonWidget(QtGui.QWidget):
 
     def fetchTriggered(self):
         """TO DO - add docstring"""
-        if  self.line_edit_OGC_url.text() != "":
+        if self.line_edit_OGC_url.text() != "":
             #print "lvct" + str(self.launchversion.currentText())
+            self.setCursor(self.waitCursor)
+            self.serviceIDServiceTable.clearContents()
+            self.servicePublisherTable.clearContents()
+            
             self.service = OgcService(
-                self.line_edit_OGC_url.text(),
-                self.launchtype,
-                str(self.launchversion.currentText())
-            )
+                    self.line_edit_OGC_url.text(),
+                    self.launchtype,
+                    str(self.launchversion.currentText())
+                )
+            self.setCursor(self.arrowCursor)
             # populate metadata!
-            if self.service:
-                # service id metadata first
-                self.serviceIDServiceTable.clearContents()
-                service_id_dict = [
-                    'service_type','service_version','service_title',
-                    'service_abstract','service_keywords','service_fees',
-                    'service_accessconstraints']
+            if self.service.service_valid:
+                # service id metadata
                 row_count = 0
-                for service_id_dict_item in service_id_dict:
+                for service_id_dict_item in self.service.service_id_keys:
                     if self.service.__dict__.has_key(service_id_dict_item):
                        qtwi = QtGui.QTableWidgetItem(
                             str(self.service.__dict__[service_id_dict_item])
                         )
                        self.serviceIDServiceTable.setItem (row_count, 0, qtwi)
                     row_count = row_count + 1
-                # now provide metadata
-                # OGC WFS 1.0.0 does not have provider metadata in this form
-                self.servicePublisherTable.clearContents() 
+                # provider metadata
+                # N.B. OGC WFS 1.0.0 does not have provider metadata in this form 
                 if self.launchtype == "wfs" and self.launchversion.currentText() == "1.0.0":
+                    #TODO: we need to indicate this visually as well !
                     pass
                 else:
-                    provider_dict = [
-                        'provider_url','provider_contact_fax',
-                        'provider_contact_name','provider_contact_country',
-                        'provider_contact_phone','provider_contact_region', 
-                        'provider_contact_city','provider_name',
-                        'provider_contact_address','provider_contact_postcode',
-                        'provider_contact_email','provider_contact_role', 
-                        'provider_contact_position','provider_contact_site',
-                        'provider_contact_organization',
-                        'provider_contact_instructions','provider_contact_hours']
                     row_count = 0
-                    for provider_dict_item in provider_dict:
+                    for provider_dict_item in self.service.provider_keys:
                         if self.service.__dict__.has_key(provider_dict_item):
                            qtwi = QtGui.QTableWidgetItem(
                                 str(self.service.__dict__[provider_dict_item])
@@ -204,6 +197,17 @@ class OgcCommonWidget(QtGui.QWidget):
                            self.servicePublisherTable.setItem (row_count, 0, qtwi)
                         row_count = row_count + 1
                 # TODO - fire a "done" event
+            else:
+                self.showWarning(
+                    'Unable to activate service:\n  Please check configuration & network.')
+        else:
+            # TODO - should not get here; maybe disable Fetch button until text entered?
+            pass
+
+    def showWarning(self, message):
+        """Show user a warning dialog."""
+        self.setCursor(self.arrowCursor)
+        QtGui.QMessageBox.warning(self,"Error",message,QtGui.QMessageBox.Ok)
 
 
 class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
