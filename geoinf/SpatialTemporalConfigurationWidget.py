@@ -83,8 +83,13 @@ class TemporalWidget(QtGui.QWidget):
     """Designed to set temporal bounds and interval paramaters for querying temporal datasets"""
 
     def __init__(self,  parent=None):
+
         QtGui.QWidget.__init__(self, parent)
         self.setObjectName("TemporalWidget")
+	self.create_temp_config_window()
+		
+    def create_temp_config_window(self):  # method: will allow us to make method call in future when we need this window 
+
 	# adding labels and their positiions to the main window
 	self.gridLayout = QtGui.QGridLayout()
 	self.setLayout(self.gridLayout)
@@ -92,26 +97,37 @@ class TemporalWidget(QtGui.QWidget):
 	self.gridLayout.addWidget(QtGui.QLabel('End date'), 1, 0)
 
 	#setting input text boxes to hold the date fields
-	self.textedit1 = QtGui.QLineEdit('yyyy-mm-dd')
-	self.textedit2 = QtGui.QLineEdit('yyyy-mm-dd')
+	self.StartDateEdit = QtGui.QLineEdit('yyyy-mm-dd')
+	self.EndDateEdit = QtGui.QLineEdit('yyyy-mm-dd')
 	# put input text boxes on the main window
-	gridLayout.addWidget(self.textedit1, 0, 1)
-	gridLayout.addWidget(self.textedit2, 1, 1)
+	self.gridLayout.addWidget(self.StartDateEdit, 0, 1)
+	self.gridLayout.addWidget(self.EndDateEdit, 1, 1)
 
 	#setting and adding the operation pushbutton, that will activate the calendar widget to the main window
 	self.startDateButton = QtGui.QPushButton('Start Date')
-	gridLayout.addWidget(self.startDateButton, 0, 2)
+	self.gridLayout.addWidget(self.startDateButton, 0, 2)
+
 	#setting the button signal such that when the button is clicked, the getCalendar function is performed
-	self.connect(self.resultButton, QtCore.SIGNAL('clicked()'), self.getCalendar)
+	self.connect(self.startDateButton, QtCore.SIGNAL('clicked()'), self.getCalendar)
+
+	'''next-step - as improvement: 
+		it would be a nice idea if we can make the StartDateEdit & EndDateEdit fields to listen to mouse-events e.g. mouse-clicked, then pop-up a calendar (i.e. 		   	call the caledar method/widget) '''
 
 	#setting and adding the end date operation pushbutton, that will activate the calendar widget to the main window
 	self.endDateButton = QtGui.QPushButton('End Date')
-        gridLayout.addWidget(self.endDateButton, 1, 2)
+        self.gridLayout.addWidget(self.endDateButton, 1, 2)
         self.connect(self.endDateButton, QtCore.SIGNAL('clicked()'),
                      self.getCalendar)
 
 	"""IN PROGRESS adding a calender Widget from which start and end dates will be selected 
 		and populated to the appropriate locations"""
+
+
+	# in the mean-time: since the self.getCalendar action is there already, let's create its method and set "pass"
+
+    def getCalendar(self): # when calendar wiget is ready, remove replace "pass" by calender widget
+
+	pass
 
 	#Calendar declaration
 	self.cal = QtGui.QCalendarWidget(self)
