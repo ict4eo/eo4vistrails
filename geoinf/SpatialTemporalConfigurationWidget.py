@@ -80,10 +80,43 @@ class SpatialWidget(QtGui.QWidget):
 
 
 class TemporalWidget(QtGui.QWidget):
-    """TO DO - add docstring"""
-    def __init__(self, parent=None):
+    """Designed to set temporal bounds and interval paramaters for querying temporal datasets"""
+
+    def __init__(self,  parent=None):
         QtGui.QWidget.__init__(self, parent)
         self.setObjectName("TemporalWidget")
+	# adding labels and their positiions to the main window
+	self.gridLayout = QtGui.QGridLayout()
+	self.setLayout(self.gridLayout)
+	self.gridLayout.addWidget(QtGui.QLabel('Start date'), 0, 0)
+	self.gridLayout.addWidget(QtGui.QLabel('End date'), 1, 0)
+
+	#setting input text boxes to hold the date fields
+	self.textedit1 = QtGui.QLineEdit('yyyy-mm-dd')
+	self.textedit2 = QtGui.QLineEdit('yyyy-mm-dd')
+	# put input text boxes on the main window
+	gridLayout.addWidget(self.textedit1, 0, 1)
+	gridLayout.addWidget(self.textedit2, 1, 1)
+
+	#setting and adding the operation pushbutton, that will activate the calendar widget to the main window
+	self.startDateButton = QtGui.QPushButton('Start Date')
+	gridLayout.addWidget(self.startDateButton, 0, 2)
+	#setting the button signal such that when the button is clicked, the getCalendar function is performed
+	self.connect(self.resultButton, QtCore.SIGNAL('clicked()'), self.getCalendar)
+
+	#setting and adding the end date operation pushbutton, that will activate the calendar widget to the main window
+	self.endDateButton = QtGui.QPushButton('End Date')
+        gridLayout.addWidget(self.endDateButton, 1, 2)
+        self.connect(self.endDateButton, QtCore.SIGNAL('clicked()'),
+                     self.getCalendar)
+
+	"""IN PROGRESS adding a calender Widget from which start and end dates will be selected 
+		and populated to the appropriate locations"""
+
+	#Calendar declaration
+	self.cal = QtGui.QCalendarWidget(self)
+        self.cal.setGridVisible(True)
+        self.cal.move(20, 20)
 
 
 class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
