@@ -108,31 +108,50 @@ class TemporalWidget(QtGui.QWidget):
         self.gridLayout.addWidget(self.startDateButton, 0, 2)
 
         #setting the button signal such that when the button is clicked, the getCalendar function is performed
-        self.connect(self.startDateButton, QtCore.SIGNAL('clicked()'), self.getCalendar)
+        self.connect(self.startDateButton, QtCore.SIGNAL('clicked()'), self.getCalendar1)
+        #self.connect(self.startDateButton, QtCore.SIGNAL('clicked()'), self.getCalendar)
 
-        '''next-step - as improvement:
-            it would be a nice idea if we can make the StartDateEdit & EndDateEdit fields to listen to mouse-events e.g. mouse-clicked, then pop-up a calendar (i.e.            call the caledar method/widget) '''
+        """Calendar widget is called by clicking the button - and appears as a pop up calendar"""
 
         #setting and adding the end date operation pushbutton, that will activate the calendar widget to the main window
         self.endDateButton = QtGui.QPushButton('End Date')
         self.gridLayout.addWidget(self.endDateButton, 1, 2)
-        self.connect(self.endDateButton, QtCore.SIGNAL('clicked()'), self.getCalendar)
-
-        """IN PROGRESS adding a calender Widget from which start and end dates will be selected
-            and populated to the appropriate locations"""
-
-
-        # in the mean-time: since the self.getCalendar action is there already, let's create its method and set "pass"
-
-    def getCalendar(self): # when calendar wiget is ready, remove replace "pass" by calender widget
-
-        pass
-
-
-    #Calendar declaration
-        self.cal = QtGui.QCalendarWidget(self)
-        self.cal.setGridVisible(True)
-        self.cal.move(20, 20)
+        self.connect(self.endDateButton, QtCore.SIGNAL('clicked()'), self.getCalendar2)
+        #self.connect(self.startDateButton, QtCore.SIGNAL('clicked()'), self.getCalendar)
+        
+        # Calendar for adding start date
+        self.cal1 = QtGui.QCalendarWidget()
+        self.cal1.setGridVisible(True)
+        self.cal1.move(20, 20)
+        self.connect(self.cal1,  QtCore.SIGNAL('selectionChanged()'),  self.showDate1)
+        
+        # Calendar for adding end date
+        self.cal2 = QtGui.QCalendarWidget()
+        self.cal2.setGridVisible(True)
+        self.cal2.move(20, 20)
+        self.connect(self.cal2,  QtCore.SIGNAL('selectionChanged()'),  self.showDate2)
+        
+    def showDate1(self):
+        #show date method defined
+        startDate = self.cal1.selectedDate()
+        self.StartDateEdit.setText(str(startDate.toPyDate()))
+        
+    def showDate2(self):
+        #show date method defined
+        endDate = self.cal2.selectedDate()
+        self.EndDateEdit.setText(str(endDate.toPyDate()))
+        
+    def getCalendar1(self):
+        self.cal1.show()
+        
+    def getCalendar2(self):
+        self.cal2.show()
+        
+        """TO-DO make calendar widget modal, in order to enable sequential update of date fields in the main widget.
+        Also need to set position of the calendar pop-up widget so that it appears closer to the main window 
+        as opposed to a random location where it may not be found."""
+        
+        """TO DO NEXT---> Add a slider widget to set the Optional interval field for querying temporal datasets """
 
 
 class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
