@@ -268,7 +268,8 @@ class WFSConfigurationWidget(OgcConfigurationWidget):
         OgcConfigurationWidget.__init__(self,  module, controller, parent)
 
         self.wfs_config = WFSCommonWidget(module)
-        self.tabs.addTab(self.wfs_config,  "")
+        #self.tabs.addTab(self.wfs_config,  "")
+        self.tabs.insertTab(1, self.wfs_config,  "")
 
         self.tabs.setTabText(self.tabs.indexOf(self.wfs_config), QtGui.QApplication.translate("WFSConfigurationWidget", "WFS", None, QtGui.QApplication.UnicodeUTF8))
         self.tabs.setTabToolTip(self.tabs.indexOf(self.wfs_config), QtGui.QApplication.translate("WFSConfigurationWidget", "WFS Configuration", None, QtGui.QApplication.UnicodeUTF8))
