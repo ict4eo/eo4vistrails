@@ -27,7 +27,7 @@
 OGC Web Service Metadata common to the various services (via owslib).
 
 Requirements:
-    owslib 0.3.4 or higher
+    owslib 0.3.2 or higher
     
 NOTE: As at 2010-11-09, you will need to patch version 0.3.4b for owslib sos.py:
         self.filters=filter.Filter_Capabilities(val)
@@ -54,12 +54,20 @@ class OgcService():
     
     INVALID_OGC_TYPE_MESSAGE = \
         "Please provide an OGC Service Type: 'wfs', 'sos', 'wcs'"
-    
+
     def __init__(self, service_url, service_type, service_version):
         #print service_url
         service_url = str(service_url)
-        #TODO: check for service and request kvp's - 
+        #check for service and request kvp's - 
         #if not there, add 'em (some services don't have a capabilities reflector),
+        STRICT_OGC_CAPABILITIES = \
+        "Service=%s&Request=GetCapabilities"%  service_type
+        service_url_check = service_url.split("?")
+        if len(service_url_check) == 1:
+            service_url = service_url + "?" + STRICT_OGC_CAPABILITIES
+        else:#various of the capabilities may be present - clobber them and replace
+            service_url = service_url_check[0] + "?" + STRICT_OGC_CAPABILITIES
+                
         if service_type != "":
             try:
                 self.service_valid = True
@@ -97,11 +105,13 @@ class OgcService():
     def setServiceIdentification(self, service_dict):
         """service identification metadata is structured differently
         for the different services - parse appropriately"""
+        self.service_id_keys = [
+            'service_type','service_version','service_title',
+            'service_abstract','service_keywords','service_fees',
+            'service_accessconstraints']
+            
         if self.ini_service_type == "sos":
-            self.service_id_keys = [
-                'service_type','service_version','service_title',
-                'service_abstract','service_keywords','service_fees',
-                'service_accessconstraints']
+
             if service_dict.has_key('service'):
                 self.service_type = service_dict['service'] # we actually know this, but rebuild anyway
             if service_dict.has_key('version'):
@@ -129,15 +139,23 @@ class OgcService():
                             tg = tg.split('}')[1].lower()
                         except:
                             pass
-                        if tg == "name":pass
-                        if tg == "title":pass
-                        if tg == "abstract":pass
-                        if tg == "keywords":pass
-                        if tg == "onlineresource":pass
-                        if tg == "fees":pass
-                        if tg == "accessconstraints":pass
-            else:
+                        if tg == "name":
+                            self.service_type = tx
+                        if tg == "title":
+                            self.service_title = tx
+                        if tg == "abstract":
+                            self.service_abstract = tx
+                        if tg == "keywords":
+                            self.service_keywords = tx
+                        if tg == "fees":
+                            self.service_fees = tx
+                        if tg == "accessconstraints":
+                            self.service_accessconstraints = tx
+                self.service_version =  '1.0.0' # will not find this dynamically          
+            elif self.ini_service_version == '1.1.0':
                 pass
+            else:
+                raise NotImplementedError,  "OGC Service version %s not supported." % self.ini_service_version
         
         elif self.ini_service_type == "wcs":
             """TODO: add service data for wcs service"""
