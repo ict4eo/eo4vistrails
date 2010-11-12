@@ -2,10 +2,10 @@
 ###
 ### Copyright (C) 2010 CSIR Meraka Institute. All rights reserved.
 ###
-### eo4vistrails extends VisTrails, providing GIS/Earth Observation 
-### ingestion, pre-processing, transformation, analytic and visualisation 
-### capabilities . Included is the abilty to run code transparently in 
-### OpenNebula cloud environments. There are various software 
+### eo4vistrails extends VisTrails, providing GIS/Earth Observation
+### ingestion, pre-processing, transformation, analytic and visualisation
+### capabilities . Included is the abilty to run code transparently in
+### OpenNebula cloud environments. There are various software
 ### dependencies, but all are FOSS.
 ###
 ### This file may be used under the terms of the GNU General Public
@@ -23,12 +23,12 @@
 ### WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ###
 #############################################################################
-"""This module provides a small api for fetching the service and dealing with 
+"""This module provides a small api for fetching the service and dealing with
 OGC Web Service Metadata common to the various services (via owslib).
 
 Requirements:
     owslib 0.3.2 or higher
-    
+
 NOTE: As at 2010-11-09, you will need to patch version 0.3.4b for owslib sos.py:
         self.filters=filter.Filter_Capabilities(val)
     should be:
@@ -51,14 +51,14 @@ class OgcService():
     ## cannot handle when geoserver shorcuts a namespace with an abbreviation
     ## also wfs will never load a 1.1.0 instance, but it should be loaded as wfs200
     #########
-    
+
     INVALID_OGC_TYPE_MESSAGE = \
         "Please provide an OGC Service Type: 'wfs', 'sos', 'wcs'"
 
     def __init__(self, service_url, service_type, service_version):
         #print service_url
         service_url = str(service_url)
-        #check for service and request kvp's - 
+        #check for service and request kvp's -
         #if not there, add 'em (some services don't have a capabilities reflector),
         STRICT_OGC_CAPABILITIES = \
         "Service=%s&Request=GetCapabilities"%  service_type
@@ -67,7 +67,7 @@ class OgcService():
             service_url = service_url + "?" + STRICT_OGC_CAPABILITIES
         else:#various of the capabilities may be present - clobber them and replace
             service_url = service_url_check[0] + "?" + STRICT_OGC_CAPABILITIES
-                
+
         if service_type != "":
             try:
                 self.service_valid = True
@@ -109,7 +109,7 @@ class OgcService():
             'service_type','service_version','service_title',
             'service_abstract','service_keywords','service_fees',
             'service_accessconstraints']
-            
+
         if self.ini_service_type == "sos":
 
             if service_dict.has_key('service'):
@@ -126,7 +126,7 @@ class OgcService():
                 self.service_fees = service_dict['fees']
             if service_dict.has_key('accessconstraints'):
                 self.service_accessconstraints = service_dict['accessconstraints']
-        
+
         elif self.ini_service_type == "wfs":
             if self.ini_service_version == '1.0.0':
                 # got to dive into the elements of _root key of service_dict
@@ -151,16 +151,16 @@ class OgcService():
                             self.service_fees = tx
                         if tg == "accessconstraints":
                             self.service_accessconstraints = tx
-                self.service_version =  '1.0.0' # will not find this dynamically          
+                self.service_version =  '1.0.0' # will not find this dynamically
             elif self.ini_service_version == '1.1.0':
                 pass
             else:
                 raise NotImplementedError,  "OGC Service version %s not supported." % self.ini_service_version
-        
+
         elif self.ini_service_type == "wcs":
             """TODO: add service data for wcs service"""
             pass
-        
+
         else:
             raise ValueError, INVALID_OGC_TYPE_MESSAGE
 
@@ -171,10 +171,10 @@ class OgcService():
             self.provider_keys = [
                 'provider_url','provider_contact_fax',
                 'provider_contact_name','provider_contact_country',
-                'provider_contact_phone','provider_contact_region', 
+                'provider_contact_phone','provider_contact_region',
                 'provider_contact_city','provider_name',
                 'provider_contact_address','provider_contact_postcode',
-                'provider_contact_email','provider_contact_role', 
+                'provider_contact_email','provider_contact_role',
                 'provider_contact_position','provider_contact_site',
                 'provider_contact_organization',
                 'provider_contact_instructions','provider_contact_hours']
@@ -182,7 +182,7 @@ class OgcService():
                 self.provider_name = provider_dict['name']
             if provider_dict.has_key('url'):
                 self.provider_url = provider_dict['url']
-            if provider_dict.has_key('contact'): 
+            if provider_dict.has_key('contact'):
                 if provider_dict['contact'].__dict__.has_key('name'):
                     self.provider_contact_name = provider_dict['contact'].__dict__['name']
                 if provider_dict['contact'].__dict__.has_key('position'):
@@ -213,14 +213,14 @@ class OgcService():
                     self.provider_contact_hours = provider_dict['contact'].__dict__['hours']
                 if provider_dict['contact'].__dict__.has_key('instructions'):
                     self.provider_contact_instructions = provider_dict['contact'].__dict__['instructions']
-        
+
         elif self.ini_service_type == "wfs":
-            """TODO: add provider data for wfs service"""
+            """There is NO provider data available for wfs service"""
             pass
-        
+
         elif self.ini_service_type == "wcs":
-            """TODO: add provider data for wcs service"""
+            #TODO: check if provider data is available for wcs service
             pass
-            
+
         else:
             raise ValueError, INVALID_OGC_TYPE_MESSAGE
