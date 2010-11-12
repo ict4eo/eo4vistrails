@@ -58,6 +58,8 @@ class OgcService():
     def __init__(self, service_url, service_type, service_version):
         #print service_url
         service_url = str(service_url)
+        #TODO: check for service and request kvp's - 
+        #if not there, add 'em (some services don't have a capabilities reflector),
         if service_type != "":
             try:
                 self.service_valid = True

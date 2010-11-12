@@ -217,7 +217,8 @@ class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
         
         self.ogc_common_widget = OgcCommonWidget(module)
         
-        self.tabs.addTab(self.ogc_common_widget, "")
+        #self.tabs.addTab(self.ogc_common_widget, "")
+        self.tabs.insertTab(0,  self.ogc_common_widget, "")
         self.tabs.setTabText(
             self.tabs.indexOf(self.ogc_common_widget),
             QtGui.QApplication.translate(
