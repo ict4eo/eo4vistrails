@@ -102,32 +102,32 @@ class TemporalWidget(QtGui.QWidget):
         # put input text boxes on the main window
         self.gridLayout.addWidget(self.StartDateEdit, 0, 1)
         self.gridLayout.addWidget(self.EndDateEdit, 1, 1)
+        
+        """Calendar widget is activated by clicking the button - and appears as a pop up calendar 
+        from which dates can be selected"""
 
         #setting and adding the operation pushbutton, that will activate the calendar widget to the main window
         self.startDateButton = QtGui.QPushButton('Start Date')
         self.gridLayout.addWidget(self.startDateButton, 0, 2)
-
         #setting the button signal such that when the button is clicked, the getCalendar function is performed
         self.connect(self.startDateButton, QtCore.SIGNAL('clicked()'), self.getCalendar1)
-        #self.connect(self.startDateButton, QtCore.SIGNAL('clicked()'), self.getCalendar)
-
-        """Calendar widget is called by clicking the button - and appears as a pop up calendar"""
-
+        
         #setting and adding the end date operation pushbutton, that will activate the calendar widget to the main window
         self.endDateButton = QtGui.QPushButton('End Date')
         self.gridLayout.addWidget(self.endDateButton, 1, 2)
         self.connect(self.endDateButton, QtCore.SIGNAL('clicked()'), self.getCalendar2)
-        #self.connect(self.startDateButton, QtCore.SIGNAL('clicked()'), self.getCalendar)
         
         # Calendar for adding start date
         self.cal1 = QtGui.QCalendarWidget()
-        self.cal1.setGridVisible(True)
+        self.cal1.setGridVisible(False)
+        self.cal1.setWindowModality(True)
         self.cal1.move(20, 20)
         self.connect(self.cal1,  QtCore.SIGNAL('selectionChanged()'),  self.showDate1)
         
         # Calendar for adding end date
         self.cal2 = QtGui.QCalendarWidget()
-        self.cal2.setGridVisible(True)
+        self.cal2.setGridVisible(False)
+        self.cal2.setWindowModality(True)
         self.cal2.move(20, 20)
         self.connect(self.cal2,  QtCore.SIGNAL('selectionChanged()'),  self.showDate2)
         
@@ -147,11 +147,10 @@ class TemporalWidget(QtGui.QWidget):
     def getCalendar2(self):
         self.cal2.show()
         
-        """TO-DO make calendar widget modal, in order to enable sequential update of date fields in the main widget.
-        Also need to set position of the calendar pop-up widget so that it appears closer to the main window 
-        as opposed to a random location where it may not be found."""
+    """TO-DO   set position of the calendar pop-up widget so that it appears closer to the main window 
+        as opposed to a random location where it may not be found. And add time to the date fields"""
         
-        """TO DO NEXT---> Add a slider widget to set the Optional interval field for querying temporal datasets """
+    """TO DO NEXT---> Add a slider widget to set the Optional interval field for querying temporal datasets """
 
 
 class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
