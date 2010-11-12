@@ -45,12 +45,10 @@ class SOS(FeatureModel):
 
 class SosCommonWidget(QtGui.QWidget):
     """TO DO - add docstring"""
-    def __init__(self,  module, parent=None):
-        '''parses modules attributes to fetch parameters'''
+    def __init__(self, service_dict, parent=None):
         QtGui.QWidget.__init__(self, parent)
-        self.launchtype = str(module).split(" ")[1].split(":")[1][0:3].lower()
-        #self.module = module
         self.setObjectName("SosCommonWidget")
+        self.service = service_dict
         self.create_config_window()
 
     def create_config_window(self):
@@ -123,48 +121,76 @@ class SosCommonWidget(QtGui.QWidget):
         self.cbResultModel = QtGui.QComboBox()
         self.detailsLayout.addWidget(self.cbResultModel, 6, 1)
 
-        # initial data - offerings list
-        self.loadOfferings()
+        # initial data - offerings list - TODO: keep this or use signal ???
+        #self.loadOfferings()
 
-        # signals
+        # local signals
         self.connect(
             self.lbxOfferings,
             QtCore.SIGNAL("itemSelectionChanged()"),
             self.offeringsChanged
         )
+        # signal emitted by OgcCommonWidget class
+        """
+        error:
+        Object::connect: No such slot SosCommonWidget::loadOfferings()
+        Object::connect:  (receiver name: 'SosCommonWidget')
+        self.connect(
+            self,
+            QtCore.SIGNAL('serviceActivated()'),
+            QtCore.SLOT('self.loadOfferings()')
+        )"""
+        QtCore.QObject.connect(
+            self,
+            QtCore.SIGNAL('serviceActivated()'),
+            self.loadOfferings
+        )
 
     def offeringsChanged(self):
         """Update offering details containers when new offering selected."""
         selected_offering =  self.lbxOfferings.selectedItems()[0].text()
+        self.lblDescription.setText(selected_offering)
         #TODO...
         pass
 
     def loadOfferings(self):
         """Load the offerings from the service metadata."""
+
+        print "load Offerings called!"
+
         model = QtGui.QStandardItemModel()
         model.clear()
         bar = ['one','two','three']
-        #get data
-        if bar:
-            for foo in bar:
-                item = QtGui.QStandardItem(foo)
-                #item.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
-                #item.setData(QVariant(Qt.Unchecked), Qt.CheckStateRole) #was QVariant(check)
-                model.appendRow(item)
-            # load list into container
-            self.lbxOfferings.setModel(model)
+        for foo in bar:
+            item = QtGui.QStandardItem(foo)
+        self.lbxOfferings.setModel(model)
+
+        if self.service and self.service.is_valid:
+            model.clear()
+            self.contents = self.service.__dict__['contents']
+            for c in contents:
+                print c['id']
+            #get data
+            if bar:
+                for foo in bar:
+                    item = QtGui.QStandardItem(foo)
+                    #item.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
+                    #item.setData(QVariant(Qt.Unchecked), Qt.CheckStateRole) #was QVariant(check)
+                    model.appendRow(item)
+                # load list into container
+                self.lbxOfferings.setModel(model)
 
 
 class SOSConfigurationWidget(OgcConfigurationWidget):
     """makes use of code style from OgcConfigurationWidget"""
     def __init__(self,  module, controller, parent=None):
         OgcConfigurationWidget.__init__(self,  module, controller, parent)
+        # pass in "service" from OgcCommonWidget class
+        self.sos_config_widget = SosCommonWidget(self.ogc_common_widget.service)
 
-        self.sos_common_widget = SosCommonWidget(module)
-
-        self.tabs.addTab(self.sos_common_widget, "")
+        self.tabs.insertTab(1, self.sos_config_widget, "")
         self.tabs.setTabText(
-            self.tabs.indexOf(self.sos_common_widget),
+            self.tabs.indexOf(self.sos_config_widget),
             QtGui.QApplication.translate(
                 "OgcConfigurationWidget",
                 "SOS Specific Metadata",
@@ -173,7 +199,7 @@ class SOSConfigurationWidget(OgcConfigurationWidget):
             )
         )
         self.tabs.setTabToolTip(
-            self.tabs.indexOf(self.sos_common_widget),
+            self.tabs.indexOf(self.sos_config_widget),
             QtGui.QApplication.translate(
                 "OgcConfigurationWidget",
                 "Stuff for SOS",

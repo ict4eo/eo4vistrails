@@ -2,10 +2,10 @@
 ##
 ## Copyright (C) 2010 CSIR Meraka Institute. All rights reserved.
 ##
-## eo4vistrails extends VisTrails, providing GIS/Earth Observation 
-## ingestion, pre-processing, transformation, analytic and visualisation 
-## capabilities . Included is the abilty to run code transparently in 
-## OpenNebula cloud environments. There are various software 
+## eo4vistrails extends VisTrails, providing GIS/Earth Observation
+## ingestion, pre-processing, transformation, analytic and visualisation
+## capabilities . Included is the abilty to run code transparently in
+## OpenNebula cloud environments. There are various software
 ## dependencies, but all are FOSS.
 ##
 ## This file may be used under the terms of the GNU General Public
@@ -42,16 +42,17 @@ class OgcCommonWidget(QtGui.QWidget):
         self.launchtype = str(module).split(" ")[1].split(":")[1][0:3].lower()
         #self.module = module
         self.setObjectName("OgcCommonWidget")
+        self.service = None
         self.create_config_window()
 
     def create_config_window(self):
         """TO DO - add docstring"""
         self.setWindowTitle("General OGC Configuration Widget")
-        self.setMinimumSize(800, 300) 
+        self.setMinimumSize(800, 300)
         self.center()
         self.mainLayout = QtGui.QVBoxLayout()
         self.setLayout(self.mainLayout)
-        
+
         if self.launchtype == "sos":
             self.urlGroupBox = QtGui.QGroupBox("OGC Sensor Observation Service:")
         elif self.launchtype == "wfs":
@@ -63,9 +64,9 @@ class OgcCommonWidget(QtGui.QWidget):
         self.fetchUrlLayout = QtGui.QHBoxLayout()
 
         self.label_OGC_url = QtGui.QLabel('URL & Version:')
-        
+
         self.line_edit_OGC_url = QtGui.QLineEdit("")
-        
+
         self.launchversion = QtGui.QComboBox()
         if self.launchtype == "sos":
             self.launchversion.addItems(['1.0.0',])
@@ -75,28 +76,28 @@ class OgcCommonWidget(QtGui.QWidget):
             self.launchversion.addItems(['1.0.0','1.1.0'])
         else:
             self.launchversion.addItems(['1.0.0',])
-            
+
         self.fetchButton = QtGui.QPushButton('&Fetch')
         self.fetchButton.setAutoDefault(False)
-        
+
         self.fetchUrlLayout.addWidget(self.label_OGC_url)
         self.fetchUrlLayout.addWidget(self.line_edit_OGC_url)
         self.fetchUrlLayout.addWidget(self.launchversion)
         self.fetchUrlLayout.addWidget(self.fetchButton)
-        
+
         self.urlGroupBox.setLayout(self.fetchUrlLayout)
-        
+
         self.mainLayout.addWidget(self.urlGroupBox)
-        
+
         self.metaLayout = QtGui.QHBoxLayout()
         self.metaGroupBox = QtGui.QGroupBox("Service Metadata")
         self.metaGroupBox.setLayout(self.metaLayout)
         self.mainLayout.addWidget(self.metaGroupBox)
-        
+
         self.serviceIDLayout = QtGui.QVBoxLayout()
         self.serviceIDGroupBox = QtGui.QGroupBox("Service Identification")
         self.serviceIDGroupBox.setLayout(self.serviceIDLayout)
-        
+
         self.serviceIDServiceTable = QtGui.QTableWidget()
         self.serviceIDServiceTable.setRowCount(7)
         self.serviceIDServiceTable.setColumnCount(1)
@@ -104,7 +105,7 @@ class OgcCommonWidget(QtGui.QWidget):
             'service','version','title','abstract','keywords','fees',
             'access constraints'
         ]
-        
+
         row_position = 0
         for service_id_list_item in service_id_list:
             qtwi = QtGui.QTableWidgetItem(service_id_list_item)
@@ -116,22 +117,22 @@ class OgcCommonWidget(QtGui.QWidget):
         self.serviceIDServiceTable.horizontalHeader().setStretchLastSection(True)
         self.serviceIDLayout.addWidget(self.serviceIDServiceTable)
         self.metaLayout.addWidget(self.serviceIDGroupBox)
-        
+
         self.servicePublisherLayout = QtGui.QVBoxLayout()
         self.servicePublisherGroupBox = QtGui.QGroupBox("Publisher Details")
         self.servicePublisherGroupBox.setLayout(self.servicePublisherLayout)
-        
+
         self.servicePublisherTable = QtGui.QTableWidget()
         self.servicePublisherTable.setRowCount(17)
         self.servicePublisherTable.setColumnCount(1)
-        
+
         provider_id_list =[
             'provider name','provider url','contact name','contact position',
             'contact role','contact organization','contact address',
             'contact city','contact region','contact postcode',
             'contact country','contact phone','contact fax','contact site',
             'contact email','contact hours','contact instructions']
-        
+
         row_position = 0
         for provider_id_list_item in provider_id_list:
             qtwi = QtGui.QTableWidgetItem(provider_id_list_item)
@@ -153,8 +154,8 @@ class OgcCommonWidget(QtGui.QWidget):
 
     def center(self):
         """TO DO - add docstring"""
-        screen = QtGui.QDesktopWidget().screenGeometry() 
-        size = self.geometry() 
+        screen = QtGui.QDesktopWidget().screenGeometry()
+        size = self.geometry()
         self.move((screen.width()-size.width())/2, (screen.height()-size.height())/2)
 
     def fetchTriggered(self):
@@ -164,7 +165,7 @@ class OgcCommonWidget(QtGui.QWidget):
             self.setCursor(self.waitCursor)
             self.serviceIDServiceTable.clearContents()
             self.servicePublisherTable.clearContents()
-            
+
             self.service = OgcService(
                     self.line_edit_OGC_url.text(),
                     self.launchtype,
@@ -183,7 +184,7 @@ class OgcCommonWidget(QtGui.QWidget):
                        self.serviceIDServiceTable.setItem (row_count, 0, qtwi)
                     row_count = row_count + 1
                 # provider metadata
-                # N.B. OGC WFS 1.0.0 does not have provider metadata in this form 
+                # N.B. OGC WFS 1.0.0 does not have provider metadata in this form
                 if self.launchtype == "wfs" and self.launchversion.currentText() == "1.0.0":
                     #TODO: we need to indicate this visually as well !
                     pass
@@ -196,8 +197,12 @@ class OgcCommonWidget(QtGui.QWidget):
                             )
                            self.servicePublisherTable.setItem (row_count, 0, qtwi)
                         row_count = row_count + 1
-                # TODO - fire a "done" event
+                # fire a "done" event: can be "listened for" in children
+                self.emit(QtCore.SIGNAL('serviceActivated()'))
+                print "self.emit(QtCore.SIGNAL('serviceActivated()'))"
+                
             else:
+                self.emit(QtCore.SIGNAL('serviceDeactivated()'))
                 self.showWarning(
                     'Unable to activate service:\n  Please check configuration & network.')
         else:
@@ -214,9 +219,9 @@ class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
     """TO DO - add docstring"""
     def __init__(self, module, controller,  parent=None):
         SpatialTemporalConfigurationWidget.__init__(self, module, controller, parent)
-        
+
         self.ogc_common_widget = OgcCommonWidget(module)
-        
+
         #self.tabs.addTab(self.ogc_common_widget, "")
         self.tabs.insertTab(0,  self.ogc_common_widget, "")
         self.tabs.setTabText(
