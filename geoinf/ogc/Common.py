@@ -70,13 +70,15 @@ class OgcService():
 
         if service_type != "":
             try:
-                self.service_valid = True
                 if service_type.lower() == "sos":
                     self.service = sos.SensorObservationService(service_url, service_version)
+                    self.service_valid = True
                 elif service_type.lower() == "wfs":
                     self.service = wfs.WebFeatureService(service_url, service_version)
+                    self.service_valid = True
                 elif service_type.lower() == "wcs":
                     self.service = wfs.WebCoverageService(service_url, service_version)
+                    self.service_valid = True
                 else:
                     self.service_valid = False
                     raise ValueError, INVALID_OGC_TYPE_MESSAGE

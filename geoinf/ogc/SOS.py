@@ -4,7 +4,7 @@
 ##
 ## eo4vistrails extends VisTrails, providing GIS/Earth Observation
 ## ingestion, pre-processing, transformation, analytic and visualisation
-## capabilities . Included is the abilty to run code transparently in
+## capabilities . Included is the ability to run code transparently in
 ## OpenNebula cloud environments. There are various software
 ## dependencies, but all are FOSS.
 ##
@@ -45,11 +45,18 @@ class SOS(FeatureModel):
 
 class SosCommonWidget(QtGui.QWidget):
     """TO DO - add docstring"""
-    def __init__(self, service_dict, parent=None):
+    def __init__(self, ogc_widget, parent=None):
         QtGui.QWidget.__init__(self, parent)
         self.setObjectName("SosCommonWidget")
-        self.service = service_dict
+        self.parent_widget = ogc_widget
+        self.service = self.parent_widget.service
         self.create_config_window()
+        # listener for signal emitted by OgcCommonWidget class
+        self.connect(
+            self.parent_widget,
+            QtCore.SIGNAL('serviceActivated'),
+            self.loadOfferings
+        )
 
     def create_config_window(self):
         """TO DO - add docstring"""
@@ -121,56 +128,48 @@ class SosCommonWidget(QtGui.QWidget):
         self.cbResultModel = QtGui.QComboBox()
         self.detailsLayout.addWidget(self.cbResultModel, 6, 1)
 
-        # initial data - offerings list - TODO: keep this or use signal ???
-        #self.loadOfferings()
-
         # local signals
         self.connect(
             self.lbxOfferings,
             QtCore.SIGNAL("itemSelectionChanged()"),
             self.offeringsChanged
         )
-        # signal emitted by OgcCommonWidget class
-        """
-        error:
-        Object::connect: No such slot SosCommonWidget::loadOfferings()
-        Object::connect:  (receiver name: 'SosCommonWidget')
-        self.connect(
-            self,
-            QtCore.SIGNAL('serviceActivated()'),
-            QtCore.SLOT('self.loadOfferings()')
-        )"""
-        QtCore.QObject.connect(
-            self,
-            QtCore.SIGNAL('serviceActivated()'),
-            self.loadOfferings
-        )
 
     def offeringsChanged(self):
         """Update offering details containers when new offering selected."""
         selected_offering =  self.lbxOfferings.selectedItems()[0].text()
         self.lblDescription.setText(selected_offering)
-        #TODO...
+        self.lblDescription.setText("HOORAY!!") # test
+        #TODO: Update offering details...
         pass
 
     def loadOfferings(self):
         """Load the offerings from the service metadata."""
+        """ *** UNDER DEVELOPMENT *** """
 
-        print "load Offerings called!"
+        print "load Offerings called!!!"
 
+        # test list box
         model = QtGui.QStandardItemModel()
         model.clear()
         bar = ['one','two','three']
         for foo in bar:
             item = QtGui.QStandardItem(foo)
+            model.appendRow(item)
         self.lbxOfferings.setModel(model)
 
-        if self.service and self.service.is_valid:
-            model.clear()
-            self.contents = self.service.__dict__['contents']
+        service = self.parent_widget.service
+        print "local service", service
+
+        if service and service.service_valid:
+            fubar = service.__dict__['provider'].__dict__ #but this works in OgcService __init__ ???
+            contents = service.__dict__['contents']
             for c in contents:
                 print c['id']
-            #get data
+
+        """
+            #set data
+            model.clear()
             if bar:
                 for foo in bar:
                     item = QtGui.QStandardItem(foo)
@@ -179,14 +178,15 @@ class SosCommonWidget(QtGui.QWidget):
                     model.appendRow(item)
                 # load list into container
                 self.lbxOfferings.setModel(model)
+        """
 
 
 class SOSConfigurationWidget(OgcConfigurationWidget):
     """makes use of code style from OgcConfigurationWidget"""
     def __init__(self,  module, controller, parent=None):
         OgcConfigurationWidget.__init__(self,  module, controller, parent)
-        # pass in "service" from OgcCommonWidget class
-        self.sos_config_widget = SosCommonWidget(self.ogc_common_widget.service)
+        # pass in parent widget i.e. OgcCommonWidget class
+        self.sos_config_widget = SosCommonWidget(self.ogc_common_widget)
 
         self.tabs.insertTab(1, self.sos_config_widget, "")
         self.tabs.setTabText(

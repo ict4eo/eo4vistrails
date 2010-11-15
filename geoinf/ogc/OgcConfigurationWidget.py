@@ -4,7 +4,7 @@
 ##
 ## eo4vistrails extends VisTrails, providing GIS/Earth Observation
 ## ingestion, pre-processing, transformation, analytic and visualisation
-## capabilities . Included is the abilty to run code transparently in
+## capabilities . Included is the ability to run code transparently in
 ## OpenNebula cloud environments. There are various software
 ## dependencies, but all are FOSS.
 ##
@@ -65,7 +65,7 @@ class OgcCommonWidget(QtGui.QWidget):
 
         self.label_OGC_url = QtGui.QLabel('URL & Version:')
 
-        self.line_edit_OGC_url = QtGui.QLineEdit("")
+        self.line_edit_OGC_url = QtGui.QLineEdit("http://giv-sos.uni-muenster.de:8080/52nSOSv3/sos?request=GetCapabilities&service=SOS")
 
         self.launchversion = QtGui.QComboBox()
         if self.launchtype == "sos":
@@ -198,11 +198,11 @@ class OgcCommonWidget(QtGui.QWidget):
                            self.servicePublisherTable.setItem (row_count, 0, qtwi)
                         row_count = row_count + 1
                 # fire a "done" event: can be "listened for" in children
-                self.emit(QtCore.SIGNAL('serviceActivated()'))
-                print "self.emit(QtCore.SIGNAL('serviceActivated()'))"
-                
+                self.emit(QtCore.SIGNAL('serviceActivated'))
+                print "self.emit(QtCore.SIGNAL('serviceActivated'))"
+
             else:
-                self.emit(QtCore.SIGNAL('serviceDeactivated()'))
+                self.emit(QtCore.SIGNAL('serviceDeactivated'))
                 self.showWarning(
                     'Unable to activate service:\n  Please check configuration & network.')
         else:
