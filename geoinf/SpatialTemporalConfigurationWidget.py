@@ -102,8 +102,8 @@ class TemporalWidget(QtGui.QWidget):
         # put input text boxes on the main window
         self.gridLayout.addWidget(self.StartDateEdit, 0, 1)
         self.gridLayout.addWidget(self.EndDateEdit, 1, 1)
-        
-        """Calendar widget is activated by clicking the button - and appears as a pop up calendar 
+
+        """Calendar widget is activated by clicking the button - and appears as a pop up calendar
         from which dates can be selected"""
 
         #setting and adding the operation pushbutton, that will activate the calendar widget to the main window
@@ -111,45 +111,45 @@ class TemporalWidget(QtGui.QWidget):
         self.gridLayout.addWidget(self.startDateButton, 0, 2)
         #setting the button signal such that when the button is clicked, the getCalendar function is performed
         self.connect(self.startDateButton, QtCore.SIGNAL('clicked()'), self.getCalendar1)
-        
+
         #setting and adding the end date operation pushbutton, that will activate the calendar widget to the main window
         self.endDateButton = QtGui.QPushButton('End Date')
         self.gridLayout.addWidget(self.endDateButton, 1, 2)
         self.connect(self.endDateButton, QtCore.SIGNAL('clicked()'), self.getCalendar2)
-        
+
         # Calendar for adding start date
         self.cal1 = QtGui.QCalendarWidget()
         self.cal1.setGridVisible(False)
         self.cal1.setWindowModality(True)
         self.cal1.move(20, 20)
         self.connect(self.cal1,  QtCore.SIGNAL('selectionChanged()'),  self.showDate1)
-        
+
         # Calendar for adding end date
         self.cal2 = QtGui.QCalendarWidget()
         self.cal2.setGridVisible(False)
         self.cal2.setWindowModality(True)
         self.cal2.move(20, 20)
         self.connect(self.cal2,  QtCore.SIGNAL('selectionChanged()'),  self.showDate2)
-        
+
     def showDate1(self):
         #show date method defined
         startDate = self.cal1.selectedDate()
         self.StartDateEdit.setText(str(startDate.toPyDate()))
-        
+
     def showDate2(self):
         #show date method defined
         endDate = self.cal2.selectedDate()
         self.EndDateEdit.setText(str(endDate.toPyDate()))
-        
+
     def getCalendar1(self):
         self.cal1.show()
-        
+
     def getCalendar2(self):
         self.cal2.show()
-        
-    """TO-DO   set position of the calendar pop-up widget so that it appears closer to the main window 
+
+    """TO DO: set position of the calendar pop-up widget so that it appears closer to the main window
         as opposed to a random location where it may not be found. And add time to the date fields"""
-        
+
     """TO DO NEXT---> Add a slider widget to set the Optional interval field for querying temporal datasets """
 
 
@@ -158,8 +158,8 @@ class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
     def __init__(self, module, controller, parent=None):
         StandardModuleConfigurationWidget.__init__(self, module, controller, parent)
         # initialise the setup necessary for all geoinf widgets that follow
-        self.setWindowTitle('Spatial and Temporal Parameters')
-        self.setToolTip("Setup spatial and temporal parameters for working with a geoinf module")
+        self.setWindowTitle('Configuration Parameters')
+        self.setToolTip("Setup service, spatial and temporal parameters for working with a geoinf module")
         self.createTabs()
         self.createButtons()
         self.setLayout(QtGui.QVBoxLayout())

@@ -35,7 +35,9 @@ from core.modules.vistrails_module import Module, new_module, NotCacheable, Modu
 
 #need to import the configuration widget we develop
 class SOS(FeatureModel):
-    """TO DO - add docstring"""
+    """TO DO - add docstring
+
+    """
     def __init__(self):
         FeatureModel.__init__(self)
 
@@ -44,7 +46,9 @@ class SOS(FeatureModel):
 
 
 class SosCommonWidget(QtGui.QWidget):
-    """TO DO - add docstring"""
+    """TO DO - add docstring
+
+    """
     def __init__(self, ogc_widget, parent=None):
         QtGui.QWidget.__init__(self, parent)
         self.setObjectName("SosCommonWidget")
@@ -76,7 +80,7 @@ class SosCommonWidget(QtGui.QWidget):
         self.detailsLayout = QtGui.QGridLayout()
         self.detailsGroupBox.setLayout(self.detailsLayout)
         # offerings
-        self.lbxOfferings = QtGui.QListView()
+        self.lbxOfferings = QtGui.QListWidget()
         self.offeringsLayout.addWidget(self.lbxOfferings)
         # offering details layout
         #   labels
@@ -114,10 +118,10 @@ class SosCommonWidget(QtGui.QWidget):
         self.detailsLayout.addWidget(self.timeGroupBox, 2, 1)
         self.timeLayout.addWidget(QtGui.QLabel('Start'))
         self.lblStartTime =  QtGui.QLabel('-')
-        self.boundingLayout.addWidget(self.lblStartTime)
+        self.timeLayout.addWidget(self.lblStartTime)
         self.timeLayout.addWidget(QtGui.QLabel('End'))
         self.lblEndTime =  QtGui.QLabel('-')
-        self.boundingLayout.addWidget(self.lblEndTime)
+        self.timeLayout.addWidget(self.lblEndTime)
 
         self.cbProcedure = QtGui.QComboBox()
         self.detailsLayout.addWidget(self.cbProcedure, 3, 1)
@@ -128,66 +132,69 @@ class SosCommonWidget(QtGui.QWidget):
         self.cbResultModel = QtGui.QComboBox()
         self.detailsLayout.addWidget(self.cbResultModel, 6, 1)
 
-        # local signals
+        # local signals itemSelectionChanged  selectionChanged()
         self.connect(
             self.lbxOfferings,
-            QtCore.SIGNAL("itemSelectionChanged()"),
+            QtCore.SIGNAL("itemClicked(QListWidgetItem*)"),
             self.offeringsChanged
         )
 
     def offeringsChanged(self):
         """Update offering details containers when new offering selected."""
-        selected_offering =  self.lbxOfferings.selectedItems()[0].text()
-        self.lblDescription.setText(selected_offering)
-        self.lblDescription.setText("HOORAY!!") # test
-        #TODO: Update offering details...
-        pass
+        """ *** UNDER DEVELOPMENT *** """
+        selected_offering = self.lbxOfferings.selectedItems()[0].text()
+        if self.parent_widget.service and self.parent_widget.service.service_valid:
+            for content in self.parent_widget.service.service_contents:
+                if selected_offering == content.id:
+                    if content.description:
+                        self.lblDescription.setText(content.description)
+                    elif content.name:
+                        self.lblDescription.setText(content.name)
+                    else:
+                        self.lblDescription.setText(content.id)
+                    # update other offering details...
+                    print "***", content.time, content.bounding_box
+                    if content.time:
+                        self.lblStartTime.setText(str(content.time[0]))
+                        self.lblEndTime.setText(str(content.time[1]))
+                    if content.bounding_box:
+                        self.lblMinX.setText(str(content.bounding_box[0]))
+                        self.lblMinY.setText(str(content.bounding_box[1]))
+                        self.lblMaxX.setText(str(content.bounding_box[2]))
+                        self.lblMaxY.setText(str(content.bounding_box[3]))
+                        #self.SRS = content.bounding_box[4] #TO DO
+                    if content.procedure:
+                        for pr in content.procedure:
+                            self.cbProcedure.addItem(pr)
+                    if content.response_format:
+                        for rf in content.response_format:
+                            self.cbResponseFormat.addItem(rf)
+                    if content.response_mode:
+                        for rm in content.response_mode:
+                            self.cbResponseMode.addItem(rm)
+                    if content.result_model:
+                        for rd in content.result_model:
+                            self.cbResultModel.addItem(rd)
+
 
     def loadOfferings(self):
         """Load the offerings from the service metadata."""
-        """ *** UNDER DEVELOPMENT *** """
+        #fubar = service.__dict__['provider'].__dict__ # only works in OgcService __init__ line 105 ???
+        if self.parent_widget.service and self.parent_widget.service.service_valid:
+            for content in self.parent_widget.service.service_contents:
+                #print content.id
+                item = QtGui.QListWidgetItem(content.id)
+                self.lbxOfferings.addItem(item)
 
-        print "load Offerings called!!!"
-
-        # test list box
-        model = QtGui.QStandardItemModel()
-        model.clear()
-        bar = ['one','two','three']
-        for foo in bar:
-            item = QtGui.QStandardItem(foo)
-            model.appendRow(item)
-        self.lbxOfferings.setModel(model)
-
-        service = self.parent_widget.service
-        print "local service", service
-
-        if service and service.service_valid:
-            fubar = service.__dict__['provider'].__dict__ #but this works in OgcService __init__ ???
-            contents = service.__dict__['contents']
-            for c in contents:
-                print c['id']
-
-        """
-            #set data
-            model.clear()
-            if bar:
-                for foo in bar:
-                    item = QtGui.QStandardItem(foo)
-                    #item.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
-                    #item.setData(QVariant(Qt.Unchecked), Qt.CheckStateRole) #was QVariant(check)
-                    model.appendRow(item)
-                # load list into container
-                self.lbxOfferings.setModel(model)
-        """
 
 
 class SOSConfigurationWidget(OgcConfigurationWidget):
     """makes use of code style from OgcConfigurationWidget"""
     def __init__(self,  module, controller, parent=None):
-        OgcConfigurationWidget.__init__(self,  module, controller, parent)
+        OgcConfigurationWidget.__init__(self, module, controller, parent)
         # pass in parent widget i.e. OgcCommonWidget class
         self.sos_config_widget = SosCommonWidget(self.ogc_common_widget)
-
+        # tabs
         self.tabs.insertTab(1, self.sos_config_widget, "")
         self.tabs.setTabText(
             self.tabs.indexOf(self.sos_config_widget),
@@ -202,8 +209,9 @@ class SOSConfigurationWidget(OgcConfigurationWidget):
             self.tabs.indexOf(self.sos_config_widget),
             QtGui.QApplication.translate(
                 "OgcConfigurationWidget",
-                "Stuff for SOS",
+                "Select SOS-specific parameters",
                 None,
                 QtGui.QApplication.UnicodeUTF8
             )
         )
+        self.tabs.setCurrentIndex(0)

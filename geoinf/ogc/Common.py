@@ -53,19 +53,19 @@ class OgcService():
     #########
 
     INVALID_OGC_TYPE_MESSAGE = \
-        "Please provide an OGC Service Type: 'wfs', 'sos', 'wcs'"
+        "Please provide an OGC Service Type: 'wfs', 'sos', or 'wcs'"
 
     def __init__(self, service_url, service_type, service_version):
         #print service_url
         service_url = str(service_url)
-        #check for service and request kvp's -
-        #if not there, add 'em (some services don't have a capabilities reflector),
+        # check for service and request kvp's -
+        # if not there, add 'em (some services don't have a capabilities reflector),
         STRICT_OGC_CAPABILITIES = \
         "Service=%s&Request=GetCapabilities"%  service_type
         service_url_check = service_url.split("?")
         if len(service_url_check) == 1:
             service_url = service_url + "?" + STRICT_OGC_CAPABILITIES
-        else:#various of the capabilities may be present - clobber them and replace
+        else:  # various of the capabilities may be present - clobber them and replace
             service_url = service_url_check[0] + "?" + STRICT_OGC_CAPABILITIES
 
         if service_type != "":
@@ -92,6 +92,7 @@ class OgcService():
         self.service_id_keys = []  # set per service type
         self.ini_service_version = service_version
         if self.service_valid:
+            # store metadata
             # this looks bizzare, but it is true...
             if service_type.lower() == "wfs" and service_version =="1.0.0":
                 self.setServiceIdentification(
@@ -103,6 +104,17 @@ class OgcService():
                     self.service.__dict__['identification'].__dict__)
                 self.setProviderIdentification(
                     self.service.__dict__['provider'].__dict__)
+            # store core data / contents
+            if self.ini_service_type == "sos":
+                self.service_contents = self.service.__dict__['contents']
+            elif self.ini_service_type == "wfs":
+                """TO DO: add core data / contents for wcs service"""
+                pass
+            elif self.ini_service_type == "wcs":
+                """TO DO: add core data / contents for wcs service"""
+                pass
+            else:
+                raise ValueError, INVALID_OGC_TYPE_MESSAGE
 
     def setServiceIdentification(self, service_dict):
         """service identification metadata is structured differently
@@ -160,7 +172,7 @@ class OgcService():
                 raise NotImplementedError,  "OGC Service version %s not supported." % self.ini_service_version
 
         elif self.ini_service_type == "wcs":
-            """TODO: add service data for wcs service"""
+            """TO DO: add service data for wcs service"""
             pass
 
         else:
@@ -221,7 +233,7 @@ class OgcService():
             pass
 
         elif self.ini_service_type == "wcs":
-            #TODO: check if provider data is available for wcs service
+            """TO DO: check if provider data is available for wcs service"""
             pass
 
         else:

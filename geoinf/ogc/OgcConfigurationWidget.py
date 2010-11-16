@@ -65,7 +65,7 @@ class OgcCommonWidget(QtGui.QWidget):
 
         self.label_OGC_url = QtGui.QLabel('URL & Version:')
 
-        self.line_edit_OGC_url = QtGui.QLineEdit("http://giv-sos.uni-muenster.de:8080/52nSOSv3/sos?request=GetCapabilities&service=SOS")
+        self.line_edit_OGC_url = QtGui.QLineEdit("http://giv-sos.uni-muenster.de:8080/52nSOSv3/sos?request=GetCapabilities&service=SOS") #test only !!!
 
         self.launchversion = QtGui.QComboBox()
         if self.launchtype == "sos":
@@ -167,21 +167,21 @@ class OgcCommonWidget(QtGui.QWidget):
             self.servicePublisherTable.clearContents()
 
             self.service = OgcService(
-                    self.line_edit_OGC_url.text(),
-                    self.launchtype,
-                    str(self.launchversion.currentText())
-                )
+                self.line_edit_OGC_url.text(),
+                self.launchtype,
+                str(self.launchversion.currentText())
+            )
             self.setCursor(self.arrowCursor)
-            # populate metadata!
+            # populate metadata
             if self.service.service_valid:
                 # service id metadata
                 row_count = 0
                 for service_id_dict_item in self.service.service_id_keys:
                     if self.service.__dict__.has_key(service_id_dict_item):
-                       qtwi = QtGui.QTableWidgetItem(
+                        qtwi = QtGui.QTableWidgetItem(
                             str(self.service.__dict__[service_id_dict_item])
                         )
-                       self.serviceIDServiceTable.setItem (row_count, 0, qtwi)
+                        self.serviceIDServiceTable.setItem (row_count, 0, qtwi)
                     row_count = row_count + 1
                 # provider metadata
                 # N.B. OGC WFS 1.0.0 does not have provider metadata in this form
@@ -199,7 +199,6 @@ class OgcCommonWidget(QtGui.QWidget):
                         row_count = row_count + 1
                 # fire a "done" event: can be "listened for" in children
                 self.emit(QtCore.SIGNAL('serviceActivated'))
-                print "self.emit(QtCore.SIGNAL('serviceActivated'))"
 
             else:
                 self.emit(QtCore.SIGNAL('serviceDeactivated'))
@@ -217,13 +216,13 @@ class OgcCommonWidget(QtGui.QWidget):
 
 class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
     """TO DO - add docstring"""
-    def __init__(self, module, controller,  parent=None):
+    def __init__(self, module, controller, parent=None):
         SpatialTemporalConfigurationWidget.__init__(self, module, controller, parent)
 
         self.ogc_common_widget = OgcCommonWidget(module)
 
         #self.tabs.addTab(self.ogc_common_widget, "")
-        self.tabs.insertTab(0,  self.ogc_common_widget, "")
+        self.tabs.insertTab(0, self.ogc_common_widget, "")
         self.tabs.setTabText(
             self.tabs.indexOf(self.ogc_common_widget),
             QtGui.QApplication.translate(

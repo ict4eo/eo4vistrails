@@ -38,7 +38,9 @@ from owslib.wfs import WebFeatureService
 #need to import the configuration widget we develop
 
 class WFS(NotCacheable,  FeatureModel):
+    """TO DO - add docstring
 
+    """
     def __init__(self):
         FeatureModel.__init__(self)
 
@@ -46,17 +48,25 @@ class WFS(NotCacheable,  FeatureModel):
         pass
 
 class WFSCommonWidget(QtGui.QWidget):
+    """TO DO - add docstring
 
-    def __init__(self, module, parent=None):
-
-        '''sets parameters for wfs request '''
-
+    """
+    def __init__(self, ogc_widget, parent=None):
+        """sets parameters for wfs request"""
         QtGui.QWidget.__init__(self, parent)
         self.setObjectName("WFSConfigurationWidget")
+        self.parent_widget = ogc_widget
+        self.service = self.parent_widget.service
         self.create_wfs_config_window()
+        # listener for signal emitted by OgcCommonWidget class
+        self.connect(
+            self.parent_widget,
+            QtCore.SIGNAL('serviceActivated'),
+            self.loadRequest
+        )
 
     def create_wfs_config_window(self):
-
+        """TO DO - add docstring"""
         gridLayout = QtGui.QGridLayout()
         self.setLayout(gridLayout)
         gridLayout.addWidget(QtGui.QLabel('wfs Url'), 0, 0)
@@ -116,45 +126,33 @@ class WFSCommonWidget(QtGui.QWidget):
         self.connect(self.saveRequestButton, QtCore.SIGNAL('clicked()'), self.saveRequest)
 
     def clearRequest(self):
-        """TO-DO Implement clear fields """
+        """TO DO Implement clear fields """
         pass
-
-
 
     def saveRequest(self):
-        #"""TO-DO implement read set parameters, assign to wfs input ports """
+        """TO DO Implement read set parameters, assign to wfs input ports """
         pass
 
-
     def loadRequest(self):
-
         """ loadRequest() -> None
-        use given url to read wfs file, populates the config widget populate fields
+        uses service data to populate the config widget populate fields
 
+        SEE SOS.py for similar code (under loadOfferings method)
         """
         #result = str(self.wfsUrlEdit.text()
 
         defaultUrl = str(self.wfsUrlEdit.text())
-
         wfs = WebFeatureService(defaultUrl)
-
         layers = list(wfs.contents)
 
-
         self.opComboAvailableOperations.addItems([op.name for op in wfs.operations])
-
         for elem in layers:
-
             self.opComboLayerNames.addItems([elem])
-
             crsCode = wfs[str(self.opComboLayerNames.currentText())].crsOptions
 
-
         for elemen in crsCode:
-
             self.ESPGEdit.setText(elemen)
             coordinates = wfs[str(self.opComboLayerNames.currentText())].boundingBoxWGS84
-
             self.minXEdit.setText(str(coordinates[0]))
             self.minYEdit.setText(str(coordinates[1]))
             self.maxXEdit.setText(str(coordinates[2]))
@@ -258,21 +256,34 @@ class WFSCommonWidget(QtGui.QWidget):
         loadButton.setText(QtGui.QApplication.translate("QTConfigurationWidget", "Load", None, QtGui.QApplication.UnicodeUTF8))
         saveButton.setText(QtGui.QApplication.translate("QTConfigurationWidget", "Save", None, QtGui.QApplication.UnicodeUTF8))
         resetButton.setText(QtGui.QApplication.translate("QTConfigurationWidget", "Reset", None, QtGui.QApplication.UnicodeUTF8))
-
         '''
 
+
 class WFSConfigurationWidget(OgcConfigurationWidget):
-
+    """makes use of code style from OgcConfigurationWidget"""
     def __init__(self,  module, controller, parent=None):
-
         OgcConfigurationWidget.__init__(self,  module, controller, parent)
-
-        self.wfs_config = WFSCommonWidget(module)
-        #self.tabs.addTab(self.wfs_config,  "")
-        self.tabs.insertTab(1, self.wfs_config,  "")
-
-        self.tabs.setTabText(self.tabs.indexOf(self.wfs_config), QtGui.QApplication.translate("WFSConfigurationWidget", "WFS", None, QtGui.QApplication.UnicodeUTF8))
-        self.tabs.setTabToolTip(self.tabs.indexOf(self.wfs_config), QtGui.QApplication.translate("WFSConfigurationWidget", "WFS Configuration", None, QtGui.QApplication.UnicodeUTF8))
-
-
+        # pass in parent widget i.e. OgcCommonWidget class
+        self.wfs_config = WFSCommonWidget(self.ogc_common_widget)
+        # tabs
+        self.tabs.insertTab(1, self.wfs_config, "")
+        self.tabs.setTabText(
+            self.tabs.indexOf(self.wfs_config),
+            QtGui.QApplication.translate(
+                "WFSConfigurationWidget",
+                "WFS",
+                None,
+                QtGui.QApplication.UnicodeUTF8
+            )
+        )
+        self.tabs.setTabToolTip(
+            self.tabs.indexOf(self.wfs_config),
+            QtGui.QApplication.translate(
+                "WFSConfigurationWidget",
+                "WFS Configuration",
+                None,
+                QtGui.QApplication.UnicodeUTF8
+            )
+        )
+        self.tabs.setCurrentIndex(0)
 
