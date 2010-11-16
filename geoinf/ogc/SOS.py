@@ -55,15 +55,20 @@ class SosCommonWidget(QtGui.QWidget):
         self.parent_widget = ogc_widget
         self.service = self.parent_widget.service
         self.create_config_window()
-        # listener for signal emitted by OgcCommonWidget class
+        # listen for signals emitted by OgcCommonWidget class
         self.connect(
             self.parent_widget,
             QtCore.SIGNAL('serviceActivated'),
             self.loadOfferings
         )
+        self.connect(
+            self.parent_widget,
+            QtCore.SIGNAL('serviceDeactivated'),
+            self.removeOfferings
+        )
 
     def create_config_window(self):
-        """TO DO - add docstring"""
+        """Create datacontainers and layout for displaying SOS-specific data."""
         self.setWindowTitle("SOS Configuration Widget")
         self.setMinimumSize(800, 300)
         # main layout
@@ -95,31 +100,30 @@ class SosCommonWidget(QtGui.QWidget):
         self.lblDescription =  QtGui.QLabel('-')
         self.detailsLayout.addWidget(self.lblDescription , 0, 1)
 
-        self.boundingGroupBox = QtGui.QGroupBox("BB")
+        self.boundingGroupBox = QtGui.QGroupBox("")
         self.boundingLayout = QtGui.QHBoxLayout()
         self.boundingGroupBox.setLayout(self.boundingLayout)
         self.detailsLayout.addWidget(self.boundingGroupBox, 1, 1)
-        self.boundingLayout.addWidget(QtGui.QLabel('Min X'))
+        self.boundingLayout.addWidget(QtGui.QLabel('Min X:'))
         self.lblMinX =  QtGui.QLabel('-')
         self.boundingLayout.addWidget(self.lblMinX)
-        self.boundingLayout.addWidget(QtGui.QLabel('Min Y'))
+        self.boundingLayout.addWidget(QtGui.QLabel('Min Y:'))
         self.lblMinY =  QtGui.QLabel('-')
         self.boundingLayout.addWidget(self.lblMinY)
-        self.boundingLayout.addWidget(QtGui.QLabel('Max X'))
+        self.boundingLayout.addWidget(QtGui.QLabel('Max X:'))
         self.lblMaxX =  QtGui.QLabel('-')
         self.boundingLayout.addWidget(self.lblMaxX)
-        self.boundingLayout.addWidget(QtGui.QLabel('Max Y'))
+        self.boundingLayout.addWidget(QtGui.QLabel('Max Y:'))
         self.lblMaxY =  QtGui.QLabel('-')
         self.boundingLayout.addWidget(self.lblMaxY)
 
-        self.timeGroupBox = QtGui.QGroupBox("Time")
-        self.timeLayout = QtGui.QHBoxLayout()
+        self.timeGroupBox = QtGui.QGroupBox("")
+        self.timeLayout = QtGui.QVBoxLayout()
         self.timeGroupBox.setLayout(self.timeLayout)
         self.detailsLayout.addWidget(self.timeGroupBox, 2, 1)
-        self.timeLayout.addWidget(QtGui.QLabel('Start'))
         self.lblStartTime =  QtGui.QLabel('-')
         self.timeLayout.addWidget(self.lblStartTime)
-        self.timeLayout.addWidget(QtGui.QLabel('End'))
+        self.timeLayout.addWidget(QtGui.QLabel('to:'))
         self.lblEndTime =  QtGui.QLabel('-')
         self.timeLayout.addWidget(self.lblEndTime)
 
@@ -132,16 +136,35 @@ class SosCommonWidget(QtGui.QWidget):
         self.cbResultModel = QtGui.QComboBox()
         self.detailsLayout.addWidget(self.cbResultModel, 6, 1)
 
-        # local signals itemSelectionChanged  selectionChanged()
+        # local signals
         self.connect(
             self.lbxOfferings,
             QtCore.SIGNAL("itemClicked(QListWidgetItem*)"),
             self.offeringsChanged
         )
 
+    def removeOfferings(self):
+        """Remove all offering details when no SOS is selected."""
+        self.clearOfferings()
+        self.lbxOfferings.clear()
+
+    def clearOfferings(self):
+        """Reset all displayed offering values."""
+        self.lblDescription.setText('-')
+        self.lblMinX.setText('-')
+        self.lblMinY.setText('-')
+        self.lblMaxX.setText('-')
+        self.lblMaxY.setText('-')
+        self.lblStartTime.setText('-')
+        self.lblEndTime.setText('-')
+        self.cbProcedure.clear()
+        self.cbResponseFormat.clear()
+        self.cbResponseMode.clear()
+        self.cbResultModel.clear()
+
     def offeringsChanged(self):
         """Update offering details containers when new offering selected."""
-        """ *** UNDER DEVELOPMENT *** """
+        self.clearOfferings()
         selected_offering = self.lbxOfferings.selectedItems()[0].text()
         if self.parent_widget.service and self.parent_widget.service.service_valid:
             for content in self.parent_widget.service.service_contents:
@@ -153,7 +176,6 @@ class SosCommonWidget(QtGui.QWidget):
                     else:
                         self.lblDescription.setText(content.id)
                     # update other offering details...
-                    print "***", content.time, content.bounding_box
                     if content.time:
                         self.lblStartTime.setText(str(content.time[0]))
                         self.lblEndTime.setText(str(content.time[1]))
@@ -176,16 +198,14 @@ class SosCommonWidget(QtGui.QWidget):
                         for rd in content.result_model:
                             self.cbResultModel.addItem(rd)
 
-
     def loadOfferings(self):
         """Load the offerings from the service metadata."""
-        #fubar = service.__dict__['provider'].__dict__ # only works in OgcService __init__ line 105 ???
+        #fubar = service.__dict__['provider'].__dict__ # only works in OgcService
         if self.parent_widget.service and self.parent_widget.service.service_valid:
             for content in self.parent_widget.service.service_contents:
                 #print content.id
                 item = QtGui.QListWidgetItem(content.id)
                 self.lbxOfferings.addItem(item)
-
 
 
 class SOSConfigurationWidget(OgcConfigurationWidget):
