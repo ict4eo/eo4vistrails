@@ -90,67 +90,31 @@ class TemporalWidget(QtGui.QWidget):
 
     def create_temp_config_window(self):  # method: will allow us to make method call in future when we need this window
 
-        # adding labels and their positiions to the main window
+        # adding labels and their positions to the main window
         self.gridLayout = QtGui.QGridLayout()
         self.setLayout(self.gridLayout)
-        self.gridLayout.addWidget(QtGui.QLabel('Start date'), 0, 0)
-        self.gridLayout.addWidget(QtGui.QLabel('End date'), 1, 0)
-
-        #setting input text boxes to hold the date fields
-        self.StartDateEdit = QtGui.QLineEdit('yyyy-mm-dd')
-        self.EndDateEdit = QtGui.QLineEdit('yyyy-mm-dd')
-        # put input text boxes on the main window
-        self.gridLayout.addWidget(self.StartDateEdit, 0, 1)
-        self.gridLayout.addWidget(self.EndDateEdit, 1, 1)
-
-        """Calendar widget is activated by clicking the button - and appears as a pop up calendar
-        from which dates can be selected"""
-
-        #setting and adding the operation pushbutton, that will activate the calendar widget to the main window
-        self.startDateButton = QtGui.QPushButton('Start Date')
-        self.gridLayout.addWidget(self.startDateButton, 0, 2)
-        #setting the button signal such that when the button is clicked, the getCalendar function is performed
-        self.connect(self.startDateButton, QtCore.SIGNAL('clicked()'), self.getCalendar1)
-
-        #setting and adding the end date operation pushbutton, that will activate the calendar widget to the main window
-        self.endDateButton = QtGui.QPushButton('End Date')
-        self.gridLayout.addWidget(self.endDateButton, 1, 2)
-        self.connect(self.endDateButton, QtCore.SIGNAL('clicked()'), self.getCalendar2)
-
-        # Calendar for adding start date
-        self.cal1 = QtGui.QCalendarWidget()
-        self.cal1.setGridVisible(False)
-        self.cal1.setWindowModality(True)
-        self.cal1.move(20, 20)
-        self.connect(self.cal1,  QtCore.SIGNAL('selectionChanged()'),  self.showDate1)
-
-        # Calendar for adding end date
-        self.cal2 = QtGui.QCalendarWidget()
-        self.cal2.setGridVisible(False)
-        self.cal2.setWindowModality(True)
-        self.cal2.move(20, 20)
-        self.connect(self.cal2,  QtCore.SIGNAL('selectionChanged()'),  self.showDate2)
-
-    def showDate1(self):
-        #show date method defined
-        startDate = self.cal1.selectedDate()
-        self.StartDateEdit.setText(str(startDate.toPyDate()))
-
-    def showDate2(self):
-        #show date method defined
-        endDate = self.cal2.selectedDate()
-        self.EndDateEdit.setText(str(endDate.toPyDate()))
-
-    def getCalendar1(self):
-        self.cal1.show()
-
-    def getCalendar2(self):
-        self.cal2.show()
-
-    """TO DO: set position of the calendar pop-up widget so that it appears closer to the main window
-        as opposed to a random location where it may not be found. And add time to the date fields"""
-
-    """TO DO NEXT---> Add a slider widget to set the Optional interval field for querying temporal datasets """
+        self.gridLayout.addWidget(QtGui.QLabel('Start date'),  0,  0)
+        self.gridLayout.addWidget(QtGui.QLabel('End date'),  1,  0)
+        
+        #setting the start date-time widget and addding it to the window
+        self.myTime = QtGui.QDateTimeEdit(self)
+        self.gridLayout.addWidget(self.myTime,  0,  1)
+        cal1 = QtGui.QCalendarWidget()
+        self.myTime.setCalendarWidget(cal1)
+        self.myTime.setCalendarPopup(True)
+        
+        #setting the end date-time widget and addding it to the window
+        self.myTime = QtGui.QDateTimeEdit(self)
+        self.gridLayout.addWidget(self.myTime,  1,  1)
+        cal2 = QtGui.QCalendarWidget()
+        self.myTime.setCalendarWidget(cal2)
+        self.myTime.setCalendarPopup(True)
+        
+        # need to set time format validation functionality
+        tim1 = QtCore.QTime()
+        self.myTime.setTime (tim1)
+        
+        """TO DO NEXT---> Add a slider widget to set the Optional interval field for querying temporal datasets """
 
 
 class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
