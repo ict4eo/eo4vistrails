@@ -53,7 +53,7 @@ class SosCommonWidget(QtGui.QWidget):
         QtGui.QWidget.__init__(self, parent)
         self.setObjectName("SosCommonWidget")
         self.parent_widget = ogc_widget
-        self.service = self.parent_widget.service
+        self.contents = None #  only set in self.loadOfferings()
         self.create_config_window()
         # listen for signals emitted by OgcCommonWidget class
         self.connect(
@@ -198,8 +198,8 @@ class SosCommonWidget(QtGui.QWidget):
         """Update offering details containers when new offering selected."""
         self.clearOfferings()
         selected_offering = self.lbxOfferings.selectedItems()[0].text()
-        if self.parent_widget.service and self.parent_widget.service.service_valid:
-            for content in self.parent_widget.service.service_contents:
+        if self.parent_widget.service and self.parent_widget.service.service_valid and self.contents:
+            for content in self.contents:
                 if selected_offering == content.id:
                     if content.description:
                         self.lblDescription.setText(content.description)
@@ -238,10 +238,9 @@ class SosCommonWidget(QtGui.QWidget):
 
     def loadOfferings(self):
         """Load the offerings from the service metadata."""
-        #fubar = service.__dict__['provider'].__dict__ # only works in OgcService
         if self.parent_widget.service and self.parent_widget.service.service_valid:
-            for content in self.parent_widget.service.service_contents:
-                #print content.id
+            self.contents = self.parent_widget.service.service.__dict__['contents']
+            for content in self.contents:
                 item = QtGui.QListWidgetItem(content.id)
                 self.lbxOfferings.addItem(item)
 

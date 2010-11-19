@@ -99,20 +99,11 @@ class OgcService():
                     self.service.__dict__['provider'].__dict__)
                 self.setProviderIdentification(
                     self.service.__dict__['provider'].__dict__)
-            else:
+            elif service_type.lower() == "wcs" or service_type.lower() == "sos":
                 self.setServiceIdentification(
                     self.service.__dict__['identification'].__dict__)
                 self.setProviderIdentification(
                     self.service.__dict__['provider'].__dict__)
-            # store core data / contents
-            if self.ini_service_type == "sos":
-                self.service_contents = self.service.__dict__['contents']
-            elif self.ini_service_type == "wfs":
-                """TO DO: add core data / contents for wcs service"""
-                pass
-            elif self.ini_service_type == "wcs":
-                """TO DO: add core data / contents for wcs service"""
-                pass
             else:
                 raise ValueError, INVALID_OGC_TYPE_MESSAGE
 
