@@ -111,10 +111,61 @@ class TemporalWidget(QtGui.QWidget):
         self.myTime.setCalendarPopup(True)
         
         # need to set time format validation functionality
-        tim1 = QtCore.QTime()
-        self.myTime.setTime (tim1)
+        endDateTime = QtCore.QDateTime()
+        myDateTime = endDateTime.currentDateTime()
+        self.myTime.setDateTime(myDateTime)
         
-        """TO DO NEXT---> Add a slider widget to set the Optional interval field for querying temporal datasets """
+        """Code that enables the Slider widget on out temporal tab. this enables the user to 
+       set the interval for required data """
+        """TO DO AT LATER STAGE----> when ready for execution the signal for the lcd should be 
+       connected to another external slot to retrieve the lcd value"""
+       #DAYS
+       #setting up the lcd and the slider widgets
+        self.dayLcd = QtGui.QLCDNumber(self)
+        self.daySlider = QtGui.QSlider(QtCore.Qt.Horizontal, self)
+        #set layout of Days Slider widget to the grid layout used above
+        #self.gridLayout.addWidget(QtGui.QLabel('Set Intervals - (optional)'), 2, 0)
+        self.gridLayout.addWidget(QtGui.QLabel('Days'), 3, 0)
+        self.gridLayout.addWidget(self.daySlider,  3,  1)
+        self.gridLayout.addWidget(self.dayLcd,  3,  2)
+        #LCD related
+        self.dayLcd.setDigitCount (3)
+        #Slider related
+        self.daySlider.setRange (0, 365)
+        #connecting the signal and slot of the slider and lcd
+        self.connect(self.daySlider,  QtCore.SIGNAL('valueChanged(int)'), self.dayLcd, QtCore.SLOT('display(int)') )
+        
+        #HOURS 
+        #setting up the lcd and the slider widgets
+        self.hourLcd = QtGui.QLCDNumber(self)
+        self.hourSlider = QtGui.QSlider(QtCore.Qt.Horizontal, self)
+        #set layout of Days Slider widget to the grid layout used above
+        self.gridLayout.addWidget(QtGui.QLabel('Hours'), 4, 0)
+        self.gridLayout.addWidget(self.hourSlider,  4,  1)
+        self.gridLayout.addWidget(self.hourLcd,  4,  2)
+        #LCD related
+        self.hourLcd.setDigitCount (2)
+        #Slider related
+        self.hourSlider.setRange (0, 23)
+        #connecting the signal and slot of the slider and lcd
+        self.connect(self.hourSlider,  QtCore.SIGNAL('valueChanged(int)'), self.hourLcd, QtCore.SLOT('display(int)') )
+        
+        #MINUTES 
+        #setting up the lcd and the slider widgets
+        self.minuteLcd = QtGui.QLCDNumber(self)
+        self.minuteSlider = QtGui.QSlider(QtCore.Qt.Horizontal, self)
+        #set layout of Days Slider widget to the grid layout used above
+        self.gridLayout.addWidget(QtGui.QLabel('Minutes'), 5, 0)
+        self.gridLayout.addWidget(self.minuteSlider,  5,  1)
+        self.gridLayout.addWidget(self.minuteLcd,  5,  2)
+        #LCD related
+        self.minuteLcd.setDigitCount (2)
+        #Slider related
+        self.minuteSlider.setRange (0, 59)
+        #connecting the signal and slot of the slider and lcd
+        self.connect(self.minuteSlider,  QtCore.SIGNAL('valueChanged(int)'), self.minuteLcd, QtCore.SLOT('display(int)') )
+        
+        """TO DO---> implement some form of validation method such that the start date is not  later than the end date """
 
 
 class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
