@@ -35,6 +35,8 @@ from core.modules.vistrails_module import Module, ModuleError
 
 class Session(Module):
     """An abstract class describing a session"""
+    def __init__(self):
+        Module.__init__(self)
     def compute(self):
         pass
 

@@ -45,6 +45,7 @@ class OgcCommonWidget(QtGui.QWidget):
         self.service = None
         self.create_config_window()
 
+
     def create_config_window(self):
         """TO DO - add docstring"""
         self.setWindowTitle("General OGC Configuration Widget")

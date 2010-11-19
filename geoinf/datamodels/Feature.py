@@ -36,11 +36,20 @@ except:
 
 
 class FeatureModel(Module):
-    """TO DO - add docstring"""
+    """This is a common representation of Vector/Feature 
+    data, sourced from numerous places {postgis, shapefiles, wfs's, gml,...}
+    Representation is provided by the GDAL/OGR (OGR) library.
+    Classes that implement this module are expected to generate the 
+    internal OGR objects. Optionally, they may expose ports that 
+    serialise the OGR objects, but is more likely to take place 
+    via external serialisers
+    """
     def __init__(self):
         Module.__init__(self)
 
     def compute(self):
+        """Overriden by subclasses - typically where the 
+        conversion to an OGR Dataset takes place"""
         pass
 
 def initialize(*args, **keywords):

@@ -24,8 +24,12 @@
 ##
 ############################################################################
 """This package provides GIS capabilities for eo4vistrails.
-In particular, provides GRASS, PostGIS, OGC clients and some 
-visualisation capabilities through the QGIS API.
+In particular, provides PostGIS clients via psycopg2.
+This is not a SQL Builder - it assumes you know SQL
+and in particular, spatial SQL as provided by PostGIS. 
+You will need to write raw sql by hand. Provsions a session
+a.k.a. a postgis connection and allows random queries to be
+executed against the chosen database. 
 """
 
 identifier = 'za.co.csir.eo4vistrails.geoinf.postgis'
