@@ -48,7 +48,7 @@ class OgcCommonWidget(QtGui.QWidget):
     def create_config_window(self):
         """TO DO - add docstring"""
         self.setWindowTitle("General OGC Configuration Widget")
-        self.setMinimumSize(800, 300)
+        self.setMinimumSize(800, 350)
         self.center()
         self.mainLayout = QtGui.QVBoxLayout()
         self.setLayout(self.mainLayout)

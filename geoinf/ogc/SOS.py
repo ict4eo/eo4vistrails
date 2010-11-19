@@ -70,7 +70,7 @@ class SosCommonWidget(QtGui.QWidget):
     def create_config_window(self):
         """Create datacontainers and layout for displaying SOS-specific data."""
         self.setWindowTitle("SOS Configuration Widget")
-        self.setMinimumSize(800, 300)
+        self.setMinimumSize(900, 675)
         # main layout
         self.mainLayout = QtGui.QHBoxLayout()
         self.setLayout(self.mainLayout)
@@ -96,28 +96,53 @@ class SosCommonWidget(QtGui.QWidget):
         self.detailsLayout.addWidget(QtGui.QLabel('Response Format'), 4, 0)
         self.detailsLayout.addWidget(QtGui.QLabel('Response Mode'), 5, 0)
         self.detailsLayout.addWidget(QtGui.QLabel('Result Model'), 6, 0)
+        self.detailsLayout.addWidget(QtGui.QLabel('Observed Property'), 7, 0)
+        self.detailsLayout.addWidget(QtGui.QLabel('Feature of Interest'), 8, 0)
         #   data containers
         self.lblDescription =  QtGui.QLabel('-')
         self.detailsLayout.addWidget(self.lblDescription , 0, 1)
 
         self.boundingGroupBox = QtGui.QGroupBox("")
-        self.boundingLayout = QtGui.QHBoxLayout()
+        self.boundingLayout = QtGui.QVBoxLayout()
         self.boundingGroupBox.setLayout(self.boundingLayout)
         self.detailsLayout.addWidget(self.boundingGroupBox, 1, 1)
-        self.boundingLayout.addWidget(QtGui.QLabel('Min X:'))
+
+        self.minGroupBox = QtGui.QGroupBox("")
+        self.minLayout = QtGui.QHBoxLayout()
+        self.minGroupBox.setLayout(self.minLayout)
+        self.boundingLayout.addWidget(self.minGroupBox)
+        self.minLayout.addWidget(QtGui.QLabel('Min X:'))
         self.lblMinX =  QtGui.QLabel('-')
-        self.boundingLayout.addWidget(self.lblMinX)
-        self.boundingLayout.addWidget(QtGui.QLabel('Min Y:'))
+        self.minLayout.addWidget(self.lblMinX)
+        self.minLayout.addWidget(QtGui.QLabel('Min Y:'))
         self.lblMinY =  QtGui.QLabel('-')
-        self.boundingLayout.addWidget(self.lblMinY)
-        self.boundingLayout.addWidget(QtGui.QLabel('Max X:'))
+        self.minLayout.addWidget(self.lblMinY)
+
+        self.maxGroupBox = QtGui.QGroupBox("")
+        self.maxGroupBox.setFlat(True)
+        self.maxLayout = QtGui.QHBoxLayout()
+        self.maxGroupBox.setLayout(self.maxLayout)
+        self.boundingLayout.addWidget(self.maxGroupBox)
+        self.maxLayout.addWidget(QtGui.QLabel('Max X:'))
         self.lblMaxX =  QtGui.QLabel('-')
-        self.boundingLayout.addWidget(self.lblMaxX)
-        self.boundingLayout.addWidget(QtGui.QLabel('Max Y:'))
+        self.maxLayout.addWidget(self.lblMaxX)
+        self.maxLayout.addWidget(QtGui.QLabel('Max Y:'))
         self.lblMaxY =  QtGui.QLabel('-')
-        self.boundingLayout.addWidget(self.lblMaxY)
+        self.maxLayout.addWidget(self.lblMaxY)
+
+        self.srsGroupBox = QtGui.QGroupBox("")
+        self.srsGroupBox.setFlat(True)
+        self.srsLayout = QtGui.QHBoxLayout()
+        self.srsGroupBox.setLayout(self.srsLayout)
+        self.boundingLayout.addWidget(self.srsGroupBox)
+        self.srsLayout.addWidget(QtGui.QLabel('SRS:'))
+        self.lblSRS =  QtGui.QLabel('-')
+        self.srsLayout.addWidget(self.lblSRS)
+
+        self.boundingLayout.addStretch()  # force all items upwards
 
         self.timeGroupBox = QtGui.QGroupBox("")
+        self.timeGroupBox.setFlat(True)
         self.timeLayout = QtGui.QVBoxLayout()
         self.timeGroupBox.setLayout(self.timeLayout)
         self.detailsLayout.addWidget(self.timeGroupBox, 2, 1)
@@ -135,6 +160,10 @@ class SosCommonWidget(QtGui.QWidget):
         self.detailsLayout.addWidget(self.cbResponseMode, 5, 1)
         self.cbResultModel = QtGui.QComboBox()
         self.detailsLayout.addWidget(self.cbResultModel, 6, 1)
+        self.cbObservedProperty = QtGui.QComboBox()
+        self.detailsLayout.addWidget(self.cbObservedProperty, 7, 1)
+        self.cbFOI = QtGui.QComboBox()
+        self.detailsLayout.addWidget(self.cbFOI, 8, 1)
 
         # local signals
         self.connect(
@@ -155,12 +184,15 @@ class SosCommonWidget(QtGui.QWidget):
         self.lblMinY.setText('-')
         self.lblMaxX.setText('-')
         self.lblMaxY.setText('-')
+        self.lblSRS.setText('-')
         self.lblStartTime.setText('-')
         self.lblEndTime.setText('-')
         self.cbProcedure.clear()
         self.cbResponseFormat.clear()
         self.cbResponseMode.clear()
         self.cbResultModel.clear()
+        self.cbObservedProperty.clear()
+        self.cbFOI.clear()
 
     def offeringsChanged(self):
         """Update offering details containers when new offering selected."""
@@ -184,7 +216,7 @@ class SosCommonWidget(QtGui.QWidget):
                         self.lblMinY.setText(str(content.bounding_box[1]))
                         self.lblMaxX.setText(str(content.bounding_box[2]))
                         self.lblMaxY.setText(str(content.bounding_box[3]))
-                        #self.SRS = content.bounding_box[4] #TO DO
+                        self.lblSRS.setText(str(content.bounding_box[4]))
                     if content.procedure:
                         for pr in content.procedure:
                             self.cbProcedure.addItem(pr)
@@ -197,6 +229,12 @@ class SosCommonWidget(QtGui.QWidget):
                     if content.result_model:
                         for rd in content.result_model:
                             self.cbResultModel.addItem(rd)
+                    if content.observed_property:
+                        for op in content.observed_property:
+                            self.cbObservedProperty.addItem(op)
+                    if content.feature_of_interest:
+                        for foi in content.feature_of_interest:
+                            self.cbFOI.addItem(foi)
 
     def loadOfferings(self):
         """Load the offerings from the service metadata."""
