@@ -62,7 +62,16 @@ class WFSCommonWidget(QtGui.QWidget):
             self.parent_widget,
             QtCore.SIGNAL('serviceActivated'),
             self.loadRequest
+
         )
+
+           # local signals
+        self.connect(
+            self.lstFeatures,
+            QtCore.SIGNAL("itemClicked(QListWidgetItem*)"),
+            self.featureNameChanged
+        )
+
 
     def create_wfs_config_window(self):
         """TO DO - add docstring"""
@@ -104,17 +113,8 @@ class WFSCommonWidget(QtGui.QWidget):
         self.lstFeatures = QtGui.QListWidget()
         gridLayout.addWidget(self.lstFeatures, 1, 1)
 
-        self.ftTreeView = QtGui.QTreeWidget()
+        self.ftTreeView = QtGui.QTreeWidget()   # want to view metadata for each selected typename / FeatureName.
         gridLayout.addWidget(self.ftTreeView, 1, 3)
-
-
-        #self.opComboLayerNames = QtGui.QComboBox()
-        #self.opComboLayerNames.addItems(['Null'])
-        #gridLayout.addWidget(self.opComboLayerNames, 2, 1)
-
-        #self.opComboSRS = QtGui.QComboBox()
-        #self.opComboSRS.addItems(['4326', '', ''])
-        #gridLayout.addWidget(self.opComboSRS, 5, 1)
 
         self.loadRequestButton = QtGui.QPushButton('load')
 
@@ -129,6 +129,7 @@ class WFSCommonWidget(QtGui.QWidget):
         gridLayout.addWidget(self.saveRequestButton, 7, 3)
         self.connect(self.saveRequestButton, QtCore.SIGNAL('clicked()'), self.saveRequest)
 
+
     def clearRequest(self):
         """TO DO Implement clear fields """
         pass
@@ -136,6 +137,8 @@ class WFSCommonWidget(QtGui.QWidget):
     def saveRequest(self):
         """TO DO Implement read set parameters, assign to wfs input ports """
         pass
+
+
 
     def loadRequest(self):
         """ loadRequest() -> None
@@ -150,30 +153,34 @@ class WFSCommonWidget(QtGui.QWidget):
                 self.lstFeatures.addItems([content])
 
 
-            #view = self.contents.getfeature(typename=['sf:bugsites'], maxfeatures=0)
-            #self.ftTreeView.Append(view.read())
+    def featureNameChanged(self):
+        """Update offering details containers when new offering selected."""
 
-        '''
-        wfs = WebFeatureService(defaultUrl)
-        layers = list(wfs.contents)
+        self.clearRequest()
 
-        self.opComboAvailableOperations.addItems([op.name for op in wfs.operations])
+        selected_featureName = self.lstFeatures.selectedItems()[0].text()
+
+        print "Accessing....: " + selected_featureName
+
+        if self.parent_widget.service and self.parent_widget.service.service_valid and self.contents:
+
+            for content in self.contents:
+
+                if selected_featureName == content:
+
+                    crsCode = self.contents[str(selected_featureName)].crsOptions
+
+            for elem in crsCode:
+
+                self.ESPGEdit.setText(elem)
+
+                coordinates = self.contents[str(selected_featureName)].boundingBoxWGS84
+                self.minXEdit.setText(str(coordinates[0]))
+                self.minYEdit.setText(str(coordinates[1]))
+                self.maxXEdit.setText(str(coordinates[2]))
+                self.maxYEdit.setText(str(coordinates[3]))
 
 
-
-        for elem in self.contents:
-
-            crsCode = elem[str(self.lstFeatures.currentText())].crsOptions
-
-        for elemen in crsCode:
-            self.ESPGEdit.setText(elemen)
-            coordinates = elemen[str(self.lstFeatures.currentText())].boundingBoxWGS84
-            self.minXEdit.setText(str(coordinates[0]))
-            self.minYEdit.setText(str(coordinates[1]))
-            self.maxXEdit.setText(str(coordinates[2]))
-            self.maxYEdit.setText(str(coordinates[3]))
-
-        '''
 
 class WFSConfigurationWidget(OgcConfigurationWidget):
     """makes use of code style from OgcConfigurationWidget"""
