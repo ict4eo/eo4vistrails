@@ -9,7 +9,7 @@ from opennebula.RPyC import RPyC
 from geoinf.ogc.OgcConfigurationWidget import OgcConfigurationWidget
 from core.modules.python_source_configure import PythonSourceConfigurationWidget
 from utils.session import Session
-from geoinf.postgis.PostGIS import PostGisSession,  PostGisCursor,  PostGisFeatureReturningCursor,  PostGisBasicReturningCursor,  PostGisNonReturningCursor
+from geoinf.postgis.PostGIS import PostGisSession,  PostGisCursor,  PostGisFeatureReturningCursor,  PostGisBasicReturningCursor,  PostGisNonReturningCursor,  SQLSourceConfigurationWidget
 #from geoinf.postgis import *
 
 def initialize(*args, **keywords):
@@ -45,23 +45,26 @@ def initialize(*args, **keywords):
         'The password for user for accessing your database'))    
     reg.add_input_port(PostGisSession, 'postgisDatabase', (core.modules.basic_modules.String, 
         'The actual database you will work with'))  
-    reg.add_output_port(PostGisSession, 'self', PostGisSession)#effect?
+    reg.add_output_port(PostGisSession, 'self', PostGisSession)#supports passing of session object around
 
     #reg.add_module(PostGisCursor)
     
-    reg.add_module(PostGisFeatureReturningCursor)
+    reg.add_module(PostGisFeatureReturningCursor,  configureWidgetType=SQLSourceConfigurationWidget)
     reg.add_input_port(PostGisFeatureReturningCursor,  "PostGisSessionObject",  PostGisSession)
-    reg.add_input_port(PostGisFeatureReturningCursor,  "SQLString",  core.modules.basic_modules.String)
+    reg.add_input_port(PostGisFeatureReturningCursor,  "source",  core.modules.basic_modules.String)
+    reg.add_output_port(PostGisFeatureReturningCursor, 'self', PostGisFeatureReturningCursor)#supports ControlFlow ExecuteInOrder
     
-    reg.add_module(PostGisBasicReturningCursor)
+    reg.add_module(PostGisBasicReturningCursor,  configureWidgetType=SQLSourceConfigurationWidget)
     reg.add_input_port(PostGisBasicReturningCursor,  "PostGisSessionObject",  PostGisSession)
-    reg.add_input_port(PostGisBasicReturningCursor,  "SQLString",  core.modules.basic_modules.String)
+    reg.add_input_port(PostGisBasicReturningCursor,  "source",  core.modules.basic_modules.String)
     reg.add_output_port(PostGisBasicReturningCursor, 'records', core.modules.basic_modules.List)
+    reg.add_output_port(PostGisBasicReturningCursor, 'self', PostGisBasicReturningCursor)#supports ControlFlow ExecuteInOrder
     
-    reg.add_module(PostGisNonReturningCursor)
+    reg.add_module(PostGisNonReturningCursor,  configureWidgetType=SQLSourceConfigurationWidget)
     reg.add_input_port(PostGisNonReturningCursor,  "PostGisSessionObject",  PostGisSession)
-    reg.add_input_port(PostGisNonReturningCursor,  "SQLString",  core.modules.basic_modules.String)
+    reg.add_input_port(PostGisNonReturningCursor,  "source",  core.modules.basic_modules.String)
     reg.add_output_port(PostGisNonReturningCursor, 'status', core.modules.basic_modules.List)
+    reg.add_output_port(PostGisNonReturningCursor, 'self', PostGisNonReturningCursor)#supports ControlFlow ExecuteInOrder
     
     # VisTrails cannot currently automatically detect your derived
     # classes, and the ports that they support as input and

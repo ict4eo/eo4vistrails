@@ -36,6 +36,8 @@ from PyQt4 import QtCore, QtGui
 from packages.eo4vistrails.geoinf.datamodels.Feature import FeatureModel
 from packages.eo4vistrails.utils.session import Session
 from core.modules.vistrails_module import Module, new_module, NotCacheable, ModuleError
+from core.modules.source_configure import SourceConfigurationWidget
+import urllib
 
 class PostGisSession(Session):
     """Responsible for making a connection to a postgis database.
@@ -101,8 +103,8 @@ class PostGisFeatureReturningCursor(PostGisCursor,  FeatureModel):
         Overrides supers method"""
         if self.cursor(self.getInputFromPort("PostGisSessionObject")) == True:
             try:
-                print str(self.getInputFromPort("SQLString"))
-                self.curs.execute(str(self.getInputFromPort("SQLString")))
+                port_input = urllib.unquote(str(self.forceGetInputFromPort('source', '')))
+                self.curs.execute(port_input)
                 self.sql_return_list = self.curs.fetchall()
                 self.curs.close()
             except:
@@ -126,8 +128,8 @@ class PostGisBasicReturningCursor(Module,  PostGisCursor):
         Overrides supers method"""
         if self.cursor(self.getInputFromPort("PostGisSessionObject")) == True:
             try:
-                print str(self.getInputFromPort("SQLString"))
-                self.curs.execute(str(self.getInputFromPort("SQLString")))
+                port_input = urllib.unquote(str(self.forceGetInputFromPort('source', '')))
+                self.curs.execute(port_input)
                 self.sql_return_list = self.curs.fetchall()
                 self.setResult('records',  self.sql_return_list)
                 self.curs.close()
@@ -150,7 +152,7 @@ class PostGisNonReturningCursor(Module,  PostGisCursor):
             try:
                 #we could be dealing with multiple requests here, so parse string and execute requests one by one
                 resultstatus =[]
-                port_input = str(self.getInputFromPort("SQLString"))
+                port_input = urllib.unquote(str(self.forceGetInputFromPort('source', '')))
                 port_input = port_input.rstrip()
                 port_input = port_input.lstrip()
                 for query in port_input.split(";"):
@@ -164,3 +166,7 @@ class PostGisNonReturningCursor(Module,  PostGisCursor):
                 self.curs.close()
             except:
                 raise ModuleError,  (PostGisFeatureReturningCursor,  "Could not execute SQL Statement")        
+class SQLSourceConfigurationWidget(SourceConfigurationWidget):
+    def __init__(self, module, controller, parent=None):
+        SourceConfigurationWidget.__init__(self, module, controller, None,
+                                           False, False, parent)
