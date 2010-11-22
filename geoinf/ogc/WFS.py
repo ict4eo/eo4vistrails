@@ -26,13 +26,11 @@
 """This module provides an OGC Web Feature Service Client via owslib.
 """
 
-#from owslib.wfs import WFS
+
 from PyQt4 import QtCore, QtGui
 from packages.eo4vistrails.geoinf.datamodels.Feature import FeatureModel
 from OgcConfigurationWidget import OgcConfigurationWidget
 from core.modules.vistrails_module import Module, new_module, NotCacheable, ModuleError
-
-#from owslib.wfs import WebFeatureService
 
 
 #need to import the configuration widget we develop
@@ -71,8 +69,8 @@ class WFSCommonWidget(QtGui.QWidget):
         gridLayout = QtGui.QGridLayout()
         self.setLayout(gridLayout)
         #gridLayout.addWidget(QtGui.QLabel('wfs Url'), 0, 0)
-        gridLayout.addWidget(QtGui.QLabel('Available Operations'), 1, 0)
-        gridLayout.addWidget(QtGui.QLabel('TypeNames'), 2, 0)
+        gridLayout.addWidget(QtGui.QLabel('Feature Names:'), 1, 0)
+        #gridLayout.addWidget(QtGui.QLabel('TypeNames'), 2, 0)
         gridLayout.addWidget(QtGui.QLabel('bbox:'), 3, 0)
         gridLayout.addWidget(QtGui.QLabel('                             min  x'), 3, 1)
         gridLayout.addWidget(QtGui.QLabel('                     min  y'), 3, 3)
@@ -102,12 +100,17 @@ class WFSCommonWidget(QtGui.QWidget):
         gridLayout.addWidget(self.maxYEdit, 4, 4)
         #gridLayout.addWidget(self.DescribeFeatureTypeEdit, 6, 1)
         #gridLayout.addWidget(self.GetFeatureEdit, 7, 1)
-        self.opComboAvailableOperations = QtGui.QComboBox()
-        #self.opComboAvailableOperations.addItems(['Null'])
-        gridLayout.addWidget(self.opComboAvailableOperations, 1, 1)
-        self.opComboLayerNames = QtGui.QComboBox()
+
+        self.lstFeatures = QtGui.QListWidget()
+        gridLayout.addWidget(self.lstFeatures, 1, 1)
+
+        self.ftTreeView = QtGui.QTreeWidget()
+        gridLayout.addWidget(self.ftTreeView, 1, 3)
+
+
+        #self.opComboLayerNames = QtGui.QComboBox()
         #self.opComboLayerNames.addItems(['Null'])
-        gridLayout.addWidget(self.opComboLayerNames, 2, 1)
+        #gridLayout.addWidget(self.opComboLayerNames, 2, 1)
 
         #self.opComboSRS = QtGui.QComboBox()
         #self.opComboSRS.addItems(['4326', '', ''])
@@ -140,36 +143,37 @@ class WFSCommonWidget(QtGui.QWidget):
 
         SEE SOS.py for similar code (under loadOfferings method)
         """
-        #result = str(self.wfsUrlEdit.text()
 
-        defaultUrl = str(self.wfsUrlEdit.text())
-        #defaultUrl = str(self.parent_widget.service.service_valid())
-
-        #if self.parent_widget.service and self.parent_widget.service.service_valid:
-
-             #for content in self.parent_widget.service:
-                #print content.id
-                #item = QtGui.QListWidgetItem(content.id)
-                #self.lbxOfferings.addItem(item)
+        if self.parent_widget.service and self.parent_widget.service.service_valid:
+            self.contents = self.parent_widget.service.service.__dict__['contents']
+            for content in self.contents:
+                self.lstFeatures.addItems([content])
 
 
+            #view = self.contents.getfeature(typename=['sf:bugsites'], maxfeatures=0)
+            #self.ftTreeView.Append(view.read())
+
+        '''
         wfs = WebFeatureService(defaultUrl)
         layers = list(wfs.contents)
 
         self.opComboAvailableOperations.addItems([op.name for op in wfs.operations])
 
-        for elem in layers:
-            self.opComboLayerNames.addItems([elem])
-            crsCode = wfs[str(self.opComboLayerNames.currentText())].crsOptions
+
+
+        for elem in self.contents:
+
+            crsCode = elem[str(self.lstFeatures.currentText())].crsOptions
 
         for elemen in crsCode:
             self.ESPGEdit.setText(elemen)
-            coordinates = wfs[str(self.opComboLayerNames.currentText())].boundingBoxWGS84
+            coordinates = elemen[str(self.lstFeatures.currentText())].boundingBoxWGS84
             self.minXEdit.setText(str(coordinates[0]))
             self.minYEdit.setText(str(coordinates[1]))
             self.maxXEdit.setText(str(coordinates[2]))
             self.maxYEdit.setText(str(coordinates[3]))
 
+        '''
 
 class WFSConfigurationWidget(OgcConfigurationWidget):
     """makes use of code style from OgcConfigurationWidget"""
