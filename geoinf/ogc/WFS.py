@@ -32,7 +32,7 @@ from packages.eo4vistrails.geoinf.datamodels.Feature import FeatureModel
 from OgcConfigurationWidget import OgcConfigurationWidget
 from core.modules.vistrails_module import Module, new_module, NotCacheable, ModuleError
 
-from owslib.wfs import WebFeatureService
+#from owslib.wfs import WebFeatureService
 
 
 #need to import the configuration widget we develop
@@ -57,6 +57,7 @@ class WFSCommonWidget(QtGui.QWidget):
         self.setObjectName("WFSConfigurationWidget")
         self.parent_widget = ogc_widget
         self.service = self.parent_widget.service
+
         self.create_wfs_config_window()
         # listener for signal emitted by OgcCommonWidget class
         self.connect(
@@ -69,7 +70,7 @@ class WFSCommonWidget(QtGui.QWidget):
         """TO DO - add docstring"""
         gridLayout = QtGui.QGridLayout()
         self.setLayout(gridLayout)
-        gridLayout.addWidget(QtGui.QLabel('wfs Url'), 0, 0)
+        #gridLayout.addWidget(QtGui.QLabel('wfs Url'), 0, 0)
         gridLayout.addWidget(QtGui.QLabel('Available Operations'), 1, 0)
         gridLayout.addWidget(QtGui.QLabel('TypeNames'), 2, 0)
         gridLayout.addWidget(QtGui.QLabel('bbox:'), 3, 0)
@@ -80,7 +81,7 @@ class WFSCommonWidget(QtGui.QWidget):
         gridLayout.addWidget(QtGui.QLabel('ESPG/SRS Code'), 5, 0)
         gridLayout.addWidget(QtGui.QLabel('maxFeatures'), 6, 0)
         #gridLayout.addWidget(QtGui.QLabel('GetFeature'), 7, 0)
-        self.wfsUrlEdit = QtGui.QLineEdit('http://localhost:8080/geoserver/wfs')
+        #self.wfsUrlEdit = QtGui.QLineEdit('http://localhost:8080/geoserver/wfs')
 
         self.minXEdit = QtGui.QLineEdit('0.0')
         self.ESPGEdit = QtGui.QLineEdit('Null')
@@ -92,7 +93,7 @@ class WFSCommonWidget(QtGui.QWidget):
         #self.DescribeFeatureTypeEdit = QtGui.QLineEdit('http://')
         #self.GetFeatureEdit = QtGui.QLineEdit('http://')
 
-        gridLayout.addWidget(self.wfsUrlEdit, 0, 1)
+        #gridLayout.addWidget(self.wfsUrlEdit, 0, 1)
         gridLayout.addWidget(self.minXEdit, 3,2)
         gridLayout.addWidget(self.ESPGEdit, 5,1)
         gridLayout.addWidget(self.maxFeaturesEdit, 6,1)
@@ -142,10 +143,21 @@ class WFSCommonWidget(QtGui.QWidget):
         #result = str(self.wfsUrlEdit.text()
 
         defaultUrl = str(self.wfsUrlEdit.text())
+        #defaultUrl = str(self.parent_widget.service.service_valid())
+
+        #if self.parent_widget.service and self.parent_widget.service.service_valid:
+
+             #for content in self.parent_widget.service:
+                #print content.id
+                #item = QtGui.QListWidgetItem(content.id)
+                #self.lbxOfferings.addItem(item)
+
+
         wfs = WebFeatureService(defaultUrl)
         layers = list(wfs.contents)
 
         self.opComboAvailableOperations.addItems([op.name for op in wfs.operations])
+
         for elem in layers:
             self.opComboLayerNames.addItems([elem])
             crsCode = wfs[str(self.opComboLayerNames.currentText())].crsOptions
@@ -157,106 +169,6 @@ class WFSCommonWidget(QtGui.QWidget):
             self.minYEdit.setText(str(coordinates[1]))
             self.maxXEdit.setText(str(coordinates[2]))
             self.maxYEdit.setText(str(coordinates[3]))
-
-        ''''
-        label_wfs_url = QtGui.QLabel('OGC WebFeatureService url:', self)  # should make use of the one from OgcConfigrationWidget instead.
-        label_wfs_url.setGeometry(QtCore.QRect(5, 20, 192, 27))
-        line_edit_wfs_url = QtGui.QLineEdit("", self)
-        line_edit_wfs_url.setGeometry(QtCore.QRect(202, 20, 530, 27))
-
-        lineEdit_MinY = QtGui.QLineEdit("", self)
-        lineEdit_MinY.setGeometry(QtCore.QRect(270, 290, 80, 21))
-        lineEdit_MinY.setObjectName("lineEdit_MinY")
-
-        lbl_MaxY = QtGui.QLabel("Max Y:", self)
-        lbl_MaxY.setGeometry(QtCore.QRect(220, 350, 50, 21))
-        lbl_MaxY.setObjectName("lbl_MaxY")
-
-        lineEdit_MaxY = QtGui.QLineEdit("", self)
-        lineEdit_MaxY.setGeometry(QtCore.QRect(270, 350, 80, 21))
-        lineEdit_MaxY.setObjectName("lineEdit_MaxY")
-
-        lblMinY = QtGui.QLabel("Min Y:", self)
-        lblMinY.setGeometry(QtCore.QRect(220, 290, 40, 20))
-        lblMinY.setObjectName("lblMinY")
-
-        lbl_bbox = QtGui.QLabel("bbox:", self)
-        lbl_bbox.setGeometry(QtCore.QRect(10, 320, 40, 21))
-        lbl_bbox.setObjectName("lbl_bbox")
-
-        lbl_TypeNames = QtGui.QLabel( "TypeNames:", self)
-        lbl_TypeNames.setGeometry(QtCore.QRect(0, 130, 80, 21))
-        lbl_TypeNames.setObjectName("lbl_TypeNames")
-
-        lbl_ESPG = QtGui.QLabel("ESPG Code:", self)
-        lbl_ESPG.setGeometry(QtCore.QRect(0, 180, 81, 21))
-        lbl_ESPG.setObjectName("lbl_ESPG")
-
-        lbl_MaxFeatures = QtGui.QLabel("MaxFeatures:", self)
-        lbl_MaxFeatures.setGeometry(QtCore.QRect(0, 230, 90, 21))
-        lbl_MaxFeatures.setObjectName("lbl_MaxFeatures")
-
-        lbl_Operations = QtGui.QLabel("Avail Operations:", self)
-        lbl_Operations.setGeometry(QtCore.QRect(0, 80, 124, 21))
-        lbl_Operations.setObjectName("lbl_Operations")
-
-        cmb_Operations = QtGui.QComboBox(self)
-        cmb_Operations.setGeometry(QtCore.QRect(130, 80, 160, 21))
-        cmb_Operations.setObjectName("cmb_Operations")
-
-        cmb_TypeNames = QtGui.QComboBox(self)
-        cmb_TypeNames.setGeometry(QtCore.QRect(130, 130, 160, 21))
-        cmb_TypeNames.setObjectName("cmb_TypeNames")
-
-        lineEdit_ESPG = QtGui.QLineEdit("", self)
-        lineEdit_ESPG.setGeometry(QtCore.QRect(130, 180, 160, 21))
-        lineEdit_ESPG.setObjectName("lineEdit_ESPG")
-
-        lineEdit_MaxFeatures = QtGui.QLineEdit("", self)
-        lineEdit_MaxFeatures.setGeometry(QtCore.QRect(130, 230, 160, 21))
-        lineEdit_MaxFeatures.setObjectName("lineEdit_MaxFeatures")
-
-        lineEdit_MinX = QtGui.QLineEdit("", self)
-        lineEdit_MinX.setGeometry(QtCore.QRect(130, 290, 80, 21))
-        lineEdit_MinX.setObjectName("lineEdit_MinX")
-
-        lbl_MinX = QtGui.QLabel("Min X:", self)
-        lbl_MinX.setGeometry(QtCore.QRect(80, 290, 40, 21))
-        lbl_MinX.setObjectName("lbl_MinX")
-
-        lineEdit_MaxX = QtGui.QLineEdit("", self)
-        lineEdit_MaxX.setGeometry(QtCore.QRect(130, 350, 80, 21))
-        lineEdit_MaxX.setObjectName("lineEdit_MaxX")
-
-        lbl_MaxX = QtGui.QLabel("Max X:", self)
-        lbl_MaxX.setGeometry(QtCore.QRect(80, 350, 44, 21))
-        lbl_MaxX.setObjectName("lbl_MaxX")
-
-        wfs_treeView = QtGui.QTreeView(self)
-        wfs_treeView.setGeometry(QtCore.QRect(355, 81, 460, 390))
-        wfs_treeView.setWordWrap(True)
-        wfs_treeView.setObjectName("wfs_treeView")
-
-        label_Inspect_browser = QtGui.QLabel("Inspect TypeName Metadata", self)
-        label_Inspect_browser.setGeometry(QtCore.QRect(531, 60, 201, 20))
-        label_Inspect_browser.setObjectName("label_Inspect_browser")
-
-        loadButton = QtGui.QPushButton(self)
-        loadButton.setGeometry(QtCore.QRect(80, 470, 71, 27))
-        loadButton.setObjectName("loadButton")
-
-        resetButton = QtGui.QPushButton(self)
-        resetButton.setGeometry(QtCore.QRect(180, 470, 71, 27))
-        resetButton.setObjectName("resetButton")
-
-        saveButton = QtGui.QPushButton(self)
-        saveButton.setGeometry(QtCore.QRect(280, 470, 71, 27))
-        saveButton.setObjectName("saveButton")
-
-        loadButton.setText(QtGui.QApplication.translate("QTConfigurationWidget", "Load", None, QtGui.QApplication.UnicodeUTF8))
-        saveButton.setText(QtGui.QApplication.translate("QTConfigurationWidget", "Save", None, QtGui.QApplication.UnicodeUTF8))
-        resetButton.setText(QtGui.QApplication.translate("QTConfigurationWidget", "Reset", None, QtGui.QApplication.UnicodeUTF8))
-        '''
 
 
 class WFSConfigurationWidget(OgcConfigurationWidget):

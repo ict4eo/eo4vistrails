@@ -56,17 +56,20 @@ class OgcCommonWidget(QtGui.QWidget):
 
         if self.launchtype == "sos":
             self.urlGroupBox = QtGui.QGroupBox("OGC Sensor Observation Service:")
+            self.line_edit_OGC_url = QtGui.QLineEdit("http://giv-sos.uni-muenster.de:8080/52nSOSv3/sos?request=GetCapabilities&service=SOS")
         elif self.launchtype == "wfs":
             self.urlGroupBox = QtGui.QGroupBox("OGC Web Feature Service:")
+            self.line_edit_OGC_url = QtGui.QLineEdit('http://localhost:8080/geoserver/wfs')
         elif self.launchtype == "wcs":
             self.urlGroupBox = QtGui.QGroupBox("OGC Web Coverage Service:")
+            self.line_edit_OGC_url = QtGui.QLineEdit('http://localhost:8080/geoserver/wcs') # this one not sure if default request is set like this.
         else:
             self.urlGroupBox = QtGui.QGroupBox("OGC Service:")
         self.fetchUrlLayout = QtGui.QHBoxLayout()
 
         self.label_OGC_url = QtGui.QLabel('URL & Version:')
 
-        self.line_edit_OGC_url = QtGui.QLineEdit("http://giv-sos.uni-muenster.de:8080/52nSOSv3/sos?request=GetCapabilities&service=SOS") #test only !!!
+        #self.line_edit_OGC_url = QtGui.QLineEdit("http://giv-sos.uni-muenster.de:8080/52nSOSv3/sos?request=GetCapabilities&service=SOS") #test only !!!
 
         self.launchversion = QtGui.QComboBox()
         if self.launchtype == "sos":
