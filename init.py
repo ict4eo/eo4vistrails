@@ -5,16 +5,23 @@ from geoinf.ogc.Common import OgcService
 from geoinf.ogc.WFS import WFS,  WFSConfigurationWidget
 from geoinf.ogc.WCS import WCS,  WCSConfigurationWidget
 from geoinf.ogc.SOS import SOS,  SOSConfigurationWidget
-from opennebula.RPyC import RPyC
 from geoinf.ogc.OgcConfigurationWidget import OgcConfigurationWidget
-from core.modules.python_source_configure import PythonSourceConfigurationWidget
 from utils.session import Session
 from geoinf.postgis.PostGIS import PostGisSession,  PostGisCursor,  PostGisFeatureReturningCursor,  PostGisBasicReturningCursor,  PostGisNonReturningCursor,  SQLSourceConfigurationWidget
 #from geoinf.postgis import *
 
+import packages.eo4vistrails.opennebula.init
+import packages.eo4vistrails.utils.init
+
 def initialize(*args, **keywords):
     '''sets everything up'''
-    
+    # VisTrails cannot currently automatically detect your derived
+    # classes, and the ports that they support as input and
+    # output. Because of this, you as a module developer need to let
+    # VisTrails know that you created a new module. This is done by calling
+    # function addModule:
+        
+
     # We'll first create a local alias for the module_registry so that
     # we can refer to it in a shorter way.
     reg = core.modules.module_registry.get_module_registry()
@@ -66,15 +73,12 @@ def initialize(*args, **keywords):
     reg.add_output_port(PostGisNonReturningCursor, 'status', core.modules.basic_modules.List)
     reg.add_output_port(PostGisNonReturningCursor, 'self', PostGisNonReturningCursor)#supports ControlFlow ExecuteInOrder
     
-    # VisTrails cannot currently automatically detect your derived
-    # classes, and the ports that they support as input and
-    # output. Because of this, you as a module developer need to let
-    # VisTrails know that you created a new module. This is done by calling
-    # function addModule:
-    reg.add_module(RPyC,
-                    configureWidgetType=PythonSourceConfigurationWidget)
-
-    reg.add_input_port(RPyC, 'rPyCServer', (core.modules.basic_modules.String, 
-                                            'The RPyC Server IP'))    
-    reg.add_input_port(RPyC, 'source', core.modules.basic_modules.String, True)    
-    reg.add_output_port(RPyC, 'self', core.modules.basic_modules.Module)
+        
+    #Isolate the registration of the modules 
+    packages.eo4vistrails.opennebula.init.initialize(*args, **keywords)
+    packages.eo4vistrails.utils.init.initialize(*args, **keywords)
+    
+    #reg.add_module(RPyC, configureWidgetType=PythonSourceConfigurationWidget)
+    #reg.add_input_port(RPyC, 'rPyCServer', (core.modules.basic_modules.String, 'The RPyC Server IP'))    
+    #reg.add_input_port(RPyC, 'source', core.modules.basic_modules.String, True)    
+    #reg.add_output_port(RPyC, 'self', core.modules.basic_modules.Module)

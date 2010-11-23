@@ -33,9 +33,6 @@ identifier = 'za.co.csir.eo4vistrails.openenbula'
 #name = 'eo4vistrails.openenbula'
 version = '0.0.1'
 
-
 def package_requirements():
-    import core.requirements
-    if not core.requirements.python_module_exists('owslib'):
-        raise core.requirements.MissingRequirement('owslib')
+    pass
 
