@@ -110,7 +110,7 @@ class PostGisFeatureReturningCursor(PostGisCursor,  FeatureModel):
             except:
                 raise ModuleError,  (PostGisFeatureReturningCursor,  "Could not execute SQL Statement")
             #do stuff with this return list -> make it into an OGR dataset
-            #see (http://trac.osgeo.org/postgis/wiki/UsersWikiOGR)
+            #see (http://trac.osgeo.org/postgis/wiki/UsersWikiOGR, http://www.gdal.org/ogr/drv_memory.htm, ogr memory driver python in googlel)
             #for now, to test, print to stdout
             #could be implemented directy via OGR's SQL capability
             print "data are: "

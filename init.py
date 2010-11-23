@@ -1,5 +1,5 @@
 import core
-from geoinf.datamodels.Feature import FeatureModel
+from geoinf.datamodels.Feature import FeatureModel,  FileFeatureModel
 from geoinf.datamodels.Raster import RasterModel
 from geoinf.ogc.Common import OgcService
 from geoinf.ogc.WFS import WFS,  WFSConfigurationWidget
@@ -29,6 +29,7 @@ def initialize(*args, **keywords):
     #reg.add_module(WFS)
     #input ports
     reg.add_module(FeatureModel) #abstract
+    reg.add_module(FileFeatureModel)
     reg.add_module(RasterModel) #abstract
     
     reg.add_module(WFS, configureWidgetType=WFSConfigurationWidget)
