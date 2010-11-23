@@ -32,5 +32,3 @@ identifier = 'za.co.csir.eo4vistrails.utils'
 name = 'eo4vistrails.utils'
 version = '0.0.1'
 
-from threading import Lock
-threadLock = Lock()
