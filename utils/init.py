@@ -13,9 +13,7 @@ def initialize(*args, **keywords):
     #Add Fork
     reg.add_module(ThreadSafe.Fork, 
                    namespace=mynamespace)
-    reg.add_input_port(ThreadSafe.Fork, 'threadSafeModule1', 
-                        basic_modules.Module)
-    reg.add_input_port(ThreadSafe.Fork, 'threadSafeModule2', 
+    reg.add_input_port(ThreadSafe.Fork, 'threadSafeModules', 
                         basic_modules.Module)
                         
     #Add ThreaedSafeTest
