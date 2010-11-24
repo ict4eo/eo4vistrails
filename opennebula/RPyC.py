@@ -35,6 +35,8 @@ from core.modules.module_registry import get_module_registry
 from core.modules.vistrails_module import Module, NotCacheable, ModuleError
 from core.modules import basic_modules
 
+from packages.eo4vistrails.utils import ThreadSafe
+
 import urllib
 import sys
 
@@ -66,7 +68,7 @@ class OneCmd(OneAbstract):
     # This constructor is strictly unnecessary. However, some modules
     # might want to initialize per-object data. When implementing your
     # own constructor, remember that it must not take any extra
-    # parameters.
+    # parameters.def __init__(self):
     def __init__(self):
         OneAbstract.__init__(self)
 
@@ -208,7 +210,7 @@ class RPyCDiscover(NotCacheable, Module):
         """Vistrails Module Compute, Entry Point Refer, to Vistrails Docs"""
         self.setResult("rpycslaves", self.getSlaves())
 
-class RPyC(NotCacheable, Module):
+class RPyC(NotCacheable, ThreadSafe.ThreadSafe):
     """
     RPyC is a Module that executes an arbitrary piece of Python code remotely.
     TODO: If you want a PythonSource execution to fail, call fail(error_message).
@@ -220,7 +222,7 @@ class RPyC(NotCacheable, Module):
     # own constructor, remember that it must not take any extra
     # parameters.
     def __init__(self):
-        Module.__init__(self)
+        ThreadSafe.ThreadSafe.__init__(self)
 
     def run_code(self, code_str, use_input=False, use_output=False):
         """

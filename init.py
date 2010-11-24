@@ -75,9 +75,10 @@ def initialize(*args, **keywords):
     reg.add_output_port(PostGisNonReturningCursor, 'self', PostGisNonReturningCursor)#supports ControlFlow ExecuteInOrder
     
         
-    #Isolate the registration of the modules 
-    packages.eo4vistrails.opennebula.init.initialize(*args, **keywords)
+    #Isolate the registration of the modules
+    #Note order does count
     packages.eo4vistrails.utils.init.initialize(*args, **keywords)
+    packages.eo4vistrails.opennebula.init.initialize(*args, **keywords)
     
     #reg.add_module(RPyC, configureWidgetType=PythonSourceConfigurationWidget)
     #reg.add_input_port(RPyC, 'rPyCServer', (core.modules.basic_modules.String, 'The RPyC Server IP'))    
