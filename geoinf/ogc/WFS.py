@@ -81,10 +81,10 @@ class WFSCommonWidget(QtGui.QWidget):
         gridLayout.addWidget(QtGui.QLabel('Feature Names:'), 1, 0)
         #gridLayout.addWidget(QtGui.QLabel('TypeNames'), 2, 0)
         gridLayout.addWidget(QtGui.QLabel('bbox:'), 3, 0)
-        gridLayout.addWidget(QtGui.QLabel('                             min  x'), 3, 1)
-        gridLayout.addWidget(QtGui.QLabel('                     min  y'), 3, 3)
-        gridLayout.addWidget(QtGui.QLabel('                             max  x'), 4, 1)
-        gridLayout.addWidget(QtGui.QLabel('                     max y'), 4, 3)
+        gridLayout.addWidget(QtGui.QLabel('top_left  X'), 3, 1)
+        gridLayout.addWidget(QtGui.QLabel('top_left  Y'), 3, 3)
+        gridLayout.addWidget(QtGui.QLabel('bottom_right  X'), 4, 1)
+        gridLayout.addWidget(QtGui.QLabel('bottom_right  Y'), 4, 3)
         gridLayout.addWidget(QtGui.QLabel('ESPG/SRS Code'), 5, 0)
         gridLayout.addWidget(QtGui.QLabel('maxFeatures'), 6, 0)
         #gridLayout.addWidget(QtGui.QLabel('GetFeature'), 7, 0)
@@ -111,11 +111,15 @@ class WFSCommonWidget(QtGui.QWidget):
         #gridLayout.addWidget(self.GetFeatureEdit, 7, 1)
 
         self.lstFeatures = QtGui.QListWidget()
+
         gridLayout.addWidget(self.lstFeatures, 1, 1)
 
-        self.ftTreeView = QtGui.QTreeWidget()   # want to view metadata for each selected typename / FeatureName.
-        gridLayout.addWidget(self.ftTreeView, 1, 3)
 
+        self.htmlView = QtGui.QTextEdit()   # want to view metadata for each selected typename / FeatureName.
+
+        gridLayout.addWidget(self.htmlView, 1, 3)
+
+        '''
         self.loadRequestButton = QtGui.QPushButton('load')
 
         gridLayout.addWidget(self.loadRequestButton, 7, 1)
@@ -128,16 +132,23 @@ class WFSCommonWidget(QtGui.QWidget):
         self.saveRequestButton = QtGui.QPushButton('save')
         gridLayout.addWidget(self.saveRequestButton, 7, 3)
         self.connect(self.saveRequestButton, QtCore.SIGNAL('clicked()'), self.saveRequest)
-
-
+        '''
+    '''
     def clearRequest(self):
         """TO DO Implement clear fields """
-        pass
+        self.minXEdit.setText('0.0')
+        self.ESPGEdit.setText('Null')
+        self.maxFeaturesEdit.setText('0')
 
+        self.minYEdit.setText('0.0')
+        self.maxXEdit.setText('0.0')
+        self.maxYEdit.setText('0.0')
+    '''
+    '''
     def saveRequest(self):
         """TO DO Implement read set parameters, assign to wfs input ports """
         pass
-
+    '''
 
 
     def loadRequest(self):
@@ -149,14 +160,13 @@ class WFSCommonWidget(QtGui.QWidget):
 
         if self.parent_widget.service and self.parent_widget.service.service_valid:
             self.contents = self.parent_widget.service.service.__dict__['contents']
+
             for content in self.contents:
                 self.lstFeatures.addItems([content])
 
 
     def featureNameChanged(self):
         """Update offering details containers when new offering selected."""
-
-        self.clearRequest()
 
         selected_featureName = self.lstFeatures.selectedItems()[0].text()
 
@@ -170,6 +180,8 @@ class WFSCommonWidget(QtGui.QWidget):
 
                     crsCode = self.contents[str(selected_featureName)].crsOptions
 
+                    #res = self.contents.getfeature(typename=[str(selected_featureName)], maxfeatures=1)
+
             for elem in crsCode:
 
                 self.ESPGEdit.setText(elem)
@@ -180,6 +192,11 @@ class WFSCommonWidget(QtGui.QWidget):
                 self.maxXEdit.setText(str(coordinates[2]))
                 self.maxYEdit.setText(str(coordinates[3]))
 
+        #self.htmlView.setText("for test purpose: to see if Feature metadata can be diplayed ")
+
+
+
+        #print res.read()
 
 
 class WFSConfigurationWidget(OgcConfigurationWidget):

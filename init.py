@@ -10,8 +10,8 @@ from utils.session import Session
 from geoinf.postgis.PostGIS import PostGisSession,  PostGisCursor,  PostGisFeatureReturningCursor,  PostGisBasicReturningCursor,  PostGisNonReturningCursor,  SQLSourceConfigurationWidget
 #from geoinf.postgis import *
 
-import packages.eo4vistrails.opennebula.init
-import packages.eo4vistrails.utils.init
+#import packages.eo4vistrails.opennebula.init
+#import packages.eo4vistrails.utils.init
 
 def initialize(*args, **keywords):
     '''sets everything up'''
@@ -77,8 +77,8 @@ def initialize(*args, **keywords):
         
     #Isolate the registration of the modules
     #Note order does count
-    packages.eo4vistrails.utils.init.initialize(*args, **keywords)
-    packages.eo4vistrails.opennebula.init.initialize(*args, **keywords)
+    #packages.eo4vistrails.utils.init.initialize(*args, **keywords)
+    #packages.eo4vistrails.opennebula.init.initialize(*args, **keywords)
     
     #reg.add_module(RPyC, configureWidgetType=PythonSourceConfigurationWidget)
     #reg.add_input_port(RPyC, 'rPyCServer', (core.modules.basic_modules.String, 'The RPyC Server IP'))    
