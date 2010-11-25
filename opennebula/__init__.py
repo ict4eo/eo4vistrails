@@ -30,9 +30,7 @@ OpenNebula cloud environments.
 """
 
 identifier = 'za.co.csir.eo4vistrails.openenbula'
-#name = 'eo4vistrails.openenbula'
+name = 'eo4vistrails.opennebula'
 version = '0.0.1'
 
-def package_requirements():
-    pass
 

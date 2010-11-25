@@ -1,6 +1,7 @@
 def initialize(*args, **keywords):
     from core.modules.module_registry import get_module_registry
     from core.modules import basic_modules
+    #import ThreadSafe
     import ThreadSafe
    
     reg = get_module_registry()
