@@ -3,44 +3,64 @@
 ## 
 
 import copy
-from threading import Lock, RLock
-from threading import Thread
+from threading import *
 from core.modules.vistrails_module import Module, NotCacheable, InvalidOutput
 
-globalThreadLock = Lock()
+global globalThreadLock
+globalThreadLock = RLock()
 
 class ThreadSafe(Module, Thread):
     """TODO. """
     def __init__(self):
         Module.__init__(self)
         Thread.__init__(self)
-        self.threadLock = RLock()   
-        self.hasRun = False
+        self.computeLock = RLock()
 
     def updateUpstream(self):
         """ TODO. """
+        print currentThread().name, " updateUpstream", " for ", self.name
         threadList = []
+        threadSafeList = []        
+        normalList= []        
+        
         for connectorList in self.inputPorts.itervalues():
-            for connector in connectorList[]:                
-                if isinstance(connector.obj, ThreadSafe):     
-                    with connector.obj.threadLock:
-                        if connector.obj.hasRun:
-                            connector.obj.update()
-                        else:
-                            connector.obj.hasRun = True
-                            threadList.append(connector.obj)
-                            connector.obj.start()
+            for connector in connectorList:
+                if isinstance(connector.obj, ThreadSafe):
+                    threadSafeList.append(connector.obj)
+                else:
+                    normalList.append(connector.obj)
 
-        for connectorList in self.inputPorts.itervalues():
-            for connector in connectorList:                
-                if not isinstance(connector.obj, ThreadSafe):
-                    global globalThreadLock
-                    with globalThreadLock:
-                        connector.obj.update()
+        if len(threadSafeList) > 0:
+            for module in threadSafeList[1:]:
+                try:
+                    module.start()
+                    threadList.append(module)
+                except RuntimeError, re:
+                    module.lockedUpdate()
+            
+            firstModule = threadSafeList[0]
+            if len(normalList) > 0:
+                try:
+                    firstModule.start()
+                    threadList.append(firstModule)
+                except RuntimeError, re:
+                    firstModule.lockedUpdate()
+            else:
+                firstModule.lockedUpdate()
 
-        for obj in threadList:              
-            obj.join()
-            obj.reset()
+        for module in normalList:
+            global globalThreadLock      
+            print currentThread().name, " blocked on global Lock", " for ", self.name
+            globalThreadLock.acquire()
+            print currentThread().name, " acquire global Lock", " for ", self.name
+            module.update()
+            globalThreadLock.release()
+            print currentThread().name, " release global Lock", " for ", self.name
+
+        for thread in threadList:
+            print currentThread().name, " waiting for ", thread.name, " to join"
+            thread.join()
+            #thread.reset()
 
         for iport, connectorList in copy.copy(self.inputPorts.items()):
             for connector in connectorList:
@@ -52,9 +72,28 @@ class ThreadSafe(Module, Thread):
         Check if the module is up-to-date then update the
         modules. Report to the logger if available
         
-        """
-        with self.threadLock:
-            self.logging.begin_update(self)        
+        """     
+        print currentThread().name, " update", " for ", self.name
+        
+        try:
+             global globalThreadLock             
+             globalThreadLock.release()
+             print currentThread().name, " release global Lock", " for ", self.name
+             self.lockedUpdate()
+             print currentThread().name, " blocked on global Lock", " for ", self.name
+             globalThreadLock.acquire()
+             print currentThread().name, " acquire global Lock", " for ", self.name
+        except RuntimeError, re:
+            self.lockedUpdate()
+            pass
+    
+    def lockedUpdate(self):
+        print currentThread().name, " lockedUpdate", " for ", self.name
+        
+        print currentThread().name, " blocked on compute Lock", " for ", self.name
+        with self.computeLock:
+            print currentThread().name, " acquire compute Lock", " for ", self.name
+            self.logging.begin_update(self)
             self.updateUpstream()
             if self.upToDate:
                 if not self.computed:
@@ -87,14 +126,16 @@ class ThreadSafe(Module, Thread):
             self.upToDate = True
             self.logging.end_update(self)
             self.logging.signalSuccess(self)
-
+        print currentThread().name, " release compute Lock", " for ", self.name
         
-    def reset(self):        
+    def reset(self):
+        print currentThread().name, " reset", " for ", self.name
         Thread.__init__(self)
-        self.hasRun = False
+    
+    def run(self):
+        print currentThread().name, " run", " for ", self.name
+        self.lockedUpdate()
         
-    def run(self):        
-        self.update()
 
 class Fork(ThreadSafe, NotCacheable):
     pass
@@ -102,7 +143,7 @@ class Fork(ThreadSafe, NotCacheable):
 from time import *
 class ThreadTestModule(ThreadSafe, NotCacheable):
      def compute(self):
-         print ctime()," ", self.name, " Started ThreadSafe Module, Waiting 2 Seconds"
+         print ctime()," ", currentThread().name, " Started ThreadSafe Module, Waiting 2 Seconds"
          sleep(2)
-         print ctime()," ", self.name, " Stoped ThreadSafe Module"
+         print ctime()," ", currentThread().name, " Stoped ThreadSafe Module"
 

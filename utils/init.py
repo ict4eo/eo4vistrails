@@ -21,5 +21,3 @@ def initialize(*args, **keywords):
                    namespace=mynamespace)
     reg.add_input_port(ThreadSafe.ThreadTestModule, 'someModuleAboveMe', 
                         basic_modules.Module)
-                   
-
