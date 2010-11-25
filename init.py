@@ -12,13 +12,13 @@ from geoinf.postgis.PostGIS import PostGisSession,  PostGisCursor,  PostGisFeatu
 
 
 try:
-    from utils import init as uinit
+    from utils import init as utils_init
 except:
-    import utils.init as uinit
+    import utils.init as utils_init
 try:
-    from opennebula import init as oinit
+    from opennebula import init as opennebula_init
 except:
-    import opennebula.init as oinit
+    import opennebula.init as opennebula_init
 
 
 def initialize(*args, **keywords):
@@ -82,13 +82,12 @@ def initialize(*args, **keywords):
     reg.add_output_port(PostGisNonReturningCursor, 'status', core.modules.basic_modules.List)
     reg.add_output_port(PostGisNonReturningCursor, 'self', PostGisNonReturningCursor)#supports ControlFlow ExecuteInOrder
     
-        
     #Isolate the registration of the modules
     #Note order does count
 
 
-    uinit.initialize(*args, **keywords)
-    oinit.initialize(*args, **keywords)
+    utils_init.initialize(*args, **keywords)
+    opennebula_init.initialize(*args, **keywords)
 
     
     #reg.add_module(RPyC, configureWidgetType=PythonSourceConfigurationWidget)
