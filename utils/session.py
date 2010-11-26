@@ -42,7 +42,8 @@ class Session(Module):
 
 def initialize(*args, **keywords):
     """Set everything up"""
-    # We'll first create a local alias for the module_registry so that
-    # we can refer to it in a shorter way.
-    reg = core.modules.module_registry.get_module_registry()
-    reg.add_module(Session)
+#    # We'll first create a local alias for the module_registry so that
+#    # we can refer to it in a shorter way.
+#    reg = core.modules.module_registry.get_module_registry()
+#    reg.add_module(Session)
+    pass

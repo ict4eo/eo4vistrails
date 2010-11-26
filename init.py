@@ -6,20 +6,29 @@ from geoinf.ogc.WFS import WFS,  WFSConfigurationWidget
 from geoinf.ogc.WCS import WCS,  WCSConfigurationWidget
 from geoinf.ogc.SOS import SOS,  SOSConfigurationWidget
 from geoinf.ogc.OgcConfigurationWidget import OgcConfigurationWidget
-from utils.session import Session
-from geoinf.postgis.PostGIS import PostGisSession,  PostGisCursor,  PostGisFeatureReturningCursor,  PostGisBasicReturningCursor,  PostGisNonReturningCursor,  SQLSourceConfigurationWidget
-#from geoinf.postgis import *
+#from utils.session import Session
+#from geoinf.postgis.PostGIS import PostGisSession,  PostGisCursor,  PostGisFeatureReturningCursor,  PostGisBasicReturningCursor,  PostGisNonReturningCursor,  SQLSourceConfigurationWidget
 
 
+
+#brings in threading and session modules
 try:
     from utils import init as utils_init
 except:
     import utils.init as utils_init
+
+#Brings in cloud modules
 try:
     from opennebula import init as opennebula_init
 except:
     import opennebula.init as opennebula_init
 
+#brings in PostGIS modules
+try:
+    from geoinf.postgis import init as postgis_init
+except:
+    import geoinf.postgis.init as postgis_init
+    
 
 def initialize(*args, **keywords):
     '''sets everything up'''
@@ -48,39 +57,6 @@ def initialize(*args, **keywords):
     #output ports
     #reg.add_output_port(FeatureModel, "OGRDataset", (ogr.Dataset, 'Feature data in OGR Dataset'))
 
-    #should try to do this in own package...
-    reg.add_module(Session)
-    reg.add_module(PostGisSession)
-    reg.add_input_port(PostGisSession, 'postgisHost', (core.modules.basic_modules.String, 
-        'The hostname or IP address of the machine hosting your database'))    
-    reg.add_input_port(PostGisSession, 'postgisPort', (core.modules.basic_modules.String, 
-        'The port postgres is using on the machine hosting your database. Default 5432'))   
-    reg.add_input_port(PostGisSession, 'postgisUser', (core.modules.basic_modules.String, 
-        'The username for accessing your database'))    
-    reg.add_input_port(PostGisSession, 'postgisPassword', (core.modules.basic_modules.String, 
-        'The password for user for accessing your database'))    
-    reg.add_input_port(PostGisSession, 'postgisDatabase', (core.modules.basic_modules.String, 
-        'The actual database you will work with'))  
-    reg.add_output_port(PostGisSession, 'self', PostGisSession)#supports passing of session object around
-
-    #reg.add_module(PostGisCursor)
-    
-    reg.add_module(PostGisFeatureReturningCursor,  configureWidgetType=SQLSourceConfigurationWidget)
-    reg.add_input_port(PostGisFeatureReturningCursor,  "PostGisSessionObject",  PostGisSession)
-    reg.add_input_port(PostGisFeatureReturningCursor,  "source",  core.modules.basic_modules.String)
-    reg.add_output_port(PostGisFeatureReturningCursor, 'self', PostGisFeatureReturningCursor)#supports ControlFlow ExecuteInOrder
-    
-    reg.add_module(PostGisBasicReturningCursor,  configureWidgetType=SQLSourceConfigurationWidget)
-    reg.add_input_port(PostGisBasicReturningCursor,  "PostGisSessionObject",  PostGisSession)
-    reg.add_input_port(PostGisBasicReturningCursor,  "source",  core.modules.basic_modules.String)
-    reg.add_output_port(PostGisBasicReturningCursor, 'records', core.modules.basic_modules.List)
-    reg.add_output_port(PostGisBasicReturningCursor, 'self', PostGisBasicReturningCursor)#supports ControlFlow ExecuteInOrder
-    
-    reg.add_module(PostGisNonReturningCursor,  configureWidgetType=SQLSourceConfigurationWidget)
-    reg.add_input_port(PostGisNonReturningCursor,  "PostGisSessionObject",  PostGisSession)
-    reg.add_input_port(PostGisNonReturningCursor,  "source",  core.modules.basic_modules.String)
-    reg.add_output_port(PostGisNonReturningCursor, 'status', core.modules.basic_modules.List)
-    reg.add_output_port(PostGisNonReturningCursor, 'self', PostGisNonReturningCursor)#supports ControlFlow ExecuteInOrder
     
     #Isolate the registration of the modules
     #Note order does count
@@ -88,6 +64,7 @@ def initialize(*args, **keywords):
 
     utils_init.initialize(*args, **keywords)
     opennebula_init.initialize(*args, **keywords)
+    postgis_init.initialize(*args,  **keywords)
 
     
     #reg.add_module(RPyC, configureWidgetType=PythonSourceConfigurationWidget)

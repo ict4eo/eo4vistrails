@@ -32,20 +32,20 @@ a.k.a. a postgis connection and allows random queries to be
 executed against the chosen database. 
 """
 import core
-from core.modules.python_source_configure import PythonSourceConfigurationWidget
-from utils.session import Session
-from geoinf.postgis.PostGIS import PostGisSession,  PostGisCursor,  PostGisFeatureReturningCursor,  PostGisBasicReturningCursor,  PostGisNonReturningCursor
+#from core.modules.python_source_configure import PythonSourceConfigurationWidget
+#from utils.session import Session
+from PostGIS import PostGisSession,  PostGisCursor,  PostGisFeatureReturningCursor,  PostGisBasicReturningCursor,  PostGisNonReturningCursor,  SQLSourceConfigurationWidget
 
 def initialize(*args, **keywords):
-    '''sets everything up'''
+    """Sets up PostGIS modules"""
     print "in my postgis init process"
     # We'll first create a local alias for the module_registry so that
     # we can refer to it in a shorter way.
     reg = core.modules.module_registry.get_module_registry()
+    postgis_namespace = "PostGIS"
     
 
-    reg.add_module(Session)
-    reg.add_module(PostGisSession)
+    reg.add_module(PostGisSession,  namespace = postgis_namespace)
     reg.add_input_port(PostGisSession, 'postgisHost', (core.modules.basic_modules.String, 
         'The hostname or IP address of the machine hosting your database'))    
     reg.add_input_port(PostGisSession, 'postgisPort', (core.modules.basic_modules.String, 
@@ -56,20 +56,23 @@ def initialize(*args, **keywords):
         'The password for user for accessing your database'))    
     reg.add_input_port(PostGisSession, 'postgisDatabase', (core.modules.basic_modules.String, 
         'The actual database you will work with'))  
-    reg.add_output_port(PostGisSession, 'self', PostGisSession)#effect?
+    reg.add_output_port(PostGisSession, 'self', PostGisSession)#supports passing of session object around
 
     #reg.add_module(PostGisCursor)
     
-    reg.add_module(PostGisFeatureReturningCursor)
+    reg.add_module(PostGisFeatureReturningCursor,  namespace = postgis_namespace,  configureWidgetType=SQLSourceConfigurationWidget)
     reg.add_input_port(PostGisFeatureReturningCursor,  "PostGisSessionObject",  PostGisSession)
-    reg.add_input_port(PostGisFeatureReturningCursor,  "SQLString",  core.modules.basic_modules.String)
+    reg.add_input_port(PostGisFeatureReturningCursor,  "source",  core.modules.basic_modules.String)
+    reg.add_output_port(PostGisFeatureReturningCursor, 'self', PostGisFeatureReturningCursor)#supports ControlFlow ExecuteInOrder
     
-    reg.add_module(PostGisBasicReturningCursor)
+    reg.add_module(PostGisBasicReturningCursor,  namespace = postgis_namespace,  configureWidgetType=SQLSourceConfigurationWidget)
     reg.add_input_port(PostGisBasicReturningCursor,  "PostGisSessionObject",  PostGisSession)
-    reg.add_input_port(PostGisBasicReturningCursor,  "SQLString",  core.modules.basic_modules.String)
+    reg.add_input_port(PostGisBasicReturningCursor,  "source",  core.modules.basic_modules.String)
     reg.add_output_port(PostGisBasicReturningCursor, 'records', core.modules.basic_modules.List)
+    reg.add_output_port(PostGisBasicReturningCursor, 'self', PostGisBasicReturningCursor)#supports ControlFlow ExecuteInOrder
     
-    reg.add_module(PostGisNonReturningCursor)
+    reg.add_module(PostGisNonReturningCursor,  namespace = postgis_namespace,  configureWidgetType=SQLSourceConfigurationWidget)
     reg.add_input_port(PostGisNonReturningCursor,  "PostGisSessionObject",  PostGisSession)
-    reg.add_input_port(PostGisNonReturningCursor,  "SQLString",  core.modules.basic_modules.String)
-  
+    reg.add_input_port(PostGisNonReturningCursor,  "source",  core.modules.basic_modules.String)
+    reg.add_output_port(PostGisNonReturningCursor, 'status', core.modules.basic_modules.List)
+    reg.add_output_port(PostGisNonReturningCursor, 'self', PostGisNonReturningCursor)#supports ControlFlow ExecuteInOrder
