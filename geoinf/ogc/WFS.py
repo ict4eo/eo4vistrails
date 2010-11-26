@@ -87,7 +87,12 @@ class WFSCommonWidget(QtGui.QWidget):
         gridLayout.addWidget(QtGui.QLabel('bottom_right  Y'), 4, 3)
         gridLayout.addWidget(QtGui.QLabel('ESPG/SRS Code'), 5, 0)
         gridLayout.addWidget(QtGui.QLabel('maxFeatures'), 6, 0)
-        #gridLayout.addWidget(QtGui.QLabel('GetFeature'), 7, 0)
+
+
+        gridLayout.addWidget(QtGui.QCheckBox('GetCapabilities Request'), 7, 0)
+        gridLayout.addWidget(QtGui.QCheckBox('GetFeature Request'), 8, 0)
+        gridLayout.addWidget(QtGui.QCheckBox('DescribeFeatureType Request'), 9, 0)
+
         #self.wfsUrlEdit = QtGui.QLineEdit('http://localhost:8080/geoserver/wfs')
 
         self.minXEdit = QtGui.QLineEdit('0.0')
@@ -97,8 +102,10 @@ class WFSCommonWidget(QtGui.QWidget):
         self.minYEdit = QtGui.QLineEdit('0.0')
         self.maxXEdit = QtGui.QLineEdit('0.0')
         self.maxYEdit = QtGui.QLineEdit('0.0')
-        #self.DescribeFeatureTypeEdit = QtGui.QLineEdit('http://')
-        #self.GetFeatureEdit = QtGui.QLineEdit('http://')
+
+        self.GetCapabilitiesEdit = QtGui.QLineEdit('http://')
+        self.GetFeatureEdit = QtGui.QLineEdit('http://')
+        self.DescribeFeatureTypeEdit = QtGui.QLineEdit('http://')
 
         #gridLayout.addWidget(self.wfsUrlEdit, 0, 1)
         gridLayout.addWidget(self.minXEdit, 3,2)
@@ -107,8 +114,10 @@ class WFSCommonWidget(QtGui.QWidget):
         gridLayout.addWidget(self.minYEdit, 3, 4)
         gridLayout.addWidget(self.maxXEdit, 4, 2)
         gridLayout.addWidget(self.maxYEdit, 4, 4)
-        #gridLayout.addWidget(self.DescribeFeatureTypeEdit, 6, 1)
-        #gridLayout.addWidget(self.GetFeatureEdit, 7, 1)
+
+        gridLayout.addWidget(self.GetCapabilitiesEdit, 7, 1)
+        gridLayout.addWidget(self.GetFeatureEdit, 8, 1)
+        gridLayout.addWidget(self.DescribeFeatureTypeEdit, 9, 1)
 
         self.lstFeatures = QtGui.QListWidget()
 
@@ -172,7 +181,12 @@ class WFSCommonWidget(QtGui.QWidget):
 
         print "Accessing....: " + selected_featureName
 
+        getfeaturemetadata = self.parent_widget.service.service
+
+
         if self.parent_widget.service and self.parent_widget.service.service_valid and self.contents:
+
+            featureMetaData = getfeaturemetadata.getfeature(typename=[str(selected_featureName)], maxfeatures=1)
 
             for content in self.contents:
 
@@ -194,12 +208,14 @@ class WFSCommonWidget(QtGui.QWidget):
 
         #self.htmlView.setText("for test purpose: to see if Feature metadata can be diplayed ")
 
+        self.htmlView.setText(str(featureMetaData.read()))
 
 
         #print res.read()
 
 
 class WFSConfigurationWidget(OgcConfigurationWidget):
+
     """makes use of code style from OgcConfigurationWidget"""
     def __init__(self,  module, controller, parent=None):
         OgcConfigurationWidget.__init__(self,  module, controller, parent)
