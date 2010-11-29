@@ -89,9 +89,9 @@ class WFSCommonWidget(QtGui.QWidget):
         gridLayout.addWidget(QtGui.QLabel('maxFeatures'), 6, 0)
 
 
-        gridLayout.addWidget(QtGui.QCheckBox('GetCapabilities Request'), 7, 0)
-        gridLayout.addWidget(QtGui.QCheckBox('GetFeature Request'), 8, 0)
-        gridLayout.addWidget(QtGui.QCheckBox('DescribeFeatureType Request'), 9, 0)
+        #gridLayout.addWidget(QtGui.QCheckBox('GetCapabilities Request'), 7, 0)
+        gridLayout.addWidget(QtGui.QCheckBox('GetFeature Request'), 7, 0)
+        gridLayout.addWidget(QtGui.QCheckBox('DescribeFeatureType Request'), 8, 0)
 
         #self.wfsUrlEdit = QtGui.QLineEdit('http://localhost:8080/geoserver/wfs')
 
@@ -115,33 +115,20 @@ class WFSCommonWidget(QtGui.QWidget):
         gridLayout.addWidget(self.maxXEdit, 4, 2)
         gridLayout.addWidget(self.maxYEdit, 4, 4)
 
-        gridLayout.addWidget(self.GetCapabilitiesEdit, 7, 1)
-        gridLayout.addWidget(self.GetFeatureEdit, 8, 1)
-        gridLayout.addWidget(self.DescribeFeatureTypeEdit, 9, 1)
+        #gridLayout.addWidget(self.GetCapabilitiesEdit, 7, 1)
+        gridLayout.addWidget(self.GetFeatureEdit, 7, 1)
+        gridLayout.addWidget(self.DescribeFeatureTypeEdit, 8, 1)
 
         self.lstFeatures = QtGui.QListWidget()
 
         gridLayout.addWidget(self.lstFeatures, 1, 1)
 
 
-        self.htmlView = QtGui.QTextEdit()   # want to view metadata for each selected typename / FeatureName.
+        self.htmlView = QtGui.QTextEdit()   # want to view featureColletion for each selected typename / FeatureName.
 
         gridLayout.addWidget(self.htmlView, 1, 3)
 
-        '''
-        self.loadRequestButton = QtGui.QPushButton('load')
 
-        gridLayout.addWidget(self.loadRequestButton, 7, 1)
-        self.connect(self.loadRequestButton, QtCore.SIGNAL('clicked()'), self.loadRequest)
-
-        self.resetRequestButton = QtGui.QPushButton('reset')
-        gridLayout.addWidget(self.resetRequestButton, 7, 2)
-        self.connect(self.resetRequestButton, QtCore.SIGNAL('clicked()'), self.clearRequest)
-
-        self.saveRequestButton = QtGui.QPushButton('save')
-        gridLayout.addWidget(self.saveRequestButton, 7, 3)
-        self.connect(self.saveRequestButton, QtCore.SIGNAL('clicked()'), self.saveRequest)
-        '''
     '''
     def clearRequest(self):
         """TO DO Implement clear fields """
@@ -153,12 +140,6 @@ class WFSCommonWidget(QtGui.QWidget):
         self.maxXEdit.setText('0.0')
         self.maxYEdit.setText('0.0')
     '''
-    '''
-    def saveRequest(self):
-        """TO DO Implement read set parameters, assign to wfs input ports """
-        pass
-    '''
-
 
     def loadRequest(self):
         """ loadRequest() -> None
@@ -181,12 +162,12 @@ class WFSCommonWidget(QtGui.QWidget):
 
         print "Accessing....: " + selected_featureName
 
-        getfeaturemetadata = self.parent_widget.service.service
+        getfeature_request = self.parent_widget.service.service
 
 
         if self.parent_widget.service and self.parent_widget.service.service_valid and self.contents:
 
-            featureMetaData = getfeaturemetadata.getfeature(typename=[str(selected_featureName)], maxfeatures=1)
+            featureDetails = getfeature_request.getfeature(typename=[str(selected_featureName)], maxfeatures=1)
 
             for content in self.contents:
 
@@ -194,7 +175,11 @@ class WFSCommonWidget(QtGui.QWidget):
 
                     crsCode = self.contents[str(selected_featureName)].crsOptions
 
-                    #res = self.contents.getfeature(typename=[str(selected_featureName)], maxfeatures=1)
+                    meta = self.contents[str(selected_featureName)]
+
+                    bheki = self.contents[str(selected_featureName)].title
+
+
 
             for elem in crsCode:
 
@@ -206,12 +191,18 @@ class WFSCommonWidget(QtGui.QWidget):
                 self.maxXEdit.setText(str(coordinates[2]))
                 self.maxYEdit.setText(str(coordinates[3]))
 
-        #self.htmlView.setText("for test purpose: to see if Feature metadata can be diplayed ")
+                # set metadata for selected layername
+                self.htmlView.setText("Name: " )
+                self.htmlView.append("Title: " + bheki  )
+                self.htmlView.append("Abstract: "  )
+                self.htmlView.append("Keywords: "   )
+                self.htmlView.append("SRS: " + str(elem))
+                self.htmlView.append("Operations: "  )
+                self.htmlView.append("LatLongBoundingBox: " + 'minx= '+ str(coordinates[0]) + ' miny= '+ str(coordinates[1]) + ' maxx= '+ str(coordinates[2])  + ' maxy= '+ str(coordinates[3])  )
+                self.htmlView.append("MetadataURL: "  )
 
-        self.htmlView.setText(str(featureMetaData.read()))
-
-
-        #print res.read()
+        #self.htmlView.setText(str(featureDetails.read()))
+        #self.htmlView.setText(str([meta])) # what's this funny stuff being shown here.
 
 
 class WFSConfigurationWidget(OgcConfigurationWidget):
