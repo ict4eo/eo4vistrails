@@ -1,11 +1,19 @@
+# -*- coding: utf-8 -*-
+
+# Form implementation generated from reading ui file 'FeatureImport.ui'
+#
+# Created: Tue Nov 30 10:30:09 2010
+#      by: PyQt4 UI code generator 4.7.2
+#
+# WARNING! All changes made in this file will be lost!
 ###########################################################################
 ##
 ## Copyright (C) 2010 CSIR Meraka Institute. All rights reserved.
 ##
-## eo4vistrails extends VisTrails, providing GIS/Earth Observation 
-## ingestion, pre-processing, transformation, analytic and visualisation 
-## capabilities . Included is the abilty to run code transparently in 
-## OpenNebula cloud environments. There are various software 
+## eo4vistrails extends VisTrails, providing GIS/Earth Observation
+## ingestion, pre-processing, transformation, analytic and visualisation
+## capabilities . Included is the ability to run code transparently in
+## OpenNebula cloud environments. There are various software
 ## dependencies, but all are FOSS.
 ##
 ## This file may be used under the terms of the GNU General Public
@@ -23,64 +31,96 @@
 ## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ##
 ############################################################################
-
-import core.modules.module_registry
-from core.modules.vistrails_module import Module, ModuleError
+"""This module provides an OGC Sensor Observation Service Client via owslib.
 """
-listspace.py - stacked view manager with a list for the mdi framework
 
-copyright: (C) 2001, Boudewijn Rempt
-email:     boud@rempt.xs4all.nl
-"""
-from qt import *
-from resources import TRUE, FALSE
+#from owslib.wfs import WFS
 from PyQt4 import QtCore, QtGui
-
-class Ui_Form(object):
-    def setupUi(self, Form):
-        Form.setObjectName("Form")
-        Form.resize(615, 434)
-        self.listWidget = QtGui.QListWidget(Form)
-        self.listWidget.setGeometry(QtCore.QRect(240, 40, 331, 311))
-        self.listWidget.setObjectName("listWidget")
-        self.buttonBox = QtGui.QDialogButtonBox(Form)
-        self.buttonBox.setGeometry(QtCore.QRect(410, 400, 176, 27))
-        self.buttonBox.setStandardButtons(QtGui.QDialogButtonBox.Cancel|QtGui.QDialogButtonBox.Open)
-        self.buttonBox.setObjectName("buttonBox")
-        self.listWidget_2 = QtGui.QListWidget(Form)
-        self.listWidget_2.setGeometry(QtCore.QRect(10, 41, 201, 341))
-        self.listWidget_2.setObjectName("listWidget_2")
-        self.buttonBox_2 = QtGui.QDialogButtonBox(Form)
-        self.buttonBox_2.setGeometry(QtCore.QRect(-20, 390, 176, 27))
-        self.buttonBox_2.setStandardButtons(QtGui.QDialogButtonBox.Apply)
-        self.buttonBox_2.setObjectName("buttonBox_2")
-        self.comboBox = QtGui.QComboBox(Form)
-        self.comboBox.setGeometry(QtCore.QRect(260, 360, 331, 31))
-        self.comboBox.setObjectName("comboBox")
-        self.label = QtGui.QLabel(Form)
-        self.label.setGeometry(QtCore.QRect(10, 20, 62, 17))
-        self.label.setObjectName("label")
-        self.label_2 = QtGui.QLabel(Form)
-        self.label_2.setGeometry(QtCore.QRect(260, 20, 62, 17))
-        self.label_2.setObjectName("label_2")
-        self.verticalScrollBar = QtGui.QScrollBar(Form)
-        self.verticalScrollBar.setEnabled(False)
-        self.verticalScrollBar.setGeometry(QtCore.QRect(560, 40, 16, 311))
-        self.verticalScrollBar.setOrientation(QtCore.Qt.Vertical)
-        self.verticalScrollBar.setObjectName("verticalScrollBar")
-
-        self.retranslateUi(Form)
-        QtCore.QMetaObject.connectSlotsByName(Form)
-        Form.setTabOrder(self.comboBox, self.listWidget_2)
-        Form.setTabOrder(self.listWidget_2, self.listWidget)
-        Form.setTabOrder(self.listWidget, self.buttonBox)
-        Form.setTabOrder(self.buttonBox, self.buttonBox_2)
-
-    def retranslateUi(self, Form):
-        Form.setWindowTitle(QtGui.QApplication.translate("Form", "Form", None, QtGui.QApplication.UnicodeUTF8))
-        self.comboBox.setProperty("Default", QtGui.QApplication.translate("Form", "GDAL", None, QtGui.QApplication.UnicodeUTF8))
-        self.label.setText(QtGui.QApplication.translate("Form", "Places", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_2.setText(QtGui.QApplication.translate("Form", "Name", None, QtGui.QApplication.UnicodeUTF8))
+from packages.eo4vistrails.geoinf.datamodels.Feature import FeatureModel
+from OgcConfigurationWidget import OgcConfigurationWidget
+from core.modules.vistrails_module import Module, new_module, NotCacheable, ModuleError
+#from geoinf.datamodels.Raster import RasterModel
 
 
+#need to import the configuration widget we develop
+class FeatureImport(FeatureModel):
+    """TO DO - add docstring
+
+    """
+    def __init__(self):
+        FeatureModel.__init__(self)
+
+    def compute(self):
+        pass
+
+
+class FeatureImportCommonWidget(QtGui.QWidget):
+    """TO DO - add docstring
+
+    """
+    def __init__(self, ogc_widget, parent=None):
+        QtGui.QWidget.__init__(self, parent)
+        self.setObjectName("SosCommonWidget")
+        self.parent_widget = ogc_widget
+        self.contents = None #  only set in self.loadOfferings()
+        self.create_config_window()
+        # listen for signals emitted by OgcCommonWidget class
+        """self.connect(
+            self.parent_widget,
+            QtCore.SIGNAL('serviceActivated'),
+            self.loadOfferings
+        )
+        self.connect(
+            self.parent_widget,
+            QtCore.SIGNAL('serviceDeactivated'),
+            self.removeOfferings
+        )"""
+
+    def create_config_window(self):
+        """Create datacontainers and layout for displaying SOS-specific data."""
+        self.setWindowTitle("SOS Configuration Widget")
+        self.setMinimumSize(900, 675)
+        # main layout
+        self.mainLayout = QtGui.QHBoxLayout()
+        self.setLayout(self.mainLayout)
+        self.placesGroupBox = QtGui.QGroupBox("Places")
+        self.placesLayout = QtGui.QVBoxLayout()
+        self.placesGroupBox.setLayout(self.placesLayout)
+        self.mainLayout.addWidget(self.placesGroupBox)
+        self.split = QtGui.QSplitter(QtCore.Qt.Vertical)
+        self.mainLayout.addWidget(self.split)
+        self.detailsGroupBox = QtGui.QGroupBox("Places Details")
+        self.mainLayout.addWidget(self.detailsGroupBox)
+        self.detailsLayout = QtGui.QGridLayout()
+        self.detailsGroupBox.setLayout(self.detailsLayout)
+        # places
+        self.lbxPlaces = QtGui.QListWidget()
+        self.placesLayout.addWidget(self.lbxOfferings)
+	self.btnPlaces = QtGui.QButton("Add");
+	self.placesLayout.addWidget(self.btnPlaces)
+        # places details layout
+        #   labels
+        #   data containers
+        self.lbxDetails = QtGui.QListWidget()
+        self.detailsLayout.addWidget(self.lbxDetails)
+	self.cbxPlaces = QtGui.QComboBox();
+	self.detailsLayout.addWidget(self.cbxPlaces)
+
+        self.buttonGroupBox = QtGui.QGroupBox("")
+        self.buttonLayout = QtGui.QHBoxLayout()
+        self.buttonGroupBox.setLayout(self.buttonLayout)
+	self.detailsLayout.addWidget(self.buttonGroupBox)
+	self.btnCancel = QtGui.QButton("Cancel");
+	self.btnOpen = QtGui.QButton("Open");
+        self.buttonLayout.addWidget(self.btnCancel)
+	self.buttonLayout.addWidget(self.btnOpen)
+
+
+
+        # local signals
+        '''self.connect(
+            self.lbxOfferings,
+            QtCore.SIGNAL("itemClicked(QListWidgetItem*)"),
+            self.offeringsChanged'''
+        )
 
