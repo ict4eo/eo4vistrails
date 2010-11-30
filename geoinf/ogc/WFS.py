@@ -177,8 +177,15 @@ class WFSCommonWidget(QtGui.QWidget):
 
                     meta = self.contents[str(selected_featureName)]
 
+                    name = self.contents[str(selected_featureName)].id
+
                     bheki = self.contents[str(selected_featureName)].title
 
+                    abstr = self.contents[str(selected_featureName)].abstract
+
+                    keyw = self.contents[str(selected_featureName)].keywords
+
+                    operations = self.contents[str(selected_featureName)].verbOptions
 
 
             for elem in crsCode:
@@ -186,23 +193,20 @@ class WFSCommonWidget(QtGui.QWidget):
                 self.ESPGEdit.setText(elem)
 
                 coordinates = self.contents[str(selected_featureName)].boundingBoxWGS84
-                self.minXEdit.setText(str(coordinates[0]))
-                self.minYEdit.setText(str(coordinates[1]))
-                self.maxXEdit.setText(str(coordinates[2]))
-                self.maxYEdit.setText(str(coordinates[3]))
+                #self.minXEdit.setText(str(coordinates[0]))
+                #self.minYEdit.setText(str(coordinates[1]))
+               #self.maxXEdit.setText(str(coordinates[2]))
+                #self.maxYEdit.setText(str(coordinates[3]))
 
-                # set metadata for selected layername
-                self.htmlView.setText("Name: " )
+                # set metadata for selected layername :  how about if we were to read these directly from the GetCapabilities file??
+                self.htmlView.setText("Name: " + name )
                 self.htmlView.append("Title: " + bheki  )
-                self.htmlView.append("Abstract: "  )
-                self.htmlView.append("Keywords: "   )
+                self.htmlView.append("Abstract: " + abstr )
+                self.htmlView.append("Keywords: "  + keyw )
                 self.htmlView.append("SRS: " + str(elem))
-                self.htmlView.append("Operations: "  )
+                self.htmlView.append("Operations: " + str(operations))
                 self.htmlView.append("LatLongBoundingBox: " + 'minx= '+ str(coordinates[0]) + ' miny= '+ str(coordinates[1]) + ' maxx= '+ str(coordinates[2])  + ' maxy= '+ str(coordinates[3])  )
-                self.htmlView.append("MetadataURL: "  )
 
-        #self.htmlView.setText(str(featureDetails.read()))
-        #self.htmlView.setText(str([meta])) # what's this funny stuff being shown here.
 
 
 class WFSConfigurationWidget(OgcConfigurationWidget):
