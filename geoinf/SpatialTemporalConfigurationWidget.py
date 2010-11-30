@@ -89,23 +89,41 @@ class TemporalWidget(QtGui.QWidget):
 
     def create_temp_config_window(self):
         """TO DO - add docstring"""
+        
 
         # adding labels and their positions to the main window
-        self.gridLayout = QtGui.QGridLayout()
-        self.setLayout(self.gridLayout)
-        self.gridLayout.addWidget(QtGui.QLabel('Start date'), 0, 0)
-        self.gridLayout.addWidget(QtGui.QLabel('End date'), 1, 0)
+        # add and set groupboxes
+        self.mainLayout = QtGui.QHBoxLayout()
+        self.setLayout(self.mainLayout)
+        self.tFramesGroupBox = QtGui.QGroupBox("Time frames")
+        self.tFramesLayout = QtGui.QVBoxLayout()
+        
+        self.tFramesLayout = QtGui.QGridLayout()
+        self.tIntervalLayout = QtGui.QGridLayout()
+        
+        self.tFramesGroupBox.setLayout(self.tFramesLayout)
+        self.mainLayout.addWidget(self.tFramesGroupBox)
+        
+        self.split = QtGui.QSplitter(QtCore.Qt.Horizontal)
+        self.mainLayout.addWidget(self.split)
+        self.intervalsGroupBox = QtGui.QGroupBox("Time interval")
+        self.mainLayout.addWidget(self.intervalsGroupBox)
+        self.intervalsGroupBox.setLayout(self.tIntervalLayout)
+        self.tFramesGroupBox.setLayout(self.tFramesLayout)
+        #self.setLayout(self.gridLayout)
+        self.tFramesLayout.addWidget(QtGui.QLabel('Start date'), 0, 0)
+        self.tFramesLayout.addWidget(QtGui.QLabel('End date'), 1, 0)
 
         #setting the start date-time widget and addding it to the window
         self.myTime = QtGui.QDateTimeEdit(self)
-        self.gridLayout.addWidget(self.myTime, 0, 1)
+        self.tFramesLayout.addWidget(self.myTime, 0, 1)
         cal1 = QtGui.QCalendarWidget()
         self.myTime.setCalendarWidget(cal1)
         self.myTime.setCalendarPopup(True)
 
         #setting the end date-time widget and addding it to the window
         self.myTime = QtGui.QDateTimeEdit(self)
-        self.gridLayout.addWidget(self.myTime, 1, 1)
+        self.tFramesLayout.addWidget(self.myTime, 1, 1)
         cal2 = QtGui.QCalendarWidget()
         self.myTime.setCalendarWidget(cal2)
         self.myTime.setCalendarPopup(True)
@@ -125,14 +143,13 @@ class TemporalWidget(QtGui.QWidget):
         self.dayLcd = QtGui.QLCDNumber(self)
         self.daySlider = QtGui.QSlider(QtCore.Qt.Horizontal, self)
         #set layout of Days Slider widget to the grid layout used above
-        #self.gridLayout.addWidget(QtGui.QLabel('Set Intervals - (optional)'), 2, 0)
-        self.gridLayout.addWidget(QtGui.QLabel('Days'), 3, 0)
-        self.gridLayout.addWidget(self.daySlider, 3, 1)
-        self.gridLayout.addWidget(self.dayLcd, 3, 2)
+        self.tIntervalLayout.addWidget(QtGui.QLabel('Days'), 3, 0)
+        self.tIntervalLayout.addWidget(self.daySlider, 3, 1)
+        self.tIntervalLayout.addWidget(self.dayLcd, 3, 2)
         #LCD related
         self.dayLcd.setDigitCount (3)
         #Slider related
-        self.daySlider.setRange (0, 365)
+        self.daySlider.setRange (0, 364)
         #connecting the signal and slot of the slider and lcd
         self.connect(self.daySlider, QtCore.SIGNAL('valueChanged(int)'), self.dayLcd, QtCore.SLOT('display(int)') )
 
@@ -141,9 +158,9 @@ class TemporalWidget(QtGui.QWidget):
         self.hourLcd = QtGui.QLCDNumber(self)
         self.hourSlider = QtGui.QSlider(QtCore.Qt.Horizontal, self)
         # set layout of Days Slider widget to the grid layout used above
-        self.gridLayout.addWidget(QtGui.QLabel('Hours'), 4, 0)
-        self.gridLayout.addWidget(self.hourSlider, 4, 1)
-        self.gridLayout.addWidget(self.hourLcd, 4, 2)
+        self.tIntervalLayout.addWidget(QtGui.QLabel('Hours'), 4, 0)
+        self.tIntervalLayout.addWidget(self.hourSlider, 4, 1)
+        self.tIntervalLayout.addWidget(self.hourLcd, 4, 2)
         # LCD related
         self.hourLcd.setDigitCount (2)
         # Slider related
@@ -156,9 +173,9 @@ class TemporalWidget(QtGui.QWidget):
         self.minuteLcd = QtGui.QLCDNumber(self)
         self.minuteSlider = QtGui.QSlider(QtCore.Qt.Horizontal, self)
         # set layout of Days Slider widget to the grid layout used above
-        self.gridLayout.addWidget(QtGui.QLabel('Minutes'), 5, 0)
-        self.gridLayout.addWidget(self.minuteSlider, 5, 1)
-        self.gridLayout.addWidget(self.minuteLcd, 5, 2)
+        self.tIntervalLayout.addWidget(QtGui.QLabel('Minutes'), 5, 0)
+        self.tIntervalLayout.addWidget(self.minuteSlider, 5, 1)
+        self.tIntervalLayout.addWidget(self.minuteLcd, 5, 2)
         # LCD related
         self.minuteLcd.setDigitCount (2)
         # Slider related
