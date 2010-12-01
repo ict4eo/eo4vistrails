@@ -6,7 +6,7 @@ from geoinf.ogc.WFS import WFS,  WFSConfigurationWidget
 from geoinf.ogc.WCS import WCS,  WCSConfigurationWidget
 from geoinf.ogc.SOS import SOS,  SOSConfigurationWidget
 from geoinf.ogc.OgcConfigurationWidget import OgcConfigurationWidget
-from geoinf.datamodels.FeatureImport import FeatureImport, FeatureImportConfigurationWidget
+#from geoinf.datamodels.FeatureImport import FeatureImport, FeatureImportConfigurationWidget
 #from utils.session import Session
 #from geoinf.postgis.PostGIS import PostGisSession,  PostGisCursor,  PostGisFeatureReturningCursor,  PostGisBasicReturningCursor,  PostGisNonReturningCursor,  SQLSourceConfigurationWidget
 
@@ -54,14 +54,14 @@ def initialize(*args, **keywords):
     #reg.add_module(WFS)
     #input ports
     reg.add_module(FeatureModel) #abstract
-    reg.add_module(FileFeatureModel)
+    #reg.add_module(FileFeatureModel)
     reg.add_module(RasterModel) #abstract
 
     reg.add_module(WFS, configureWidgetType=WFSConfigurationWidget)
 
     reg.add_module(SOS, configureWidgetType=SOSConfigurationWidget)
     reg.add_module(WCS, configureWidgetType=WCSConfigurationWidget)
-    reg.add_module(FeatureImport, configureWidgetType=FeatureImportConfigurationWidget)
+    #reg.add_module(FeatureImport, configureWidgetType=FeatureImportConfigurationWidget)
 
 
     #reg.add_input_port(FeatureModel, "service_version", (core.modules.basic_modules.String, 'Web Map Service version - default 1.1.1'))
