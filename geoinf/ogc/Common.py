@@ -37,23 +37,12 @@ NOTE: As at 2010-11-09, you will need to patch version 0.3.4b for owslib sos.py:
 
 try:
         from owslib import wfs as wfs
-
-
         from owslib import wcs as wcs
-
-
         from owslib import sos as sos
-
 except:
-
-
         import owslib.wfs as wfs
-
         import owslib.sos as sos
-
         import owslib.wcs as wcs
-
-
 
 
 class OgcService():

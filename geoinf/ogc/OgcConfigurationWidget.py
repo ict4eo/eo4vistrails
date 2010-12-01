@@ -36,15 +36,15 @@ from Common import OgcService  # include owslib .wfs, .sos, .wcs
 
 class OgcCommonWidget(QtGui.QWidget):
     """TO DO - add docstring"""
-    def __init__(self,  module, parent=None):
+    def __init__(self, module, parent=None):
         '''parses modules attributes to fetch parameters'''
         QtGui.QWidget.__init__(self, parent)
         self.launchtype = str(module).split(" ")[1].split(":")[1][0:3].lower()
         #self.module = module
         self.setObjectName("OgcCommonWidget")
+        self.parent_widget = module
         self.service = None
         self.create_config_window()
-
 
     def create_config_window(self):
         """TO DO - add docstring"""
@@ -68,8 +68,8 @@ class OgcCommonWidget(QtGui.QWidget):
         self.fetchUrlLayout = QtGui.QHBoxLayout()
 
         self.label_OGC_url = QtGui.QLabel('URL & Version:')
-
-        #self.line_edit_OGC_url = QtGui.QLineEdit("http://giv-sos.uni-muenster.de:8080/52nSOSv3/sos?request=GetCapabilities&service=SOS") #test only !!!
+        #test only !!!
+        #self.line_edit_OGC_url = QtGui.QLineEdit("http://giv-sos.uni-muenster.de:8080/52nSOSv3/sos?request=GetCapabilities&service=SOS")
 
         self.launchversion = QtGui.QComboBox()
         if self.launchtype == "sos":

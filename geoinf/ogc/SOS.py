@@ -26,14 +26,12 @@
 """This module provides an OGC Sensor Observation Service Client via owslib.
 """
 
-#from owslib.wfs import WFS
 from PyQt4 import QtCore, QtGui
 from packages.eo4vistrails.geoinf.datamodels.Feature import FeatureModel
 from OgcConfigurationWidget import OgcConfigurationWidget
 from core.modules.vistrails_module import Module, new_module, NotCacheable, ModuleError
 
 
-#need to import the configuration widget we develop
 class SOS(FeatureModel):
     """TO DO - add docstring
 
@@ -65,6 +63,14 @@ class SosCommonWidget(QtGui.QWidget):
             self.parent_widget,
             QtCore.SIGNAL('serviceDeactivated'),
             self.removeOfferings
+        )
+        # listen for signals emitted by SpatialTemporalConfigurationWidget class
+        # ... i.e. grandparent class
+        # OK clicked
+        self.connect(
+            self.parent_widget, # should be  self.parent_widget.parent_widget, ???
+            QtCore.SIGNAL('doneConfigure'),
+            self.doConfigure
         )
 
     def create_config_window(self):
@@ -243,6 +249,11 @@ class SosCommonWidget(QtGui.QWidget):
             for content in self.contents:
                 item = QtGui.QListWidgetItem(content.id)
                 self.lbxOfferings.addItem(item)
+
+    def doConfigure(self):
+        """Set the output request on the input port aka ServiceURL """
+        print "OK!!!"
+        pass
 
 
 class SOSConfigurationWidget(OgcConfigurationWidget):

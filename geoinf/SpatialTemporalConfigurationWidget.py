@@ -89,7 +89,7 @@ class TemporalWidget(QtGui.QWidget):
 
     def create_temp_config_window(self):
         """TO DO - add docstring"""
-        
+
 
         # adding labels and their positions to the main window
         # add and set groupboxes
@@ -97,13 +97,13 @@ class TemporalWidget(QtGui.QWidget):
         self.setLayout(self.mainLayout)
         self.tFramesGroupBox = QtGui.QGroupBox("Time frames")
         self.tFramesLayout = QtGui.QVBoxLayout()
-        
+
         self.tFramesLayout = QtGui.QGridLayout()
         self.tIntervalLayout = QtGui.QGridLayout()
-        
+
         self.tFramesGroupBox.setLayout(self.tFramesLayout)
         self.mainLayout.addWidget(self.tFramesGroupBox)
-        
+
         self.split = QtGui.QSplitter(QtCore.Qt.Horizontal)
         self.mainLayout.addWidget(self.split)
         self.intervalsGroupBox = QtGui.QGroupBox("Time interval")
@@ -275,9 +275,11 @@ class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
         self.okButton = QtGui.QPushButton('&OK', self)
         self.okButton.setAutoDefault(False)
         self.buttonLayout.addWidget(self.okButton)
-        self.connect(self.okButton, QtCore.SIGNAL('clicked(bool)'),
+        self.connect(self.okButton,
+                     QtCore.SIGNAL('clicked(bool)'),
                      self.okTriggered)
-        self.connect(self.cancelButton, QtCore.SIGNAL('clicked(bool)'),
+        self.connect(self.cancelButton,
+                     QtCore.SIGNAL('clicked(bool)'),
                      self.close)
 
     def sizeHint(self):
@@ -289,9 +291,13 @@ class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
 
     def okTriggered(self, checked = False):
         """ okTriggered(checked: bool) -> None
-        Update vistrail controller and module when the user clicks Ok
+        Fire a "done" event when the user clicks OK
+        Update vistrail controller and module
 
-        """
+
         if self.updateVistrail():
-            self.emit(QtCore.SIGNAL('doneConfigure()'))
+            self.emit(QtCore.SIGNAL('doneConfigure'))
             self.close()
+        """
+        self.emit(QtCore.SIGNAL('doneConfigure'))
+        self.close()

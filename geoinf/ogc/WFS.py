@@ -32,7 +32,7 @@ from packages.eo4vistrails.geoinf.datamodels.Feature import FeatureModel
 from OgcConfigurationWidget import OgcConfigurationWidget
 from packages.eo4vistrails.geoinf.SpatialTemporalConfigurationWidget import SpatialTemporalConfigurationWidget, SpatialWidget
 from core.modules.vistrails_module import Module, new_module, NotCacheable, ModuleError
-
+from packages.eo4vistrails.geoinf.SpatialTemporalConfigurationWidget import SpatialTemporalConfigurationWidget, SpatialWidget
 
 #need to import the configuration widget we develop
 
