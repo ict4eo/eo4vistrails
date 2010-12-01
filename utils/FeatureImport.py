@@ -96,24 +96,24 @@ class FeatureImportCommonWidget(QtGui.QWidget):
         # places
         self.lbxPlaces = QtGui.QListWidget()
         self.placesLayout.addWidget(self.lbxOfferings)
-	self.btnPlaces = QtGui.QButton("Add");
-	self.placesLayout.addWidget(self.btnPlaces)
+        self.btnPlaces = QtGui.QButton("Add");
+        self.placesLayout.addWidget(self.btnPlaces)
         # places details layout
         #   labels
         #   data containers
         self.lbxDetails = QtGui.QListWidget()
         self.detailsLayout.addWidget(self.lbxDetails)
-	self.cbxPlaces = QtGui.QComboBox();
-	self.detailsLayout.addWidget(self.cbxPlaces)
+        self.cbxPlaces = QtGui.QComboBox();
+        self.detailsLayout.addWidget(self.cbxPlaces)
 
         self.buttonGroupBox = QtGui.QGroupBox("")
         self.buttonLayout = QtGui.QHBoxLayout()
         self.buttonGroupBox.setLayout(self.buttonLayout)
-	self.detailsLayout.addWidget(self.buttonGroupBox)
-	self.btnCancel = QtGui.QButton("Cancel");
-	self.btnOpen = QtGui.QButton("Open");
+        self.detailsLayout.addWidget(self.buttonGroupBox)
+        self.btnCancel = QtGui.QButton("Cancel");
+        self.btnOpen = QtGui.QButton("Open");
         self.buttonLayout.addWidget(self.btnCancel)
-	self.buttonLayout.addWidget(self.btnOpen)
+        self.buttonLayout.addWidget(self.btnOpen)
 
 
 
@@ -121,6 +121,7 @@ class FeatureImportCommonWidget(QtGui.QWidget):
         '''self.connect(
             self.lbxOfferings,
             QtCore.SIGNAL("itemClicked(QListWidgetItem*)"),
-            self.offeringsChanged'''
+            self.offeringsChanged'
         )
+        '''
 

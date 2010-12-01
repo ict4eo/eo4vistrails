@@ -30,6 +30,7 @@
 from PyQt4 import QtCore, QtGui
 from packages.eo4vistrails.geoinf.datamodels.Feature import FeatureModel
 from OgcConfigurationWidget import OgcConfigurationWidget
+from packages.eo4vistrails.geoinf.SpatialTemporalConfigurationWidget import SpatialTemporalConfigurationWidget, SpatialWidget
 from core.modules.vistrails_module import Module, new_module, NotCacheable, ModuleError
 
 
@@ -55,8 +56,10 @@ class WFSCommonWidget(QtGui.QWidget):
         self.setObjectName("WFSConfigurationWidget")
         self.parent_widget = ogc_widget
         self.service = self.parent_widget.service
+        self.coords = SpatialWidget()
 
         self.create_wfs_config_window()
+
         # listener for signal emitted by OgcCommonWidget class
         self.connect(
             self.parent_widget,
@@ -70,15 +73,18 @@ class WFSCommonWidget(QtGui.QWidget):
             self.lstFeatures,
             QtCore.SIGNAL("itemClicked(QListWidgetItem*)"),
             self.featureNameChanged
+
         )
+
 
 
     def create_wfs_config_window(self):
         """TO DO - add docstring"""
         gridLayout = QtGui.QGridLayout()
         self.setLayout(gridLayout)
-        #gridLayout.addWidget(QtGui.QLabel('wfs Url'), 0, 0)
-        gridLayout.addWidget(QtGui.QLabel('Feature Names:'), 1, 0)
+        gridLayout.addWidget(QtGui.QLabel('TypeNames List:'), 0, 1)
+        gridLayout.addWidget(QtGui.QLabel('TypeName Metadata:'), 0, 3)
+        #gridLayout.addWidget(QtGui.QLabel('Feature Names:'), 1, 0)
         #gridLayout.addWidget(QtGui.QLabel('TypeNames'), 2, 0)
         gridLayout.addWidget(QtGui.QLabel('bbox:'), 3, 0)
         gridLayout.addWidget(QtGui.QLabel('top_left  X'), 3, 1)
@@ -88,22 +94,25 @@ class WFSCommonWidget(QtGui.QWidget):
         gridLayout.addWidget(QtGui.QLabel('ESPG/SRS Code'), 5, 0)
         gridLayout.addWidget(QtGui.QLabel('maxFeatures'), 6, 0)
 
-
-        #gridLayout.addWidget(QtGui.QCheckBox('GetCapabilities Request'), 7, 0)
         gridLayout.addWidget(QtGui.QCheckBox('GetFeature Request'), 7, 0)
-        gridLayout.addWidget(QtGui.QCheckBox('DescribeFeatureType Request'), 8, 0)
+        gridLayout.addWidget(QtGui.QCheckBox('DescrbFeatureType Request'), 8, 0)
 
         #self.wfsUrlEdit = QtGui.QLineEdit('http://localhost:8080/geoserver/wfs')
 
         self.minXEdit = QtGui.QLineEdit('0.0')
+        self.minXEdit.setEnabled(False)
         self.ESPGEdit = QtGui.QLineEdit('Null')
+        self.ESPGEdit.setEnabled(False)
         self.maxFeaturesEdit = QtGui.QLineEdit('0')
 
         self.minYEdit = QtGui.QLineEdit('0.0')
+        self.minYEdit.setEnabled(False)
         self.maxXEdit = QtGui.QLineEdit('0.0')
+        self.maxXEdit.setEnabled(False)
         self.maxYEdit = QtGui.QLineEdit('0.0')
+        self.maxYEdit.setEnabled(False)
 
-        self.GetCapabilitiesEdit = QtGui.QLineEdit('http://')
+        #self.GetCapabilitiesEdit = QtGui.QLineEdit('http://')
         self.GetFeatureEdit = QtGui.QLineEdit('http://')
         self.DescribeFeatureTypeEdit = QtGui.QLineEdit('http://')
 
@@ -115,7 +124,6 @@ class WFSCommonWidget(QtGui.QWidget):
         gridLayout.addWidget(self.maxXEdit, 4, 2)
         gridLayout.addWidget(self.maxYEdit, 4, 4)
 
-        #gridLayout.addWidget(self.GetCapabilitiesEdit, 7, 1)
         gridLayout.addWidget(self.GetFeatureEdit, 7, 1)
         gridLayout.addWidget(self.DescribeFeatureTypeEdit, 8, 1)
 
@@ -123,29 +131,14 @@ class WFSCommonWidget(QtGui.QWidget):
 
         gridLayout.addWidget(self.lstFeatures, 1, 1)
 
-
         self.htmlView = QtGui.QTextEdit()   # want to view featureColletion for each selected typename / FeatureName.
+        #self.htmlView.setEnabled(False)
+        gridLayout.addWidget(self.htmlView, 1, 2,  1,  3)
 
-        gridLayout.addWidget(self.htmlView, 1, 3)
-
-
-    '''
-    def clearRequest(self):
-        """TO DO Implement clear fields """
-        self.minXEdit.setText('0.0')
-        self.ESPGEdit.setText('Null')
-        self.maxFeaturesEdit.setText('0')
-
-        self.minYEdit.setText('0.0')
-        self.maxXEdit.setText('0.0')
-        self.maxYEdit.setText('0.0')
-    '''
 
     def loadRequest(self):
         """ loadRequest() -> None
         uses service data to populate the config widget populate fields
-
-        SEE SOS.py for similar code (under loadOfferings method)
         """
 
         if self.parent_widget.service and self.parent_widget.service.service_valid:
@@ -162,12 +155,18 @@ class WFSCommonWidget(QtGui.QWidget):
 
         print "Accessing....: " + selected_featureName
 
-        getfeature_request = self.parent_widget.service.service
+        #getfeature_request = self.parent_widget.service.service
+
+        # read set coordinates
+        self.minXEdit.setText(self.coords.bbox_tlx.text())
+        self.minYEdit.setText(self.coords.bbox_tly.text())
+        self.maxXEdit.setText(self.coords.bbox_brx.text())
+        self.maxYEdit.setText(self.coords.bbox_bry.text())
 
 
         if self.parent_widget.service and self.parent_widget.service.service_valid and self.contents:
 
-            featureDetails = getfeature_request.getfeature(typename=[str(selected_featureName)], maxfeatures=1)
+            #featureDetails = getfeature_request.getfeature(typename=[str(selected_featureName)], maxfeatures=1)
 
             for content in self.contents:
 
@@ -179,7 +178,7 @@ class WFSCommonWidget(QtGui.QWidget):
 
                     name = self.contents[str(selected_featureName)].id
 
-                    bheki = self.contents[str(selected_featureName)].title
+                    titl = self.contents[str(selected_featureName)].title
 
                     abstr = self.contents[str(selected_featureName)].abstract
 
@@ -193,6 +192,7 @@ class WFSCommonWidget(QtGui.QWidget):
                 self.ESPGEdit.setText(elem)
 
                 coordinates = self.contents[str(selected_featureName)].boundingBoxWGS84
+
                 #self.minXEdit.setText(str(coordinates[0]))
                 #self.minYEdit.setText(str(coordinates[1]))
                #self.maxXEdit.setText(str(coordinates[2]))
@@ -200,13 +200,18 @@ class WFSCommonWidget(QtGui.QWidget):
 
                 # set metadata for selected layername :  how about if we were to read these directly from the GetCapabilities file??
                 self.htmlView.setText("Name: " + name )
-                self.htmlView.append("Title: " + bheki  )
+                self.htmlView.append('')
+                self.htmlView.append("Title: " + titl  )
+                self.htmlView.append('')
                 self.htmlView.append("Abstract: " + abstr )
+                self.htmlView.append('')
                 self.htmlView.append("Keywords: "  + keyw )
+                self.htmlView.append('')
                 self.htmlView.append("SRS: " + str(elem))
+                self.htmlView.append('')
                 self.htmlView.append("Operations: " + str(operations))
+                self.htmlView.append('')
                 self.htmlView.append("LatLongBoundingBox: " + 'minx= '+ str(coordinates[0]) + ' miny= '+ str(coordinates[1]) + ' maxx= '+ str(coordinates[2])  + ' maxy= '+ str(coordinates[3])  )
-
 
 
 class WFSConfigurationWidget(OgcConfigurationWidget):
@@ -214,8 +219,11 @@ class WFSConfigurationWidget(OgcConfigurationWidget):
     """makes use of code style from OgcConfigurationWidget"""
     def __init__(self,  module, controller, parent=None):
         OgcConfigurationWidget.__init__(self,  module, controller, parent)
+
         # pass in parent widget i.e. OgcCommonWidget class
+
         self.wfs_config = WFSCommonWidget(self.ogc_common_widget)
+
         # tabs
         self.tabs.insertTab(1, self.wfs_config, "")
         self.tabs.setTabText(
@@ -237,4 +245,5 @@ class WFSConfigurationWidget(OgcConfigurationWidget):
             )
         )
         self.tabs.setCurrentIndex(0)
+
 
