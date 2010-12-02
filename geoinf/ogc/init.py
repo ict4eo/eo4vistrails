@@ -17,16 +17,16 @@ def initialize(*args, **keywords):
     reg = get_module_registry()
 
     # WFS MODULE
-    reg.add_input_port(WFS, "ServiceURL",
-                     (core.modules.basic_modules.String, 'wfs url'))#, True)
-    reg.add_output_port(WFS, "ConfiguredRequest",
-                      (core.modules.basic_modules.String, 'ConfiguredRequest String Output'))#,True)
+    reg.add_input_port(WFS, "ConfiguredRequest",
+                     (core.modules.basic_modules.String, 'Configured Request'))#, True)
+    reg.add_output_port(WFS, "ServiceOutput",
+                      (core.modules.basic_modules.String, 'Service Output String'))#,True)
 
     # SOS MODULE
-    reg.add_input_port(SOS, "ServiceURL",
-                     (core.modules.basic_modules.String, 'wfs url'))#, True)
-    reg.add_output_port(SOS, "ConfiguredRequest",
-                      (core.modules.basic_modules.String, 'ConfiguredRequest String Output'))#,True)
+    reg.add_input_port(SOS, "ConfiguredRequest",
+                     (core.modules.basic_modules.String, 'Configured Request'))#, True)
+    reg.add_output_port(SOS, "ServiceOutput",
+                      (core.modules.basic_modules.String, 'Service Output String'))#,True)
 
     """
     # these ports will not be used/required in the OGC services modules ...

@@ -33,7 +33,14 @@ from core.modules.vistrails_module import Module, new_module, NotCacheable, Modu
 
 
 class SOS(FeatureModel):
-    """TO DO - add docstring
+    """
+    SOS module allows connection to a web-based OGC sensor observation service.
+    Configuration allows the base URL for the service to be set and called.
+    Choosing the appropriate combination of specific service type and other
+    parameters, will cause the input port to be set with a specific POST call,
+    once the configuration interface is closed.
+    Running the SOS will cause the specific, parameterised SOS to be called
+    and output from the request to be available via the output ports.
 
     """
     def __init__(self):
@@ -41,6 +48,86 @@ class SOS(FeatureModel):
 
     def compute(self):
         pass
+        """        """
+        print "input ports (before setting):\n", self.inputPorts
+        print "output ports (before setting):\n", self.outputPorts
+
+        try:
+            o = 'foo'
+            self.setResult('ServiceOutput', o)
+        except:
+            print "CANNOT setResult for ServiceOutput"
+
+        try:
+            i = "http://foo.bar"
+            self.set_input_port(self, 'ConfiguredRequest', i)
+        except:
+            print "CANNOT set_input_port for ConfiguredRequest"
+
+        print "input ports (after setting):\n", self.inputPorts
+        print "output ports (after setting):\n", self.outputPorts
+
+        """
+        # ----------------------------------------------------------------------
+
+        i = "http://foo.bar"
+
+        try:
+            self.setResult('ConfiguredRequest', i)
+        except:
+            print "NOT set result for ConfiguredRequest"
+
+        try:
+            self.setInputPort('ConfiguredRequest', i)
+        except:
+            print "NOT setInputPort"
+
+        try:
+            self.setInput('ConfiguredRequest', i)
+        except:
+            print "NOT setInput"
+
+        try:
+            self.set_input_port('ConfiguredRequest', i)
+        except:
+            print "NOT set_input_port"
+
+        try:
+            self.checkInputPort('ConfiguredRequest')
+        except:
+            print "NOT checkInputPort('ConfiguredRequest')"
+
+        try:
+            foo = self.hasInputFromPort('ConfiguredRequest')
+            print "CAN hasInputFromPort('ConfiguredRequest')", foo
+        except:
+            print "NOT hasInputFromPort('ConfiguredRequest')"
+
+        try:
+            self.service_url = self.getInputFromPort('ConfiguredRequest')
+            print "CAN getInputFromPort('ConfiguredRequest')", self.service_url
+        except:
+            print "NOT getInputFromPort('ConfiguredRequest')"
+
+        print "input ports (after setting):\n", self.inputPorts
+
+        outputPort = self.outputPorts.get('ServiceOutput')
+        print "type(outputPort)",type(outputPort)
+
+        outputPort = self.outputPorts['self']
+        print "type(outputPort)",type(outputPort)
+
+        inputPort = self.inputPorts.get('ConfiguredRequest')
+        print "type(inputPort)",type(inputPort)
+
+        # attempted to "lift' code from fold.py... does not work here
+        if inputPort:
+            module = inputPort.obj
+            del module.inputPorts[inputPort]
+            element = "FOOBAR"
+            new_connector = ModuleConnector(create_constant(element), 'value')
+            module.set_input_port(inputPort, new_connector)
+        """
 
 
 class SosCommonWidget(QtGui.QWidget):
@@ -93,6 +180,10 @@ class SosCommonWidget(QtGui.QWidget):
         # offerings
         self.lbxOfferings = QtGui.QListWidget()
         self.offeringsLayout.addWidget(self.lbxOfferings)
+
+        self.testButton = QtGui.QPushButton('&Test', self)
+        self.offeringsLayout.addWidget(self.testButton)
+
         # offering details layout
         #   labels
         self.detailsLayout.addWidget(QtGui.QLabel('Description'), 0, 0)
@@ -145,7 +236,7 @@ class SosCommonWidget(QtGui.QWidget):
         self.lblSRS =  QtGui.QLabel('-')
         self.srsLayout.addWidget(self.lblSRS)
 
-        self.boundingLayout.addStretch()  # force all items upwards
+        self.boundingLayout.addStretch()  # force all items upwards -does not work
 
         self.timeGroupBox = QtGui.QGroupBox("")
         self.timeGroupBox.setFlat(True)
@@ -176,6 +267,11 @@ class SosCommonWidget(QtGui.QWidget):
             self.lbxOfferings,
             QtCore.SIGNAL("itemClicked(QListWidgetItem*)"),
             self.offeringsChanged
+        )
+        self.connect(
+            self.testButton,
+            QtCore.SIGNAL("clicked(bool)"),
+            self.doConfigure
         )
 
     def removeOfferings(self):
@@ -251,9 +347,8 @@ class SosCommonWidget(QtGui.QWidget):
                 self.lbxOfferings.addItem(item)
 
     def doConfigure(self):
-        """Set the output request on the input port aka ServiceURL """
+        """Set the output request (aka ConfiguredRequest) on the input port."""
         print "OK!!!"
-        pass
 
 
 class SOSConfigurationWidget(OgcConfigurationWidget):
