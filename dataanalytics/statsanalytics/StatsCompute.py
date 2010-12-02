@@ -2,10 +2,10 @@
 ##
 ## Copyright (C) 2010 CSIR Meraka Institute. All rights reserved.
 ##
-## eo4vistrails extends VisTrails, providing GIS/Earth Observation 
-## ingestion, pre-processing, transformation, analytic and visualisation 
-## capabilities. Included is the abilty to run code transparently in 
-## OpenNebula cloud environments. There are various software 
+## eo4vistrails extends VisTrails, providing GIS/Earth Observation
+## ingestion, pre-processing, transformation, analytic and visualisation
+## capabilities. Included is the abilty to run code transparently in
+## OpenNebula cloud environments. There are various software
 ## dependencies, but all are FOSS.
 ##
 ## This file may be used under the terms of the GNU General Public
@@ -23,9 +23,8 @@
 ## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ##
 ############################################################################
-"""This module provides a base class for the dataAnalytics.statistics 
-An eo4Vistrails statistical computing base class, doing initial argument
-parsing. Inherited by all statistical classes
+"""A base class for the dataAnalytics.statistics class, an eo4Vistrails
+statistical computing base class, doing initial argument parsing.
 """
 
 # NOTES
@@ -35,27 +34,24 @@ parsing. Inherited by all statistical classes
 import core.modules.module_registry
 from core.modules.vistrails_module import Module, ModuleError
 
-# We'll first create a local alias for the module_registry so that
-# we can refer to it in a shorter way. This right?
+# First create a local alias for the module_registry so that
+# we can refer to it in a shorter way.
 reg = core.modules.module_registry.get_module_registry()
 reg.add_module(statsCompute)
 
 
 class statsCompute (Module):
     """TO DO - add docstring"""
+
     def __init__(self):
-        # Is this the python constructor?
+        # Python constructor does nothing
         pass
 
     def compute(self):
-        # Starts with a big switch statement usually, to parse input port args
-        """Below, to be done by classes that inherit this one
-        case library call (numpy/scipy, whatever...)
-        case R: Have to figure out how to inherit a Session class in python
-             if R session running
-                send to it
-             else // instantiate a Session
-                statsSession =  Session(); So easy in C++, sigh...
+        # Starts with a big 'switch' statement usually, to parse input port args
+        """To be done by classes that inherit this one
+           E.g., a statsSession, RPy2, numpy, scipy...
+               statsSession = Session(); So easy in C++, sigh...
         """
         pass
 
@@ -64,6 +60,4 @@ class statsCompute (Module):
 
     #Set up output ports
     #reg.add_output_port(statsModule, bla, bla)
-
-# I know nothing about python. Is above right?
 
