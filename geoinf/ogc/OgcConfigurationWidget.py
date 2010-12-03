@@ -222,10 +222,9 @@ class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
     """TO DO - add docstring"""
     def __init__(self, module, controller, parent=None):
         SpatialTemporalConfigurationWidget.__init__(self, module, controller, parent)
-
+        # will be used by children classes to access signals
         self.ogc_common_widget = OgcCommonWidget(module)
-
-        #self.tabs.addTab(self.ogc_common_widget, "")
+        # set basic Configuration tabs
         self.tabs.insertTab(0, self.ogc_common_widget, "")
         self.tabs.setTabText(
             self.tabs.indexOf(self.ogc_common_widget),

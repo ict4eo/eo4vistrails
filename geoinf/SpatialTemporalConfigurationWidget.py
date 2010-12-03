@@ -300,4 +300,6 @@ class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
             self.close()
         """
         self.emit(QtCore.SIGNAL('doneConfigure'))
+        # listen for return signal before closing
+        # i.e. port is configured
         self.close()

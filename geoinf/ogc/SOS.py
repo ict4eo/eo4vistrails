@@ -30,9 +30,16 @@ from PyQt4 import QtCore, QtGui
 from packages.eo4vistrails.geoinf.datamodels.Feature import FeatureModel
 from OgcConfigurationWidget import OgcConfigurationWidget
 from core.modules.vistrails_module import Module, new_module, NotCacheable, ModuleError
+import init
+
+def raiseError(self, msg, error=''):
+    """Raise a VisTrails error."""
+    import traceback
+    traceback.print_exc()
+    raise ModuleError(self, msg + ': %s' % str(error))
 
 
-class SOS(FeatureModel):
+class SOS(NotCacheable, FeatureModel):
     """
     SOS module allows connection to a web-based OGC sensor observation service.
     Configuration allows the base URL for the service to be set and called.
@@ -47,87 +54,92 @@ class SOS(FeatureModel):
         FeatureModel.__init__(self)
 
     def compute(self):
-        pass
-        """        """
-        print "input ports (before setting):\n", self.inputPorts
-        print "output ports (before setting):\n", self.outputPorts
+        """Execute the module to create the output"""
+
+        request = None
+        # first try & get request data from a connected module (if any)
+        try:
+            request = self.getInputFromPort(init.OGC_POST_REQUEST_PORT)
+            #print "request from port %s :::", init.OGC_POST_REQUEST_PORT, type(request), request, len(request)
+        except:
+            request = None
+        # then try & get request data from local function
+        if not(request):
+            try:
+                data = self.getRequest()
+                if data:
+                    self.set_input_port(init.OGC_POST_REQUEST_PORT, data)
+                    request = self.inputPorts[init.OGC_POST_REQUEST_PORT][0]
+                else:
+                    raiseError(self, 'Null request set on request port')
+            except Exception, e:
+                raiseError(self, 'Cannot set request port', e)
+
+        url = None
+        # first try & get URL data from a connected module (if any)
+        try:
+            url = self.getInputFromPort(init.OGC_URL_PORT)
+            #print "URL from port %s :::", init.OGC_URL_PORT, type(URL), URL, len(URL)
+        except:
+            url = None
+        # then try & get URL data from local function
+        if not(url):
+            #TO DO - set on request port
+            url = 'http://giv-sos.uni-muenster.de:8080/52nSOSv3/sos'
 
         try:
-            o = 'foo'
-            self.setResult('ServiceOutput', o)
-        except:
-            print "CANNOT setResult for ServiceOutput"
+            out = self.runRequest(url, request)
+            self.setResult(init.OGC_RESULT_PORT, out)
+        except Exception, e:
+            raiseError(self, 'Cannot set output port', e)
 
-        try:
-            i = "http://foo.bar"
-            self.set_input_port(self, 'ConfiguredRequest', i)
-        except:
-            print "CANNOT set_input_port for ConfiguredRequest"
+    def getRequest(self):
+        """Return an XML-encoded request
 
-        print "input ports (after setting):\n", self.inputPorts
-        print "output ports (after setting):\n", self.outputPorts
-
+        TO DO: construct from info on SOS tab
         """
-        # ----------------------------------------------------------------------
+        #<?xml version="1.0" encoding="UTF-8"?><GetFeatureOfInterest xmlns="http://www.opengis.net/sos/1.0" service="SOS" version="1.0.0" xmlns:ows="http://www.opengeospatial.net/ows" xmlns:gml="http://www.opengis.net/gml" xmlns:ogc="http://www.opengis.net/ogc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/sos/1.0 http://schemas.opengis.net/sos/1.0.0/sosGetFeatureOfInterest.xsd"> <FeatureOfInterestId>foi_1001</FeatureOfInterestId></GetFeatureOfInterest>
+        data = \
+"""<?xml version="1.0" encoding="UTF-8"?>
+<GetFeatureOfInterest xmlns="http://www.opengis.net/sos/1.0"
+  service="SOS" version="1.0.0"
+  xmlns:ows="http://www.opengeospatial.net/ows"
+  xmlns:gml="http://www.opengis.net/gml"
+  xmlns:ogc="http://www.opengis.net/ogc"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.opengis.net/sos/1.0
+  http://schemas.opengis.net/sos/1.0.0/sosGetFeatureOfInterest.xsd">
+  <FeatureOfInterestId>foi_1001</FeatureOfInterestId>
+</GetFeatureOfInterest>
+"""
+        return data
 
-        i = "http://foo.bar"
-
-        try:
-            self.setResult('ConfiguredRequest', i)
-        except:
-            print "NOT set result for ConfiguredRequest"
-
-        try:
-            self.setInputPort('ConfiguredRequest', i)
-        except:
-            print "NOT setInputPort"
-
-        try:
-            self.setInput('ConfiguredRequest', i)
-        except:
-            print "NOT setInput"
-
-        try:
-            self.set_input_port('ConfiguredRequest', i)
-        except:
-            print "NOT set_input_port"
-
-        try:
-            self.checkInputPort('ConfiguredRequest')
-        except:
-            print "NOT checkInputPort('ConfiguredRequest')"
-
-        try:
-            foo = self.hasInputFromPort('ConfiguredRequest')
-            print "CAN hasInputFromPort('ConfiguredRequest')", foo
-        except:
-            print "NOT hasInputFromPort('ConfiguredRequest')"
-
-        try:
-            self.service_url = self.getInputFromPort('ConfiguredRequest')
-            print "CAN getInputFromPort('ConfiguredRequest')", self.service_url
-        except:
-            print "NOT getInputFromPort('ConfiguredRequest')"
-
-        print "input ports (after setting):\n", self.inputPorts
-
-        outputPort = self.outputPorts.get('ServiceOutput')
-        print "type(outputPort)",type(outputPort)
-
-        outputPort = self.outputPorts['self']
-        print "type(outputPort)",type(outputPort)
-
-        inputPort = self.inputPorts.get('ConfiguredRequest')
-        print "type(inputPort)",type(inputPort)
-
-        # attempted to "lift' code from fold.py... does not work here
-        if inputPort:
-            module = inputPort.obj
-            del module.inputPorts[inputPort]
-            element = "FOOBAR"
-            new_connector = ModuleConnector(create_constant(element), 'value')
-            module.set_input_port(inputPort, new_connector)
-        """
+    def runRequest(self, url, request):
+        """Execute an HTTP POST request for a given URL"""
+        import urllib
+        import urllib2
+        import os
+        from  urllib2 import URLError
+        result = None
+        if url and request:
+            user_agent = 'Mozilla/4.0 (compatible; MSIE 5.5; Windows NT)'
+            headers = {'User-Agent': user_agent}
+            #request = urllib.urlencode(xml)
+            req = urllib2.Request(url, request, headers)
+            #proxy - not needed
+            #os.environ["http_proxy"] = "http://myproxy.com:3128"
+            try:
+                urllib2.urlopen(req)
+                response = urllib2.urlopen(req)
+                result = response.read()
+            except URLError, e:
+                if hasattr(e, 'reason'):
+                    raiseError(self, 'Failed to reach the server. Reason', e.reason)
+                elif hasattr(e, 'code'):
+                    raiseError(self, 'The server couldn\'t fulfill the request. Error code', e.code)
+            except Exception, e:
+                raiseError(self, 'Exception', e)
+        return result
 
 
 class SosCommonWidget(QtGui.QWidget):
@@ -195,6 +207,7 @@ class SosCommonWidget(QtGui.QWidget):
         self.detailsLayout.addWidget(QtGui.QLabel('Result Model'), 6, 0)
         self.detailsLayout.addWidget(QtGui.QLabel('Observed Property'), 7, 0)
         self.detailsLayout.addWidget(QtGui.QLabel('Feature of Interest'), 8, 0)
+        self.detailsLayout.addWidget(QtGui.QLabel('data'), 9, 0)
         #   data containers
         self.lblDescription =  QtGui.QLabel('-')
         self.detailsLayout.addWidget(self.lblDescription , 0, 1)
@@ -236,7 +249,7 @@ class SosCommonWidget(QtGui.QWidget):
         self.lblSRS =  QtGui.QLabel('-')
         self.srsLayout.addWidget(self.lblSRS)
 
-        self.boundingLayout.addStretch()  # force all items upwards -does not work
+        self.boundingLayout.addStretch()  # force all items upwards -does not work?
 
         self.timeGroupBox = QtGui.QGroupBox("")
         self.timeGroupBox.setFlat(True)
@@ -261,6 +274,12 @@ class SosCommonWidget(QtGui.QWidget):
         self.detailsLayout.addWidget(self.cbObservedProperty, 7, 1)
         self.cbFOI = QtGui.QComboBox()
         self.detailsLayout.addWidget(self.cbFOI, 8, 1)
+
+        self.cbRequest = QtGui.QComboBox()
+        self.detailsLayout.addWidget(self.cbRequest, 9, 1)
+        self.cbRequest.addItem('DescribeSensor')
+        self.cbRequest.addItem('GetFeatureOfInterest')
+        self.cbRequest.addItem('GetObservation')
 
         # local signals
         self.connect(
@@ -347,7 +366,7 @@ class SosCommonWidget(QtGui.QWidget):
                 self.lbxOfferings.addItem(item)
 
     def doConfigure(self):
-        """Set the output request (aka ConfiguredRequest) on the input port."""
+        """Set the output data (aka ConfiguredRequest) on the input port."""
         print "OK!!!"
 
 
@@ -357,8 +376,9 @@ class SOSConfigurationWidget(OgcConfigurationWidget):
         OgcConfigurationWidget.__init__(self, module, controller, parent)
         # pass in parent widget i.e. OgcCommonWidget class
         self.sos_config_widget = SosCommonWidget(self.ogc_common_widget)
-        # tabs
+        # move parent tab to first palce
         self.tabs.insertTab(1, self.sos_config_widget, "")
+        # set SOS-specific tabs
         self.tabs.setTabText(
             self.tabs.indexOf(self.sos_config_widget),
             QtGui.QApplication.translate(
