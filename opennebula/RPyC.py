@@ -35,7 +35,7 @@ from core.modules.module_registry import get_module_registry
 from core.modules.vistrails_module import Module, NotCacheable, ModuleError
 from core.modules import basic_modules
 
-from packages.eo4vistrails.utils import ThreadSafe
+from packages.eo4vistrails.utils.ThreadSafe import ThreadSafe
 
 import urllib
 import sys
@@ -210,7 +210,7 @@ class RPyCDiscover(NotCacheable, Module):
         """Vistrails Module Compute, Entry Point Refer, to Vistrails Docs"""
         self.setResult("rpycslaves", self.getSlaves())
 
-class RPyC(NotCacheable, ThreadSafe.ThreadSafe):
+class RPyC(NotCacheable, ThreadSafe, Module):
     """
     RPyC is a Module that executes an arbitrary piece of Python code remotely.
     TODO: If you want a PythonSource execution to fail, call fail(error_message).
@@ -222,7 +222,7 @@ class RPyC(NotCacheable, ThreadSafe.ThreadSafe):
     # own constructor, remember that it must not take any extra
     # parameters.
     def __init__(self):
-        ThreadSafe.ThreadSafe.__init__(self)
+        ThreadSafe.__init__(self)
 
     def run_code(self, code_str, use_input=False, use_output=False):
         """
@@ -249,7 +249,7 @@ class RPyC(NotCacheable, ThreadSafe.ThreadSafe):
             conn.namespace.update(inputDict)
         
         if use_output:
-            outputDict = dict([(k, None) for k in self.outputPorts])
+            outputDict = dict([(k, self.get_output(k)) for k in self.outputPorts])
             conn.namespace.update(outputDict)
 
         _m = packagemanager.get_package_manager()
@@ -278,3 +278,62 @@ class RPyC(NotCacheable, ThreadSafe.ThreadSafe):
             str(self.forceGetInputFromPort('source', ''))
         )
         self.run_code(s, use_input=True, use_output=True)
+        
+class RPyCSafe(ThreadSafe):
+    """
+    RPyC is a Module that executes an arbitrary piece of Python code remotely.
+    TODO: If you want a PythonSource execution to fail, call fail(error_message).
+    TODO: If you want a PythonSource execution to be cached, call cache_this().
+    """
+      
+    # This constructor is strictly unnecessary. However, some modules
+    # might want to initialize per-object data. When implementing your
+    # own constructor, remember that it must not take any extra
+    # parameters.
+    def __init__(self):
+        ThreadSafe.__init__(self)
+
+    def run_code(self, code_str, use_input=False, use_output=False):
+        """
+        run_code runs a piece of code as a VisTrails module.
+        use_input and use_output control whether to use the inputport
+        and output port dictionary as local variables inside the
+        execution.
+        """
+        import rpyc
+        
+        if type(self.getInputFromPort('rpycslave')) == list:
+            conn = rpyc.classic.connect(self.getInputFromPort('rpycslave')[0][0],self.getInputFromPort('rpycslave')[0][1])
+        else:
+            conn = rpyc.classic.connect(self.getInputFromPort('rpycslave')[0],self.getInputFromPort('rpycslave')[1])
+
+        if use_input:
+            inputDict = dict([(k, self.getInputFromPort(k)) for k in self.inputPorts])
+            conn.namespace.update(inputDict)
+        
+        if use_output:
+            outputDict = dict([(k, self.get_output(k)) for k in self.outputPorts])
+            conn.namespace.update(outputDict)
+
+        _m = packagemanager.get_package_manager()
+        reg = get_module_registry()
+        conn.namespace.update({'fail': fail,
+                        'package_manager': _m,
+                        'cache_this': cache_this,
+                        'registry': reg,
+                        'self': self})
+        del conn.namespace['source']
+
+        #TODO: changed to demo that this is in the cloud!!!!
+        #conn.modules.sys.stdout = sys.stdout
+        conn.execute(code_str)
+        #exec code_str in locals_, locals_
+        if use_output:
+            for k in outputDict.iterkeys():
+                if conn.namespace[k] != None:
+                    self.setResult(k, conn.namespace[k])
+
+    def compute(self):
+        """
+        Vistrails Module Compute, Entry Point Refer, to Vistrails Docs
+        """
