@@ -23,8 +23,10 @@
 ## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ##
 ############################################################################
-"""This module provides an generic OGC Simple Features data model via OGR. 
-All eo4vistrails modules dealing with feature data must extend this class.
+"""
+This module provides an generic OGC Simple Features data model via OGR. 
+All eo4vistrails modules dealing with feature data must extend one of the 
+provided classes.
 """
 import core.modules.module_registry
 import core.system
@@ -63,8 +65,12 @@ class _OgrMemModel():
         if os.path.exists(sourceDS):
             conn = ogr.Open(sourceDS)
             lyr = conn.GetLayer(0)
-            self.datasource.CopyLayer(lyr)
-        
+            self.datasource.CopyLayer(lyr,  lyr.GetName())
+            
+            try:
+                self.datasource.ReleaseResultLayer(lyr)
+            except:
+                return
             conn.ReleaseResultSet(lyr)
             conn = None 
         else:
@@ -75,22 +81,50 @@ class _OgrMemModel():
         connection string and layer defined by a Select statement"""
         conn = ogr.Open(connstr)
         lyr = conn.ExecuteSQL(getStatement)
-        self.datasource.CopyLayer(lyr)
+        self.datasource.CopyLayer(lyr,  lyr.GetName())
+        try:
+            self.datasource.ReleaseResultLayer(lyr)
+        except:
+            return
         
         conn.ReleaseResultSet(lyr)
         conn = None
     
     def loadContentFromURI(self,  uri,  getStatement=""):
-        """Loads content off web service, feed etc, like a WFS, GeoRSS"""
+        """
+        Loads content off web service, feed etc, like a WFS, GeoRSS
+        Could use OGR WFS driver here, but incoming url may not be properly setup
+        """
         pass
         
-    def dumpToFile(self,  datasetType = "shp"):    
-        pass
+    def dumpToFile(self,  filesource,  datasetType = "ESRI Shapefile"):    
+        
+        try:
+            driver = ogr.GetDriverByName(datasetType)
+            if datasetType == "CSV":
+                ds = driver.CreateDataSource( filesource,  options=["GEOMETRY=AS_XY"])
+                ds.CopyLayer(self.datasource.GetLayer(0),  self.datasource.GetLayer(0).GetName(),  options=["GEOMETRY=AS_XY"])      
+            else:
+                ds = driver.CreateDataSource( filesource)
+                ds.CopyLayer(self.datasource.GetLayer(0),  self.datasource.GetLayer(0).GetName())
+            filename = ds.GetName()
+        
+            ds = None
+        except:
+            return (False,  "")
+            
+        return (True,  filename)
         
     def __del__(self):
         """connection resetting, memory deallocation"""
-        self.datasource.ReleaseResultLayer(0)
-        self.datasource = None
+        try:
+            self.datasource.ReleaseResultLayer(0)
+        except:
+            pass
+        try:
+            self.datasource = None
+        except:
+            pass
         
 class MemFeatureModel(Module):
     """
@@ -98,16 +132,47 @@ class MemFeatureModel(Module):
     """
     def __init__(self):
         Module.__init__(self)
-    
-    def compute(self):
         self.feature_model = _OgrMemModel()
         
+    def loadContentFromDB(self,  dbconnstr,  sql):
+        self.feature_model.loadContentFromDB(dbconnstr,  sql)
+    
+    def loadContentFromFile(self,  source_file):
+        self.feature_model.loadContentFromFile(source_file)
+        
+    def loadContentFromURI(self):
+        pass
+    
+    def dumpToFile(self):
+        print "dumping featuremodel"
+        print self.feature_model
+        
+    def compute(self):
+        
+        if (self.hasInputFromPort("source_file") and self.getInputFromPort("source_file")):
+            source_file = self.getInputFromPort("source_file")
+            #self.feature_model.loadContentFromFile(source_file)
+            self.loadContentFromFile(source_file)
+        elif (self.hasInputFromPort("dbconn") and self.getInputFromPort("dbconn")) \
+            and (self.hasInputFromPort("sql") and self.getInputFromPort("sql")) :
+            #dbconn = self.getInputFromPort("dbconn")
+            #sql = self.getInputFromPort("sql")
+            #self.feature_model.loadContentFromDB("some connstr",  "some SQL")#get sql to execute
+            self.loadContentFromDB(self.getInputFromPort("dbconn"),  self.getInputFromPort("sql"))
+            self.dumpToFile()
+        else: 
+            raise ModuleError(self, 'No source file is supplied - an OGR dataset cannot be generated')         
+        
+        #self.setResult("feature_dataset",  self.feature_model)
+        self.setResult("feature_dataset",  self)
+            
+       
 
 class FileFeatureModel(File):
     """
     Persists a FeatureModel to disk at a user specified location;
     Likely outputs via OGR would be :
-    {shapefile, a spatialite database, a GML file,GeoJSON}
+    {shapefile, a postgis database dump, a CSV file ,a GML file,  a KML file or GeoJSON}
     """
     def __init__(self):
         File.__init__(self)
@@ -121,18 +186,52 @@ class FileFeatureModel(File):
 
     def compute(self):
         n = self.get_name()
+        
+        if (self.hasInputFromPort("source_file") and self.getInputFromPort("source_file")):
+            source_file = self.getInputFromPort("source_file")
+        else: 
+            raise ModuleError(self, 'No source file is supplied - an OGR dataset cannot be generated')      
+        if not os.path.isfile(source_file):
+            raise ModuleError(self, 'File "%s" does not exist' % source_file)    
+            
+        ogr  = _OgrMemModel() 
+        ogr.loadContentFromFile(source_file)
+        
+        if (self.hasInputFromPort("output_type") and self.getInputFromPort("output_type")):
+            output_type = self._ogr_format_check(self.getInputFromPort("output_type"))
+        else: 
+            output_type = "ESRI Shapefile"            
+            
         if (self.hasInputFromPort("create_file") and
             self.getInputFromPort("create_file")):
-            core.system.touch(n)
-        if not os.path.isfile(n):
-            raise ModuleError(self, 'File "%s" does not exist' % n)
-        self.set_results(n)
-        self.setResult("local_filename", n)
-        self.setResult("self", self)
+            #core.system.touch(n)
+            success,  fn = ogr.dumpToFile(n,  output_type)
+            if success == True:
+                self.setResult("local_filename", fn)
+                self.setResult("self", self)
+                self.set_results(fn)
+            else:
+                raise ModuleError(self, 'File "%s" does not exist or could not be created' % fn)
+        #if not os.path.isfile(n):
+        #    raise ModuleError(self, 'File "%s" does not exist' % n)
+        #self.set_results(n)
+        #self.setResult("local_filename", n)
+        #self.setResult("self", self)
 
     @staticmethod
     def get_widget_class():
         return FileChooserWidget
+    
+    def _ogr_format_check(self, fmt):
+        supported_ogr_formats = ("ESRI Shapefile", "CSV", "GML", "GeoJSON", "PGDump", "KML")
+        fmt = fmt.lstrip()
+        fmt = fmt.rstrip()
+        fmt = fmt.lower()
+        for sfmt in supported_ogr_formats:
+            if sfmt.lower() == fmt:
+               return sfmt
+        return "ESRI Shapefile"
+        
 
 class FeatureModel(Module):
     """This is a common representation of Vector/Feature 
@@ -151,6 +250,51 @@ class FeatureModel(Module):
         """Overriden by subclasses - typically where the 
         conversion to an OGR Dataset takes place"""
         pass
+
+
+
+class FeatureModelGeometryComparitor(Module):
+    """
+    Performs Geometry comparisons between OGR Geoms
+    Assumes same projection. Is only a double input comparison 
+    i.e. geomA | geomB. Supports the followong comparisons:
+    geomA | geomB : individual geometries compared -> geomB | None
+    geomA | geomSetB : individual geometry compared to a set of geometries -> [geomB's] | None
+    geomSetA | geomB : set of geometries compared to individual geometry -> [geomA's] | None
+    geomSetA | geomSetB : set of geometries compared to a set of geometries -> [(geomA, geomB)] | None
+    
+    Operators supported :-
+    
+    Predicates: Contains, Crosses, Disjoint, Equal, Intersect, Overlaps, Touches, Within
+    
+    For other purposes later:-
+    
+    Constructors: Buffer, Centroid, Clone, ConvexHull, Difference, Intersection, 
+            SymmetricDifference, Union
+    Editors: AddPoint, AddPoint_2D, CloseRings, FlattenTo2D, GetPoint, GetPoint_2D, 
+            Segmentize, SetCoordinateDimension, SetPoint, SetPoint_2D, Transform, 
+            TransformTo
+    
+    Calcs: Distance, GetArea, GetBoundary, GetEnvelope,
+    Info: GetCoordinateDimension , GetDimension,  GetGeometryCount, GetGeometryName, 
+            GetGeometryRef, GetGeometryType, GetPointCount, GetSpatialReference,GetX,
+            GetY, GetZ IsEmpty, IsRing, IsSimple, IsValid
+    """
+    def __init__(self):
+        Module.__init__()
+        
+    def compute(self):
+        if (self.hasInputFromPort("geometryA") and self.getInputFromPort("geometryA")):
+            geomA = self.getInputFromPort("geometryA")
+            
+        if (self.hasInputFromPort("geometrySetA") and self.getInputFromPort("geometrySetA")):
+            geomSetA = self.getInputFromPort("geometrySetA")
+
+        if (self.hasInputFromPort("geometryB") and self.getInputFromPort("geometryB")):
+            geomA = self.getInputFromPort("geometryB")
+            
+        if (self.hasInputFromPort("geometrySetB") and self.getInputFromPort("geometrySetB")):
+            geomSetA = self.getInputFromPort("geometrySetB")
 
 def initialize(*args, **keywords):
     """sets everything up"""

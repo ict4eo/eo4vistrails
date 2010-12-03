@@ -33,7 +33,7 @@ executed against the chosen database.
 """
 import psycopg2
 from PyQt4 import QtCore, QtGui
-from packages.eo4vistrails.geoinf.datamodels.Feature import FeatureModel
+from packages.eo4vistrails.geoinf.datamodels.Feature import FeatureModel,  MemFeatureModel
 from packages.eo4vistrails.utils.session import Session
 from core.modules.vistrails_module import Module, new_module, NotCacheable, ModuleError
 from core.modules.source_configure import SourceConfigurationWidget
@@ -50,16 +50,21 @@ class PostGisSession(Session):
     def compute(self):
         '''fetches psycopg connection'''
         host = self.forceGetInputFromPort('postgisHost', 'localhost')
-        port = self.forceGetInputFromPort('postgisPort', 5432)
+        port = self.forceGetInputFromPort('postgisPort', '5432')
         user = self.forceGetInputFromPort('postgisUser', 'default')
         pwd =  self.forceGetInputFromPort('postgisPassword', 'default')
         database = self.forceGetInputFromPort('postgisDatabase', 'default')
 
         self.connectstr = "host=" + host+ " dbname=" + database + " user=" + user + " password=" + pwd
+        #PG:"dbname='databasename' host='addr' port='5432' user='x' password='y'"
+        #PG:'host=myserver.velocet.ca user=postgres dbname=warmerda'
+        self.ogr_connectstr = "PG:host='%s' port='%s' dbname='%s' user='%s' password='%s'" % (host,  port,  database,  user,  pwd)
         try:
             self.pgconn = psycopg2.connect(self.connectstr)
         except:
             raise ModuleError,  (self, "cannot access a PostGIS connection")
+            
+        self.setResult("PostGisSession",  self)
 
     def __del__(self):
         try:
@@ -73,54 +78,82 @@ class PostGisCursor():
     """MixIn class responsible for opening a cursor
         on the PostGisSession/ connection"""
 
-    def __init__(self):
-        #ideally, would take a PostGisSession obj here, but not certain it will be available at __init__ time
-        #self.curs = PostGisSessionObj.pgconn.cursor()
-        pass
+    def __init__(self,  conn_type = "psycopg2"):
+
+        if conn_type == "ogr":
+            self.conn_type = "ogr"
+        else:
+            self.conn_type = "psycopg2"
+            
+            
 
     def cursor(self,  PostGisSessionObj):
-        try:
-            self.curs = PostGisSessionObj.pgconn.cursor()
+        
+        if self.conn_type == "psycopg2":
+            try:
+                self.curs = PostGisSessionObj.pgconn.cursor()
+                return True
+            except:
+                return False
+        else:
             return True
-        except:
-            return False
+            #below is not necessary, I suspect
+            try:
+                self.curs = ogr.Open(PostGisSessionObj.ogr_connectstr)
+                return True
+            except:
+                return False
+                
 
     def __del__(self):
         try:
             if self.curs:
-                self.curs.close()
+                if self.conn_type == "psycopg2":
+                    self.curs.close()
+                else:
+                    self.curs.ReleaseResultLayer(0)
+                    self.curs.Destroy()
         except:
             pass
 
 
-class PostGisFeatureReturningCursor(PostGisCursor, FeatureModel):
+class PostGisFeatureReturningCursor(PostGisCursor, MemFeatureModel):
     """Returns data in the form of a eo4vistrails FeatureModel"""
     #multi inheritance of module subclasses is a problem
     def __init__(self):
-        PostGisCursor.__init__(self)
-        FeatureModel.__init__(self)
+        PostGisCursor.__init__(self,   conn_type = "ogr")
+        MemFeatureModel.__init__(self)
+        
 
     def compute(self):
         """Will need to fetch a PostGisSession object on its input port
         Overrides supers method"""
         if self.cursor(self.getInputFromPort("PostGisSessionObject")) == True:
+            print "got cursor"
             try:
-                port_input = urllib.unquote(str(self.forceGetInputFromPort('source', '')))
-                self.curs.execute(port_input)
-                self.sql_return_list = self.curs.fetchall()
-                self.curs.close()
+                sql_input = urllib.unquote(str(self.forceGetInputFromPort('source', '')))
+                sql_input = sql_input.split(";")[0]#ogr does not want a trailing ';'
+                print "got sql input"
+                ogr_conn = self.getInputFromPort("PostGisSessionObject").ogr_connectstr               
+                print "checking connection: connectstr: %s, sql: %s" % (ogr_conn,  sql_input)
+                self.loadContentFromDB(ogr_conn, sql_input)
+                
             except:
                 raise ModuleError,  (PostGisFeatureReturningCursor,  "Could not execute SQL Statement")
             #do stuff with this return list -> make it into an OGR dataset
             #see (http://trac.osgeo.org/postgis/wiki/UsersWikiOGR, http://www.gdal.org/ogr/drv_memory.htm, ogr memory driver python in google)
             #for now, to test, print to stdout
             #could be implemented directy via OGR's SQL capability
-            print "data are: "
-            print self.sql_return_list
+            #print "data are: "
+            #print self.sql_return_list
 
 
 class PostGisBasicReturningCursor(Module, PostGisCursor):
-    """Returns data in the form of a python list (as per psycopg2)"""
+    """
+    Returns data in the form of a python list (as per psycopg2).
+    Only one dataset per module is allowed, defined by the SQL 
+    statement in the editor
+    """
 
     def __init__(self):
         Module.__init__(self)
@@ -144,8 +177,12 @@ class PostGisBasicReturningCursor(Module, PostGisCursor):
 class PostGisNonReturningCursor(Module, PostGisCursor):
     """Returns a list of result strings to indicate success or failure; usually to be
     used as a way to do an insert, update, delete operation on the
-    database, for example"""
+    database, for example
 
+    Unlike the 'returning' cursors, can support multiple SQL 
+    statements, separated by the ';', as expected by PostgreSQL
+    """
+    
     def __init__(self):
         Module.__init__(self)
         PostGisCursor.__init__(self)
@@ -163,7 +200,7 @@ class PostGisNonReturningCursor(Module, PostGisCursor):
                 for query in port_input.split(";"):
                     if len(query) != 0:
                         query = query + ";"
-                        print "about to execute: " + query
+                        #print "about to execute: " + query
                         self.curs.execute(query)
                         resultstatus.append(self.curs.statusmessage)
 

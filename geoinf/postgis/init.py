@@ -56,8 +56,8 @@ def initialize(*args, **keywords):
         'The password for user for accessing your database'))    
     reg.add_input_port(PostGisSession, 'postgisDatabase', (core.modules.basic_modules.String, 
         'The actual database you will work with'))  
-    reg.add_output_port(PostGisSession, 'self', PostGisSession)#supports passing of session object around
-
+    #reg.add_output_port(PostGisSession, 'self', PostGisSession)#supports passing of session object around
+    reg.add_output_port(PostGisSession, 'PostGisSession', PostGisSession)#supports passing of session object around
     #reg.add_module(PostGisCursor)
     
     reg.add_module(PostGisFeatureReturningCursor,  namespace = postgis_namespace,  configureWidgetType=SQLSourceConfigurationWidget)
