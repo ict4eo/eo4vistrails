@@ -38,13 +38,9 @@ class MultiProcessSafe(ThreadSafe):
     def __init__(self):
         ThreadSafe.__init__(self)
         self.manager = Manager()
-        
+   
     def lockedUpdate(self):
-        print currentThread().name, " lockedUpdate", " for ", self.name
-        
-        print currentThread().name, " blocked on compute Lock", " for ", self.name
         with self.computeLock:
-            print currentThread().name, " acquire compute Lock", " for ", self.name
             self.logging.begin_update(self)
             self.updateUpstream()
             if self.upToDate:
@@ -58,17 +54,25 @@ class MultiProcessSafe(ThreadSafe):
                     raise ModuleBreakpoint(self)
                 
                 #Do Compute in a Parrallel Process
-                inputPorts = self.manager.dict(self.inputPorts)
-                outputPorts = self.manager.dict()           
+                inputPorts = self.manager.dict([(k, self.getInputFromPort(k)) for k in self.inputPorts])
+                #outputPorts = self.manager.dict([(k, self.get_output(k)) for k in self.outputPorts])
+                
+                outputPorts = self.manager.dict([(k, None) for k in self.outputPorts])                
+                
+                
                 p = Process(target=self.shadowCompute, args=(inputPorts, outputPorts))
                 p.start()
                 p.join()
-                self.inputPorts = dict(inputPorts)
-                for key, value in outputPorts.items():
-                    self.outputPorts[key] = value                    
+                p.terminate()
+                
+                
+                #for key, value in outputPorts.items():
+                #    self.outputPorts[key] = value
+                
                 self.computed = True
                 
             except ModuleError, me:
+                p.terminate()
                 if hasattr(me.module, 'interpreter'):
                     raise
                 else:
@@ -81,30 +85,50 @@ class MultiProcessSafe(ThreadSafe):
                 raise ModuleError(self, 'Interrupted by user')
             except ModuleBreakpoint:
                 raise
-            except Exception, e: 
+            except Exception, e:
                 import traceback
                 traceback.print_exc()
                 raise ModuleError(self, 'Uncaught exception: "%s"' % str(e))
             self.upToDate = True
             self.logging.end_update(self)
             self.logging.signalSuccess(self)
-        print currentThread().name, " release compute Lock", " for ", self.name
 
     def shadowCompute(self, inputPorts, outputPorts):
+        #for key, value in outputPorts.items():
+        #    self.set_input_port(key,value)
         self.inputPorts = inputPorts
+        self.outputPorts = outputPorts
         self.compute()
-        for key, value in self.outputPorts.items():
-            if not isinstance(value, ThreadSafe):
-                outputPorts[key] = value
+        #for key, value in self.outputPorts.items():
+        #    try:
+        #        outputPorts[key] = value
+        #    except:
+        #        pass
+
+class MultiProcessCompute():
+    '''this is the class that holds the compute module for any multi process 
+    safe code. Any code that is to run in a multi process should start from 
+    the compute module of this class. Note that some additional helper methods 
+    have been added so that this class is a shadow to vistrails module but a 
+    pickle-able version. '''
+    
+    def Compute(self):
+        pass
 
 from time import *
 from multiprocessing import current_process
-class MultiProcessTestModule(MultiProcessSafe, NotCacheable):
+from math import sqrt
+class MultiProcessTestModule(NotCacheable, MultiProcessSafe, Module):
     """This Test Module is to check that MultiProcess is working and also provides
     a template for others to use MultiProcess"""
     def compute(self):
          print ctime()," ", current_process(), " Started Process Module, Waiting 2 Seconds"
-         sleep(2)
+         #sleep(2)
+         for i in xrange(10000):
+             #waste some time
+             for j in xrange(10000):
+                 sqrt(i*j)
          print ctime()," ", current_process(), " Stoped Process Module"
+         print self.getInputFromPort("someStringAboveMe")
          self.setResult("someString", "someString")
-         
+
