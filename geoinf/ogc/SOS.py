@@ -372,7 +372,7 @@ class SOSConfigurationWidget(OgcConfigurationWidget):
     """makes use of code style from OgcConfigurationWidget"""
     def __init__(self, module, controller, parent=None):
         OgcConfigurationWidget.__init__(self, module, controller, parent)
-        self.parent_module = module
+        #self.parent_module = module
         # pass in parent widget i.e. OgcCommonWidget class
         self.config = SosCommonWidget(self.ogc_common_widget)
         # move parent tab to first place
@@ -401,7 +401,13 @@ class SOSConfigurationWidget(OgcConfigurationWidget):
     def okTriggered(self): # , checked=False in parent?
         """Extend method which is extended in OgcTemporalConfigurationWidget."""
         print "OK Triggered in SOSConfigurationWidget"
-        #request = self.parent_module.getInputFromPort(init.OGC_POST_REQUEST_PORT) #not working ???
+        functions = []
+        functions.append(('OGC_URL', ['http://test']),)
+        self.controller.update_ports_and_functions(self.module.id, 
+                                                   [],
+                                                   [],
+                                                   functions)
+        #$request = self.module.getInputFromPort(init.OGC_POST_REQUEST_PORT) #not working ???
         #self.parent_module.set_input_port(init.OGC_POST_REQUEST_PORT, data) #not working ???
         OgcConfigurationWidget.okTriggered(self)
 

@@ -35,12 +35,118 @@ from core.modules.vistrails_module import Module, NotCacheable, \
 global globalThreadLock
 globalThreadLock = RLock()
 
-class ThreadSafe():
+class ThreadSafeness(object):
+    def __init__(self, clazz):
+        self.clazz = clazz
+        if ThreadSafeMixin not in self.clazz.__bases__:
+            self.clazz.__base__ = (ThreadSafeMixin,) + self.clazz.__base__
+    
+    def __call__(self, *args):  
+        return self.clazz(*args)
+
+class ThreadSafe(object):
     """TODO. """
     def __init__(self):
         Module.__init__(self)
         self.computeLock = RLock()
+    
+    def globalThread(self, module):            
+        global globalThreadLock
+        globalThreadLock.acquire()
+        module.update()
+        globalThreadLock.release()
+            
+    def updateUpstream(self):
+        """ TODO. """
+        threadList = []
+        threadSafeList = []        
+        normalList= []        
+        foundFirstModule = False
 
+        for connectorList in self.inputPorts.itervalues():
+            for connector in connectorList:
+                if not foundFirstModule:
+                    foundFirstModule = True
+                    firstModule = connector.obj
+                elif isinstance(connector.obj, ThreadSafe):
+                    thread = Thread(target=connector.obj.lockedUpdate)
+                    thread.start()
+                    threadList.append(thread)
+                else:
+                    thread = Thread(target=self.globalThread, args=(connector.obj,))
+                    thread.start()
+                    threadList.append(thread)
+
+        if foundFirstModule:
+            if isinstance(firstModule, ThreadSafe):
+                firstModule.lockedUpdate()
+            else:
+                self.globalThread(firstModule)
+
+        for thread in threadList:
+            thread.join()
+
+        for iport, connectorList in copy.copy(self.inputPorts.items()):
+            for connector in connectorList:
+                if connector.obj.get_output(connector.port) is InvalidOutput:
+                    self.removeInputConnector(iport, connector)
+
+    def update(self):
+        """ update() -> None        
+        Check if the module is up-to-date then update the
+        modules. Report to the logger if available
+        
+        """     
+        try:
+             global globalThreadLock
+             globalThreadLock.release()
+             self.lockedUpdate()
+             globalThreadLock.acquire()
+        except AssertionError, ae:
+            self.lockedUpdate()
+            pass
+    
+    def lockedUpdate(self):
+        with self.computeLock:
+            self.logging.begin_update(self)
+            self.updateUpstream()
+            if self.upToDate:
+                if not self.computed:
+                    self.logging.update_cached(self)
+                    self.computed = True
+                return
+            self.logging.begin_compute(self)
+            try:
+                if self.is_breakpoint:
+                    raise ModuleBreakpoint(self)
+                self.compute()
+                self.computed = True
+            except ModuleError, me:
+                if hasattr(me.module, 'interpreter'):
+                    raise
+                else:
+                    msg = "A dynamic module raised an exception: '%s'"
+                    msg %= str(me)
+                    raise ModuleError(self, msg)
+            except ModuleErrors:
+                raise
+            except KeyboardInterrupt, e:
+                raise ModuleError(self, 'Interrupted by user')
+            except ModuleBreakpoint:
+                raise
+            except Exception, e: 
+                import traceback
+                traceback.print_exc()
+                raise ModuleError(self, 'Uncaught exception: "%s"' % str(e))
+            self.upToDate = True
+            self.logging.end_update(self)
+            self.logging.signalSuccess(self)
+            
+class ThreadSafeMixin(object):
+    """TODO. """
+    def initLocks(self):
+        self.computeLock = RLock()
+    
     def globalThread(self, module):            
         global globalThreadLock
         globalThreadLock.acquire()

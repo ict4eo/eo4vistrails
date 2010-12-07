@@ -223,6 +223,7 @@ class RPyC(NotCacheable, ThreadSafe, Module):
     # parameters.
     def __init__(self):
         ThreadSafe.__init__(self)
+        Module.__init__(self)
 
     def run_code(self, code_str, use_input=False, use_output=False):
         """
