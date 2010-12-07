@@ -54,7 +54,7 @@ def initialize(*args, **keywords):
     #reg.add_module(WFS)
     #input ports
     reg.add_module(FeatureModel) #abstract
-    
+
     reg.add_module(FileFeatureModel)
     reg.add_input_port(FileFeatureModel,  "source_file", core.modules.basic_modules.String )
     reg.add_input_port(FileFeatureModel,  "output_type", core.modules.basic_modules.String )
@@ -67,14 +67,13 @@ def initialize(*args, **keywords):
     reg.add_input_port(MemFeatureModel,  "uri", core.modules.basic_modules.String )
     reg.add_input_port(MemFeatureModel,  "uri_data", core.modules.basic_modules.Dictionary)
     reg.add_output_port(MemFeatureModel, "feature_dataset", MemFeatureModel)
-    
-    
+
+
     reg.add_module(RasterModel) #abstract
-
     reg.add_module(WFS, configureWidgetType=WFSConfigurationWidget)
-
     reg.add_module(SOS, configureWidgetType=SOSConfigurationWidget)
     reg.add_module(WCS, configureWidgetType=WCSConfigurationWidget)
+
     #reg.add_module(FeatureImport, configureWidgetType=FeatureImportConfigurationWidget)
 
 
@@ -88,8 +87,9 @@ def initialize(*args, **keywords):
 
     ogc_init.initialize(*args, **keywords)  # looks like no-one is willing to mess up this file, so have created ogc specific init.py as well.
     utils_init.initialize(*args, **keywords)
-    opennebula_init.initialize(*args, **keywords)
     postgis_init.initialize(*args,  **keywords)
+    opennebula_init.initialize(*args, **keywords)
+
 
 
     #reg.add_module(RPyC, configureWidgetType=PythonSourceConfigurationWidget)

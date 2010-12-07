@@ -289,7 +289,7 @@ class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
         """
         return QtCore.QSize(800, 600)
 
-    def okTriggered(self, checked = False):
+    def okTriggered(self, checked=False):
         """ okTriggered(checked: bool) -> None
         Fire a "done" event when the user clicks OK
         Update vistrail controller and module
@@ -299,6 +299,7 @@ class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
             self.emit(QtCore.SIGNAL('doneConfigure'))
             self.close()
         """
+        print "OK Triggered in SpatialTemporalConfigurationWidget"
         self.emit(QtCore.SIGNAL('doneConfigure'))
         # listen for return signal before closing
         # i.e. port is configured

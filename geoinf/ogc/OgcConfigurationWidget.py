@@ -195,6 +195,7 @@ class OgcCommonWidget(QtGui.QWidget):
                 else:
                     row_count = 0
                     for provider_dict_item in self.service.provider_keys:
+                        # print "provider",row_count, provider_dict_item #TO DO - order is wrong !!!
                         if self.service.__dict__.has_key(provider_dict_item):
                            qtwi = QtGui.QTableWidgetItem(
                                 str(self.service.__dict__[provider_dict_item])
@@ -244,3 +245,8 @@ class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
                 QtGui.QApplication.UnicodeUTF8
             )
         )
+
+    def okTriggered(self): # , checked=False in parent?
+        """Extend method defined in SpatialTemporalConfigurationWidget."""
+        print "OK Triggered in OgcConfigurationWidget"
+        SpatialTemporalConfigurationWidget.okTriggered(self)

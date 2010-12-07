@@ -71,7 +71,7 @@ class SOS(NotCacheable, FeatureModel):
                     self.set_input_port(init.OGC_POST_REQUEST_PORT, data)
                     request = self.inputPorts[init.OGC_POST_REQUEST_PORT][0]
                 else:
-                    raiseError(self, 'Null request set on request port')
+                    raiseError(self, 'Cannot set null request on request port')
             except Exception, e:
                 raiseError(self, 'Cannot set request port', e)
 
@@ -100,18 +100,16 @@ class SOS(NotCacheable, FeatureModel):
         """
         #<?xml version="1.0" encoding="UTF-8"?><GetFeatureOfInterest xmlns="http://www.opengis.net/sos/1.0" service="SOS" version="1.0.0" xmlns:ows="http://www.opengeospatial.net/ows" xmlns:gml="http://www.opengis.net/gml" xmlns:ogc="http://www.opengis.net/ogc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/sos/1.0 http://schemas.opengis.net/sos/1.0.0/sosGetFeatureOfInterest.xsd"> <FeatureOfInterestId>foi_1001</FeatureOfInterestId></GetFeatureOfInterest>
         data = \
-"""<?xml version="1.0" encoding="UTF-8"?>
-<GetFeatureOfInterest xmlns="http://www.opengis.net/sos/1.0"
-  service="SOS" version="1.0.0"
-  xmlns:ows="http://www.opengeospatial.net/ows"
-  xmlns:gml="http://www.opengis.net/gml"
-  xmlns:ogc="http://www.opengis.net/ogc"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://www.opengis.net/sos/1.0
-  http://schemas.opengis.net/sos/1.0.0/sosGetFeatureOfInterest.xsd">
-  <FeatureOfInterestId>foi_1001</FeatureOfInterestId>
-</GetFeatureOfInterest>
-"""
+            """<?xml version="1.0" encoding="UTF-8"?>
+            <DescribeSensor version="1.0.0" service="SOS"
+              xmlns="http://www.opengis.net/sos/1.0"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://www.opengis.net/sos/1.0
+              http://schemas.opengis.net/sos/1.0.0/sosDescribeSensor.xsd"
+              outputFormat="text/xml;subtype=&quot;sensorML/1.0.1&quot;">
+              <procedure>urn:ogc:object:feature:Sensor:IFGI:ifgi-sensor-1</procedure>
+            </DescribeSensor>
+            """
         return data
 
     def runRequest(self, url, request):
@@ -372,15 +370,16 @@ class SosCommonWidget(QtGui.QWidget):
 
 class SOSConfigurationWidget(OgcConfigurationWidget):
     """makes use of code style from OgcConfigurationWidget"""
-    def __init__(self,  module, controller, parent=None):
+    def __init__(self, module, controller, parent=None):
         OgcConfigurationWidget.__init__(self, module, controller, parent)
+        self.parent_module = module
         # pass in parent widget i.e. OgcCommonWidget class
-        self.sos_config_widget = SosCommonWidget(self.ogc_common_widget)
-        # move parent tab to first palce
-        self.tabs.insertTab(1, self.sos_config_widget, "")
+        self.config = SosCommonWidget(self.ogc_common_widget)
+        # move parent tab to first place
+        self.tabs.insertTab(1, self.config, "")
         # set SOS-specific tabs
         self.tabs.setTabText(
-            self.tabs.indexOf(self.sos_config_widget),
+            self.tabs.indexOf(self.config),
             QtGui.QApplication.translate(
                 "OgcConfigurationWidget",
                 "SOS Specific Metadata",
@@ -389,7 +388,7 @@ class SOSConfigurationWidget(OgcConfigurationWidget):
             )
         )
         self.tabs.setTabToolTip(
-            self.tabs.indexOf(self.sos_config_widget),
+            self.tabs.indexOf(self.config),
             QtGui.QApplication.translate(
                 "OgcConfigurationWidget",
                 "Select SOS-specific parameters",
@@ -398,3 +397,11 @@ class SOSConfigurationWidget(OgcConfigurationWidget):
             )
         )
         self.tabs.setCurrentIndex(0)
+
+    def okTriggered(self): # , checked=False in parent?
+        """Extend method which is extended in OgcTemporalConfigurationWidget."""
+        print "OK Triggered in SOSConfigurationWidget"
+        #request = self.parent_module.getInputFromPort(init.OGC_POST_REQUEST_PORT) #not working ???
+        #self.parent_module.set_input_port(init.OGC_POST_REQUEST_PORT, data) #not working ???
+        OgcConfigurationWidget.okTriggered(self)
+
