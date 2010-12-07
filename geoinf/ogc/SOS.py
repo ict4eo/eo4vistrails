@@ -275,9 +275,9 @@ class SosCommonWidget(QtGui.QWidget):
 
         self.cbRequest = QtGui.QComboBox()
         self.detailsLayout.addWidget(self.cbRequest, 9, 1)
-        self.cbRequest.addItem('DescribeSensor')
         self.cbRequest.addItem('GetFeatureOfInterest')
         self.cbRequest.addItem('GetObservation')
+        self.cbRequest.addItem('DescribeSensor')
 
         # local signals
         self.connect(
@@ -402,12 +402,96 @@ class SOSConfigurationWidget(OgcConfigurationWidget):
         """Extend method which is extended in OgcTemporalConfigurationWidget."""
         print "OK Triggered in SOSConfigurationWidget"
         functions = []
-        functions.append(('OGC_URL', ['http://test']),)
-        self.controller.update_ports_and_functions(self.module.id, 
-                                                   [],
-                                                   [],
-                                                   functions)
-        #$request = self.module.getInputFromPort(init.OGC_POST_REQUEST_PORT) #not working ???
-        #self.parent_module.set_input_port(init.OGC_POST_REQUEST_PORT, data) #not working ???
+        data = self.constructSOSRequest()
+        # TO DO: pick up "stripped down" url from ogc tab
+        functions.append(
+            (init.OGC_URL_PORT,
+            ['http://giv-sos.uni-muenster.de:8080/52nSOSv3/sos']),
+        )
+        functions.append(
+            (init.OGC_POST_REQUEST_PORT,
+            [data]),
+        )
+        # from: gui.vistrails_controller.py
+        self.controller.update_ports_and_functions(
+            self.module.id,
+            [],
+            [],
+            functions
+        )
         OgcConfigurationWidget.okTriggered(self)
 
+    def constructSOSRequest(self):
+        """Return an XML-encoded request from configuration parameters"""
+        data = ''
+        type = self.config.cbRequest.currentText()
+        procedure = self.config.cbProcedure.currentText()
+        format = self.config.cbResponseFormat.currentText()
+        mode = self.config.cbResponseMode.currentText()
+        model = self.config.cbResultModel.currentText()
+        obs_prop = self.config.cbObservedProperty.currentText()
+        foi = self.config.cbFOI.currentText()
+        offering = self.config.lbxOfferings.currentItem().text()
+        # details
+        if type == 'DescribeSensor':
+            if procedure:
+                data = '<procedure>' + procedure + '</procedure>'
+        elif type == 'GetFeatureOfInterest':
+            if foi:
+                data = '<FeatureOfInterestId>' + foi + '</FeatureOfInterestId>'
+        elif type == 'GetObservation':
+            if foi:
+                data = '<featureOfInterest><ObjectID>' + foi + '</ObjectID></featureOfInterest>'
+            if offering:
+                data = '<offering>' + offering + '</offering>'
+            if procedure:
+                data = '<procedure>' + procedure + '</procedure>'
+            if model:
+                data = '<resultModel>' + model + '</resultModel>'
+            if mode:
+                data = '<resultMode>' + mode + '</resultMode>'
+            if obs_prop:
+                data = '<observedProperty>' + obs_prop + '</observedProperty>'
+            if format:
+                data = '<responseFormat>' + format + '</responseFormat>'
+            # TO DO: time params
+            # TO DO: spatial params
+        # wrapper
+        if type == 'DescribeSensor':
+            data = \
+            """<DescribeSensor service="SOS" version="1.0.0"
+            xmlns="http://www.opengis.net/sos/1.0"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="http://www.opengis.net/sos/1.0
+            http://schemas.opengis.net/sos/1.0.0/sosDescribeSensor.xsd"
+            outputFormat="text/xml;subtype=&quot;sensorML/1.0.1&quot;">""" + \
+            data + '</DescribeSensor>'
+        elif type == 'GetFeatureOfInterest':
+            data = \
+            """<GetFeatureOfInterest service="SOS" version="1.0.0"
+            xmlns="http://www.opengis.net/sos/1.0"
+            xmlns:ows="http://www.opengeospatial.net/ows"
+            xmlns:gml="http://www.opengis.net/gml"
+            xmlns:ogc="http://www.opengis.net/ogc"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="http://www.opengis.net/sos/1.0
+            http://schemas.opengis.net/sos/1.0.0/sosGetFeatureOfInterest.xsd">""" + \
+            data + '</GetFeatureOfInterest>'
+        elif type == 'GetObservation':
+            data = \
+            """<GetObservation service="SOS" version="1.0.0"
+            xmlns="http://www.opengis.net/sos/1.0"
+            xmlns:ows="http://www.opengis.net/ows/1.1"
+            xmlns:gml="http://www.opengis.net/gml"
+            xmlns:ogc="http://www.opengis.net/ogc"
+            xmlns:om="http://www.opengis.net/om/1.0"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="http://www.opengis.net/sos/1.0
+            http://schemas.opengis.net/sos/1.0.0/sosGetObservation.xsd"
+            srsName="urn:ogc:def:crs:EPSG:4326">""" + \
+            data + '</GetObservation>'
+        else:
+            raiseError(self, 'Unknown request type: check SOS Request combobox')
+        # header
+        data = '<?xml version="1.0" encoding="UTF-8"?>' + data
+        return data
