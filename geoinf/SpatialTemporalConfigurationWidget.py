@@ -206,6 +206,11 @@ class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
         msg = "updateVistrail() is not yet implemented in this subclass"
         raise VistrailsInternalError(msg)
 
+
+
+
+
+
     def createTabs(self):
         """ createTabs() -> None
         create and polulate with widgets the necessary
@@ -304,3 +309,4 @@ class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
         # listen for return signal before closing
         # i.e. port is configured
         self.close()
+

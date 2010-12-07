@@ -69,7 +69,7 @@ class OgcCommonWidget(QtGui.QWidget):
 
         self.label_OGC_url = QtGui.QLabel('URL & Version:')
         #test only !!!
-        #self.line_edit_OGC_url = QtGui.QLineEdit("http://giv-sos.uni-muenster.de:8080/52nSOSv3/sos?request=GetCapabilities&service=SOS")
+        #self.line_edit_OGC_url = QtGui.QLineEdit("http://localhost:8080/geoserver/wfs")
 
         self.launchversion = QtGui.QComboBox()
         if self.launchtype == "sos":

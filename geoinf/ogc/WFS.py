@@ -26,36 +26,62 @@
 """This module provides an OGC Web Feature Service Client via owslib.
 """
 
-
+import init
 from PyQt4 import QtCore, QtGui
 from packages.eo4vistrails.geoinf.datamodels.Feature import FeatureModel
-from OgcConfigurationWidget import OgcConfigurationWidget
+from OgcConfigurationWidget import OgcConfigurationWidget,  OgcCommonWidget
 from packages.eo4vistrails.geoinf.SpatialTemporalConfigurationWidget import SpatialTemporalConfigurationWidget, SpatialWidget
 from core.modules.vistrails_module import Module, new_module, NotCacheable, ModuleError
 from packages.eo4vistrails.geoinf.SpatialTemporalConfigurationWidget import SpatialTemporalConfigurationWidget, SpatialWidget
 
 #need to import the configuration widget we develop
 
+
+#class TestDefaults(Module):
+
+     #_input_ports = [("f1", "(edu.utah.sci.vistrails.basic:Float)",
+        #              {"defaults": str([1.23]), "labels": str(["temp"])})]
+     #_modules = [TestDefaults]
+
 class WFS(NotCacheable,  FeatureModel):
     """TO DO - add docstring
 
     """
+      # testing: create, set port defaults parameters / values
+    _input_ports = [("MinX", "(edu.utah.sci.vistrails.basic:Float)",
+                      {"defaults": str([23.0]), "labels": str(["XVal"])})]
+
+
     def __init__(self):
         FeatureModel.__init__(self)
 
+
     def compute(self):
-        pass
+        #pass
+
+        if self.hasInputFromPort(init.OGC_URL_PORT):
+
+            ogc_wfs_url = self.getInputFromPort(init.OGC_URL_PORT)
+
+            print ogc_wfs_url
+
 
 class WFSCommonWidget(QtGui.QWidget):
     """TO DO - add docstring
 
     """
+
     def __init__(self, ogc_widget, parent=None):
         """sets parameters for wfs request"""
+
         QtGui.QWidget.__init__(self, parent)
+
         self.setObjectName("WFSConfigurationWidget")
+
         self.parent_widget = ogc_widget
+
         self.service = self.parent_widget.service
+
         self.coords = SpatialWidget()
 
         self.create_wfs_config_window()
@@ -75,7 +101,6 @@ class WFSCommonWidget(QtGui.QWidget):
             self.featureNameChanged
 
         )
-
 
 
     def create_wfs_config_window(self):
@@ -131,7 +156,7 @@ class WFSCommonWidget(QtGui.QWidget):
 
         gridLayout.addWidget(self.lstFeatures, 1, 1)
 
-        self.htmlView = QtGui.QTextEdit()   # want to view featureColletion for each selected typename / FeatureName.
+        self.htmlView = QtGui.QTextEdit()   # view selected typename / FeatureName ContentMetadata
         #self.htmlView.setEnabled(False)
         gridLayout.addWidget(self.htmlView, 1, 2,  1,  3)
 
@@ -144,11 +169,13 @@ class WFSCommonWidget(QtGui.QWidget):
         if self.parent_widget.service and self.parent_widget.service.service_valid:
             self.contents = self.parent_widget.service.service.__dict__['contents']
 
+
             for content in self.contents:
                 self.lstFeatures.addItems([content])
 
 
     def featureNameChanged(self):
+
         """Update offering details containers when new offering selected."""
 
         selected_featureName = self.lstFeatures.selectedItems()[0].text()
@@ -162,6 +189,25 @@ class WFSCommonWidget(QtGui.QWidget):
         self.minYEdit.setText(self.coords.bbox_tly.text())
         self.maxXEdit.setText(self.coords.bbox_brx.text())
         self.maxYEdit.setText(self.coords.bbox_bry.text())
+
+
+        # testing global dic
+        global wfs_config_dict
+
+        wfs_config_dict = dict()
+
+        wfs_config_dict = {'minX': str(self.minXEdit.text())}
+
+        globals().update(wfs_config_dict)
+
+        print "After update.......................:"
+
+        print wfs_config_dict
+
+
+
+
+
 
 
         if self.parent_widget.service and self.parent_widget.service.service_valid and self.contents:
@@ -195,10 +241,10 @@ class WFSCommonWidget(QtGui.QWidget):
 
                 #self.minXEdit.setText(str(coordinates[0]))
                 #self.minYEdit.setText(str(coordinates[1]))
-               #self.maxXEdit.setText(str(coordinates[2]))
+                #self.maxXEdit.setText(str(coordinates[2]))
                 #self.maxYEdit.setText(str(coordinates[3]))
 
-                # set metadata for selected layername :  how about if we were to read these directly from the GetCapabilities file??
+                #set metadata for selected layername :  how about if we were to read these directly from the GetCapabilities file??
                 self.htmlView.setText("Name: " + name )
                 self.htmlView.append('')
                 self.htmlView.append("Title: " + titl  )
@@ -245,5 +291,19 @@ class WFSConfigurationWidget(OgcConfigurationWidget):
             )
         )
         self.tabs.setCurrentIndex(0)
+
+    def okTriggered(self): # , checked=False in parent?
+        """Extend method which is extended in OgcTemporalConfigurationWidget."""
+
+        self.wfs_url = self.wfs_config.parent_widget.line_edit_OGC_url.text() # wfs ogc tab url value
+
+        functions = []
+        functions.append(('OGC_URL', [str(self.wfs_url)]),)
+        self.controller.update_ports_and_functions(self.module.id,
+                                                   [],
+                                                   [],
+                                                   functions)
+
+        OgcConfigurationWidget.okTriggered(self)
 
 

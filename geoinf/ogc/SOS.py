@@ -401,12 +401,14 @@ class SOSConfigurationWidget(OgcConfigurationWidget):
     def okTriggered(self): # , checked=False in parent?
         """Extend method which is extended in OgcTemporalConfigurationWidget."""
         print "OK Triggered in SOSConfigurationWidget"
+
+        self.sos_url = self.config.parent_widget.line_edit_OGC_url.text() #picking url from ogc tab
         functions = []
         data = self.constructSOSRequest()
         # TO DO: pick up "stripped down" url from ogc tab
         functions.append(
             (init.OGC_URL_PORT,
-            ['http://giv-sos.uni-muenster.de:8080/52nSOSv3/sos']),
+            [self.sos_url]),
         )
         functions.append(
             (init.OGC_POST_REQUEST_PORT,
