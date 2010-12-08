@@ -23,8 +23,8 @@
 ## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ##
 ############################################################################
-"""This module provides general ogc selection widgetry for configuring
-geoinf.ogc modules.
+"""This module provides general OGC (Open Geospatial Consortium) Web Service
+selection widgets for configuring geoinf.ogc modules.
 
 This refers primarily to GetCapabilities requests
 """

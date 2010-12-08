@@ -23,7 +23,8 @@
 ## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ##
 ############################################################################
-"""This module provides an OGC Sensor Observation Service Client via owslib.
+"""This module provides an OGC (Open Geospatial Consortium) Sensor Observation
+Service client, making use of the owslib library.
 """
 
 from PyQt4 import QtCore, QtGui
@@ -41,7 +42,8 @@ def raiseError(self, msg, error=''):
 
 class SOS(NotCacheable, FeatureModel):
     """
-    SOS module allows connection to a web-based OGC sensor observation service.
+    SOS module allows connection to a web-based OGC (Open Geospatial Consortium)
+    sensor observation service.
     Configuration allows the base URL for the service to be set and called.
     Choosing the appropriate combination of specific service type and other
     parameters, will cause the input port to be set with a specific POST call,
@@ -95,8 +97,8 @@ class SOS(NotCacheable, FeatureModel):
 
     def getRequest(self):
         """Return an XML-encoded request
-
         TO DO: construct from info on SOS tab
+
         """
         #<?xml version="1.0" encoding="UTF-8"?><GetFeatureOfInterest xmlns="http://www.opengis.net/sos/1.0" service="SOS" version="1.0.0" xmlns:ows="http://www.opengeospatial.net/ows" xmlns:gml="http://www.opengis.net/gml" xmlns:ogc="http://www.opengis.net/ogc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/sos/1.0 http://schemas.opengis.net/sos/1.0.0/sosGetFeatureOfInterest.xsd"> <FeatureOfInterestId>foi_1001</FeatureOfInterestId></GetFeatureOfInterest>
         data = \
@@ -141,9 +143,7 @@ class SOS(NotCacheable, FeatureModel):
 
 
 class SosCommonWidget(QtGui.QWidget):
-    """TO DO - add docstring
-
-    """
+    """Enable SOS-specific parameters to be obtained, displayed and selected."""
     def __init__(self, ogc_widget, parent=None):
         QtGui.QWidget.__init__(self, parent)
         self.setObjectName("SosCommonWidget")
@@ -160,14 +160,6 @@ class SosCommonWidget(QtGui.QWidget):
             self.parent_widget,
             QtCore.SIGNAL('serviceDeactivated'),
             self.removeOfferings
-        )
-        # listen for signals emitted by SpatialTemporalConfigurationWidget class
-        # ... i.e. grandparent class
-        # OK clicked
-        self.connect(
-            self.parent_widget, # should be  self.parent_widget.parent_widget, ???
-            QtCore.SIGNAL('doneConfigure'),
-            self.doConfigure
         )
 
     def create_config_window(self):
@@ -191,10 +183,7 @@ class SosCommonWidget(QtGui.QWidget):
         self.lbxOfferings = QtGui.QListWidget()
         self.offeringsLayout.addWidget(self.lbxOfferings)
 
-        self.testButton = QtGui.QPushButton('&Test', self)
-        self.offeringsLayout.addWidget(self.testButton)
-
-        # offering details layout
+        # Offering details layout
         #   labels
         self.detailsLayout.addWidget(QtGui.QLabel('Description'), 0, 0)
         self.detailsLayout.addWidget(QtGui.QLabel('Bounding Box'), 1, 0)
@@ -285,11 +274,6 @@ class SosCommonWidget(QtGui.QWidget):
             QtCore.SIGNAL("itemClicked(QListWidgetItem*)"),
             self.offeringsChanged
         )
-        self.connect(
-            self.testButton,
-            QtCore.SIGNAL("clicked(bool)"),
-            self.doConfigure
-        )
 
     def removeOfferings(self):
         """Remove all offering details when no SOS is selected."""
@@ -363,9 +347,6 @@ class SosCommonWidget(QtGui.QWidget):
                 item = QtGui.QListWidgetItem(content.id)
                 self.lbxOfferings.addItem(item)
 
-    def doConfigure(self):
-        """Set the output data (aka ConfiguredRequest) on the input port."""
-        print "OK!!!"
 
 
 class SOSConfigurationWidget(OgcConfigurationWidget):
@@ -399,27 +380,28 @@ class SOSConfigurationWidget(OgcConfigurationWidget):
         self.tabs.setCurrentIndex(0)
 
     def okTriggered(self): # , checked=False in parent?
-        """Extend method which is extended in OgcTemporalConfigurationWidget."""
-        print "OK Triggered in SOSConfigurationWidget"
+        """Set module input ports based on user-selected options in the widgets.
+        Extends the method which is extended in OgcTemporalConfigurationWidget.
 
-        self.sos_url = self.config.parent_widget.line_edit_OGC_url.text() #picking url from ogc tab
-        functions = []
+        """
+        print "OK Triggered in SOSConfigurationWidget"
+        full_url = self.config.parent_widget.line_edit_OGC_url.text() #ogc widget
+        if '?' in full_url:
+            parts = full_url.split('?')
+            url = parts[0]
+        else:
+            url = full_url
         data = self.constructSOSRequest()
-        # TO DO: pick up "stripped down" url from ogc tab
+        functions = []
         functions.append(
-            (init.OGC_URL_PORT,
-            [self.sos_url]),
+            (init.OGC_URL_PORT,[url]),
         )
         functions.append(
-            (init.OGC_POST_REQUEST_PORT,
-            [data]),
+            (init.OGC_POST_REQUEST_PORT,[data]),
         )
-        # from: gui.vistrails_controller.py
+        # see: gui.vistrails_controller.py
         self.controller.update_ports_and_functions(
-            self.module.id,
-            [],
-            [],
-            functions
+            self.module.id, [], [], functions
         )
         OgcConfigurationWidget.okTriggered(self)
 

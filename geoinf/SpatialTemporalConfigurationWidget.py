@@ -23,7 +23,8 @@
 ## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ##
 ############################################################################
-"""This module provides spatial and temporal selection widgetry for configuring geoinf modules.
+"""This module provides spatial and temporal selection widgets for configuring
+geoinf modules.
 """
 from PyQt4 import QtCore, QtGui
 from core.modules.module_configure import StandardModuleConfigurationWidget
@@ -80,8 +81,9 @@ class SpatialWidget(QtGui.QWidget):
 
 
 class TemporalWidget(QtGui.QWidget):
-    """Designed to set temporal bounds and interval paramaters for querying temporal datasets"""
+    """Set temporal bounds and interval parameters for querying datasets
 
+    """
     def __init__(self, parent=None):
         QtGui.QWidget.__init__(self, parent)
         self.setObjectName("TemporalWidget")
@@ -89,8 +91,6 @@ class TemporalWidget(QtGui.QWidget):
 
     def create_temp_config_window(self):
         """TO DO - add docstring"""
-
-
         # adding labels and their positions to the main window
         # add and set groupboxes
         self.mainLayout = QtGui.QHBoxLayout()
@@ -135,7 +135,7 @@ class TemporalWidget(QtGui.QWidget):
 
         """Code that enables the Slider widget on out temporal tab. this enables
         the user to set the interval for required data """
-        """TO DO AT LATER STAGE---->
+        """TO DO ---->
         when ready for execution the signal for the lcd should be
         connected to another external slot to retrieve the lcd value"""
         # DAYS
@@ -151,8 +151,12 @@ class TemporalWidget(QtGui.QWidget):
         #Slider related
         self.daySlider.setRange (0, 364)
         #connecting the signal and slot of the slider and lcd
-        self.connect(self.daySlider, QtCore.SIGNAL('valueChanged(int)'), self.dayLcd, QtCore.SLOT('display(int)') )
-
+        self.connect(
+            self.daySlider,
+            QtCore.SIGNAL('valueChanged(int)'),
+            self.dayLcd,
+            QtCore.SLOT('display(int)')
+        )
         # HOURS
         # setting up the lcd and the slider widgets
         self.hourLcd = QtGui.QLCDNumber(self)
@@ -166,8 +170,12 @@ class TemporalWidget(QtGui.QWidget):
         # Slider related
         self.hourSlider.setRange (0, 23)
         # connecting the signal and slot of the slider and lcd
-        self.connect(self.hourSlider, QtCore.SIGNAL('valueChanged(int)'), self.hourLcd, QtCore.SLOT('display(int)') )
-
+        self.connect(
+            self.hourSlider,
+            QtCore.SIGNAL('valueChanged(int)'),
+            self.hourLcd,
+            QtCore.SLOT('display(int)')
+        )
         # MINUTES
         # setting up the lcd and the slider widgets
         self.minuteLcd = QtGui.QLCDNumber(self)
@@ -181,7 +189,12 @@ class TemporalWidget(QtGui.QWidget):
         # Slider related
         self.minuteSlider.setRange (0, 59)
         # connecting the signal and slot of the slider and lcd
-        self.connect(self.minuteSlider, QtCore.SIGNAL('valueChanged(int)'), self.minuteLcd, QtCore.SLOT('display(int)') )
+        self.connect(
+            self.minuteSlider,
+            QtCore.SIGNAL('valueChanged(int)'),
+            self.minuteLcd,
+            QtCore.SLOT('display(int)')
+        )
 
         """TO DO---> use "onChange" methods to call a validation method -
             check that the start date is not later than the end date """
@@ -205,11 +218,6 @@ class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
         """TO DO - add docstring"""
         msg = "updateVistrail() is not yet implemented in this subclass"
         raise VistrailsInternalError(msg)
-
-
-
-
-
 
     def createTabs(self):
         """ createTabs() -> None
@@ -258,7 +266,6 @@ class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
                 QtGui.QApplication.UnicodeUTF8
             )
         )
-
         self.tabLayout = QtGui.QHBoxLayout()
         self.tabLayout.addWidget(self.tabs)
         self.tabs.setCurrentIndex(0)
@@ -296,17 +303,9 @@ class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
 
     def okTriggered(self, checked=False):
         """ okTriggered(checked: bool) -> None
-        Fire a "done" event when the user clicks OK
-        Update vistrail controller and module
-
-
-        if self.updateVistrail():
-            self.emit(QtCore.SIGNAL('doneConfigure'))
-            self.close()
+        Overwrite in a subclass to set configuration on the module ports
+        
         """
         print "OK Triggered in SpatialTemporalConfigurationWidget"
-        self.emit(QtCore.SIGNAL('doneConfigure'))
-        # listen for return signal before closing
-        # i.e. port is configured
+        #self.emit(QtCore.SIGNAL('doneConfigure')) # not needed
         self.close()
-

@@ -24,7 +24,8 @@
 ###
 #############################################################################
 """This module provides a small api for fetching the service and dealing with
-OGC Web Service Metadata common to the various services (via owslib).
+OGC (Open Geospatial Consortium) Web Service Metadata which is common to the
+various services (via owslib).
 
 Requirements:
     owslib 0.3.2 or higher
