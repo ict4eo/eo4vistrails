@@ -37,19 +37,13 @@ from packages.eo4vistrails.geoinf.SpatialTemporalConfigurationWidget import Spat
 #need to import the configuration widget we develop
 
 
-#class TestDefaults(Module):
-
-     #_input_ports = [("f1", "(edu.utah.sci.vistrails.basic:Float)",
-        #              {"defaults": str([1.23]), "labels": str(["temp"])})]
-     #_modules = [TestDefaults]
-
 class WFS(NotCacheable,  FeatureModel):
     """TO DO - add docstring
 
     """
       # testing: create, set port defaults parameters / values
-    _input_ports = [("MinX", "(edu.utah.sci.vistrails.basic:Float)",
-                      {"defaults": str([23.0]), "labels": str(["XVal"])})]
+   # _input_ports = [("MinX", "(edu.utah.sci.vistrails.basic:Float)",
+    #                  {"defaults": str([23.0]), "labels": str(["XVal"])})]
 
 
     def __init__(self):
@@ -59,11 +53,18 @@ class WFS(NotCacheable,  FeatureModel):
     def compute(self):
         #pass
 
+
+        print '..............Printing url from OGC_URL_PORT...........'
         if self.hasInputFromPort(init.OGC_URL_PORT):
 
             ogc_wfs_url = self.getInputFromPort(init.OGC_URL_PORT)
 
-            print ogc_wfs_url
+            print ogc_wfs_url  # print url value
+
+
+        print '..............Accessing configuration parameters from dict............'
+
+        print wfs_config_dict  #print items from dictionary: this won't work when accessing saved wfs_test.vt, re-configure WFS. dict holds values temporarly
 
 
 class WFSCommonWidget(QtGui.QWidget):
@@ -101,6 +102,10 @@ class WFSCommonWidget(QtGui.QWidget):
             self.featureNameChanged
 
         )
+
+        global wfs_config_dict   # global dictionary to hold configuration  parameters
+
+        wfs_config_dict = dict()
 
 
     def create_wfs_config_window(self):
@@ -192,22 +197,18 @@ class WFSCommonWidget(QtGui.QWidget):
 
 
         # testing global dic
-        global wfs_config_dict
 
-        wfs_config_dict = dict()
+        #wfs_config_dict = {'TypeName': str(selected_featureName) ,'minX': str(self.minXEdit.text()), 'minY': str(self.minYEdit.text()),  'maxX': str(self.maxXEdit.text()),  'maxY': str(self.maxYEdit.text()) }
 
-        wfs_config_dict = {'minX': str(self.minXEdit.text())}
+        wfs_config_dict['TypeName'] = str(selected_featureName)
+        wfs_config_dict['minX'] = str(self.minXEdit.text())
+        wfs_config_dict['minY'] = str(self.minYEdit.text())
+        wfs_config_dict['maxX'] = str(self.maxXEdit.text())
+        wfs_config_dict['maxY'] = str(self.maxYEdit.text())
 
-        globals().update(wfs_config_dict)
+        #print "After update.......................:"
 
-        print "After update.......................:"
-
-        print wfs_config_dict
-
-
-
-
-
+        #print wfs_config_dict
 
 
         if self.parent_widget.service and self.parent_widget.service.service_valid and self.contents:
@@ -239,6 +240,8 @@ class WFSCommonWidget(QtGui.QWidget):
 
                 coordinates = self.contents[str(selected_featureName)].boundingBoxWGS84
 
+                wfs_config_dict['SRS'] = str(self.ESPGEdit.text())
+
                 #self.minXEdit.setText(str(coordinates[0]))
                 #self.minYEdit.setText(str(coordinates[1]))
                 #self.maxXEdit.setText(str(coordinates[2]))
@@ -258,6 +261,14 @@ class WFSCommonWidget(QtGui.QWidget):
                 self.htmlView.append("Operations: " + str(operations))
                 self.htmlView.append('')
                 self.htmlView.append("LatLongBoundingBox: " + 'minx= '+ str(coordinates[0]) + ' miny= '+ str(coordinates[1]) + ' maxx= '+ str(coordinates[2])  + ' maxy= '+ str(coordinates[3])  )
+
+        #print "Before update.......................:"
+        #print wfs_config_dict
+
+        globals().update(wfs_config_dict)
+
+        #print "After update.......................:"
+        #print wfs_config_dict
 
 
 class WFSConfigurationWidget(OgcConfigurationWidget):
