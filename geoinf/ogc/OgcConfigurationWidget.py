@@ -33,6 +33,8 @@ from PyQt4 import QtCore, QtGui
 from packages.eo4vistrails.geoinf.SpatialTemporalConfigurationWidget \
     import SpatialTemporalConfigurationWidget
 from Common import OgcService  # include owslib .wfs, .sos, .wcs
+import init
+
 
 class OgcCommonWidget(QtGui.QWidget):
     """TO DO - add docstring"""
@@ -247,6 +249,31 @@ class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
         )
 
     def okTriggered(self): # , checked=False in parent?
-        """Extend method defined in SpatialTemporalConfigurationWidget."""
+        """Extends method defined in SpatialTemporalConfigurationWidget."""
         print "OK Triggered in OgcConfigurationWidget"
+        full_url = self.ogc_common_widget.line_edit_OGC_url.text()
+        if '?' in full_url:
+            parts = full_url.split('?')
+            self.url = parts[0]
+        else:
+            self.url = full_url
+        self.data = self.constructRequest()
+        functions = []
+        functions.append(
+            (init.OGC_URL_PORT,[self.url]),
+        )
+        functions.append(
+            (init.OGC_POST_REQUEST_PORT,[self.data]),
+        )
+        # see: gui.vistrails_controller.py
+        self.controller.update_ports_and_functions(
+            self.module.id, [], [], functions
+        )
         SpatialTemporalConfigurationWidget.okTriggered(self)
+
+    def constructRequest(self):
+        """Return an XML-encoded request from configuration parameters
+
+        Overwrite in a subclass to set the service specific parameters.
+        """
+        return ''

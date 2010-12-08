@@ -57,62 +57,25 @@ class SOS(NotCacheable, FeatureModel):
 
     def compute(self):
         """Execute the module to create the output"""
-
-        request = None
-        # first try & get request data from a connected module (if any)
         try:
             request = self.getInputFromPort(init.OGC_POST_REQUEST_PORT)
-            #print "request from port %s :::", init.OGC_POST_REQUEST_PORT, type(request), request, len(request)
+            print "Request from port :::", init.OGC_POST_REQUEST_PORT, type(request), request, len(request)
         except:
             request = None
-        # then try & get request data from local function
-        if not(request):
-            try:
-                data = self.getRequest()
-                if data:
-                    self.set_input_port(init.OGC_POST_REQUEST_PORT, data)
-                    request = self.inputPorts[init.OGC_POST_REQUEST_PORT][0]
-                else:
-                    raiseError(self, 'Cannot set null request on request port')
-            except Exception, e:
-                raiseError(self, 'Cannot set request port', e)
 
-        url = None
-        # first try & get URL data from a connected module (if any)
         try:
             url = self.getInputFromPort(init.OGC_URL_PORT)
-            #print "URL from port %s :::", init.OGC_URL_PORT, type(URL), URL, len(URL)
+            print "URL from port :::", init.OGC_URL_PORT, type(url), url, len(url)
         except:
             url = None
-        # then try & get URL data from local function
-        if not(url):
-            #TO DO - set on request port
-            url = 'http://giv-sos.uni-muenster.de:8080/52nSOSv3/sos'
 
         try:
             out = self.runRequest(url, request)
             self.setResult(init.OGC_RESULT_PORT, out)
         except Exception, e:
-            raiseError(self, 'Cannot set output port', e)
-
-    def getRequest(self):
-        """Return an XML-encoded request
-        TO DO: construct from info on SOS tab
-
-        """
-        #<?xml version="1.0" encoding="UTF-8"?><GetFeatureOfInterest xmlns="http://www.opengis.net/sos/1.0" service="SOS" version="1.0.0" xmlns:ows="http://www.opengeospatial.net/ows" xmlns:gml="http://www.opengis.net/gml" xmlns:ogc="http://www.opengis.net/ogc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/sos/1.0 http://schemas.opengis.net/sos/1.0.0/sosGetFeatureOfInterest.xsd"> <FeatureOfInterestId>foi_1001</FeatureOfInterestId></GetFeatureOfInterest>
-        data = \
-            """<?xml version="1.0" encoding="UTF-8"?>
-            <DescribeSensor version="1.0.0" service="SOS"
-              xmlns="http://www.opengis.net/sos/1.0"
-              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-              xsi:schemaLocation="http://www.opengis.net/sos/1.0
-              http://schemas.opengis.net/sos/1.0.0/sosDescribeSensor.xsd"
-              outputFormat="text/xml;subtype=&quot;sensorML/1.0.1&quot;">
-              <procedure>urn:ogc:object:feature:Sensor:IFGI:ifgi-sensor-1</procedure>
-            </DescribeSensor>
-            """
-        return data
+            import traceback
+            traceback.print_exc()
+            raise ModuleError(self, 'Cannot set output port: %s' % str(e))
 
     def runRequest(self, url, request):
         """Execute an HTTP POST request for a given URL"""
@@ -126,7 +89,7 @@ class SOS(NotCacheable, FeatureModel):
             headers = {'User-Agent': user_agent}
             #request = urllib.urlencode(xml)
             req = urllib2.Request(url, request, headers)
-            #proxy - not needed
+            #proxy ?
             #os.environ["http_proxy"] = "http://myproxy.com:3128"
             try:
                 urllib2.urlopen(req)
@@ -320,21 +283,27 @@ class SosCommonWidget(QtGui.QWidget):
                         self.lblMaxX.setText(str(content.bounding_box[2]))
                         self.lblMaxY.setText(str(content.bounding_box[3]))
                         self.lblSRS.setText(str(content.bounding_box[4]))
+                    self.cbProcedure.addItem('')
                     if content.procedure:
                         for pr in content.procedure:
                             self.cbProcedure.addItem(pr)
+                    self.cbResponseFormat.addItem('')
                     if content.response_format:
                         for rf in content.response_format:
                             self.cbResponseFormat.addItem(rf)
+                    self.cbResponseMode.addItem('')
                     if content.response_mode:
                         for rm in content.response_mode:
                             self.cbResponseMode.addItem(rm)
+                    self.cbResultModel.addItem('')
                     if content.result_model:
                         for rd in content.result_model:
                             self.cbResultModel.addItem(rd)
+                    self.cbObservedProperty.addItem('')
                     if content.observed_property:
                         for op in content.observed_property:
                             self.cbObservedProperty.addItem(op)
+                    self.cbFOI.addItem('')
                     if content.feature_of_interest:
                         for foi in content.feature_of_interest:
                             self.cbFOI.addItem(foi)
@@ -346,7 +315,6 @@ class SosCommonWidget(QtGui.QWidget):
             for content in self.contents:
                 item = QtGui.QListWidgetItem(content.id)
                 self.lbxOfferings.addItem(item)
-
 
 
 class SOSConfigurationWidget(OgcConfigurationWidget):
@@ -379,66 +347,64 @@ class SOSConfigurationWidget(OgcConfigurationWidget):
         )
         self.tabs.setCurrentIndex(0)
 
-    def okTriggered(self): # , checked=False in parent?
-        """Set module input ports based on user-selected options in the widgets.
-        Extends the method which is extended in OgcTemporalConfigurationWidget.
+    def constructRequest(self):
+        """Return an XML-encoded request from configuration parameters
 
+        Extends method defined in OgcConfigurationWidget.
         """
-        print "OK Triggered in SOSConfigurationWidget"
-        full_url = self.config.parent_widget.line_edit_OGC_url.text() #ogc widget
-        if '?' in full_url:
-            parts = full_url.split('?')
-            url = parts[0]
-        else:
-            url = full_url
-        data = self.constructSOSRequest()
-        functions = []
-        functions.append(
-            (init.OGC_URL_PORT,[url]),
-        )
-        functions.append(
-            (init.OGC_POST_REQUEST_PORT,[data]),
-        )
-        # see: gui.vistrails_controller.py
-        self.controller.update_ports_and_functions(
-            self.module.id, [], [], functions
-        )
-        OgcConfigurationWidget.okTriggered(self)
-
-    def constructSOSRequest(self):
-        """Return an XML-encoded request from configuration parameters"""
         data = ''
         type = self.config.cbRequest.currentText()
-        procedure = self.config.cbProcedure.currentText()
-        format = self.config.cbResponseFormat.currentText()
-        mode = self.config.cbResponseMode.currentText()
-        model = self.config.cbResultModel.currentText()
-        obs_prop = self.config.cbObservedProperty.currentText()
-        foi = self.config.cbFOI.currentText()
-        offering = self.config.lbxOfferings.currentItem().text()
+        try:
+            procedure = self.config.cbProcedure.currentText()
+        except:
+            procedure = None
+        try:
+            format = self.config.cbResponseFormat.currentText()
+        except:
+            format = None
+        try:
+            mode = self.config.cbResponseMode.currentText()
+        except:
+            mode = None
+        try:
+            model = self.config.cbResultModel.currentText()
+        except:
+            model = None
+        try:
+            obs_prop = self.config.cbObservedProperty.currentText()
+        except:
+            obs_prop = None
+        try:
+            foi = self.config.cbFOI.currentText()
+        except:
+            foi = None
+        try:
+            offering = self.config.lbxOfferings.currentItem().text()
+        except:
+            offering = None
         # details
         if type == 'DescribeSensor':
             if procedure:
-                data = '<procedure>' + procedure + '</procedure>'
+                data = data + '<procedure>' + procedure + '</procedure>'
         elif type == 'GetFeatureOfInterest':
             if foi:
                 data = '<FeatureOfInterestId>' + foi + '</FeatureOfInterestId>'
         elif type == 'GetObservation':
-            if foi:
-                data = '<featureOfInterest><ObjectID>' + foi + '</ObjectID></featureOfInterest>'
             if offering:
-                data = '<offering>' + offering + '</offering>'
-            if procedure:
-                data = '<procedure>' + procedure + '</procedure>'
-            if model:
-                data = '<resultModel>' + model + '</resultModel>'
-            if mode:
-                data = '<resultMode>' + mode + '</resultMode>'
-            if obs_prop:
-                data = '<observedProperty>' + obs_prop + '</observedProperty>'
-            if format:
-                data = '<responseFormat>' + format + '</responseFormat>'
+                data = data + '<offering>' + offering + '</offering>'
             # TO DO: time params
+            if procedure:
+                data = data + '<procedure>' + procedure + '</procedure>'
+            if obs_prop:
+                data = data + '<observedProperty>' + obs_prop + '</observedProperty>'
+            if format:
+                data = data + '<responseFormat>' + format + '</responseFormat>'
+            if model:
+                data = data + '<resultModel>' + model + '</resultModel>'
+            if mode:
+                data = data + '<responseMode>' + mode + '</responseMode>'
+            if foi:
+                data = data + '<featureOfInterest><ObjectID>' + foi + '</ObjectID></featureOfInterest>'
             # TO DO: spatial params
         # wrapper
         if type == 'DescribeSensor':
@@ -469,6 +435,7 @@ class SOSConfigurationWidget(OgcConfigurationWidget):
             xmlns:gml="http://www.opengis.net/gml"
             xmlns:ogc="http://www.opengis.net/ogc"
             xmlns:om="http://www.opengis.net/om/1.0"
+            xmlns:ns="http://www.opengis.net/om/1.0"
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
             xsi:schemaLocation="http://www.opengis.net/sos/1.0
             http://schemas.opengis.net/sos/1.0.0/sosGetObservation.xsd"
