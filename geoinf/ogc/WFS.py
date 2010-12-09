@@ -49,16 +49,12 @@ class WFS(NotCacheable,  FeatureModel):
     def __init__(self):
         FeatureModel.__init__(self)
 
-
     def compute(self):
         #pass
-
-
         print '..............Printing url from OGC_URL_PORT...........'
+
         if self.hasInputFromPort(init.OGC_URL_PORT):
-
             ogc_wfs_url = self.getInputFromPort(init.OGC_URL_PORT)
-
             print ogc_wfs_url  # print url value
 
 
@@ -219,27 +215,27 @@ class WFSCommonWidget(QtGui.QWidget):
 
                 if selected_featureName == content:
 
-                    crsCode = self.contents[str(selected_featureName)].crsOptions
+                    #print self.contents[str(selected_featureName)].__dict__
+                    """
+                    'styles': None,
+                    'timepositions': None,
+                    'crsOptions': ['EPSG:900913'],
+                    'title': None,
+                    'boundingBoxWGS84': (32.43423534250477, -27.025131724476203, 40.851497819156378, -10.54235793928602),
+                    'boundingBox': None,
+                    'verbOptions': ['{http://www.opengis.net/wfs}Query', '{http://www.opengis.net/wfs}Insert', '{http://www.opengis.net/wfs}Update', '{http://www.opengis.net/wfs}Delete', '{http://www.opengis.net/wfs}Lock'],
+                    'id': 'ict4eo:moz_coast_vulnerability_tide'
+                    """
 
                     meta = self.contents[str(selected_featureName)]
-
+                    crsCode = self.contents[str(selected_featureName)].crsOptions
                     name = self.contents[str(selected_featureName)].id
-
-                    titl = self.contents[str(selected_featureName)].title
-
-                    abstr = self.contents[str(selected_featureName)].abstract
-
-                    keyw = self.contents[str(selected_featureName)].keywords
-
+                    title = self.contents[str(selected_featureName)].title
+                    coordinates = self.contents[str(selected_featureName)].boundingBoxWGS84
                     operations = self.contents[str(selected_featureName)].verbOptions
 
-
             for elem in crsCode:
-
                 self.ESPGEdit.setText(elem)
-
-                coordinates = self.contents[str(selected_featureName)].boundingBoxWGS84
-
                 wfs_config_dict['SRS'] = str(self.ESPGEdit.text())
 
                 #self.minXEdit.setText(str(coordinates[0]))
@@ -247,20 +243,33 @@ class WFSCommonWidget(QtGui.QWidget):
                 #self.maxXEdit.setText(str(coordinates[2]))
                 #self.maxYEdit.setText(str(coordinates[3]))
 
-                #set metadata for selected layername :  how about if we were to read these directly from the GetCapabilities file??
-                self.htmlView.setText("Name: " + name )
+                #set metadata for selected layername :
+                # how about if we were to read these directly from the GetCapabilities file??
+                if name:
+                    self.htmlView.setText("Name: " + name)
+                    self.htmlView.append('')
+                if title:
+                    self.htmlView.append("Title: " + title)
+                    self.htmlView.append('')
+                """ not in wfs ?
+                self.htmlView.append("Abstract: " + abstr)
                 self.htmlView.append('')
-                self.htmlView.append("Title: " + titl  )
+                self.htmlView.append("Keywords: "  + keyw)
                 self.htmlView.append('')
-                self.htmlView.append("Abstract: " + abstr )
-                self.htmlView.append('')
-                self.htmlView.append("Keywords: "  + keyw )
-                self.htmlView.append('')
-                self.htmlView.append("SRS: " + str(elem))
-                self.htmlView.append('')
-                self.htmlView.append("Operations: " + str(operations))
-                self.htmlView.append('')
-                self.htmlView.append("LatLongBoundingBox: " + 'minx= '+ str(coordinates[0]) + ' miny= '+ str(coordinates[1]) + ' maxx= '+ str(coordinates[2])  + ' maxy= '+ str(coordinates[3])  )
+                """
+                if elem:
+                    self.htmlView.append("SRS: " + str(elem))
+                    self.htmlView.append('')
+                if operations:
+                    self.htmlView.append("Operations: " + str(operations))
+                    self.htmlView.append('')
+                if coordinates:
+                    self.htmlView.append("LatLongBoundingBox:" + \
+                        ' minx= '+ str(coordinates[0]) + \
+                        ' miny= '+ str(coordinates[1]) + \
+                        ' maxx= '+ str(coordinates[2])  + \
+                        ' maxy= '+ str(coordinates[3])
+                    )
 
         #print "Before update.......................:"
         #print wfs_config_dict
@@ -316,5 +325,3 @@ class WFSConfigurationWidget(OgcConfigurationWidget):
                                                    functions)
 
         OgcConfigurationWidget.okTriggered(self)
-
-
