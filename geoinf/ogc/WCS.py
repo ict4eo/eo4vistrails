@@ -23,10 +23,9 @@
 ## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ##
 ############################################################################
-"""This module provides an OGC Web Feature Service Client via owslib.
+"""This module provides an OGC Web Coverage Service Client via owslib.
 """
 
-#from owslib.wfs import WFS
 from PyQt4 import QtCore, QtGui
 from packages.eo4vistrails.geoinf.datamodels.Raster import RasterModel
 from OgcConfigurationWidget import OgcConfigurationWidget
@@ -47,11 +46,11 @@ class WCSCommonWidget(QtGui.QWidget):
 
     """
     def __init__(self, ogc_widget, parent=None):
-        """sets parameters for wfs request"""
+        """sets parameters for wcs request"""
         QtGui.QWidget.__init__(self, parent)
         self.setObjectName("WCSCommonWidget")
         self.parent_widget = ogc_widget
-        
+        #self.service = self.parent_widget.service
         self.contents = None #  only set in self.loadRequests()
         self.create_wcs_config_window()
         
@@ -100,10 +99,12 @@ class WCSCommonWidget(QtGui.QWidget):
         self.detailsLayout.addWidget(QtGui.QLabel('SRS:'), 5, 0)
         self.detailsLayout.addWidget(QtGui.QLabel('Required Output SRS:'), 6, 0)
         self.detailsLayout.addWidget(QtGui.QLabel('Required Output Format:'), 7, 0)
+        
         # Data containers
         self.dcLayers = QtGui.QComboBox()
         self.detailsLayout.addWidget(self.dcLayers, 0, 1)
         self.dcLayerGeometry = QtGui.QLineEdit(' ')
+        #self.dclayerGeometry.setEnabled(False)
         self.detailsLayout.addWidget(self.dcLayerGeometry, 1,1)
         self.dcULX = QtGui.QLineEdit(' ')
         self.detailsLayout.addWidget(self.dcULX, 3,1)
@@ -121,9 +122,29 @@ class WCSCommonWidget(QtGui.QWidget):
         self.detailsLayout.addWidget(self.dcReqFormat, 7, 1)
         
     def loadRequests(self):
+        """ loadRequest() -> None
+        uses service data to populate the config widget populate fields
+        """
+        if self.parent_widget.service and self.parent_widget.service.service_valid:
+            self.contents = self.parent_widget.service.service.__dict__['contents']
+            
+            for content in self.contents:
+                #self.requestLbx.addItems([content])
+                item = QtGui.QListWidgetItem(content.id)
+                self.requestLbx.addItem(item)
+        pass
+        
+    def coverageNameChanged(self):
+        """Update offering details containers when new offering selected."""
         pass
         
     def removeRequests(self):
+        """Remove all details when no WCS is selected."""
+        #self.clearOfferings()
+        #self.lbxOfferings.clear()
+        pass
+        
+    def clearRequests(self):
         pass
 
 
