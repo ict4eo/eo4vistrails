@@ -57,18 +57,46 @@ class OgcService():
         "Please provide an OGC Service Type: 'wfs', 'sos', or 'wcs'"
 
     def __init__(self, service_url, service_type, service_version):
-        #print service_url
         service_url = str(service_url)
-        # check for service and request kvp's -
-        # if not there, add 'em (some services don't have a capabilities reflector),
+        # check for service and request key-value pairs;
+        # if not there, add (some services don't have a capabilities reflector),
         STRICT_OGC_CAPABILITIES = \
-        "Service=%s&Request=GetCapabilities"%  service_type
+        "Service=%s&Request=GetCapabilities" %  service_type
         service_url_check = service_url.split("?")
         if len(service_url_check) == 1:
             service_url = service_url + "?" + STRICT_OGC_CAPABILITIES
-        else:  # various of the capabilities may be present - clobber them and replace
+        else:  # various of the capabilities may be present - remove and replace
             service_url = service_url_check[0] + "?" + STRICT_OGC_CAPABILITIES
-
+        # set common attributes
+        self.service_id_key_set = [
+            {'service_type':'Service'},
+            {'service_version':'Version'},
+            {'service_title':'Title'},
+            {'service_abstract':'Abstract'},
+            {'service_keywords':'Keywords'},
+            {'service_fees':'Fees'},
+            {'service_accessconstraints':'Access Constraints'},
+        ]
+        self.provider_key_set = [
+            {'provider_name':'Provider Name'},
+            {'provider_url':'Provider URL'},
+            {'provider_contact_name':'Contact Name'},
+            {'provider_contact_position':'Contact Position'},
+            {'provider_contact_role':'Contact Role'},
+            {'provider_contact_organization':'Contact Organization'},
+            {'provider_contact_address':'Contact Address'},
+            {'provider_contact_city':'Contact City'},
+            {'provider_contact_region':'Contact Region'},
+            {'provider_contact_postcode':'Contact Postal Code'},
+            {'provider_contact_country':'Contact Country'},
+            {'provider_contact_phone':'Contact Phone'},
+            {'provider_contact_fax':'Contact Fax'},
+            {'provider_contact_site':'Contact Site'},
+            {'provider_contact_email':'Contact Email'},
+            {'provider_contact_hours':'Contact Hours'},
+            {'provider_contact_instructions':'Contact Instructions'},
+        ]
+        # set service-specific attributes
         if service_type != "":
             try:
                 if service_type.lower() == "sos":
@@ -89,8 +117,6 @@ class OgcService():
             raise ValueError, INVALID_OGC_TYPE_MESSAGE
         self.service_url = service_url
         self.ini_service_type = service_type.lower()
-        self.provider_keys = []  # set per service type
-        self.service_id_keys = []  # set per service type
         self.ini_service_version = service_version
         if self.service_valid:
             # store metadata
@@ -111,13 +137,8 @@ class OgcService():
     def setServiceIdentification(self, service_dict):
         """service identification metadata is structured differently
         for the different services - parse appropriately"""
-        self.service_id_keys = [
-            'service_type','service_version','service_title',
-            'service_abstract','service_keywords','service_fees',
-            'service_accessconstraints']
 
         if self.ini_service_type == "sos":
-
             if service_dict.has_key('service'):
                 self.service_type = service_dict['service'] # we actually know this, but rebuild anyway
             if service_dict.has_key('version'):
@@ -188,16 +209,6 @@ class OgcService():
         """provider metadata is struct__dict__ured differently
         for the different services - parse appropriately"""
         if self.ini_service_type == "sos":
-            self.provider_keys = [
-                'provider_url','provider_contact_fax',
-                'provider_contact_name','provider_contact_country',
-                'provider_contact_phone','provider_contact_region',
-                'provider_contact_city','provider_name',
-                'provider_contact_address','provider_contact_postcode',
-                'provider_contact_email','provider_contact_role',
-                'provider_contact_position','provider_contact_site',
-                'provider_contact_organization',
-                'provider_contact_instructions','provider_contact_hours']
             if provider_dict.has_key('name'):
                 self.provider_name = provider_dict['name']
             if provider_dict.has_key('url'):
@@ -289,3 +300,17 @@ class OgcService():
 
         else:
             raise ValueError, INVALID_OGC_TYPE_MESSAGE
+
+
+provider_keys = [
+    {'provider_name':'Name'},
+    {'provider_url':'URL'},
+    {'provider_contact_name':'Contact'},
+    {'provider_contact_position':'Pos'},
+]
+
+for item in provider_keys:
+    provider_dict_item = item.keys()[0]
+    print provider_dict_item
+
+

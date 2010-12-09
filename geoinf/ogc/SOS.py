@@ -157,7 +157,7 @@ class SosCommonWidget(QtGui.QWidget):
         self.detailsLayout.addWidget(QtGui.QLabel('Result Model'), 6, 0)
         self.detailsLayout.addWidget(QtGui.QLabel('Observed Property'), 7, 0)
         self.detailsLayout.addWidget(QtGui.QLabel('Feature of Interest'), 8, 0)
-        self.detailsLayout.addWidget(QtGui.QLabel('data'), 9, 0)
+        self.detailsLayout.addWidget(QtGui.QLabel('Request Type'), 9, 0)
         #   data containers
         self.lblDescription =  QtGui.QLabel('-')
         self.detailsLayout.addWidget(self.lblDescription , 0, 1)

@@ -103,21 +103,18 @@ class OgcCommonWidget(QtGui.QWidget):
         self.serviceIDLayout = QtGui.QVBoxLayout()
         self.serviceIDGroupBox = QtGui.QGroupBox("Service Identification")
         self.serviceIDGroupBox.setLayout(self.serviceIDLayout)
-
         self.serviceIDServiceTable = QtGui.QTableWidget()
         self.serviceIDServiceTable.setRowCount(7)
         self.serviceIDServiceTable.setColumnCount(1)
-        service_id_list = [
-            'service','version','title','abstract','keywords','fees',
-            'access constraints'
-        ]
+        ogc_dummy = OgcService('','SOS','1.0.0') #placeholder; use to get row labels
 
         row_position = 0
-        for service_id_list_item in service_id_list:
-            qtwi = QtGui.QTableWidgetItem(service_id_list_item)
+        for item in ogc_dummy.service_id_key_set:
+            service_id_list_item = item.values()[0]
+            qtwi = QtGui.QTableWidgetItem(service_id_list_item) # row label
             self.serviceIDServiceTable.setVerticalHeaderItem(row_position, qtwi)
             row_position = row_position + 1
-        self.serviceIDServiceTable.setHorizontalHeaderLabels (['Service Value', ])
+        self.serviceIDServiceTable.setHorizontalHeaderLabels (['', ]) #Service Value
         self.serviceIDServiceTable.setAutoScroll(True)
         self.serviceIDServiceTable.setWordWrap(True)
         self.serviceIDServiceTable.horizontalHeader().setStretchLastSection(True)
@@ -132,19 +129,13 @@ class OgcCommonWidget(QtGui.QWidget):
         self.servicePublisherTable.setRowCount(17)
         self.servicePublisherTable.setColumnCount(1)
 
-        provider_id_list =[
-            'provider name','provider url','contact name','contact position',
-            'contact role','contact organization','contact address',
-            'contact city','contact region','contact postcode',
-            'contact country','contact phone','contact fax','contact site',
-            'contact email','contact hours','contact instructions']
-
         row_position = 0
-        for provider_id_list_item in provider_id_list:
-            qtwi = QtGui.QTableWidgetItem(provider_id_list_item)
+        for item in ogc_dummy.provider_key_set:
+            provider_id_list_item = item.values()[0]
+            qtwi = QtGui.QTableWidgetItem(provider_id_list_item)  # row label
             self.servicePublisherTable.setVerticalHeaderItem(row_position, qtwi)
             row_position = row_position + 1
-        self.servicePublisherTable.setHorizontalHeaderLabels (['Provider Value',])
+        self.servicePublisherTable.setHorizontalHeaderLabels (['',]) #Publisher Value
         self.servicePublisherTable.setAutoScroll(True)
         self.servicePublisherTable.setWordWrap(True)
         self.servicePublisherTable.horizontalHeader().setStretchLastSection(True)
@@ -182,7 +173,8 @@ class OgcCommonWidget(QtGui.QWidget):
             if self.service.service_valid:
                 # service id metadata
                 row_count = 0
-                for service_id_dict_item in self.service.service_id_keys:
+                for item in self.service.service_id_key_set:
+                    service_id_dict_item = item.keys()[0]
                     if self.service.__dict__.has_key(service_id_dict_item):
                         qtwi = QtGui.QTableWidgetItem(
                             str(self.service.__dict__[service_id_dict_item])
@@ -192,12 +184,12 @@ class OgcCommonWidget(QtGui.QWidget):
                 # provider metadata
                 # N.B. OGC WFS 1.0.0 does not have provider metadata in this form
                 if self.launchtype == "wfs" and self.launchversion.currentText() == "1.0.0":
-                    #TODO: we need to indicate this visually as well !
+                    #TODO: we need to indicate visually that no meta data is present
                     pass
                 else:
                     row_count = 0
-                    for provider_dict_item in self.service.provider_keys:
-                        # print "provider",row_count, provider_dict_item #TO DO - order is wrong !!!
+                    for item in self.service.provider_key_set:
+                        provider_dict_item = item.keys()[0]
                         if self.service.__dict__.has_key(provider_dict_item):
                            qtwi = QtGui.QTableWidgetItem(
                                 str(self.service.__dict__[provider_dict_item])
