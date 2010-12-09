@@ -24,7 +24,7 @@
 ##
 ############################################################################
 """This module provides an OGC (Open Geospatial Consortium) Sensor Observation
-Service client, making use of the owslib library.
+Service (SOS) client, making use of the owslib library.
 """
 
 from PyQt4 import QtCore, QtGui

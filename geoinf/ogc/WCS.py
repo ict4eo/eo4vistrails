@@ -2,10 +2,10 @@
 ##
 ## Copyright (C) 2010 CSIR Meraka Institute. All rights reserved.
 ##
-## eo4vistrails extends VisTrails, providing GIS/Earth Observation 
-## ingestion, pre-processing, transformation, analytic and visualisation 
-## capabilities . Included is the abilty to run code transparently in 
-## OpenNebula cloud environments. There are various software 
+## eo4vistrails extends VisTrails, providing GIS/Earth Observation
+## ingestion, pre-processing, transformation, analytic and visualisation
+## capabilities . Included is the abilty to run code transparently in
+## OpenNebula cloud environments. There are various software
 ## dependencies, but all are FOSS.
 ##
 ## This file may be used under the terms of the GNU General Public
@@ -23,7 +23,8 @@
 ## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ##
 ############################################################################
-"""This module provides an OGC Web Coverage Service Client via owslib.
+"""This module provides an OGC (Open Geospatial Consortium) Web Coverage Service
+Client via owslib.
 """
 
 from PyQt4 import QtCore, QtGui
@@ -31,18 +32,26 @@ from packages.eo4vistrails.geoinf.datamodels.Raster import RasterModel
 from OgcConfigurationWidget import OgcConfigurationWidget
 from core.modules.vistrails_module import Module, new_module, NotCacheable, ModuleError
 
+
 #need to import the configuration widget we develop
-class WCS(NotCacheable,  RasterModel):
+class WCS(NotCacheable, RasterModel):
     def __init__(self):
         RasterModel.__init__(self)
-        
+
     def compute(self):
         pass
 
 
-
 class WCSCommonWidget(QtGui.QWidget):
-    """TO DO - add docstring
+    """
+    WCS module allows connection to a web-based OGC (Open Geospatial Consortium)
+    web coverage service.
+    Configuration allows the base URL for the service to be set and called.
+    Choosing the appropriate combination of specific service type and other
+    parameters, will cause the input port to be set with a specific POST call,
+    once the configuration interface is closed.
+    Running the WCS will cause the specific, parameterised WCS to be called
+    and output from the request to be available via the output port(s).
 
     """
     def __init__(self, ogc_widget, parent=None):
@@ -53,7 +62,7 @@ class WCSCommonWidget(QtGui.QWidget):
         #self.service = self.parent_widget.service
         self.contents = None #  only set in self.loadRequests()
         self.create_wcs_config_window()
-        
+
         # listen for signals emitted by OgcCommonWidget class
         self.connect(
             self.parent_widget,
@@ -65,10 +74,10 @@ class WCSCommonWidget(QtGui.QWidget):
             QtCore.SIGNAL('serviceDeactivated'),
             self.removeRequests
         )
-        
+
     def create_wcs_config_window(self):
         """TO DO - add docstring"""
-        
+
         # add widgets here!
         self.mainLayout = QtGui.QHBoxLayout()
         self.setLayout(self.mainLayout)
@@ -76,7 +85,7 @@ class WCSCommonWidget(QtGui.QWidget):
         self.requestsLayout = QtGui.QVBoxLayout()
         self.requestsGroupBox.setLayout(self.requestsLayout)
         self.mainLayout.addWidget(self.requestsGroupBox)
-        # add a horizontal split to split the window equally 
+        # add a horizontal split to split the window equally
         self.split = QtGui.QSplitter(QtCore.Qt.Vertical)
         self.mainLayout.addWidget(self.split)
         self.detailsGroupBox = QtGui.QGroupBox("WCS Request Details")
@@ -86,7 +95,7 @@ class WCSCommonWidget(QtGui.QWidget):
         # WCS Request offerings layout
         self.requestLbx = QtGui.QListWidget()
         self.requestsLayout.addWidget(self.requestLbx)
-        
+
         # WCS Request details layout
         # Labels
         self.detailsLayout.addWidget(QtGui.QLabel('Layer ID:'), 0, 0)
@@ -99,7 +108,7 @@ class WCSCommonWidget(QtGui.QWidget):
         self.detailsLayout.addWidget(QtGui.QLabel('SRS:'), 5, 0)
         self.detailsLayout.addWidget(QtGui.QLabel('Required Output SRS:'), 6, 0)
         self.detailsLayout.addWidget(QtGui.QLabel('Required Output Format:'), 7, 0)
-        
+
         # Data containers
         self.dcLayers = QtGui.QComboBox()
         self.detailsLayout.addWidget(self.dcLayers, 0, 1)
@@ -120,36 +129,36 @@ class WCSCommonWidget(QtGui.QWidget):
         self.detailsLayout.addWidget(self.dcSRSreq, 6, 1)
         self.dcReqFormat = QtGui.QComboBox()
         self.detailsLayout.addWidget(self.dcReqFormat, 7, 1)
-        
+
     def loadRequests(self):
         """ loadRequest() -> None
         uses service data to populate the config widget populate fields
         """
         if self.parent_widget.service and self.parent_widget.service.service_valid:
             self.contents = self.parent_widget.service.service.__dict__['contents']
-            
+
             for content in self.contents:
                 #self.requestLbx.addItems([content])
                 item = QtGui.QListWidgetItem(content.id)
                 self.requestLbx.addItem(item)
         pass
-        
+
     def coverageNameChanged(self):
         """Update offering details containers when new offering selected."""
         pass
-        
+
     def removeRequests(self):
         """Remove all details when no WCS is selected."""
         #self.clearOfferings()
         #self.lbxOfferings.clear()
         pass
-        
+
     def clearRequests(self):
         pass
 
 
 class WCSConfigurationWidget(OgcConfigurationWidget):
-    
+
     def __init__(self,  module, controller, parent=None):
         OgcConfigurationWidget.__init__(self,  module, controller, parent)
         # pass in parent widget i.e. OgcCommonWidget class
@@ -165,7 +174,7 @@ class WCSConfigurationWidget(OgcConfigurationWidget):
                 QtGui.QApplication.UnicodeUTF8
             )
         )
-        
+
         self.tabs.setTabToolTip(
             self.tabs.indexOf(self.wcs_config_widget),
             QtGui.QApplication.translate(

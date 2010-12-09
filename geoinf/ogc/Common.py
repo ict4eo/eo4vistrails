@@ -36,6 +36,7 @@ NOTE: As at 2010-11-09, you will need to patch version 0.3.4b for owslib sos.py:
         self.filters=filter.FilterCapabilities(val)
 """
 
+import traceback
 try:
         from owslib import wfs as wfs
         from owslib import wcs as wcs
@@ -97,6 +98,8 @@ class OgcService():
             {'provider_contact_instructions':'Contact Instructions'},
         ]
         # set service-specific attributes
+        self.service_valid = False
+        self.service_valid_error = ''
         if service_type != "":
             try:
                 if service_type.lower() == "sos":
@@ -106,13 +109,15 @@ class OgcService():
                     self.service = wfs.WebFeatureService(service_url, service_version)
                     self.service_valid = True
                 elif service_type.lower() == "wcs":
-                    self.service = wfs.WebCoverageService(service_url, service_version)
+                    self.service = wcs.WebCoverageService(service_url, service_version)
                     self.service_valid = True
                 else:
                     self.service_valid = False
                     raise ValueError, INVALID_OGC_TYPE_MESSAGE
-            except: # e.g. urllib2.HTTPError: HTTP Error 404: Not Found
+            except Exception, e:
+                traceback.print_exc() # e.g. urllib2.HTTPError: HTTP Error 404: Not Found
                 self.service_valid = False
+                self.service_valid_error = str(e)
         else:
             raise ValueError, INVALID_OGC_TYPE_MESSAGE
         self.service_url = service_url
@@ -186,9 +191,9 @@ class OgcService():
 
         elif self.ini_service_type == "wcs":
             """TO DO: add service data for wcs service"""
-            
+
             if service_dict.has_key('service'):
-                self.service_type = service_dict['service'] 
+                self.service_type = service_dict['service']
             if service_dict.has_key('version'):
                 self.service_version = service_dict['version']
             if service_dict.has_key('title'):
@@ -206,7 +211,7 @@ class OgcService():
             raise ValueError, INVALID_OGC_TYPE_MESSAGE
 
     def setProviderIdentification(self, provider_dict):
-        """provider metadata is struct__dict__ured differently
+        """provider metadata is structured differently
         for the different services - parse appropriately"""
         if self.ini_service_type == "sos":
             if provider_dict.has_key('name'):
@@ -251,6 +256,7 @@ class OgcService():
 
         elif self.ini_service_type == "wcs":
             """Provider data is available for wcs service"""
+            """ redundant  - see self.provider_key_set in _init_
             self.provider_keys = [
                 'provider_url','provider_contact_fax',
                 'provider_contact_name','provider_contact_country',
@@ -261,6 +267,7 @@ class OgcService():
                 'provider_contact_position','provider_contact_site',
                 'provider_contact_organization',
                 'provider_contact_instructions','provider_contact_hours']
+            """
             if provider_dict.has_key('name'):
                 self.provider_name = provider_dict['name']
             if provider_dict.has_key('url'):
@@ -300,17 +307,3 @@ class OgcService():
 
         else:
             raise ValueError, INVALID_OGC_TYPE_MESSAGE
-
-
-provider_keys = [
-    {'provider_name':'Name'},
-    {'provider_url':'URL'},
-    {'provider_contact_name':'Contact'},
-    {'provider_contact_position':'Pos'},
-]
-
-for item in provider_keys:
-    provider_dict_item = item.keys()[0]
-    print provider_dict_item
-
-
