@@ -165,13 +165,27 @@ class OgcService():
 
         elif self.ini_service_type == "wcs":
             """TO DO: add service data for wcs service"""
-            pass
-
+            
+            if service_dict.has_key('service'):
+                self.service_type = service_dict['service'] 
+            if service_dict.has_key('version'):
+                self.service_version = service_dict['version']
+            if service_dict.has_key('title'):
+                self.service_title = service_dict['title']
+            if service_dict.has_key('abstract'):
+                self.service_abstract = service_dict['abstract']
+            if service_dict.has_key('keywords'):
+                self.service_keywords = service_dict['keywords']
+            if service_dict.has_key('fees'):
+                self.service_fees = service_dict['fees']
+            if service_dict.has_key('accessconstraints'):
+                self.service_accessconstraints = service_dict['accessconstraints']
+            #pass
         else:
             raise ValueError, INVALID_OGC_TYPE_MESSAGE
 
     def setProviderIdentification(self, provider_dict):
-        """provider metadata is structured differently
+        """provider metadata is struct__dict__ured differently
         for the different services - parse appropriately"""
         if self.ini_service_type == "sos":
             self.provider_keys = [
@@ -225,8 +239,53 @@ class OgcService():
             pass
 
         elif self.ini_service_type == "wcs":
-            """TO DO: check if provider data is available for wcs service"""
-            pass
+            """Provider data is available for wcs service"""
+            self.provider_keys = [
+                'provider_url','provider_contact_fax',
+                'provider_contact_name','provider_contact_country',
+                'provider_contact_phone','provider_contact_region',
+                'provider_contact_city','provider_name',
+                'provider_contact_address','provider_contact_postcode',
+                'provider_contact_email','provider_contact_role',
+                'provider_contact_position','provider_contact_site',
+                'provider_contact_organization',
+                'provider_contact_instructions','provider_contact_hours']
+            if provider_dict.has_key('name'):
+                self.provider_name = provider_dict['name']
+            if provider_dict.has_key('url'):
+                self.provider_url = provider_dict['url']
+            if provider_dict.has_key('contact'):
+                if provider_dict['contact'].__dict__.has_key('name'):
+                    self.provider_contact_name = provider_dict['contact'].__dict__['name']
+                if provider_dict['contact'].__dict__.has_key('position'):
+                    self.provider_contact_position = provider_dict['contact'].__dict__['position']
+                if provider_dict['contact'].__dict__.has_key('role'):
+                    self.provider_contact_role =  provider_dict['contact'].__dict__['role']
+                if provider_dict['contact'].__dict__.has_key('organization'):
+                    self.provider_contact_organization = provider_dict['contact'].__dict__['organization']
+                if provider_dict['contact'].__dict__.has_key('address'):
+                    self.provider_contact_address =  provider_dict['contact'].__dict__['address']
+                if provider_dict['contact'].__dict__.has_key('city'):
+                    self.provider_contact_city = provider_dict['contact'].__dict__['city']
+                if provider_dict['contact'].__dict__.has_key('region'):
+                    self.provider_contact_region = provider_dict['contact'].__dict__['region']
+                if provider_dict['contact'].__dict__.has_key('postcode'):
+                    self.provider_contact_postcode = provider_dict['contact'].__dict__['postcode']
+                if provider_dict['contact'].__dict__.has_key('country'):
+                    self.provider_contact_country = provider_dict['contact'].__dict__['country']
+                if provider_dict['contact'].__dict__.has_key('phone'):
+                    self.provider_contact_phone = provider_dict['contact'].__dict__['phone']
+                if provider_dict['contact'].__dict__.has_key('fax'):
+                    self.provider_contact_fax = provider_dict['contact'].__dict__['fax']
+                if provider_dict['contact'].__dict__.has_key('site'):
+                    self.provider_contact_site = provider_dict['contact'].__dict__['site']
+                if provider_dict['contact'].__dict__.has_key('email'):
+                    self.provider_contact_email = provider_dict['contact'].__dict__['email']
+                if provider_dict['contact'].__dict__.has_key('hours'):
+                    self.provider_contact_hours = provider_dict['contact'].__dict__['hours']
+                if provider_dict['contact'].__dict__.has_key('instructions'):
+                    self.provider_contact_instructions = provider_dict['contact'].__dict__['instructions']
+            #pass
 
         else:
             raise ValueError, INVALID_OGC_TYPE_MESSAGE
