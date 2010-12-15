@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 ############################################################################
 ###
 ### Copyright (C) 2010 CSIR Meraka Institute. All rights reserved.
@@ -23,11 +24,19 @@
 ### WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ###
 #############################################################################
-#"""This full package extends VisTrails, providing GIS/Earth Observation 
-#ingestion, pre-processing, transformation, analytic and visualisation 
-#capabilities . Included is the abilty to run code transparently in 
-#OpenNebula cloud environments.
-#"""
+"""
+Created on Tue Dec 14 09:38:10 2010
+
+@author: tvzyl
+
+Module forms part of the rpyc vistrails capabilties, used to add multicore
+parallel and distributed processing to vistrails.
+
+This Module holds some helper classes to make working with rpyc easier
+
+"""
+#History
+#Terence van Zyl, 15 Dec 2010, Version 1.0
 
 from core import packagemanager
 from core.modules.module_registry import get_module_registry

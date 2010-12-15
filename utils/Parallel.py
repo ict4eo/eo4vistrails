@@ -26,6 +26,9 @@
 """TODO:
 """
 
+#History
+#Terence van Zyl, 15 Dec 2010, Version 1.0
+
 from ThreadSafe import ThreadSafe
 from multiprocessing import Process, Value, Manager
 from multiprocessing.managers import BaseManager

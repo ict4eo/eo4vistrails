@@ -29,6 +29,9 @@ capabilities . Included is the abilty to run code transparently in
 OpenNebula cloud environments.
 """
 
+#History
+#Terence van Zyl, 15 Dec 2010, Version 1.0
+
 identifier = 'za.co.csir.eo4vistrails.rpyc'
 name = 'eo4vistrails.rpyc'
 version = '0.0.1'

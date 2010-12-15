@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 ############################################################################
 ###
 ### Copyright (C) 2010 CSIR Meraka Institute. All rights reserved.
@@ -23,10 +24,16 @@
 ### WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ###
 #############################################################################
-"""This full package extends VisTrails, providing GIS/Earth Observation 
-ingestion, pre-processing, transformation, analytic and visualisation 
-capabilities . Included is the abilty to run code transparently in 
-OpenNebula cloud environments.
+"""
+Created on Tue Dec 14 09:38:10 2010
+
+@author: tvzyl
+
+Module forms part of the rpyc vistrails capabilties, used to add multicore
+parallel and distributed processing to vistrails.
+
+This Module is the core module holding annotaions and mixins
+
 """
 #History
 #Terence van Zyl, 15 Dec 2010, Version 1.0
@@ -36,6 +43,8 @@ import Shared
 class RPyCSafeModule(object):
     """
     RPyCSafeModule is a Module that executes the compute method on a RPyC node.
+    This annotaion mixes in the code needed to ensure both threadsafe execution
+    and rpyc safe execution
     """
     def __init__(self, requiredVisPackages=[]):
         #Always need packages.eo4vistrails in requiredvispackages
