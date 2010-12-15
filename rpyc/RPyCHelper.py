@@ -293,3 +293,4 @@ class RPyCCode(NotCacheable, RPyCModule):
             str(self.forceGetInputFromPort('source', ''))
         )
         self.run_code(s, use_input=True, use_output=True)
+        

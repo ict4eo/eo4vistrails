@@ -38,13 +38,14 @@ This Module holds code to help test the rpyc functioning in vistrails
 #History
 #Terence van Zyl, 15 Dec 2010, Version 1.0
 
-from core.modules.vistrails_module import NotCacheable, Module
+from core.modules.vistrails_module import NotCacheable
 from multiprocessing import current_process
 from time import ctime, sleep
 from RPyC import RPyCSafeModule
+from RPyCNode import RPyCModule
 
 @RPyCSafeModule([])
-class RPyCTestModule(NotCacheable, Module):
+class RPyCTestModule(NotCacheable, RPyCModule):
     """This Test Module is to check that ThreadSafe is working and also provides
     a template for others to use ThreadSafe"""
     

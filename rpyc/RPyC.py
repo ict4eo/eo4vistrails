@@ -190,4 +190,3 @@ class RPyCSafeMixin(object):
             conn.proc.terminate()
             conn.proc.wait()
         conn.close()
-
