@@ -20,9 +20,9 @@ except:
 
 #Brings in cloud modules
 try:
-    from opennebula import init as opennebula_init
+    from rpyc import init as rpyc_init
 except:
-    import opennebula.init as opennebula_init
+    import rpyc.init as rpyc_init
 
 #brings in PostGIS modules
 try:
@@ -88,7 +88,7 @@ def initialize(*args, **keywords):
     ogc_init.initialize(*args, **keywords)  # looks like no-one is willing to mess up this file, so have created ogc specific init.py as well.
     utils_init.initialize(*args, **keywords)
     postgis_init.initialize(*args,  **keywords)
-    opennebula_init.initialize(*args, **keywords)
+    rpyc_init.initialize(*args, **keywords)
 
 
 

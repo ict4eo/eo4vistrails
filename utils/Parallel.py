@@ -30,8 +30,7 @@ from ThreadSafe import ThreadSafe
 from multiprocessing import Process, Value, Manager
 from multiprocessing.managers import BaseManager
 from threading import *
-from core.modules.vistrails_module import Module, NotCacheable, \
-        InvalidOutput, ModuleError, ModuleErrors, ModuleBreakpoint
+from core.modules.vistrails_module import *
 
 class MultiProcessSafe(ThreadSafe):
     """TODO:"""
