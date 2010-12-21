@@ -51,7 +51,6 @@ def initialize(*args, **keywords):
     # we can refer to it in a shorter way.
     reg = core.modules.module_registry.get_module_registry()
 
-    #reg.add_module(WFS)
     #input ports
     reg.add_module(FeatureModel) #abstract
 

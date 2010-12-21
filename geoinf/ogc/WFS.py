@@ -62,6 +62,14 @@ class WFS(NotCacheable,  FeatureModel):
 
         print wfs_config_dict  #print items from dictionary: this won't work when accessing saved wfs_test.vt, re-configure WFS. dict holds values temporarly
 
+        #print wfs_config_dict.keys()
+
+        #for item in wfs_config_dict.keys():
+
+            #print "wfs_config_dict[ ", item, " ] = ", wfs_config_dict[ item ]
+
+
+
 
 class WFSCommonWidget(QtGui.QWidget):
     """TO DO - add docstring
@@ -118,10 +126,10 @@ class WFSCommonWidget(QtGui.QWidget):
         gridLayout.addWidget(QtGui.QLabel('bottom_right  X'), 4, 1)
         gridLayout.addWidget(QtGui.QLabel('bottom_right  Y'), 4, 3)
         gridLayout.addWidget(QtGui.QLabel('ESPG/SRS Code'), 5, 0)
-        gridLayout.addWidget(QtGui.QLabel('maxFeatures'), 6, 0)
+        gridLayout.addWidget(QtGui.QLabel('maxFeatures'), 5, 3)
 
         gridLayout.addWidget(QtGui.QCheckBox('GetFeature Request'), 7, 0)
-        gridLayout.addWidget(QtGui.QCheckBox('DescrbFeatureType Request'), 8, 0)
+        #gridLayout.addWidget(QtGui.QCheckBox('DescrbFeatureType Request'), 8, 0)
 
         #self.wfsUrlEdit = QtGui.QLineEdit('http://localhost:8080/geoserver/wfs')
 
@@ -140,18 +148,18 @@ class WFSCommonWidget(QtGui.QWidget):
 
         #self.GetCapabilitiesEdit = QtGui.QLineEdit('http://')
         self.GetFeatureEdit = QtGui.QLineEdit('http://')
-        self.DescribeFeatureTypeEdit = QtGui.QLineEdit('http://')
+        #self.DescribeFeatureTypeEdit = QtGui.QLineEdit('http://')
 
         #gridLayout.addWidget(self.wfsUrlEdit, 0, 1)
         gridLayout.addWidget(self.minXEdit, 3,2)
         gridLayout.addWidget(self.ESPGEdit, 5,1)
-        gridLayout.addWidget(self.maxFeaturesEdit, 6,1)
+        gridLayout.addWidget(self.maxFeaturesEdit, 5,4)
         gridLayout.addWidget(self.minYEdit, 3, 4)
         gridLayout.addWidget(self.maxXEdit, 4, 2)
         gridLayout.addWidget(self.maxYEdit, 4, 4)
 
         gridLayout.addWidget(self.GetFeatureEdit, 7, 1)
-        gridLayout.addWidget(self.DescribeFeatureTypeEdit, 8, 1)
+        #gridLayout.addWidget(self.DescribeFeatureTypeEdit, 8, 1)
 
         self.lstFeatures = QtGui.QListWidget()
 
@@ -169,7 +177,6 @@ class WFSCommonWidget(QtGui.QWidget):
 
         if self.parent_widget.service and self.parent_widget.service.service_valid:
             self.contents = self.parent_widget.service.service.__dict__['contents']
-
 
             for content in self.contents:
                 self.lstFeatures.addItems([content])
@@ -193,8 +200,8 @@ class WFSCommonWidget(QtGui.QWidget):
 
 
         # testing global dic
-
         #wfs_config_dict = {'TypeName': str(selected_featureName) ,'minX': str(self.minXEdit.text()), 'minY': str(self.minYEdit.text()),  'maxX': str(self.maxXEdit.text()),  'maxY': str(self.maxYEdit.text()) }
+
 
         wfs_config_dict['TypeName'] = str(selected_featureName)
         wfs_config_dict['minX'] = str(self.minXEdit.text())
@@ -205,6 +212,9 @@ class WFSCommonWidget(QtGui.QWidget):
         #print "After update.......................:"
 
         #print wfs_config_dict
+        #simpleGetRequest = self.parent_widget.service.getfeature(typename=[str(selected_featureName)], maxfeatures=1)
+
+
 
 
         if self.parent_widget.service and self.parent_widget.service.service_valid and self.contents:
@@ -265,10 +275,10 @@ class WFSCommonWidget(QtGui.QWidget):
                     self.htmlView.append('')
                 if coordinates:
                     self.htmlView.append("LatLongBoundingBox:" + \
-                        ' minx= '+ str(coordinates[0]) + \
-                        ' miny= '+ str(coordinates[1]) + \
-                        ' maxx= '+ str(coordinates[2])  + \
-                        ' maxy= '+ str(coordinates[3])
+                        '   minx= '+ str(coordinates[0]) + \
+                        '   miny= '+ str(coordinates[1]) + \
+                        '   maxx= '+ str(coordinates[2])  + \
+                        '   maxy= '+ str(coordinates[3])
                     )
 
         #print "Before update.......................:"
@@ -288,12 +298,12 @@ class WFSConfigurationWidget(OgcConfigurationWidget):
 
         # pass in parent widget i.e. OgcCommonWidget class
 
-        self.wfs_config = WFSCommonWidget(self.ogc_common_widget)
+        self.wfs_config_widget = WFSCommonWidget(self.ogc_common_widget)
 
         # tabs
-        self.tabs.insertTab(1, self.wfs_config, "")
+        self.tabs.insertTab(1, self.wfs_config_widget, "")
         self.tabs.setTabText(
-            self.tabs.indexOf(self.wfs_config),
+            self.tabs.indexOf(self.wfs_config_widget),
             QtGui.QApplication.translate(
                 "WFSConfigurationWidget",
                 "WFS",
@@ -302,7 +312,7 @@ class WFSConfigurationWidget(OgcConfigurationWidget):
             )
         )
         self.tabs.setTabToolTip(
-            self.tabs.indexOf(self.wfs_config),
+            self.tabs.indexOf(self.wfs_config_widget),
             QtGui.QApplication.translate(
                 "WFSConfigurationWidget",
                 "WFS Configuration",
@@ -312,16 +322,69 @@ class WFSConfigurationWidget(OgcConfigurationWidget):
         )
         self.tabs.setCurrentIndex(0)
 
-    def okTriggered(self): # , checked=False in parent?
-        """Extend method which is extended in OgcTemporalConfigurationWidget."""
 
-        self.wfs_url = self.wfs_config.parent_widget.line_edit_OGC_url.text() # wfs ogc tab url value
+    def constructRequest(self):
 
-        functions = []
-        functions.append(('OGC_URL', [str(self.wfs_url)]),)
-        self.controller.update_ports_and_functions(self.module.id,
-                                                   [],
-                                                   [],
-                                                   functions)
+        # POST REQUEST:
 
-        OgcConfigurationWidget.okTriggered(self)
+        #From WFS Case, users will pass varying requests mainly comprised of FILTERS,  it tends to be a difficult
+        # to construct all such possible templates for all kinds of requests. ??
+
+
+        selected_typeName = self.wfs_config_widget.lstFeatures.selectedItems()[0].text()
+
+        espg_number =  self.wfs_config_widget.ESPGEdit.text()
+
+        top_letf_X = self.wfs_config_widget.minXEdit.text()
+        top_left_Y = self.wfs_config_widget.minYEdit.text()
+        btm_right_X = self.wfs_config_widget.maxXEdit.text()
+        btm_right_Y = self.wfs_config_widget.maxYEdit.text()
+
+
+        #simpleGetRequest = self.wfs_config_widget.contents.getfeature(typename=[str(selected_typeName)], maxfeatures=self.maxFeaturesEdit.text())
+
+        """"
+
+        postRequest =\
+        "<wfs:GetFeature service="'WFS'" version="'1.0.0'" outputFormat="'GML2'"'xmlns:topp='http://www.openplans.org/topp"
+        'xmlns:wfs='"http://www.opengis.net/wfs"
+        'xmlns:ogc='"http://www.opengis.net/ogc"
+        'xmlns:gml='"http://www.opengis.net/gml"
+        'xmlns:xsi='"http://www.w3.org/2001/XMLSchema-instance"
+        'xsi:schemaLocation='"http://www.opengis.net/wfs'http://schemas.opengis.net/wfs/1.0.0/WFS-basic.xsd>"
+        '<wfs:Query typeName='+str(selected_typeName)+'>'
+        '<ogc:Filter>'
+        '<ogc:BBOX>'
+        '<ogc:PropertyName>the_geom</ogc:PropertyName>'
+        '<gml:Box srsName='"http://www.opengis.net/gml/srs/epsg.xml#"+str(espg_number[5:])+'>'
+        '<gml:coordinates>'+str(top_letf_X) + ','+ str(top_left_Y) +' ' + str(btm_right_X)+','+ str(btm_right_Y)+'</gml:coordinates>'
+        '</gml:Box>'
+        '</ogc:BBOX>'
+        '</ogc:Filter>'
+        '</wfs:GetFeature>'
+
+        <wfs:GetFeature service="WFS" version="1.0.0"
+          outputFormat="GML2"
+          xmlns:wfs="http://www.opengis.net/wfs"
+          xmlns:ogc="http://www.opengis.net/ogc"
+          xmlns:gml="http://www.opengis.net/gml"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.0.0/WFS-basic.xsd">
+          <wfs:Query typeName="topp:states">
+            <ogc:PropertyName>topp:STATE_NAME</ogc:PropertyName>
+            <ogc:PropertyName>topp:PERSONS</ogc:PropertyName>
+            <ogc:Filter>
+              <ogc:BBOX>
+                <ogc:PropertyName>the_geom</ogc:PropertyName>
+                <gml:Box srsName="http://www.opengis.net/gml/srs/epsg.xml#4326">
+                   <gml:coordinates>-75.102613,40.212597 -72.361859,41.512517</gml:coordinates>
+                </gml:Box>
+              </ogc:BBOX>
+           </ogc:Filter>
+          </wfs:Query>
+        </wfs:GetFeature>
+
+        """
+        #return simpleGetRequest.read()
+
+        return 'postRequest'

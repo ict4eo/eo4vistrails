@@ -139,7 +139,7 @@ class WCSCommonWidget(QtGui.QWidget):
 
             for content in self.contents:
                 #self.requestLbx.addItems([content])
-                item = QtGui.QListWidgetItem(content.id)
+                item = QtGui.QListWidgetItem(content)
                 self.requestLbx.addItem(item)
         pass
 
