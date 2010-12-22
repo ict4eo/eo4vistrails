@@ -57,18 +57,52 @@ class WFS(NotCacheable,  FeatureModel):
             ogc_wfs_url = self.getInputFromPort(init.OGC_URL_PORT)
             print ogc_wfs_url  # print url value
 
+        if self.hasInputFromPort(init.OGC_POST_REQUEST_PORT):
+            configuredReq = self.getInputFromPort(init.OGC_POST_REQUEST_PORT)
+            print configuredReq
+
 
         print '..............Accessing configuration parameters from dict............'
 
+
         print wfs_config_dict  #print items from dictionary: this won't work when accessing saved wfs_test.vt, re-configure WFS. dict holds values temporarly
 
-        #print wfs_config_dict.keys()
 
-        #for item in wfs_config_dict.keys():
+        try:
+            out = self.runRequest(ogc_wfs_url, configuredReq)
+            self.setResult(init.OGC_RESULT_PORT, out)
+        except Exception, e:
+            import traceback
+            traceback.print_exc()
+            raise ModuleError(self, 'Cannot set output port: %s' % str(e))
 
-            #print "wfs_config_dict[ ", item, " ] = ", wfs_config_dict[ item ]
 
-
+    def runRequest(self, ogc_wfs_url, configuredReq):
+        """Execute an HTTP POST request for a given URL"""
+        import urllib
+        import urllib2
+        import os
+        from  urllib2 import URLError
+        result = None
+        if ogc_wfs_url and configuredReq:
+            user_agent = 'Mozilla/4.0 (compatible; MSIE 5.5; Windows NT)'
+            headers = {'User-Agent': user_agent}
+            #request = urllib.urlencode(xml)
+            req = urllib2.Request(ogc_wfs_url, configuredReq, headers)
+            #proxy ?
+            #os.environ["http_proxy"] = "http://myproxy.com:3128"
+            try:
+                urllib2.urlopen(req)
+                response = urllib2.urlopen(req)
+                result = response.read()
+            except URLError, e:
+                if hasattr(e, 'reason'):
+                    raiseError(self, 'Failed to reach the server. Reason', e.reason)
+                elif hasattr(e, 'code'):
+                    raiseError(self, 'The server couldn\'t fulfill the request. Error code', e.code)
+            except Exception, e:
+                raiseError(self, 'Exception', e)
+        return result
 
 
 class WFSCommonWidget(QtGui.QWidget):
@@ -325,12 +359,6 @@ class WFSConfigurationWidget(OgcConfigurationWidget):
 
     def constructRequest(self):
 
-        # POST REQUEST:
-
-        #From WFS Case, users will pass varying requests mainly comprised of FILTERS,  it tends to be a difficult
-        # to construct all such possible templates for all kinds of requests. ??
-
-
         selected_typeName = self.wfs_config_widget.lstFeatures.selectedItems()[0].text()
 
         espg_number =  self.wfs_config_widget.ESPGEdit.text()
@@ -340,51 +368,21 @@ class WFSConfigurationWidget(OgcConfigurationWidget):
         btm_right_X = self.wfs_config_widget.maxXEdit.text()
         btm_right_Y = self.wfs_config_widget.maxYEdit.text()
 
-
         #simpleGetRequest = self.wfs_config_widget.contents.getfeature(typename=[str(selected_typeName)], maxfeatures=self.maxFeaturesEdit.text())
 
-        """"
+        wfs_url = self.ogc_common_widget.line_edit_OGC_url.text()
 
-        postRequest =\
-        "<wfs:GetFeature service="'WFS'" version="'1.0.0'" outputFormat="'GML2'"'xmlns:topp='http://www.openplans.org/topp"
-        'xmlns:wfs='"http://www.opengis.net/wfs"
-        'xmlns:ogc='"http://www.opengis.net/ogc"
-        'xmlns:gml='"http://www.opengis.net/gml"
-        'xmlns:xsi='"http://www.w3.org/2001/XMLSchema-instance"
-        'xsi:schemaLocation='"http://www.opengis.net/wfs'http://schemas.opengis.net/wfs/1.0.0/WFS-basic.xsd>"
-        '<wfs:Query typeName='+str(selected_typeName)+'>'
-        '<ogc:Filter>'
-        '<ogc:BBOX>'
-        '<ogc:PropertyName>the_geom</ogc:PropertyName>'
-        '<gml:Box srsName='"http://www.opengis.net/gml/srs/epsg.xml#"+str(espg_number[5:])+'>'
-        '<gml:coordinates>'+str(top_letf_X) + ','+ str(top_left_Y) +' ' + str(btm_right_X)+','+ str(btm_right_Y)+'</gml:coordinates>'
-        '</gml:Box>'
-        '</ogc:BBOX>'
-        '</ogc:Filter>'
-        '</wfs:GetFeature>'
+        vers = str(self.ogc_common_widget.launchversion.currentText())
 
-        <wfs:GetFeature service="WFS" version="1.0.0"
-          outputFormat="GML2"
-          xmlns:wfs="http://www.opengis.net/wfs"
-          xmlns:ogc="http://www.opengis.net/ogc"
-          xmlns:gml="http://www.opengis.net/gml"
-          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-          xsi:schemaLocation="http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.0.0/WFS-basic.xsd">
-          <wfs:Query typeName="topp:states">
-            <ogc:PropertyName>topp:STATE_NAME</ogc:PropertyName>
-            <ogc:PropertyName>topp:PERSONS</ogc:PropertyName>
-            <ogc:Filter>
-              <ogc:BBOX>
-                <ogc:PropertyName>the_geom</ogc:PropertyName>
-                <gml:Box srsName="http://www.opengis.net/gml/srs/epsg.xml#4326">
-                   <gml:coordinates>-75.102613,40.212597 -72.361859,41.512517</gml:coordinates>
-                </gml:Box>
-              </ogc:BBOX>
-           </ogc:Filter>
-          </wfs:Query>
-        </wfs:GetFeature>
+        if '?' in wfs_url:
+            parts = wfs_url.split('?')
+            self.url = parts[0]
+        else:
+            self.url = wfs_url
 
-        """
-        #return simpleGetRequest.read()
+        getFeatureBBoxFilter = self.url + \
+        "?request=GetFeature&version="+vers+ \
+        "&typeName="+str(selected_typeName)+ \
+        "&BBOX="+str(top_letf_X) + ','+ str(top_left_Y) +',' + str(btm_right_X)+','+ str(btm_right_Y)+','+str(espg_number)
 
-        return 'postRequest'
+        return getFeatureBBoxFilter
