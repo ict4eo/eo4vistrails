@@ -99,7 +99,7 @@ class WCSCommonWidget(QtGui.QWidget):
         # WCS Request details layout
         # Labels
         self.detailsLayout.addWidget(QtGui.QLabel('Layer ID:'), 0, 0)
-        self.detailsLayout.addWidget(QtGui.QLabel('Layer Geometry:'), 1, 0)
+        self.detailsLayout.addWidget(QtGui.QLabel('Layer Description:'), 1, 0)
         self.detailsLayout.addWidget(QtGui.QLabel('BBox - data bounds:'), 2, 0)
         self.detailsLayout.addWidget(QtGui.QLabel('ULX:'), 3, 0)
         self.detailsLayout.addWidget(QtGui.QLabel('LRX:'), 3, 2)
@@ -108,27 +108,43 @@ class WCSCommonWidget(QtGui.QWidget):
         self.detailsLayout.addWidget(QtGui.QLabel('SRS:'), 5, 0)
         self.detailsLayout.addWidget(QtGui.QLabel('Required Output SRS:'), 6, 0)
         self.detailsLayout.addWidget(QtGui.QLabel('Required Output Format:'), 7, 0)
+        self.detailsLayout.addWidget(QtGui.QLabel('Required Request Type:'), 8, 0)
 
         # Data containers
-        self.dcLayers = QtGui.QComboBox()
-        self.detailsLayout.addWidget(self.dcLayers, 0, 1)
-        self.dcLayerGeometry = QtGui.QLineEdit(' ')
-        #self.dclayerGeometry.setEnabled(False)
-        self.detailsLayout.addWidget(self.dcLayerGeometry, 1,1)
+        self.dcLayerId = QtGui.QLabel('__')
+        self.detailsLayout.addWidget(self.dcLayerId, 0, 1)
+        self.dcLayerDescription = QtGui.QLabel('__') 
+        self.detailsLayout.addWidget(self.dcLayerDescription, 1,1)
         self.dcULX = QtGui.QLineEdit(' ')
+        self.dcULX.setEnabled(False) #sets it not to be editable
         self.detailsLayout.addWidget(self.dcULX, 3,1)
         self.dcLRX = QtGui.QLineEdit(' ')
+        self.dcLRX.setEnabled(False)
         self.detailsLayout.addWidget(self.dcLRX, 3,3)
         self.dcULY = QtGui.QLineEdit(' ')
+        self.dcULY.setEnabled(False)
         self.detailsLayout.addWidget(self.dcULY, 4,1)
         self.dcLRY = QtGui.QLineEdit(' ')
+        self.dcLRY.setEnabled(False)
         self.detailsLayout.addWidget(self.dcLRY, 4,3)
-        self.dcSRS = QtGui.QComboBox()
+        self.dcSRS = QtGui.QLabel('__')
         self.detailsLayout.addWidget(self.dcSRS, 5, 1)
         self.dcSRSreq = QtGui.QComboBox()
         self.detailsLayout.addWidget(self.dcSRSreq, 6, 1)
         self.dcReqFormat = QtGui.QComboBox()
         self.detailsLayout.addWidget(self.dcReqFormat, 7, 1)
+        self.dcRequestType = QtGui.QComboBox()
+        self.detailsLayout.addWidget(self.dcRequestType, 8, 1)
+        self.dcRequestType.addItem('GetCapabilities')
+        self.dcRequestType.addItem('DescribeCoverage')
+        self.dcRequestType.addItem('GetCoverage')
+        
+        # local signals
+        self.connect(
+            self.requestLbx,
+            QtCore.SIGNAL("itemClicked(QListWidgetItem*)"),
+            self.coverageNameChanged
+        )
 
     def loadRequests(self):
         """ loadRequest() -> None
@@ -138,14 +154,39 @@ class WCSCommonWidget(QtGui.QWidget):
             self.contents = self.parent_widget.service.service.__dict__['contents']
 
             for content in self.contents:
-                #self.requestLbx.addItems([content])
-                item = QtGui.QListWidgetItem(content)
-                self.requestLbx.addItem(item)
-        pass
+                self.requestLbx.addItems([content])
+
+
+    def clearRequests(self):
+        """To reset the values in the fields"""
+        self.dcLayerId.setText('-')
+        self.dcLayerDescription.setText('-')
+        self.dcULX.setText('-')
+        self.dcLRX.setText('-')
+        self.dcULY.setText('-')
+        self.dcLRY.setText('-')
+        self.dcSRS.setText('-')
+        self.dcSRSreq.clear()
+        self.dcReqFormat.clear()
+        #self.dcRequestType.clear()
+        #pass
 
     def coverageNameChanged(self):
         """Update offering details containers when new offering selected."""
-        pass
+        self.clearRequests()
+        selected_coverageName = self.requestLbx.selectedItems()[0].text()
+        if self.parent_widget.service and self.parent_widget.service.service_valid and self.contents:
+            for content in self.contents:
+                if selected_coverageName == content:
+                     self.dcLayerId.setText(self.contents[str(selected_coverageName)].id)
+                     self.dcLayerDescription.setText(self.contents[str(selected_coverageName)].title)
+                     self.dcULX.setText(str(self.contents[str(selected_coverageName)].boundingBoxWGS84[0])) # 1st item in bbox tuple
+                     self.dcLRX.setText(str(self.contents[str(selected_coverageName)].boundingBoxWGS84[1]))
+                     self.dcULY.setText(str(self.contents[str(selected_coverageName)].boundingBoxWGS84[2]))
+                     self.dcLRY.setText(str(self.contents[str(selected_coverageName)].boundingBoxWGS84[3]))
+                     #self.dcSRS.setText(self.contents[str(selected_coverageName)].crsOptions)
+                     #self.dcSRSreq.addItems(self.contents[str(selected_coverageName)].responseSRS) #don't know how to access this yet on WCS
+                     self.dcReqFormat.addItems(self.contents[str(selected_coverageName)].supportedFormats)# returns a list of values that are unpacked into a combobox
 
     def removeRequests(self):
         """Remove all details when no WCS is selected."""
@@ -153,8 +194,7 @@ class WCSCommonWidget(QtGui.QWidget):
         #self.lbxOfferings.clear()
         pass
 
-    def clearRequests(self):
-        pass
+
 
 
 class WCSConfigurationWidget(OgcConfigurationWidget):
