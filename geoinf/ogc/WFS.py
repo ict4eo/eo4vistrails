@@ -57,40 +57,37 @@ class WFS(NotCacheable,  FeatureModel):
             ogc_wfs_url = self.getInputFromPort(init.OGC_URL_PORT)
             print ogc_wfs_url  # print url value
 
-        if self.hasInputFromPort(init.OGC_POST_REQUEST_PORT):
-            configuredReq = self.getInputFromPort(init.OGC_POST_REQUEST_PORT)
-            print configuredReq
-
-
         print '..............Accessing configuration parameters from dict............'
 
 
         print wfs_config_dict  #print items from dictionary: this won't work when accessing saved wfs_test.vt, re-configure WFS. dict holds values temporarly
 
 
-        try:
-            out = self.runRequest(ogc_wfs_url, configuredReq)
-            self.setResult(init.OGC_RESULT_PORT, out)
-        except Exception, e:
-            import traceback
-            traceback.print_exc()
-            raise ModuleError(self, 'Cannot set output port: %s' % str(e))
+        if self.hasInputFromPort(init.OGC_POST_REQUEST_PORT):
+            configuredReq = self.getInputFromPort(init.OGC_POST_REQUEST_PORT)
+            print configuredReq
+
+            try:
+                out = self.runRequest(configuredReq)
+                self.setResult(init.OGC_RESULT_PORT, out)
+            except Exception, e:
+                import traceback
+                traceback.print_exc()
+                raise ModuleError(self, 'Cannot set output port: %s' % str(e))
 
 
-    def runRequest(self, ogc_wfs_url, configuredReq):
+    def runRequest(self, configuredReq):
         """Execute an HTTP POST request for a given URL"""
         import urllib
         import urllib2
         import os
         from  urllib2 import URLError
         result = None
-        if ogc_wfs_url and configuredReq:
-            user_agent = 'Mozilla/4.0 (compatible; MSIE 5.5; Windows NT)'
-            headers = {'User-Agent': user_agent}
-            #request = urllib.urlencode(xml)
-            req = urllib2.Request(ogc_wfs_url, configuredReq, headers)
-            #proxy ?
-            #os.environ["http_proxy"] = "http://myproxy.com:3128"
+
+        if configuredReq:
+
+            req = urllib2.Request(configuredReq)
+
             try:
                 urllib2.urlopen(req)
                 response = urllib2.urlopen(req)
@@ -141,9 +138,10 @@ class WFSCommonWidget(QtGui.QWidget):
 
         )
 
-        global wfs_config_dict   # global dictionary to hold configuration  parameters
+        global wfs_config_dict   # global dictionary to hold configuration  parameters - volatile
 
         wfs_config_dict = dict()
+
 
 
     def create_wfs_config_window(self):
@@ -162,7 +160,9 @@ class WFSCommonWidget(QtGui.QWidget):
         gridLayout.addWidget(QtGui.QLabel('ESPG/SRS Code'), 5, 0)
         gridLayout.addWidget(QtGui.QLabel('maxFeatures'), 5, 3)
 
-        gridLayout.addWidget(QtGui.QCheckBox('GetFeature Request'), 7, 0)
+        self.cbGetFeature = QtGui.QCheckBox("GetFeature bbox-url", self)
+
+        gridLayout.addWidget(self.cbGetFeature,  7, 0)
         #gridLayout.addWidget(QtGui.QCheckBox('DescrbFeatureType Request'), 8, 0)
 
         #self.wfsUrlEdit = QtGui.QLineEdit('http://localhost:8080/geoserver/wfs')
@@ -197,11 +197,13 @@ class WFSCommonWidget(QtGui.QWidget):
 
         self.lstFeatures = QtGui.QListWidget()
 
+
         gridLayout.addWidget(self.lstFeatures, 1, 1)
 
         self.htmlView = QtGui.QTextEdit()   # view selected typename / FeatureName ContentMetadata
         #self.htmlView.setEnabled(False)
         gridLayout.addWidget(self.htmlView, 1, 2,  1,  3)
+
 
 
     def loadRequest(self):
@@ -236,7 +238,6 @@ class WFSCommonWidget(QtGui.QWidget):
         # testing global dic
         #wfs_config_dict = {'TypeName': str(selected_featureName) ,'minX': str(self.minXEdit.text()), 'minY': str(self.minYEdit.text()),  'maxX': str(self.maxXEdit.text()),  'maxY': str(self.maxYEdit.text()) }
 
-
         wfs_config_dict['TypeName'] = str(selected_featureName)
         wfs_config_dict['minX'] = str(self.minXEdit.text())
         wfs_config_dict['minY'] = str(self.minYEdit.text())
@@ -247,7 +248,6 @@ class WFSCommonWidget(QtGui.QWidget):
 
         #print wfs_config_dict
         #simpleGetRequest = self.parent_widget.service.getfeature(typename=[str(selected_featureName)], maxfeatures=1)
-
 
 
 
@@ -323,6 +323,37 @@ class WFSCommonWidget(QtGui.QWidget):
         #print "After update.......................:"
         #print wfs_config_dict
 
+        if self.cbGetFeature.isChecked():
+
+            #self.selected_featureName = self.lstFeatures.selectedItems()[0].text()
+            espg_number =  self.ESPGEdit.text()
+            top_letf_X = self.minXEdit.text()
+            top_left_Y = self.minYEdit.text()
+            btm_right_X = self.maxXEdit.text()
+            btm_right_Y = self.maxYEdit.text()
+            select_feature = self.lstFeatures.selectedItems()[0].text()
+
+            wfs_url = self.parent_widget.line_edit_OGC_url.text()
+
+            vers = str(self.parent_widget.launchversion.currentText())
+
+            if '?' in wfs_url:
+                parts = wfs_url.split('?')
+                self.url = parts[0]
+            else:
+                self.url = wfs_url
+
+                getFeatureBBoxUrl = wfs_url+ \
+                "?request=GetFeature&version="+vers+ \
+                "&typeName="+str(select_feature)+ \
+                "&BBOX="+str(top_letf_X) + ','+ str(top_left_Y) +',' + str(btm_right_X)+','+ str(btm_right_Y)+','+str(espg_number)
+
+                self.GetFeatureEdit.setText(str(getFeatureBBoxUrl))
+
+        else:
+            self.GetFeatureEdit.setText("http://no getfeature request constructed")
+
+
 
 class WFSConfigurationWidget(OgcConfigurationWidget):
 
@@ -368,8 +399,6 @@ class WFSConfigurationWidget(OgcConfigurationWidget):
         btm_right_X = self.wfs_config_widget.maxXEdit.text()
         btm_right_Y = self.wfs_config_widget.maxYEdit.text()
 
-        #simpleGetRequest = self.wfs_config_widget.contents.getfeature(typename=[str(selected_typeName)], maxfeatures=self.maxFeaturesEdit.text())
-
         wfs_url = self.ogc_common_widget.line_edit_OGC_url.text()
 
         vers = str(self.ogc_common_widget.launchversion.currentText())
@@ -380,9 +409,9 @@ class WFSConfigurationWidget(OgcConfigurationWidget):
         else:
             self.url = wfs_url
 
-        getFeatureBBoxFilter = self.url + \
+        getFeatureBBoxUrl = self.url + \
         "?request=GetFeature&version="+vers+ \
         "&typeName="+str(selected_typeName)+ \
         "&BBOX="+str(top_letf_X) + ','+ str(top_left_Y) +',' + str(btm_right_X)+','+ str(btm_right_Y)+','+str(espg_number)
 
-        return getFeatureBBoxFilter
+        return getFeatureBBoxUrl

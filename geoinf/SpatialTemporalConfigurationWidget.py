@@ -67,16 +67,16 @@ class SpatialWidget(QtGui.QWidget):
         self.setLayout(self.verticalBox)
         # add widgets
         self.gridLayout.addWidget(QtGui.QLabel('Top Left X'), 0, 0)
-        self.bbox_tlx = QtGui.QLineEdit('15.0')
+        self.bbox_tlx = QtGui.QLineEdit('-75.102613')
         self.gridLayout.addWidget(self.bbox_tlx, 0, 1)
         self.gridLayout.addWidget(QtGui.QLabel('Top Left Y'), 0, 2)
-        self.bbox_tly = QtGui.QLineEdit('-22.0')
+        self.bbox_tly = QtGui.QLineEdit('40.212597')
         self.gridLayout.addWidget(self.bbox_tly, 0, 3)
         self.gridLayout.addWidget(QtGui.QLabel('Bottom Right X'), 1, 0)
-        self.bbox_brx = QtGui.QLineEdit('33.0')
+        self.bbox_brx = QtGui.QLineEdit('-72.361859')
         self.gridLayout.addWidget(self.bbox_brx, 1, 1)
         self.gridLayout.addWidget(QtGui.QLabel('Bottom Right Y'), 1, 2)
-        self.bbox_bry = QtGui.QLineEdit('-35.0')
+        self.bbox_bry = QtGui.QLineEdit('41.512517')
         self.gridLayout.addWidget(self.bbox_bry, 1, 3)
 
 
@@ -304,7 +304,7 @@ class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
     def okTriggered(self, checked=False):
         """ okTriggered(checked: bool) -> None
         Overwrite in a subclass to set configuration on the module ports
-        
+
         """
         print "OK Triggered in SpatialTemporalConfigurationWidget"
         #self.emit(QtCore.SIGNAL('doneConfigure')) # not needed
