@@ -36,3 +36,11 @@ def initialize(*args, **keywords):
     reg.add_output_port(SOS, OGC_RESULT_PORT,
                       (core.modules.basic_modules.String, 'Service Output String'))#,True)
 
+    # WCS MODULE
+    reg.add_input_port(WCS, OGC_POST_REQUEST_PORT,
+                     (core.modules.basic_modules.String, 'Configured Request'))#, True)
+    reg.add_input_port(WCS, OGC_URL_PORT,
+                     (core.modules.basic_modules.String, 'Request URL'))#, True)
+    reg.add_output_port(WCS, OGC_RESULT_PORT,
+                      (core.modules.basic_modules.String, 'Service Output String'))#,True)
+
