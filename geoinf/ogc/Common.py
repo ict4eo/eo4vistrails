@@ -190,8 +190,7 @@ class OgcService():
                 raise NotImplementedError,  "OGC Service version %s not supported." % self.ini_service_version
 
         elif self.ini_service_type == "wcs":
-            """TO DO: add service data for wcs service"""
-
+            
             if service_dict.has_key('service'):
                 self.service_type = service_dict['service']
             if service_dict.has_key('version'):
@@ -206,7 +205,7 @@ class OgcService():
                 self.service_fees = service_dict['fees']
             if service_dict.has_key('accessconstraints'):
                 self.service_accessconstraints = service_dict['accessconstraints']
-            #pass
+                
         else:
             raise ValueError, INVALID_OGC_TYPE_MESSAGE
 
@@ -255,19 +254,7 @@ class OgcService():
             pass
 
         elif self.ini_service_type == "wcs":
-            """Provider data is available for wcs service"""
-            """ redundant  - see self.provider_key_set in _init_
-            self.provider_keys = [
-                'provider_url','provider_contact_fax',
-                'provider_contact_name','provider_contact_country',
-                'provider_contact_phone','provider_contact_region',
-                'provider_contact_city','provider_name',
-                'provider_contact_address','provider_contact_postcode',
-                'provider_contact_email','provider_contact_role',
-                'provider_contact_position','provider_contact_site',
-                'provider_contact_organization',
-                'provider_contact_instructions','provider_contact_hours']
-            """
+            """Provider data  for wcs service - see self.provider_key_set in _init_"""
             if provider_dict.has_key('name'):
                 self.provider_name = provider_dict['name']
             if provider_dict.has_key('url'):
@@ -303,7 +290,6 @@ class OgcService():
                     self.provider_contact_hours = provider_dict['contact'].__dict__['hours']
                 if provider_dict['contact'].__dict__.has_key('instructions'):
                     self.provider_contact_instructions = provider_dict['contact'].__dict__['instructions']
-            #pass
-
+                    
         else:
             raise ValueError, INVALID_OGC_TYPE_MESSAGE
