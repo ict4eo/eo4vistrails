@@ -38,13 +38,20 @@ from packages.eo4vistrails.geoinf.SpatialTemporalConfigurationWidget import Spat
 
 
 class WFS(NotCacheable,  FeatureModel):
-    """TO DO - add docstring
+    """
+    WFS module allows connection to a web-based OGC (Open Geospatial Consortium)
+    web feature service.
+    Configuration allows the base URL for the service to be set and called.
+    Choosing the appropriate combination of specific service type and other
+    parameters, will cause the input port to be set with a specific request,
+    once the configuration interface is closed.
+    Running the WFS will cause the specific, parameterised WFS to be called
+    and output from the request to be available via the output ports.
 
     """
-      # testing: create, set port defaults parameters / values
-   # _input_ports = [("MinX", "(edu.utah.sci.vistrails.basic:Float)",
+    # testing: create, set port defaults parameters / values
+    # _input_ports = [("MinX", "(edu.utah.sci.vistrails.basic:Float)",
     #                  {"defaults": str([23.0]), "labels": str(["XVal"])})]
-
 
     def __init__(self):
         FeatureModel.__init__(self)
@@ -85,9 +92,7 @@ class WFS(NotCacheable,  FeatureModel):
         result = None
 
         if configuredReq:
-
             req = urllib2.Request(configuredReq)
-
             try:
                 urllib2.urlopen(req)
                 response = urllib2.urlopen(req)
@@ -103,46 +108,29 @@ class WFS(NotCacheable,  FeatureModel):
 
 
 class WFSCommonWidget(QtGui.QWidget):
-    """TO DO - add docstring
-
-    """
-
+    """Enable WCS-specific parameters to be obtained, displayed and selected."""
     def __init__(self, ogc_widget, parent=None):
         """sets parameters for wfs request"""
-
         QtGui.QWidget.__init__(self, parent)
-
         self.setObjectName("WFSConfigurationWidget")
-
         self.parent_widget = ogc_widget
-
         self.service = self.parent_widget.service
-
         self.coords = SpatialWidget()
-
         self.create_wfs_config_window()
-
         # listener for signal emitted by OgcCommonWidget class
         self.connect(
             self.parent_widget,
             QtCore.SIGNAL('serviceActivated'),
             self.loadRequest
-
-        )
-
+            )
            # local signals
         self.connect(
             self.lstFeatures,
             QtCore.SIGNAL("itemClicked(QListWidgetItem*)"),
             self.featureNameChanged
-
-        )
-
+            )
         global wfs_config_dict   # global dictionary to hold configuration  parameters - volatile
-
         wfs_config_dict = dict()
-
-
 
     def create_wfs_config_window(self):
         """TO DO - add docstring"""
@@ -164,7 +152,6 @@ class WFSCommonWidget(QtGui.QWidget):
 
         gridLayout.addWidget(self.cbGetFeature,  7, 0)
         #gridLayout.addWidget(QtGui.QCheckBox('DescrbFeatureType Request'), 8, 0)
-
         #self.wfsUrlEdit = QtGui.QLineEdit('http://localhost:8080/geoserver/wfs')
 
         self.minXEdit = QtGui.QLineEdit('0.0')
@@ -197,43 +184,32 @@ class WFSCommonWidget(QtGui.QWidget):
 
         self.lstFeatures = QtGui.QListWidget()
 
-
         gridLayout.addWidget(self.lstFeatures, 1, 1)
 
         self.htmlView = QtGui.QTextEdit()   # view selected typename / FeatureName ContentMetadata
         #self.htmlView.setEnabled(False)
         gridLayout.addWidget(self.htmlView, 1, 2,  1,  3)
 
-
-
     def loadRequest(self):
         """ loadRequest() -> None
         uses service data to populate the config widget populate fields
         """
-
         if self.parent_widget.service and self.parent_widget.service.service_valid:
             self.contents = self.parent_widget.service.service.__dict__['contents']
-
             for content in self.contents:
                 self.lstFeatures.addItems([content])
 
 
     def featureNameChanged(self):
-
         """Update offering details containers when new offering selected."""
-
         selected_featureName = self.lstFeatures.selectedItems()[0].text()
-
         print "Accessing....: " + selected_featureName
-
         #getfeature_request = self.parent_widget.service.service
-
         # read set coordinates
         self.minXEdit.setText(self.coords.bbox_tlx.text())
         self.minYEdit.setText(self.coords.bbox_tly.text())
         self.maxXEdit.setText(self.coords.bbox_brx.text())
         self.maxYEdit.setText(self.coords.bbox_bry.text())
-
 
         # testing global dic
         #wfs_config_dict = {'TypeName': str(selected_featureName) ,'minX': str(self.minXEdit.text()), 'minY': str(self.minYEdit.text()),  'maxX': str(self.maxXEdit.text()),  'maxY': str(self.maxYEdit.text()) }
@@ -245,20 +221,13 @@ class WFSCommonWidget(QtGui.QWidget):
         wfs_config_dict['maxY'] = str(self.maxYEdit.text())
 
         #print "After update.......................:"
-
         #print wfs_config_dict
         #simpleGetRequest = self.parent_widget.service.getfeature(typename=[str(selected_featureName)], maxfeatures=1)
 
-
-
         if self.parent_widget.service and self.parent_widget.service.service_valid and self.contents:
-
             #featureDetails = getfeature_request.getfeature(typename=[str(selected_featureName)], maxfeatures=1)
-
             for content in self.contents:
-
                 if selected_featureName == content:
-
                     #print self.contents[str(selected_featureName)].__dict__
                     """
                     'styles': None,
@@ -270,7 +239,6 @@ class WFSCommonWidget(QtGui.QWidget):
                     'verbOptions': ['{http://www.opengis.net/wfs}Query', '{http://www.opengis.net/wfs}Insert', '{http://www.opengis.net/wfs}Update', '{http://www.opengis.net/wfs}Delete', '{http://www.opengis.net/wfs}Lock'],
                     'id': 'ict4eo:moz_coast_vulnerability_tide'
                     """
-
                     meta = self.contents[str(selected_featureName)]
                     crsCode = self.contents[str(selected_featureName)].crsOptions
                     name = self.contents[str(selected_featureName)].id
@@ -324,7 +292,6 @@ class WFSCommonWidget(QtGui.QWidget):
         #print wfs_config_dict
 
         if self.cbGetFeature.isChecked():
-
             #self.selected_featureName = self.lstFeatures.selectedItems()[0].text()
             espg_number =  self.ESPGEdit.text()
             top_letf_X = self.minXEdit.text()
@@ -332,9 +299,7 @@ class WFSCommonWidget(QtGui.QWidget):
             btm_right_X = self.maxXEdit.text()
             btm_right_Y = self.maxYEdit.text()
             select_feature = self.lstFeatures.selectedItems()[0].text()
-
             wfs_url = self.parent_widget.line_edit_OGC_url.text()
-
             vers = str(self.parent_widget.launchversion.currentText())
 
             if '?' in wfs_url:
@@ -342,29 +307,22 @@ class WFSCommonWidget(QtGui.QWidget):
                 self.url = parts[0]
             else:
                 self.url = wfs_url
-
                 getFeatureBBoxUrl = wfs_url+ \
                 "?request=GetFeature&version="+vers+ \
                 "&typeName="+str(select_feature)+ \
                 "&BBOX="+str(top_letf_X) + ','+ str(top_left_Y) +',' + str(btm_right_X)+','+ str(btm_right_Y)+','+str(espg_number)
-
                 self.GetFeatureEdit.setText(str(getFeatureBBoxUrl))
-
         else:
             self.GetFeatureEdit.setText("http://no getfeature request constructed")
 
 
 
 class WFSConfigurationWidget(OgcConfigurationWidget):
-
     """makes use of code style from OgcConfigurationWidget"""
     def __init__(self,  module, controller, parent=None):
         OgcConfigurationWidget.__init__(self,  module, controller, parent)
-
         # pass in parent widget i.e. OgcCommonWidget class
-
         self.wfs_config_widget = WFSCommonWidget(self.ogc_common_widget)
-
         # tabs
         self.tabs.insertTab(1, self.wfs_config_widget, "")
         self.tabs.setTabText(
@@ -374,8 +332,8 @@ class WFSConfigurationWidget(OgcConfigurationWidget):
                 "WFS",
                 None,
                 QtGui.QApplication.UnicodeUTF8
+                )
             )
-        )
         self.tabs.setTabToolTip(
             self.tabs.indexOf(self.wfs_config_widget),
             QtGui.QApplication.translate(
@@ -383,24 +341,26 @@ class WFSConfigurationWidget(OgcConfigurationWidget):
                 "WFS Configuration",
                 None,
                 QtGui.QApplication.UnicodeUTF8
+                )
             )
-        )
         self.tabs.setCurrentIndex(0)
 
-
-    def constructRequest(self):
-
-        selected_typeName = self.wfs_config_widget.lstFeatures.selectedItems()[0].text()
-
-        espg_number =  self.wfs_config_widget.ESPGEdit.text()
-
-        top_letf_X = self.wfs_config_widget.minXEdit.text()
+    def getBoundingBox(self):
+        """Return a comma-delimited string containing box co-ordinates."""
+        top_left_X = self.wfs_config_widget.minXEdit.text()
         top_left_Y = self.wfs_config_widget.minYEdit.text()
         btm_right_X = self.wfs_config_widget.maxXEdit.text()
         btm_right_Y = self.wfs_config_widget.maxYEdit.text()
+        return str(top_left_X)+','+str(top_left_Y)+','+str(btm_right_X)+','+str(btm_right_Y)
 
+    def constructRequest(self):
+        """Return a URL request from configuration parameters
+
+        Overwrites method defined in OgcConfigurationWidget.
+        """
+        selected_typeName = self.wfs_config_widget.lstFeatures.selectedItems()[0].text()
+        espg_number =  self.wfs_config_widget.ESPGEdit.text()
         wfs_url = self.ogc_common_widget.line_edit_OGC_url.text()
-
         vers = str(self.ogc_common_widget.launchversion.currentText())
 
         if '?' in wfs_url:
@@ -409,9 +369,7 @@ class WFSConfigurationWidget(OgcConfigurationWidget):
         else:
             self.url = wfs_url
 
-        getFeatureBBoxUrl = self.url + \
-        "?request=GetFeature&version="+vers+ \
-        "&typeName="+str(selected_typeName)+ \
-        "&BBOX="+str(top_letf_X) + ','+ str(top_left_Y) +',' + str(btm_right_X)+','+ str(btm_right_Y)+','+str(espg_number)
-
-        return getFeatureBBoxUrl
+        return self.url + \
+            "?request=GetFeature&version="+vers+ \
+            "&typeName="+str(selected_typeName)+ \
+            "&BBOX="+getBoundingBox()+','+str(espg_number)

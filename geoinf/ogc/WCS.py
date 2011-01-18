@@ -24,7 +24,7 @@
 ##
 ############################################################################
 """This module provides an OGC (Open Geospatial Consortium) Web Coverage Service
-Client via owslib.
+(WCS) Client via owslib.
 """
 
 from PyQt4 import QtCore, QtGui
@@ -33,9 +33,19 @@ from OgcConfigurationWidget import OgcConfigurationWidget
 from core.modules.vistrails_module import Module, new_module, NotCacheable, ModuleError
 import init
 
-
 #need to import the configuration widget we develop
 class WCS(NotCacheable, RasterModel):
+    """
+    WCS module allows connection to a web-based OGC (Open Geospatial Consortium)
+    web coverage service.
+    Configuration allows the base URL for the service to be set and called.
+    Choosing the appropriate combination of specific service type and other
+    parameters, will cause the input port to be set with a specific request,
+    once the configuration interface is closed.
+    Running the WCS will cause the specific, parameterised WCS to be called
+    and output from the request to be available via the output ports.
+
+    """
     def __init__(self):
         RasterModel.__init__(self)
 
@@ -43,16 +53,16 @@ class WCS(NotCacheable, RasterModel):
         """Execute the module to create the output"""
         try:
             request = self.getInputFromPort(init.OGC_POST_REQUEST_PORT)
-            print "Request from port :::", init.OGC_POST_REQUEST_PORT,  type(request),  request,  len(request)
+            #print "Request from port :::", init.OGC_POST_REQUEST_PORT,  type(request),  request,  len(request)
         except:
             request = None
-            
+
         try:
             url = self.getInputFromPort(init.OGC_URL_PORT)
-            print "URL from port :::",  init.OGC_URL_PORT,  type(url),  url,  len(url)
+            #print "URL from port :::",  init.OGC_URL_PORT,  type(url),  url,  len(url)
         except:
             url = None
-            
+
         try:
             out = self.runRequest(url,  request)
             self.setResult(init.OGC_RESULT_PORT,  out)
@@ -61,7 +71,7 @@ class WCS(NotCacheable, RasterModel):
             traceback.print_exc()
             raise ModuleError(self,  'Cannot set output port: %s' % str(e))
         #pass
-        
+
     def runRequest(self,  url,  request):
         """Execute an Http post request for a given url"""
         import urllib
@@ -74,7 +84,6 @@ class WCS(NotCacheable, RasterModel):
             headers = {'User-Agent': user_agent}
             # request = urllib.urlencode(xml)
             req = urllib2.Request(url,  request,  headers)
-            
             try:
                 urllib2.urlopen(req)
                 response = urllib2.urlopen(req)
@@ -115,16 +124,15 @@ class WCSCommonWidget(QtGui.QWidget):
             self.parent_widget,
             QtCore.SIGNAL('serviceActivated'),
             self.loadRequests
-        )
+            )
         self.connect(
             self.parent_widget,
             QtCore.SIGNAL('serviceDeactivated'),
             self.removeRequests
-        )
+            )
 
     def create_wcs_config_window(self):
         """TO DO - add docstring"""
-
         # add widgets here!
         self.mainLayout = QtGui.QHBoxLayout()
         self.setLayout(self.mainLayout)
@@ -160,7 +168,7 @@ class WCSCommonWidget(QtGui.QWidget):
         # Data containers
         self.dcLayerId = QtGui.QLabel('__')
         self.detailsLayout.addWidget(self.dcLayerId, 0, 1)
-        self.dcLayerDescription = QtGui.QLabel('__') 
+        self.dcLayerDescription = QtGui.QLabel('__')
         self.detailsLayout.addWidget(self.dcLayerDescription, 1,1)
         self.dcULX = QtGui.QLineEdit(' ')
         self.dcULX.setEnabled(False) #sets it not to be editable
@@ -185,13 +193,13 @@ class WCSCommonWidget(QtGui.QWidget):
         self.dcRequestType.addItem('GetCapabilities')
         self.dcRequestType.addItem('DescribeCoverage')
         self.dcRequestType.addItem('GetCoverage')
-        
+
         # local signals
         self.connect(
             self.requestLbx,
             QtCore.SIGNAL("itemClicked(QListWidgetItem*)"),
             self.coverageNameChanged
-        )
+            )
 
     def loadRequests(self):
         """ loadRequest() -> None
@@ -241,8 +249,9 @@ class WCSCommonWidget(QtGui.QWidget):
         self.requestLbx.clear()
         #pass
 
-class WCSConfigurationWidget(OgcConfigurationWidget):
 
+class WCSConfigurationWidget(OgcConfigurationWidget):
+    """makes use of code style from OgcConfigurationWidget"""
     def __init__(self,  module, controller, parent=None):
         OgcConfigurationWidget.__init__(self,  module, controller, parent)
         # pass in parent widget i.e. OgcCommonWidget class
@@ -256,8 +265,8 @@ class WCSConfigurationWidget(OgcConfigurationWidget):
                 "WCS Specific Metadata",
                 None,
                 QtGui.QApplication.UnicodeUTF8
+                )
             )
-        )
 
         self.tabs.setTabToolTip(
             self.tabs.indexOf(self.wcs_config_widget),
@@ -266,23 +275,24 @@ class WCSConfigurationWidget(OgcConfigurationWidget):
                 "Select WCS-specific parameters",
                 None,
                 QtGui.QApplication.UnicodeUTF8
-            )
-        )
+                    )
+                )
         self.tabs.setCurrentIndex(0)
-        
+
     def constructRequest(self):
-        """TO DO - add doc string"""
-        #pass
+        """Return a URL request from configuration parameters
+
+        Overwrites method defined in OgcConfigurationWidget.
+        """
         wcs_url = self.ogc_common_widget.line_edit_OGC_url.text()
         WCSversion = str(self.ogc_common_widget.launchversion.currentText())
         selectedCoverageId = str(self.wcs_config_widget.dcLayerId.text())
-        getCoverageDescription = wcs_url+ \
-        "?version="+WCSversion+\
-        "&service=WCS"+\
-        "&REQUEST=DescribeCoverage"+\
-        "&COVERAGE="+selectedCoverageId
+        return wcs_url+ \
+            "?version="+WCSversion+\
+            "&service=WCS"+\
+            "&REQUEST=DescribeCoverage"+\
+            "&COVERAGE="+selectedCoverageId
         #data = ''
         #type = self.config.dcRequestType.currentText()
         #try:
             #procedure = self.config.
-        return getCoverageDescription

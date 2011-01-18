@@ -58,10 +58,14 @@ class OgcCommonWidget(QtGui.QWidget):
 
         if self.launchtype == "sos":
             self.urlGroupBox = QtGui.QGroupBox("OGC Sensor Observation Service:")
-            self.line_edit_OGC_url = QtGui.QLineEdit("http://giv-sos.uni-muenster.de:8080/52nSOSv3/sos?request=GetCapabilities&service=SOS")
+            self.line_edit_OGC_url = QtGui.QLineEdit(
+                "http://giv-sos.uni-muenster.de:8080/52nSOSv3/sos" #?request=GetCapabilities&service=SOS"
+                )
         elif self.launchtype == "wfs":
             self.urlGroupBox = QtGui.QGroupBox("OGC Web Feature Service:")
-            self.line_edit_OGC_url = QtGui.QLineEdit('http://ict4eo.meraka.csir.co.za:8080/geoserver/wfs')                                #('http://localhost:8080/geoserver/wfs')
+            self.line_edit_OGC_url = QtGui.QLineEdit(
+                'http://ict4eo.meraka.csir.co.za:8080/geoserver/wfs'
+                )
             #self.line_edit_OGC_url = QtGui.QLineEdit('http://ict4eo.meraka.csir.co.za:8080/geoserver/ows?service=WFS&request=GetCapabilities')
         elif self.launchtype == "wcs":
             self.urlGroupBox = QtGui.QGroupBox("OGC Web Coverage Service:")
@@ -71,8 +75,6 @@ class OgcCommonWidget(QtGui.QWidget):
         self.fetchUrlLayout = QtGui.QHBoxLayout()
 
         self.label_OGC_url = QtGui.QLabel('URL & Version:')
-        #test only !!!
-        #self.line_edit_OGC_url = QtGui.QLineEdit("http://localhost:8080/geoserver/wfs")
 
         self.launchversion = QtGui.QComboBox()
         if self.launchtype == "sos":
@@ -115,7 +117,7 @@ class OgcCommonWidget(QtGui.QWidget):
             qtwi = QtGui.QTableWidgetItem(service_id_list_item) # row label
             self.serviceIDServiceTable.setVerticalHeaderItem(row_position, qtwi)
             row_position = row_position + 1
-        self.serviceIDServiceTable.setHorizontalHeaderLabels (['', ]) #Service Value
+        self.serviceIDServiceTable.setHorizontalHeaderLabels (['', ])
         self.serviceIDServiceTable.setAutoScroll(True)
         self.serviceIDServiceTable.setWordWrap(True)
         self.serviceIDServiceTable.horizontalHeader().setStretchLastSection(True)
@@ -136,7 +138,7 @@ class OgcCommonWidget(QtGui.QWidget):
             qtwi = QtGui.QTableWidgetItem(provider_id_list_item)  # row label
             self.servicePublisherTable.setVerticalHeaderItem(row_position, qtwi)
             row_position = row_position + 1
-        self.servicePublisherTable.setHorizontalHeaderLabels (['',]) #Publisher Value
+        self.servicePublisherTable.setHorizontalHeaderLabels (['',])
         self.servicePublisherTable.setAutoScroll(True)
         self.servicePublisherTable.setWordWrap(True)
         self.servicePublisherTable.horizontalHeader().setStretchLastSection(True)
@@ -146,9 +148,11 @@ class OgcCommonWidget(QtGui.QWidget):
         self.waitCursor = QtGui.QCursor(QtCore.Qt.WaitCursor)
         self.arrowCursor = QtGui.QCursor(QtCore.Qt.ArrowCursor)
         # signals
-        self.connect(self.fetchButton,
-                     QtCore.SIGNAL('clicked(bool)'),
-                     self.fetchTriggered)
+        self.connect(
+            self.fetchButton,
+            QtCore.SIGNAL('clicked(bool)'),
+            self.fetchTriggered
+            )
 
     def center(self):
         """TO DO - add docstring"""
@@ -168,7 +172,7 @@ class OgcCommonWidget(QtGui.QWidget):
                 self.line_edit_OGC_url.text(),
                 self.launchtype,
                 str(self.launchversion.currentText())
-            )
+                )
             self.setCursor(self.arrowCursor)
             # populate metadata
             if self.service.service_valid:
@@ -179,7 +183,7 @@ class OgcCommonWidget(QtGui.QWidget):
                     if self.service.__dict__.has_key(service_id_dict_item):
                         qtwi = QtGui.QTableWidgetItem(
                             str(self.service.__dict__[service_id_dict_item])
-                        )
+                            )
                         self.serviceIDServiceTable.setItem (row_count, 0, qtwi)
                     row_count = row_count + 1
                 # provider metadata
@@ -194,7 +198,7 @@ class OgcCommonWidget(QtGui.QWidget):
                         if self.service.__dict__.has_key(provider_dict_item):
                            qtwi = QtGui.QTableWidgetItem(
                                 str(self.service.__dict__[provider_dict_item])
-                            )
+                                )
                            self.servicePublisherTable.setItem (row_count, 0, qtwi)
                         row_count = row_count + 1
                 # fire a "done" event: can be "listened for" in children
@@ -206,7 +210,7 @@ class OgcCommonWidget(QtGui.QWidget):
                     'Unable to activate service:\n \
 Please check configuration & network.\n'\
                     +self.service.service_valid_error
-                )
+                    )
         else:
             # TODO - should not get here; maybe disable Fetch button until text entered?
             pass
@@ -223,7 +227,7 @@ class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
         SpatialTemporalConfigurationWidget.__init__(self, module, controller, parent)
         # will be used by children classes to access signals
         self.ogc_common_widget = OgcCommonWidget(module)
-        # set basic Configuration tabs
+        # set basic configuration tabs
         self.tabs.insertTab(0, self.ogc_common_widget, "")
         self.tabs.setTabText(
             self.tabs.indexOf(self.ogc_common_widget),
@@ -232,8 +236,8 @@ class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
                 "Service Metadata",
                 None,
                 QtGui.QApplication.UnicodeUTF8
+                )
             )
-        )
         self.tabs.setTabToolTip(
             self.tabs.indexOf(self.ogc_common_widget),
             QtGui.QApplication.translate(
@@ -241,8 +245,8 @@ class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
                 "Inspect basic service metadata for your chosen OGC service",
                 None,
                 QtGui.QApplication.UnicodeUTF8
+                )
             )
-        )
 
     def okTriggered(self): # , checked=False in parent?
         """Extends method defined in SpatialTemporalConfigurationWidget."""
@@ -257,14 +261,14 @@ class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
         functions = []
         functions.append(
             (init.OGC_URL_PORT,[self.url]),
-        )
+            )
         functions.append(
             (init.OGC_POST_REQUEST_PORT,[self.data]),
-        )
+            )
         # see: gui.vistrails_controller.py
         self.controller.update_ports_and_functions(
             self.module.id, [], [], functions
-        )
+            )
         SpatialTemporalConfigurationWidget.okTriggered(self)
 
     def constructRequest(self):

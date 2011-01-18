@@ -59,13 +59,13 @@ class SOS(NotCacheable, FeatureModel):
         """Execute the module to create the output"""
         try:
             request = self.getInputFromPort(init.OGC_POST_REQUEST_PORT)
-            print "Request from port :::", init.OGC_POST_REQUEST_PORT, type(request), request, len(request)
+            #print "Request from port :::", init.OGC_POST_REQUEST_PORT, type(request), request, len(request)
         except:
             request = None
 
         try:
             url = self.getInputFromPort(init.OGC_URL_PORT)
-            print "URL from port :::", init.OGC_URL_PORT, type(url), url, len(url)
+            #print "URL from port :::", init.OGC_URL_PORT, type(url), url, len(url)
         except:
             url = None
 
@@ -89,7 +89,7 @@ class SOS(NotCacheable, FeatureModel):
             headers = {'User-Agent': user_agent}
             #request = urllib.urlencode(xml)
             req = urllib2.Request(url, request, headers)
-            #proxy ?
+            #assuming this works inside a proxy ... otherwise:
             #os.environ["http_proxy"] = "http://myproxy.com:3128"
             try:
                 urllib2.urlopen(req)
@@ -118,12 +118,12 @@ class SosCommonWidget(QtGui.QWidget):
             self.parent_widget,
             QtCore.SIGNAL('serviceActivated'),
             self.loadOfferings
-        )
+            )
         self.connect(
             self.parent_widget,
             QtCore.SIGNAL('serviceDeactivated'),
             self.removeOfferings
-        )
+            )
 
     def create_config_window(self):
         """Create datacontainers and layout for displaying SOS-specific data."""
@@ -236,7 +236,7 @@ class SosCommonWidget(QtGui.QWidget):
             self.lbxOfferings,
             QtCore.SIGNAL("itemClicked(QListWidgetItem*)"),
             self.offeringsChanged
-        )
+            )
 
     def removeOfferings(self):
         """Remove all offering details when no SOS is selected."""
@@ -334,8 +334,8 @@ class SOSConfigurationWidget(OgcConfigurationWidget):
                 "SOS Specific Metadata",
                 None,
                 QtGui.QApplication.UnicodeUTF8
+                )
             )
-        )
         self.tabs.setTabToolTip(
             self.tabs.indexOf(self.config),
             QtGui.QApplication.translate(
@@ -343,14 +343,14 @@ class SOSConfigurationWidget(OgcConfigurationWidget):
                 "Select SOS-specific parameters",
                 None,
                 QtGui.QApplication.UnicodeUTF8
+                )
             )
-        )
         self.tabs.setCurrentIndex(0)
 
     def constructRequest(self):
         """Return an XML-encoded request from configuration parameters
 
-        Extends method defined in OgcConfigurationWidget.
+        Overwrites method defined in OgcConfigurationWidget.
         """
         data = ''
         type = self.config.cbRequest.currentText()
