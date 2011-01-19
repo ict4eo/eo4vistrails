@@ -12,11 +12,12 @@ def initialize(*args, **keywords):
     from packages.eo4vistrails.geoinf.datamodels.Feature import FeatureModel,  FileFeatureModel
     from packages.eo4vistrails.geoinf.datamodels.Raster import RasterModel
     from packages.eo4vistrails.geoinf.ogc.Common import OgcService
-    from packages.eo4vistrails.geoinf.ogc.WFS import WFS, WFSConfigurationWidget
+    from packages.eo4vistrails.geoinf.ogc.WFS import WFS, WFSConfigurationWidget, WFSCommonWidget
     from packages.eo4vistrails.geoinf.ogc.WCS import WCS, WCSConfigurationWidget
     from packages.eo4vistrails.geoinf.ogc.SOS import SOS, SOSConfigurationWidget
     from packages.eo4vistrails.geoinf.ogc.OgcConfigurationWidget import OgcConfigurationWidget
     from packages.eo4vistrails.geoinf.datamodels.FeatureImport import FeatureImport, FeatureImportConfigurationWidget
+
 
     reg = get_module_registry()
 

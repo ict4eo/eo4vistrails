@@ -26,6 +26,8 @@
 """This module provides spatial and temporal selection widgets for configuring
 geoinf modules.
 """
+
+
 from PyQt4 import QtCore, QtGui
 from core.modules.module_configure import StandardModuleConfigurationWidget
 from core.modules.module_registry import get_module_registry
@@ -46,14 +48,15 @@ class SpatioTemporalConfigurationWidgetTabs(QtGui.QTabWidget):
         self.setElideMode(QtCore.Qt.ElideNone)
         self.setObjectName("SpatioTemporalConfigurationWidgetTabsInstance")
 
-
 class SpatialWidget(QtGui.QWidget):
     """Gather coordinates of a bounding box, or in the case of GRASS, a location
 
     """
+
     def __init__(self, parent=None):
         QtGui.QWidget.__init__(self, parent)
         self.setObjectName("SpatialWidget")
+
         # set holding boxes
         self.metaLayout = QtGui.QHBoxLayout()
         self.gridLayout = QtGui.QGridLayout()
