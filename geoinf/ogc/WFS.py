@@ -29,75 +29,20 @@
 import init
 from PyQt4 import QtCore, QtGui
 from packages.eo4vistrails.geoinf.datamodels.Feature import FeatureModel
-from OgcConfigurationWidget import OgcConfigurationWidget,  OgcCommonWidget
+from OgcConfigurationWidget import OgcConfigurationWidget, OgcCommonWidget
+from OgcService import OGC
 from packages.eo4vistrails.geoinf.SpatialTemporalConfigurationWidget import SpatialTemporalConfigurationWidget, SpatialWidget
 from core.modules.vistrails_module import Module, new_module, NotCacheable, ModuleError
 
 
-class WFS(NotCacheable,  FeatureModel):
+class WFS(OGC, FeatureModel):
     """
-    WFS module allows connection to a web-based OGC (Open Geospatial Consortium)
-    web feature service.
-    Configuration allows the base URL for the service to be set and called.
-    Choosing the appropriate combination of specific service type and other
-    parameters, will cause the input port to be set with a specific request,
-    once the configuration interface is closed.
-    Running the WFS will cause the specific, parameterised WFS to be called
-    and output from the request to be available via the output ports.
+    Override for base OGC service class
 
     """
-
     def __init__(self):
+        OGC.__init__(self)
         FeatureModel.__init__(self)
-
-
-    def compute(self):
-
-        print '..............Printing url from OGC_URL_PORT...........'
-
-        if self.hasInputFromPort(init.OGC_URL_PORT):
-            ogc_wfs_url = self.getInputFromPort(init.OGC_URL_PORT)
-
-            # print url value
-            print ogc_wfs_url
-
-        if self.hasInputFromPort(init.OGC_POST_REQUEST_PORT):
-            configuredReq = self.getInputFromPort(init.OGC_POST_REQUEST_PORT)
-
-            # print configured request
-            print '..............Printing Configured Request from OGC_POST_REQUEST_PORT...........'
-            print configuredReq
-
-            try:
-                out = self.runRequest(configuredReq)
-                self.setResult(init.OGC_RESULT_PORT, out)
-            except Exception, e:
-                import traceback
-                traceback.print_exc()
-                raise ModuleError(self, 'Cannot set output port: %s' % str(e))
-
-    def runRequest(self, configuredReq):
-        """Execute an HTTP POST request for a given URL"""
-        import urllib
-        import urllib2
-        import os
-        from  urllib2 import URLError
-        result = None
-
-        if configuredReq:
-            req = urllib2.Request(configuredReq)
-            try:
-                urllib2.urlopen(req)
-                response = urllib2.urlopen(req)
-                result = response.read()
-            except URLError, e:
-                if hasattr(e, 'reason'):
-                    raiseError(self, 'Failed to reach the server. Reason', e.reason)
-                elif hasattr(e, 'code'):
-                    raiseError(self, 'The server couldn\'t fulfill the request. Error code', e.code)
-            except Exception, e:
-                raiseError(self, 'Exception', e)
-        return result
 
 
 class WFSCommonWidget(QtGui.QWidget):
@@ -167,19 +112,16 @@ class WFSCommonWidget(QtGui.QWidget):
 
     def loadRequest(self):
         """ loadRequest() -> None
-        uses service data to populate the config widget populate fields
+        uses service data to populate the config widget fields
         """
         if self.parent_widget.service and self.parent_widget.service.service_valid:
             self.contents = self.parent_widget.service.service.__dict__['contents']
             for content in self.contents:
                 self.lstFeatures.addItems([content])
 
-
     def featureNameChanged(self):
         """Update offering details containers when new offering selected."""
-
         selected_featureName = self.lstFeatures.selectedItems()[0].text()
-
         print "Accessing....: " + selected_featureName
 
         # update wfs bbox values with SpatialTemporalConfigurationWidget bbox values
@@ -221,7 +163,6 @@ class WFSCommonWidget(QtGui.QWidget):
                     )
 
         if self.cbGetFeature.isChecked():
-
             selected_featureName = self.lstFeatures.selectedItems()[0].text()
             top_letf_X = self.minXEdit.text()
             top_left_Y = self.minYEdit.text()
@@ -273,7 +214,6 @@ class WFSConfigurationWidget(OgcConfigurationWidget):
             )
         self.tabs.setCurrentIndex(0)
 
-
     def getBoundingBox(self):
         """Return a comma-delimited string containing box co-ordinates."""
         top_left_X = self.wfs_config_widget.minXEdit.text()
@@ -281,7 +221,6 @@ class WFSConfigurationWidget(OgcConfigurationWidget):
         btm_right_X = self.wfs_config_widget.maxXEdit.text()
         btm_right_Y = self.wfs_config_widget.maxYEdit.text()
         return str(top_left_X)+','+str(top_left_Y)+','+str(btm_right_X)+','+str(btm_right_Y)
-
 
     def constructRequest(self):
         """Return a URL request from configuration parameters

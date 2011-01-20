@@ -30,79 +30,20 @@ Service (SOS) client, making use of the owslib library.
 from PyQt4 import QtCore, QtGui
 from packages.eo4vistrails.geoinf.datamodels.Feature import FeatureModel
 from OgcConfigurationWidget import OgcConfigurationWidget
+from OgcService import OGC
 from core.modules.vistrails_module import Module, new_module, NotCacheable, ModuleError
 import init
-
-def raiseError(self, msg, error=''):
-    """Raise a VisTrails error."""
-    import traceback
-    traceback.print_exc()
-    raise ModuleError(self, msg + ': %s' % str(error))
+import traceback
 
 
-class SOS(NotCacheable, FeatureModel):
+class SOS(OGC, FeatureModel):
     """
-    SOS module allows connection to a web-based OGC (Open Geospatial Consortium)
-    sensor observation service.
-    Configuration allows the base URL for the service to be set and called.
-    Choosing the appropriate combination of specific service type and other
-    parameters, will cause the input port to be set with a specific POST call,
-    once the configuration interface is closed.
-    Running the SOS will cause the specific, parameterised SOS to be called
-    and output from the request to be available via the output ports.
+    Override for base OGC service class
 
     """
     def __init__(self):
+        OGC.__init__(self)
         FeatureModel.__init__(self)
-
-    def compute(self):
-        """Execute the module to create the output"""
-        try:
-            request = self.getInputFromPort(init.OGC_POST_REQUEST_PORT)
-            #print "Request from port :::", init.OGC_POST_REQUEST_PORT, type(request), request, len(request)
-        except:
-            request = None
-
-        try:
-            url = self.getInputFromPort(init.OGC_URL_PORT)
-            #print "URL from port :::", init.OGC_URL_PORT, type(url), url, len(url)
-        except:
-            url = None
-
-        try:
-            out = self.runRequest(url, request)
-            self.setResult(init.OGC_RESULT_PORT, out)
-        except Exception, e:
-            import traceback
-            traceback.print_exc()
-            raise ModuleError(self, 'Cannot set output port: %s' % str(e))
-
-    def runRequest(self, url, request):
-        """Execute an HTTP POST request for a given URL"""
-        import urllib
-        import urllib2
-        import os
-        from  urllib2 import URLError
-        result = None
-        if url and request:
-            user_agent = 'Mozilla/4.0 (compatible; MSIE 5.5; Windows NT)'
-            headers = {'User-Agent': user_agent}
-            #request = urllib.urlencode(xml)
-            req = urllib2.Request(url, request, headers)
-            #assuming this works inside a proxy ... otherwise:
-            #os.environ["http_proxy"] = "http://myproxy.com:3128"
-            try:
-                urllib2.urlopen(req)
-                response = urllib2.urlopen(req)
-                result = response.read()
-            except URLError, e:
-                if hasattr(e, 'reason'):
-                    raiseError(self, 'Failed to reach the server. Reason', e.reason)
-                elif hasattr(e, 'code'):
-                    raiseError(self, 'The server couldn\'t fulfill the request. Error code', e.code)
-            except Exception, e:
-                raiseError(self, 'Exception', e)
-        return result
 
 
 class SosCommonWidget(QtGui.QWidget):
@@ -442,7 +383,11 @@ class SOSConfigurationWidget(OgcConfigurationWidget):
             srsName="urn:ogc:def:crs:EPSG:4326">""" + \
             data + '</GetObservation>'
         else:
-            raiseError(self, 'Unknown request type: check SOS Request combobox')
+            traceback.print_exc()
+            raise ModuleError(
+                self,
+                'Unknown request type: check Request combobox' + ': %s' % str(error)
+                )
         # header
         data = '<?xml version="1.0" encoding="UTF-8"?>' + data
         return data

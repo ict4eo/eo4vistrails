@@ -37,7 +37,7 @@ from core.utils import VistrailsInternalError
 
 class SpatioTemporalConfigurationWidgetTabs(QtGui.QTabWidget):
     """Geoinf Configuration Tab Widgets
-    are added vis the addTab method of the QTabWidget
+    are added via the addTab method of the QTabWidget
 
     """
     def __init__(self, parent=None):

@@ -30,72 +30,19 @@
 from PyQt4 import QtCore, QtGui
 from packages.eo4vistrails.geoinf.datamodels.Raster import RasterModel
 from OgcConfigurationWidget import OgcConfigurationWidget
+from OgcService import OGC
 from core.modules.vistrails_module import Module, new_module, NotCacheable, ModuleError
 import init
 
-#need to import the configuration widget we develop
-class WCS(NotCacheable, RasterModel):
+
+class WCS(OGC, RasterModel):
     """
-    WCS module allows connection to a web-based OGC (Open Geospatial Consortium)
-    web coverage service.
-    Configuration allows the base URL for the service to be set and called.
-    Choosing the appropriate combination of specific service type and other
-    parameters, will cause the input port to be set with a specific request,
-    once the configuration interface is closed.
-    Running the WCS will cause the specific, parameterised WCS to be called
-    and output from the request to be available via the output ports.
+    Override for base OGC service class
 
     """
     def __init__(self):
+        OGC.__init__(self)
         RasterModel.__init__(self)
-
-    def compute(self):
-        """Execute the module to create the output"""
-        try:
-            request = self.getInputFromPort(init.OGC_POST_REQUEST_PORT)
-            #print "Request from port :::", init.OGC_POST_REQUEST_PORT,  type(request),  request,  len(request)
-        except:
-            request = None
-
-        try:
-            url = self.getInputFromPort(init.OGC_URL_PORT)
-            #print "URL from port :::",  init.OGC_URL_PORT,  type(url),  url,  len(url)
-        except:
-            url = None
-
-        try:
-            out = self.runRequest(url,  request)
-            self.setResult(init.OGC_RESULT_PORT,  out)
-        except Exception,  e:
-            import traceback
-            traceback.print_exc()
-            raise ModuleError(self,  'Cannot set output port: %s' % str(e))
-        #pass
-
-    def runRequest(self,  url,  request):
-        """Execute an Http post request for a given url"""
-        import urllib
-        import urllib2
-        import os
-        from urllib2 import URLError
-        result = None
-        if url and request:
-            user_agent = 'Mozilla/4.0 (compatible; MSIE 5.5; Windows NT)'
-            headers = {'User-Agent': user_agent}
-            # request = urllib.urlencode(xml)
-            req = urllib2.Request(url,  request,  headers)
-            try:
-                urllib2.urlopen(req)
-                response = urllib2.urlopen(req)
-                result = response.read()
-            except URLError,  e:
-                if hasattr(e,  'reason'):
-                    raiseError(self,  'Failed to reach the server. Reason',  e.reason)
-                elif hasattr(e,  'code'):
-                    raiseError(self,  'The server couldn\'t fulfill the request. Error code ', e.code)
-            except Exception,  e:
-                raiseError(self,  'Exception',  e)
-        return result
 
 
 class WCSCommonWidget(QtGui.QWidget):
@@ -207,10 +154,8 @@ class WCSCommonWidget(QtGui.QWidget):
         """
         if self.parent_widget.service and self.parent_widget.service.service_valid:
             self.contents = self.parent_widget.service.service.__dict__['contents']
-
             for content in self.contents:
                 self.requestLbx.addItems([content])
-
 
     def clearRequests(self):
         """To reset the values in the fields"""
@@ -224,7 +169,6 @@ class WCSCommonWidget(QtGui.QWidget):
         self.dcSRSreq.clear()
         self.dcReqFormat.clear()
         #self.dcRequestType.clear()
-        #pass
 
     def coverageNameChanged(self):
         """Update offering details containers when new offering selected."""
@@ -247,13 +191,12 @@ class WCSCommonWidget(QtGui.QWidget):
         """Remove all details when no WCS is selected."""
         self.clearRequests()
         self.requestLbx.clear()
-        #pass
 
 
 class WCSConfigurationWidget(OgcConfigurationWidget):
     """makes use of code style from OgcConfigurationWidget"""
-    def __init__(self,  module, controller, parent=None):
-        OgcConfigurationWidget.__init__(self,  module, controller, parent)
+    def __init__(self, module, controller, parent=None):
+        OgcConfigurationWidget.__init__(self, module, controller, parent)
         # pass in parent widget i.e. OgcCommonWidget class
         self.wcs_config_widget = WCSCommonWidget(self.ogc_common_widget)
         # tabs
