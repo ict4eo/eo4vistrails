@@ -118,7 +118,7 @@ class PostGisCursor():
 
 
 class PostGisFeatureReturningCursor(PostGisCursor, MemFeatureModel):
-    """Returns data in the form of a eo4vistrails FeatureModel"""
+    """Returns data in the form of a eo4vistrails FeatureModel if user binds to self output port"""
     #multi inheritance of module subclasses is a problem
     def __init__(self):
         PostGisCursor.__init__(self,   conn_type = "ogr")
@@ -129,15 +129,15 @@ class PostGisFeatureReturningCursor(PostGisCursor, MemFeatureModel):
         """Will need to fetch a PostGisSession object on its input port
         Overrides supers method"""
         if self.cursor(self.getInputFromPort("PostGisSessionObject")) == True:
-            print "got cursor"
+            #print "got cursor"
             try:
                 sql_input = urllib.unquote(str(self.forceGetInputFromPort('source', '')))
                 sql_input = sql_input.split(";")[0]#ogr does not want a trailing ';'
-                print "got sql input"
+                #print "got sql input"
                 ogr_conn = self.getInputFromPort("PostGisSessionObject").ogr_connectstr               
-                print "checking connection: connectstr: %s, sql: %s" % (ogr_conn,  sql_input)
+                #print "checking connection: connectstr: %s, sql: %s" % (ogr_conn,  sql_input)
                 self.loadContentFromDB(ogr_conn, sql_input)
-                
+
             except:
                 raise ModuleError,  (PostGisFeatureReturningCursor,  "Could not execute SQL Statement")
             #do stuff with this return list -> make it into an OGR dataset

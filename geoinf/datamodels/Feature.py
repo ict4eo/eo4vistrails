@@ -250,13 +250,19 @@ class FileFeatureModel(File):
 
         if (self.hasInputFromPort("source_file") and self.getInputFromPort("source_file")):
             source_file = self.getInputFromPort("source_file")
+            if not os.path.isfile(source_file):
+                raise ModuleError(self, 'File "%s" does not exist' % source_file)
+            ogr  = _OgrMemModel()
+            ogr.loadContentFromFile(source_file)
+        
+        elif (self.hasInputFromPort("source_feature_dataset")): #and self.getInputFromPort("source_feature_dataset")):
+            ogr = self.getInputFromPort("source_feature_dataset").feature_model #which is the same, an instance of _OgrMemModel
+            print ogr
         else:
-            raise ModuleError(self, 'No source file is supplied - an OGR dataset cannot be generated')
-        if not os.path.isfile(source_file):
-            raise ModuleError(self, 'File "%s" does not exist' % source_file)
+            raise ModuleError(self, 'No feature_dataset or source file is supplied - an OGR dataset cannot be generated')
 
-        ogr  = _OgrMemModel()
-        ogr.loadContentFromFile(source_file)
+
+
 
         if (self.hasInputFromPort("output_type") and self.getInputFromPort("output_type")):
             output_type = self._ogr_format_check(self.getInputFromPort("output_type"))
