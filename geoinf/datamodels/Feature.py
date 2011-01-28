@@ -30,6 +30,8 @@ provided classes.
 """
 import os
 import os.path
+import urllib
+import hashlib
 import core.modules.module_registry
 import core.system
 from core.modules.vistrails_module import Module, ModuleError
@@ -91,10 +93,73 @@ class _OgrMemModel():
 
     def loadContentFromURI(self, uri, getStatement=""):
         """Loads content off web service, feed etc, like a WFS, GeoRSS
-        Could use OGR WFS driver here, but incoming url may not be properly setup
+        Could use OGR WFS driver here, but incoming url may not be properly setup.
+        Also, OGR WFS support requires compiling GDAL/OGR with libcurl support.
+        
+        So, this method will need to implement things a bit more generically....
+        The OGR in-memory model will still be used, but not fed by OGR internals.
+        Rather, we need to read in from a temporary file (e.g. a GML file) retrieved 
+        by urllib or stream data from urllib into the memory model
+        
+        uri: string of the service endpoint
+        getStatement: a string of the xml of the request parameters
+        
+        These two variables allow creation of get/post requests and also allow us 
+        to make OGR sensibly deal with the inputs.
         """
-        pass
+        
+       
+        #to test, just split, but should use elementtree
+        print getStatement
+        test = {
+            'responseformat':('<responseformat>',  '</responseformat>'), 
+            'outputformat':('outputformat="', '"')
+            }
+        
+        for ky in test:
+            try:
+                fmt = getStatement.lower().split(test[ky][0])[1].split(test[ky][1])[0]
+                if fmt:
+                    print fmt
+                    break
+            except:
+                pass
 
+        
+        #type = getStatement.lower().split('<responseformat>')
+
+        #type = type[1].split('<responseformat>')[0]
+        
+
+        
+        def _guessOutputType(type_string):
+            print type_string
+            if type_string.split(';')[0].lower() == "text/xml":
+                #is gml, O&M etc
+                return ".xml"
+            if type_string.split(';')[0].lower() == "gml2":
+                return ".gml"
+        
+        def _viaCache():
+            temp_filepath = core.system.default_dot_vistrails() + "/eo4vistrails/ogr/"
+            if not os.path.exists(temp_filepath):
+                os.mkdir(temp_filepath)
+            temp_filename = temp_filepath + hashlib.sha1(urllib.quote_plus(uri+getStatement)).hexdigest() + outputtype
+            #core.system.touch(temp_filename)
+            postdata = urllib.urlencode({'request': getStatement})
+            print postdata
+            u = urllib.urlretrieve(url = uri,  filename = temp_filename,  data = postdata,)
+            self.loadContentFromFile(temp_filename)
+            
+        def _viaStream():
+            pass
+            
+        outputtype = _guessOutputType(fmt)
+        #implement first a non-streaming version of this method, 
+        #i.e. fetches from uri, caches, reads from cache
+        
+        _viaCache()
+        
     def dumpToFile(self,  filesource,  datasetType = "ESRI Shapefile"):
         try:
             driver = ogr.GetDriverByName(datasetType)
@@ -134,8 +199,8 @@ class MemFeatureModel(Module):
     def loadContentFromFile(self,  source_file):
         self.feature_model.loadContentFromFile(source_file)
 
-    def loadContentFromURI(self):
-        pass
+    def loadContentFromURI(self,  uri,  uri_data=""):
+        self.feature_model.loadContentFromURI(uri,  uri_data)
 
     def dumpToFile(self):
         print "dumping featuremodel"
@@ -153,6 +218,10 @@ class MemFeatureModel(Module):
             #self.feature_model.loadContentFromDB("some connstr",  "some SQL")#get sql to execute
             self.loadContentFromDB(self.getInputFromPort("dbconn"),  self.getInputFromPort("sql"))
             self.dumpToFile()
+        elif (self.hasInputFromPort("uri") and self.getInputFromPort("uri")) \
+            and (self.hasInputFromPort("uri_data") and self.getInputFromPort("uri_data")):
+                self.loadContentFromURI(self.getInputFromPort("uri"),  self.getInputFromPort("uri_data"))
+            
         else:
             raise ModuleError(self, 'No source file is supplied - an OGR dataset cannot be generated')
 

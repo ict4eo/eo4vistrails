@@ -199,7 +199,7 @@ class PostGisNonReturningCursor(Module, PostGisCursor):
                 port_input = port_input.lstrip()
                 for query in port_input.split(";"):
                     if len(query) != 0:
-                        query = query + ";"
+                        if query[len(query)-1] != ";": query = query + ";"
                         #print "about to execute: " + query
                         self.curs.execute(query)
                         resultstatus.append(self.curs.statusmessage)

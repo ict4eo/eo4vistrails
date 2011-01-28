@@ -64,7 +64,7 @@ def initialize(*args, **keywords):
     reg.add_input_port(MemFeatureModel,  "dbconn", core.modules.basic_modules.String )
     reg.add_input_port(MemFeatureModel,  "sql", core.modules.basic_modules.String )
     reg.add_input_port(MemFeatureModel,  "uri", core.modules.basic_modules.String )
-    reg.add_input_port(MemFeatureModel,  "uri_data", core.modules.basic_modules.Dictionary)
+    reg.add_input_port(MemFeatureModel,  "uri_data", core.modules.basic_modules.String)
     reg.add_output_port(MemFeatureModel, "feature_dataset", MemFeatureModel)
 
 
