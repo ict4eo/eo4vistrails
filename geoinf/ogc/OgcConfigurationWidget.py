@@ -68,7 +68,7 @@ class OgcCommonWidget(QtGui.QWidget):
                 )
         elif self.launchtype == "wcs":
             self.urlGroupBox = QtGui.QGroupBox("OGC Web Coverage Service:")
-            self.line_edit_OGC_url = QtGui.QLineEdit('http://ict4eo.meraka.csir.co.za:8080/geoserver/wcs')
+            self.line_edit_OGC_url = QtGui.QLineEdit('http://afis.meraka.org.za/geoserver/wcs')
         else:
             self.urlGroupBox = QtGui.QGroupBox("OGC Service:")
         self.fetchUrlLayout = QtGui.QHBoxLayout()
