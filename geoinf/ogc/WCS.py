@@ -65,7 +65,7 @@ class WCSCommonWidget(QtGui.QWidget):
         QtGui.QWidget.__init__(self, parent)
         self.setObjectName("WCSCommonWidget")
         self.parent_widget = ogc_widget
-        #self.service = self.parent_widget.service
+        self.service = self.parent_widget.service
         self.contents = None #  only set in self.loadRequests()
         self.spatialSubset= spatial_widget
         self.create_wcs_config_window()
@@ -206,11 +206,11 @@ class WCSCommonWidget(QtGui.QWidget):
     def coverageNameChanged(self):
         """Update offering details containers when new offering selected."""
         self.clearRequests()
-        
         #populate other coverage dependent parameters
         selected_coverageName = self.requestLbx.selectedItems()[0].text()
         if self.parent_widget.service and self.parent_widget.service.service_valid and self.contents:
             for content in self.contents:
+                print self.contents[content].supportedFormats
                 if selected_coverageName == content:
                      self.dcLayerId.setText(self.contents[str(selected_coverageName)].id)
                      self.dcLayerDescription.setText(self.contents[str(selected_coverageName)].title)
@@ -218,25 +218,11 @@ class WCSCommonWidget(QtGui.QWidget):
                      self.dcLRX.setText(str(self.contents[str(selected_coverageName)].boundingBoxWGS84[1]))
                      self.dcULY.setText(str(self.contents[str(selected_coverageName)].boundingBoxWGS84[2]))
                      self.dcLRY.setText(str(self.contents[str(selected_coverageName)].boundingBoxWGS84[3]))
-                     #self.dcSRS.setText(self.contents[str(selected_coverageName)].crsOptions)
-                     #self.dcSRSreq.addItems(self.contents[str(selected_coverageName)].supportedCRS) 
+                     self.dcSRS.setText(self.contents[str(selected_coverageName)].supportedCRS[0])
+                     #self.dcSRSreq.addItems(self.contents[str(selected_coverageName)].supportedCRS)  # spectral bands
+                     self.dcSRSreq.addItems(self.contents[str(selected_coverageName)].supportedCRS) 
                      self.dcReqFormat.addItems(self.contents[str(selected_coverageName)].supportedFormats) # returns a list of values that are unpacked into a combobo
-        #self._getSupportedCRSProperty()
-            #print self.contents[str(selected_coverageName)].supportedFormats
-        
-        """def _getSupportedCRSProperty(self):
-        selected_coverageName = self.requestLbx.selectedItems()[0].text()
-        if self.parent_widget.service and self.parent_widget.service.service_valid and self.contents:
-            for content in self.contents:
-                if selected_coverageName == content:
-                    id = self.contents[str(selected_coverageName)].id
-                    crss=[]
-                    for elem in self.parent_widget.service.service.getDescribeCoverage(id).findall(ns('supportedCRSs')):
-                        print 'test'
-                        for crs in elem.text.split(' '):
-                            crss.append(crs)
-                            #print len (crss)
-                            """
+                     #print self.contents [str(selected_coverageName)].supportedFormats# .__dict__['_service'].__dict__['contents']['sf:sfdem'].__dict__['_elem']#.supportedFormats
             
         #display spatial subset in WCS window and set warning if data out of bounds
         self.ssULX.setText(str(self.spatialSubset.bbox_tlx.text()))
@@ -262,11 +248,11 @@ class WCSCommonWidget(QtGui.QWidget):
         if minX < x1< maxX and minY < y1 < maxY:
             pass
         else :
-         self.showWarning("Warinig: POINT (X1,Y1) OUT OF BOUNDS....Selected area may be empty!!")
+         self.showWarning("Warning: POINT (X1,Y1) OUT OF BOUNDS....Selected area may be empty!!")
         if minX < x2< maxX and minY < y2 < maxY:
             pass
         else :
-         self.showWarning("Warinig: POINT (X2,Y2) OUT OF BOUNDS....Selected area may be empty!!")
+         self.showWarning("Warning: POINT (X2,Y2) OUT OF BOUNDS....Selected area may be empty!!")
          
     def showWarning(self, message):
         """Show user a warning dialog."""
@@ -315,7 +301,6 @@ class WCSConfigurationWidget(OgcConfigurationWidget):
 
     def constructRequest(self):
         """Return a URL request from configuration parameters
-
         Overwrites method defined in OgcConfigurationWidget.
         """
         wcs_url = self.ogc_common_widget.line_edit_OGC_url.text()
@@ -330,35 +315,50 @@ class WCSConfigurationWidget(OgcConfigurationWidget):
         # request type in request comboBox
         rType = self.wcs_config_widget.dcRequestType.currentText()
         # check for data in comboBoxes
-        try:
-            bands = self.wcs_config_widget.dcBandsreq.currentText()
-        except:
-            bands = None
-        try:
-            coord_system = self.wcs_config_widget.SRSreq.currentText()
-        except:
-            coord_system = None
-        try:
-            formats =  str(self.wcs_config_widget.dcReqFormat.currentText())
-        except:
-            formats = None
+        #try:
+        bands = self.wcs_config_widget.dcBandsreq.currentText()
+        #except:
+            #bands = None
+        #try:
+        coord_system = self.wcs_config_widget.dcSRSreq.currentText()
+        #except:
+            #coord_system = None
+        #try:
+        formats =  self.wcs_config_widget.dcReqFormat.currentText()
+        #except:
+            #formats = None
         # details per request type:
         if rType == 'DescribeCoverage':
+            """was trying to get the contents of getDescribeCoverage to display in xml format on the terminal, 
+            but that does not working becasue getDescribeCoverage only returns an element tree object not the actual xml
+            see the printed result on the terminal - therefore we can only get a url out of this request see code below -
+            I stand to be corrected if my research findings are wrong?"""
+            myWCS = self.wcs_config_widget.parent_widget.service.service
+            description = myWCS.getDescribeCoverage(selectedCoverageId)
+            #describe_doc= description.read()
+            print description
+            
             return wcs_url+ \
             "?version="+WCSversion+\
             "&service=WCS"+\
             "&REQUEST=DescribeCoverage"+\
             "&COVERAGE="+selectedCoverageId
+            
         elif rType == 'GetCoverage':
+            
+            myWCS = self.wcs_config_widget.parent_widget.service.service
+            response = myWCS.getCoverage(identifier= selectedCoverageId, bbox=(ULX,  ULY,  BRX,  BRY),  crs= coord_system,  format=formats)
+            f=open('myfile.'+ formats,  'wb')
+            f.write(response.read())
+            f.close()
+            
             return wcs_url+\
             "?service=WCS"+\
             "&version="+WCSversion+\
             "&request=GetCoverage"+\
             "&coverage="+selectedCoverageId+\
-            "&bbox="+ULX+","+ULY+","+BRX+","+BRY
-            """+\
+            "&bbox="+ULX+","+ULY+","+BRX+","+BRY+\
             "&crs="+coord_system+\
             "&format="+formats+\
-            "&res=10&resy=10"
-            """
-            
+            "&resx=10&resy=10"
+
