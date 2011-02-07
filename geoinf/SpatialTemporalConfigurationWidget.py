@@ -82,6 +82,34 @@ class SpatialWidget(QtGui.QWidget):
         self.bbox_bry = QtGui.QLineEdit('41.512517')
         self.gridLayout.addWidget(self.bbox_bry, 1, 3)
 
+    def checkCoords(self, layer_box):
+        """Return a warning if layer_box co-ords outside of bounding box co-ords.
+        layer_box: tuple (top-left X, top-left Y, bottom-right X, bottom-right Y)
+
+        Using Point in Polygon method
+
+        """
+        message = None
+        # setup
+        minX = str(layer_box[0])
+        minY= str(layer_box[1])
+        maxX= str(layer_box[2])
+        maxY= str(layer_box[3])
+        x1 = str(self.bbox_tlx.text())
+        y1 = str(self.bbox_tly.text())
+        x2 = str(self.bbox_brx.text())
+        y2 = str(self.bbox_bry.text())
+        # check
+        if minX < x1< maxX and minY < y1 < maxY:
+            pass
+        else :
+            message = "Warning: POINT (X1,Y1) OUT OF BOUNDS... Selected area may be empty!!"
+        if minX < x2< maxX and minY < y2 < maxY:
+            pass
+        else :
+            message = "Warning: POINT (X2,Y2) OUT OF BOUNDS... Selected area may be empty!!"
+        return message
+
 
 class TemporalWidget(QtGui.QWidget):
     """Set temporal bounds and interval parameters for querying datasets
@@ -224,7 +252,7 @@ class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
 
     def createTabs(self):
         """ createTabs() -> None
-        create and polulate with widgets the necessary
+        create and populate with widgets the necessary
         tabs for spatial and temporal parameterisation
 
         """
@@ -312,3 +340,22 @@ class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
         print "OK Triggered in SpatialTemporalConfigurationWidget"
         #self.emit(QtCore.SIGNAL('doneConfigure')) # not needed
         self.close()
+
+    def getBoundingBox(self):
+        """Return a tuple containing box co-ordinates.
+        Format: top-left X, top-left Y, bottom-left X, bottom-left Y
+
+        """
+        return (
+            self.spatial_widget.bbox_tlx.text(),
+            self.spatial_widget.bbox_tly.text(),
+            self.spatial_widget.bbox_brx.text(),
+            self.spatial_widget.bbox_bry.text()
+            )
+
+    def getBoundingBoxString(self):
+        """Return a comma-delimited string containing box co-ordinates."""
+        bbox = self.getBoundingBox()
+        return str(bbox[0])+','+str(bbox[1])+','+str(bbox[2])+','+str(bbox[3])
+
+

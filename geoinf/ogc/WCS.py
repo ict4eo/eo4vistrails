@@ -65,9 +65,9 @@ class WCSCommonWidget(QtGui.QWidget):
         QtGui.QWidget.__init__(self, parent)
         self.setObjectName("WCSCommonWidget")
         self.parent_widget = ogc_widget
-        self.service = self.parent_widget.service
+        #self.service = self.parent_widget.service
         self.contents = None #  only set in self.loadRequests()
-        self.spatialSubset= spatial_widget
+        self.spatial_widget = spatial_widget
         self.create_wcs_config_window()
 
         # listen for signals emitted by OgcCommonWidget class
@@ -212,48 +212,42 @@ class WCSCommonWidget(QtGui.QWidget):
             for content in self.contents:
                 print self.contents[content].supportedFormats
                 if selected_coverageName == content:
-                     self.dcLayerId.setText(self.contents[str(selected_coverageName)].id)
-                     self.dcLayerDescription.setText(self.contents[str(selected_coverageName)].title)
-                     self.dcULX.setText(str(self.contents[str(selected_coverageName)].boundingBoxWGS84[0])) # 1st item in bbox tuple
-                     self.dcLRX.setText(str(self.contents[str(selected_coverageName)].boundingBoxWGS84[1]))
-                     self.dcULY.setText(str(self.contents[str(selected_coverageName)].boundingBoxWGS84[2]))
-                     self.dcLRY.setText(str(self.contents[str(selected_coverageName)].boundingBoxWGS84[3]))
-                     self.dcSRS.setText(self.contents[str(selected_coverageName)].supportedCRS[0])
-                     #self.dcSRSreq.addItems(self.contents[str(selected_coverageName)].supportedCRS)  # spectral bands
-                     self.dcSRSreq.addItems(self.contents[str(selected_coverageName)].supportedCRS) 
-                     self.dcReqFormat.addItems(self.contents[str(selected_coverageName)].supportedFormats) # returns a list of values that are unpacked into a combobo
-                     #print self.contents [str(selected_coverageName)].supportedFormats# .__dict__['_service'].__dict__['contents']['sf:sfdem'].__dict__['_elem']#.supportedFormats
+                    self.dcLayerId.setText(self.contents[str(selected_coverageName)].id)
+                    self.dcLayerDescription.setText(self.contents[str(selected_coverageName)].title)
+                    self.dcULX.setText(str(self.contents[str(selected_coverageName)].boundingBoxWGS84[0])) # 1st item in bbox tuple
+                    self.dcLRX.setText(str(self.contents[str(selected_coverageName)].boundingBoxWGS84[1]))
+                    self.dcULY.setText(str(self.contents[str(selected_coverageName)].boundingBoxWGS84[2]))
+                    self.dcLRY.setText(str(self.contents[str(selected_coverageName)].boundingBoxWGS84[3]))
+                    self.dcSRS.setText(self.contents[str(selected_coverageName)].supportedCRS[0])
+                    #self.dcSRSreq.addItems(self.contents[str(selected_coverageName)].supportedCRS)  # spectral bands
+                    self.dcSRSreq.addItems(self.contents[str(selected_coverageName)].supportedCRS) 
+                    self.dcReqFormat.addItems(self.contents[str(selected_coverageName)].supportedFormats) # returns a list of values that are unpacked into a combobo
+                    #print self.contents [str(selected_coverageName)].supportedFormats# .__dict__['_service'].__dict__['contents']['sf:sfdem'].__dict__['_elem']#.supportedFormats
             
         #display spatial subset in WCS window and set warning if data out of bounds
-        self.ssULX.setText(str(self.spatialSubset.bbox_tlx.text()))
-        self.ssULY.setText(str(self.spatialSubset.bbox_tly.text()))
-        self.ssLRX.setText(str(self.spatialSubset.bbox_brx.text()))
-        self.ssLRY.setText(str(self.spatialSubset.bbox_bry.text()))
+        self.ssULX.setText(str(self.spatial_widget.bbox_tlx.text()))
+        self.ssULY.setText(str(self.spatial_widget.bbox_tly.text()))
+        self.ssLRX.setText(str(self.spatial_widget.bbox_brx.text()))
+        self.ssLRY.setText(str(self.spatial_widget.bbox_bry.text()))
         
-        #call to check spatial subset coordinates
-        self.checkCoords()
+        #call to check spatial subset coordinates:
+        #   see SpatialTemporalConfigurationWidget for checkCoords()
+        message = self.spatial_widget.checkCoords(self.getBoundingBoxLayer())
+        if message:
+            self.showWarning(message)
 
-    def checkCoords(self):
-        self.setCursor(self.arrowCursor)
-        # checks that user entered subset data is not out of bounds. Using Point in Polygon method
-        minX = str(self.dcULX.text())
-        maxX= str(self.dcLRX.text())
-        minY= str(self.dcULY.text())
-        maxY= str(self.dcLRY.text())
-        x1 = str(self.spatialSubset.bbox_tlx.text())
-        y1 = str(self.spatialSubset.bbox_tly.text())
-        x2 = str(self.spatialSubset.bbox_brx.text())
-        y2 = str(self.spatialSubset.bbox_bry.text())
-        
-        if minX < x1< maxX and minY < y1 < maxY:
-            pass
-        else :
-         self.showWarning("Warning: POINT (X1,Y1) OUT OF BOUNDS....Selected area may be empty!!")
-        if minX < x2< maxX and minY < y2 < maxY:
-            pass
-        else :
-         self.showWarning("Warning: POINT (X2,Y2) OUT OF BOUNDS....Selected area may be empty!!")
-         
+    def getBoundingBoxLayer(self):
+        """Return a tuple containing box co-ordinates for selected layer.
+        Format: top-left X, top-left Y, bottom-left X, bottom-left Y
+
+        """
+        return (
+            self.dcULX.text(),
+            self.dcULY.text(),
+            self.dcLRX.text(),
+            self.dcLRY.text()
+            )
+
     def showWarning(self, message):
         """Show user a warning dialog."""
         self.setCursor(self.arrowCursor)
@@ -315,18 +309,18 @@ class WCSConfigurationWidget(OgcConfigurationWidget):
         # request type in request comboBox
         rType = self.wcs_config_widget.dcRequestType.currentText()
         # check for data in comboBoxes
-        #try:
-        bands = self.wcs_config_widget.dcBandsreq.currentText()
-        #except:
-            #bands = None
-        #try:
-        coord_system = self.wcs_config_widget.dcSRSreq.currentText()
-        #except:
-            #coord_system = None
-        #try:
-        formats =  self.wcs_config_widget.dcReqFormat.currentText()
-        #except:
-            #formats = None
+        try:
+            bands = self.wcs_config_widget.dcBandsreq.currentText()
+        except:
+            bands = None
+        try:
+            coord_system = self.wcs_config_widget.dcSRSreq.currentText()
+        except:
+            coord_system = None
+        try:
+            formats =  self.wcs_config_widget.dcReqFormat.currentText()
+        except:
+            formats = None
         # details per request type:
         if rType == 'DescribeCoverage':
             """was trying to get the contents of getDescribeCoverage to display in xml format on the terminal, 
@@ -361,4 +355,3 @@ class WCSConfigurationWidget(OgcConfigurationWidget):
             "&crs="+coord_system+\
             "&format="+formats+\
             "&resx=10&resy=10"
-

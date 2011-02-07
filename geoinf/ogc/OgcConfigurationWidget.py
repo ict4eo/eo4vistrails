@@ -217,7 +217,7 @@ Please check configuration & network.\n'\
     def showWarning(self, message):
         """Show user a warning dialog."""
         self.setCursor(self.arrowCursor)
-        QtGui.QMessageBox.warning(self,"Error",message,QtGui.QMessageBox.Ok)
+        QtGui.QMessageBox.warning(self,"Warning",message,QtGui.QMessageBox.Ok)
 
 
 class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
@@ -246,10 +246,23 @@ class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
                 QtGui.QApplication.UnicodeUTF8
                 )
             )
+        # set other common properties
+        self.waitCursor = QtGui.QCursor(QtCore.Qt.WaitCursor)
+        self.arrowCursor = QtGui.QCursor(QtCore.Qt.ArrowCursor)
+
+    def showWarning(self, message):
+        """Show user a warning dialog."""
+        self.setCursor(self.arrowCursor)
+        QtGui.QMessageBox.warning(self,'Warning',message,QtGui.QMessageBox.Ok)
+
+    def showError(self, message):
+        """Show user an error dialog."""
+        self.setCursor(self.arrowCursor)
+        QtGui.QMessageBox.critical(self, 'Error',message,QtGui.QMessageBox.Ok)
 
     def okTriggered(self): # , checked=False in parent?
         """Extends method defined in SpatialTemporalConfigurationWidget."""
-        print "OK Triggered in OgcConfigurationWidget"
+        print "=== OK Triggered in OgcConfigurationWidget ==="
         full_url = self.ogc_common_widget.line_edit_OGC_url.text()
         if '?' in full_url:
             parts = full_url.split('?')
@@ -257,22 +270,25 @@ class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
         else:
             self.url = full_url
         self.data = self.constructRequest()
-        functions = []
-        functions.append(
-            (init.OGC_URL_PORT,[self.url]),
-            )
-        functions.append(
-            (init.OGC_POST_REQUEST_PORT,[self.data]),
-            )
-        # see: gui.vistrails_controller.py
-        self.controller.update_ports_and_functions(
-            self.module.id, [], [], functions
-            )
-        SpatialTemporalConfigurationWidget.okTriggered(self)
+        # must not set ports if nothing has been specified, or
+        # if there was a problem constructing the request
+        if self.data:
+            functions = []
+            functions.append(
+                (init.OGC_URL_PORT,[self.url]),
+                )
+            functions.append(
+                (init.OGC_POST_REQUEST_PORT,[self.data]),
+                )
+            # see: gui.vistrails_controller.py
+            self.controller.update_ports_and_functions(
+                self.module.id, [], [], functions
+                )
+            SpatialTemporalConfigurationWidget.okTriggered(self)
 
     def constructRequest(self):
         """Return an XML-encoded request from configuration parameters
 
         Overwrite in a subclass to set the service specific parameters.
         """
-        return ''
+        return None

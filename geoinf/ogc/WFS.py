@@ -116,6 +116,7 @@ class WFSCommonWidget(QtGui.QWidget):
         """
         if self.parent_widget.service and self.parent_widget.service.service_valid:
             self.contents = self.parent_widget.service.service.__dict__['contents']
+            print "WFS self.contents", self.contents
             for content in self.contents:
                 self.lstFeatures.addItems([content])
 
@@ -174,9 +175,9 @@ class WFSCommonWidget(QtGui.QWidget):
 
             if '?' in wfs_url:
                 parts = wfs_url.split('?')
-                self.url = parts[0]
+                url = parts[0]
             else:
-                self.url = wfs_url
+                url = wfs_url
                 getFeatureBBoxUrl = wfs_url+ \
                 "?request=GetFeature&version="+vers+ \
                 "&typeName="+str(selected_featureName)+ \
@@ -214,30 +215,31 @@ class WFSConfigurationWidget(OgcConfigurationWidget):
             )
         self.tabs.setCurrentIndex(0)
 
-    def getBoundingBox(self):
-        """Return a comma-delimited string containing box co-ordinates."""
-        top_left_X = self.wfs_config_widget.minXEdit.text()
-        top_left_Y = self.wfs_config_widget.minYEdit.text()
-        btm_right_X = self.wfs_config_widget.maxXEdit.text()
-        btm_right_Y = self.wfs_config_widget.maxYEdit.text()
-        return str(top_left_X)+','+str(top_left_Y)+','+str(btm_right_X)+','+str(btm_right_Y)
-
     def constructRequest(self):
         """Return a URL request from configuration parameters
         Overwrites method defined in OgcConfigurationWidget.
         """
-        selected_typeName = self.wfs_config_widget.lstFeatures.selectedItems()[0].text()
-        espg_number =  self.wfs_config_widget.ESPGEdit.text()
-        wfs_url = self.ogc_common_widget.line_edit_OGC_url.text()
+        if self.wfs_config_widget.lstFeatures.selectedItems() == None or \
+            len(self.wfs_config_widget.lstFeatures.selectedItems()) == 0:
+            raise ModuleError(
+                self,
+                'Service type not selected'
+                )
+        selected_type = str(self.wfs_config_widget.lstFeatures.selectedItems()[0].text())
+        espg_number =  str(self.wfs_config_widget.ESPGEdit.text())
+        wfs_url = str(self.ogc_common_widget.line_edit_OGC_url.text())
         vers = str(self.ogc_common_widget.launchversion.currentText())
+        bbox = self.getBoundingBoxString() # see SpatialTemporalConfigurationWidget
 
         if '?' in wfs_url:
             parts = wfs_url.split('?')
-            self.url = parts[0]
+            url = parts[0]
         else:
-            self.url = wfs_url
+            url = wfs_url
 
-        return self.url + \
+        return url + \
             "?request=GetFeature&version="+vers+ \
-            "&typeName="+str(selected_typeName)+ \
-            "&BBOX="+self.getBoundingBox()+','+str(espg_number)
+            "&typeName="+selected_type+ \
+            "&BBOX="+bbox+ \
+            ",urn:ogc:def:crs:"+espg_number
+

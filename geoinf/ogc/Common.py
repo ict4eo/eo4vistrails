@@ -111,6 +111,10 @@ class OgcService():
                 elif service_type.lower() == "wcs":
                     self.service = wcs.WebCoverageService(service_url, service_version)
                     self.service_valid = True
+                    print "WCS", service_url, service_version
+                    test = self.service
+                    dem = test['sf:sfdem']
+                    print "Common:117", dem.supportedFormats
                 else:
                     self.service_valid = False
                     raise ValueError, INVALID_OGC_TYPE_MESSAGE
@@ -190,7 +194,7 @@ class OgcService():
                 raise NotImplementedError,  "OGC Service version %s not supported." % self.ini_service_version
 
         elif self.ini_service_type == "wcs":
-            
+
             if service_dict.has_key('service'):
                 self.service_type = service_dict['service']
             if service_dict.has_key('version'):
@@ -205,7 +209,7 @@ class OgcService():
                 self.service_fees = service_dict['fees']
             if service_dict.has_key('accessconstraints'):
                 self.service_accessconstraints = service_dict['accessconstraints']
-                
+
         else:
             raise ValueError, INVALID_OGC_TYPE_MESSAGE
 
@@ -290,6 +294,6 @@ class OgcService():
                     self.provider_contact_hours = provider_dict['contact'].__dict__['hours']
                 if provider_dict['contact'].__dict__.has_key('instructions'):
                     self.provider_contact_instructions = provider_dict['contact'].__dict__['instructions']
-                    
+
         else:
             raise ValueError, INVALID_OGC_TYPE_MESSAGE

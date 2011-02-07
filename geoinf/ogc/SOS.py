@@ -253,6 +253,7 @@ class SosCommonWidget(QtGui.QWidget):
         """Load the offerings from the service metadata."""
         if self.parent_widget.service and self.parent_widget.service.service_valid:
             self.contents = self.parent_widget.service.service.__dict__['contents']
+            print "SOS self.contents", self.contents
             for content in self.contents:
                 item = QtGui.QListWidgetItem(content.id)
                 self.lbxOfferings.addItem(item)
@@ -324,28 +325,57 @@ class SOSConfigurationWidget(OgcConfigurationWidget):
         except:
             offering = None
         # details
+        WARNING_YES = '%s must be chosen for a "%s" request.'
+        WARNING_NO  = '%s must NOT be chosen for a "%s" request.'
         if type == 'DescribeSensor':
             if procedure:
                 data = data + '<procedure>' + procedure + '</procedure>'
+            else:
+                self.showWarning(WARNING_YES % ('Procedure', type))
+                return None
         elif type == 'GetFeatureOfInterest':
             if foi:
-                data = '<FeatureOfInterestId>' + foi + '</FeatureOfInterestId>'
+                data = '<FeatureOfInterestId><ObjectID>' + \
+                       foi + \
+                       '</ObjectID></FeatureOfInterestId>'
+            else:
+                self.showWarning(WARNING_YES % ('Feature Of Interest', type))
+                return None
         elif type == 'GetObservation':
+
             if offering:
                 data = data + '<offering>' + offering + '</offering>'
-            # TO DO: time params
+            else:
+                self.showWarning(WARNING_YES % ('Offering', type))
+                return None
+
             if procedure:
                 data = data + '<procedure>' + procedure + '</procedure>'
-            if obs_prop:
-                data = data + '<observedProperty>' + obs_prop + '</observedProperty>'
+
             if format:
                 data = data + '<responseFormat>' + format + '</responseFormat>'
-            if model:
-                data = data + '<resultModel>' + model + '</resultModel>'
+            else:
+                self.showWarning(WARNING_YES % ('Response Format', type))
+                return None
+
             if mode:
                 data = data + '<responseMode>' + mode + '</responseMode>'
+
+                return None
+
+            if model:
+                data = data + '<resultModel>' + model + '</resultModel>'
+
+            if obs_prop:
+                data = data + '<observedProperty>' + obs_prop + '</observedProperty>'
+            else:
+                self.showWarning(WARNING_YES % ('Observed Property', type))
+                return None
+
             if foi:
                 data = data + '<featureOfInterest><ObjectID>' + foi + '</ObjectID></featureOfInterest>'
+
+            # TO DO: time params
             # TO DO: spatial params
         # wrapper
         if type == 'DescribeSensor':
