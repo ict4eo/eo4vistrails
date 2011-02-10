@@ -27,7 +27,6 @@
 geoinf modules.
 """
 
-
 from PyQt4 import QtCore, QtGui
 from core.modules.module_configure import StandardModuleConfigurationWidget
 from core.modules.module_registry import get_module_registry
@@ -42,11 +41,11 @@ class SpatioTemporalConfigurationWidgetTabs(QtGui.QTabWidget):
     """
     def __init__(self, parent=None):
         QtGui.QTabWidget.__init__(self, parent)
-        #self.setGeometry(QtCore.QRect(20, 20, 990, 740))
-        self.setGeometry(QtCore.QRect(20, 20, 790, 540))
+        self.setGeometry(QtCore.QRect(20, 20, 790, 540)) # 20, 20, 990, 740
         self.setTabShape(QtGui.QTabWidget.Rounded)
         self.setElideMode(QtCore.Qt.ElideNone)
         self.setObjectName("SpatioTemporalConfigurationWidgetTabsInstance")
+
 
 class SpatialWidget(QtGui.QWidget):
     """Gather coordinates of a bounding box, or in the case of GRASS, a location
@@ -90,6 +89,7 @@ class SpatialWidget(QtGui.QWidget):
 
         """
         message = None
+        MSG = "Warning: POINT (%s) OUT OF BOUNDS... Selected area may be empty!!"
         # setup
         minX = str(layer_box[0])
         minY= str(layer_box[1])
@@ -103,11 +103,11 @@ class SpatialWidget(QtGui.QWidget):
         if minX < x1< maxX and minY < y1 < maxY:
             pass
         else :
-            message = "Warning: POINT (X1,Y1) OUT OF BOUNDS... Selected area may be empty!!"
+            message = MSG % 'X1,Y1'
         if minX < x2< maxX and minY < y2 < maxY:
             pass
         else :
-            message = "Warning: POINT (X2,Y2) OUT OF BOUNDS... Selected area may be empty!!"
+            message = MSG % 'X2,Y2'
         return message
 
 
@@ -115,13 +115,19 @@ class TemporalWidget(QtGui.QWidget):
     """Set temporal bounds and interval parameters for querying datasets
 
     """
+
+    """TO DO:
+        use "onChange" methods to call a validation method -
+        check that the start date is not later than the end date
+    """
+
     def __init__(self, parent=None):
         QtGui.QWidget.__init__(self, parent)
         self.setObjectName("TemporalWidget")
         self.create_temp_config_window()
 
     def create_temp_config_window(self):
-        """TO DO - add docstring"""
+        """TO DO: add docstring"""
         # adding labels and their positions to the main window
         # add and set groupboxes
         self.mainLayout = QtGui.QHBoxLayout()
@@ -166,7 +172,7 @@ class TemporalWidget(QtGui.QWidget):
 
         """Code that enables the Slider widget on out temporal tab. this enables
         the user to set the interval for required data """
-        """TO DO ---->
+        """TO DO:
         when ready for execution the signal for the lcd should be
         connected to another external slot to retrieve the lcd value"""
         # DAYS
@@ -227,8 +233,15 @@ class TemporalWidget(QtGui.QWidget):
             QtCore.SLOT('display(int)')
         )
 
-        """TO DO---> use "onChange" methods to call a validation method -
-            check that the start date is not later than the end date """
+    def getTimeBegin(self):
+        """ TO DO: calculate UTC time string from GUI widgets."""
+        # dummy - example format
+        return '2005-09-01T11:54:00'
+
+    def getTimeEnd(self):
+        """ TO DO: calculate UTC time string from GUIS widgets."""
+        # dummy - example format
+        return '2005-09-02T11:54:00'
 
 
 class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
@@ -275,7 +288,7 @@ class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
             self.tabs.indexOf(self.spatial_widget),
             QtGui.QApplication.translate(
                 "SpatialTemporalConfigurationWidget",
-                "Gather coordinates of a bounding box, or in the case of GRASS, a location",
+                "Gather coordinates of a bounding box or, in the case of GRASS, a location",
                 None,
                 QtGui.QApplication.UnicodeUTF8
             )
@@ -341,6 +354,15 @@ class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
         #self.emit(QtCore.SIGNAL('doneConfigure')) # not needed
         self.close()
 
+    def getTimeInterval(self):
+        """Return a tuple containing begin / end in universal time.
+
+        """
+        return (
+            self.temporal_widget.getTimeBegin(),
+            self.temporal_widget.getTimeEnd(),
+            )
+
     def getBoundingBox(self):
         """Return a tuple containing box co-ordinates.
         Format: top-left X, top-left Y, bottom-left X, bottom-left Y
@@ -357,5 +379,3 @@ class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
         """Return a comma-delimited string containing box co-ordinates."""
         bbox = self.getBoundingBox()
         return str(bbox[0])+','+str(bbox[1])+','+str(bbox[2])+','+str(bbox[3])
-
-

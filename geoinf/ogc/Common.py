@@ -54,20 +54,23 @@ class OgcService():
     ## also wfs will never load a 1.1.0 instance, but it should be loaded as wfs200
     #########
 
-    INVALID_OGC_TYPE_MESSAGE = \
-        "Please provide an OGC Service Type: 'wfs', 'sos', or 'wcs'"
-
     def __init__(self, service_url, service_type, service_version):
-        service_url = str(service_url)
-        # check for service and request key-value pairs;
-        # if not there, add (some services don't have a capabilities reflector),
-        STRICT_OGC_CAPABILITIES = \
-        "Service=%s&Request=GetCapabilities" %  service_type
-        service_url_check = service_url.split("?")
-        if len(service_url_check) == 1:
-            service_url = service_url + "?" + STRICT_OGC_CAPABILITIES
-        else:  # various of the capabilities may be present - remove and replace
-            service_url = service_url_check[0] + "?" + STRICT_OGC_CAPABILITIES
+        self.INVALID_OGC_TYPE_MESSAGE = \
+            "Please provide an OGC Service Type: 'wfs', 'sos', or 'wcs'"
+        #print "OgcService():__init__:\nservice_url, service_type, service_version\n", \
+            #service_url, '#', service_type, '#', service_version
+        if service_url:
+            service_url = str(service_url)
+            # check for service and request key-value pairs;
+            # if not there, add (some services don't have a capabilities reflector),
+            STRICT_OGC_CAPABILITIES = \
+                "Service=%s&Request=GetCapabilities" %  service_type
+            service_url_check = service_url.split("?")
+            if len(service_url_check) == 1:
+                service_url = service_url + "?" + STRICT_OGC_CAPABILITIES
+            else:
+                # various of the capabilities may be present - remove and replace
+                service_url = service_url_check[0] + "?" + STRICT_OGC_CAPABILITIES
         # set common attributes
         self.service_id_key_set = [
             {'service_type':'Service'},
@@ -100,30 +103,30 @@ class OgcService():
         # set service-specific attributes
         self.service_valid = False
         self.service_valid_error = ''
-        if service_type != "":
-            try:
-                if service_type.lower() == "sos":
-                    self.service = sos.SensorObservationService(service_url, service_version)
-                    self.service_valid = True
-                elif service_type.lower() == "wfs":
-                    self.service = wfs.WebFeatureService(service_url, service_version)
-                    self.service_valid = True
-                elif service_type.lower() == "wcs":
-                    self.service = wcs.WebCoverageService(service_url, service_version)
-                    self.service_valid = True
-                    print "WCS", service_url, service_version
-                    test = self.service
-                    dem = test['sf:sfdem']
-                    print "Common:117", dem.supportedFormats
-                else:
+        if service_url:
+            if service_type != "":
+                try:
+                    if service_type.lower() == "sos":
+                        self.service = sos.SensorObservationService(
+                            service_url, service_version)
+                        self.service_valid = True
+                    elif service_type.lower() == "wfs":
+                        self.service = wfs.WebFeatureService(
+                            service_url, service_version)
+                        self.service_valid = True
+                    elif service_type.lower() == "wcs":
+                        self.service = wcs.WebCoverageService(
+                            service_url, service_version)
+                        self.service_valid = True
+                    else:
+                        self.service_valid = False
+                        raise ValueError, self.INVALID_OGC_TYPE_MESSAGE
+                except Exception, e:
+                    traceback.print_exc() # e.g. HTTP Error 404: Not Found
                     self.service_valid = False
-                    raise ValueError, INVALID_OGC_TYPE_MESSAGE
-            except Exception, e:
-                traceback.print_exc() # e.g. urllib2.HTTPError: HTTP Error 404: Not Found
-                self.service_valid = False
-                self.service_valid_error = str(e)
-        else:
-            raise ValueError, INVALID_OGC_TYPE_MESSAGE
+                    self.service_valid_error = str(e)
+            else:
+                raise ValueError, self.INVALID_OGC_TYPE_MESSAGE
         self.service_url = service_url
         self.ini_service_type = service_type.lower()
         self.ini_service_version = service_version
@@ -141,7 +144,7 @@ class OgcService():
                 self.setProviderIdentification(
                     self.service.__dict__['provider'].__dict__)
             else:
-                raise ValueError, INVALID_OGC_TYPE_MESSAGE
+                raise ValueError, self.INVALID_OGC_TYPE_MESSAGE
 
     def setServiceIdentification(self, service_dict):
         """service identification metadata is structured differently
@@ -149,9 +152,9 @@ class OgcService():
 
         if self.ini_service_type == "sos":
             if service_dict.has_key('service'):
-                self.service_type = service_dict['service'] # we actually know this, but rebuild anyway
+                self.service_type = service_dict['service'] # we know this, but rebuild anyway
             if service_dict.has_key('version'):
-                self.service_version = service_dict['version']# we actually know this, but rebuild anyway
+                self.service_version = service_dict['version']# we know this, but rebuild anyway
             if service_dict.has_key('title'):
                 self.service_title = service_dict['title']
             if service_dict.has_key('abstract'):
@@ -168,7 +171,8 @@ class OgcService():
                 # got to dive into the elements of _root key of service_dict
                 # (in this case the provider_dict)to get anything useful.
                 for elem in service_dict['_root'].__dict__['_children']:
-                    if elem.__dict__.has_key('tag') and elem.__dict__.has_key('text'):# we have a kvp, so process
+                    if elem.__dict__.has_key('tag') and elem.__dict__.has_key('text'):
+                        # we have a kvp, so process
                         tg = elem.__dict__['tag']
                         tx = elem.__dict__['text']
                         try:# check for {http://www.opengis.net/wfs} prefix
@@ -211,7 +215,7 @@ class OgcService():
                 self.service_accessconstraints = service_dict['accessconstraints']
 
         else:
-            raise ValueError, INVALID_OGC_TYPE_MESSAGE
+            raise ValueError, self.INVALID_OGC_TYPE_MESSAGE
 
     def setProviderIdentification(self, provider_dict):
         """provider metadata is structured differently
@@ -296,4 +300,4 @@ class OgcService():
                     self.provider_contact_instructions = provider_dict['contact'].__dict__['instructions']
 
         else:
-            raise ValueError, INVALID_OGC_TYPE_MESSAGE
+            raise ValueError, self.INVALID_OGC_TYPE_MESSAGE

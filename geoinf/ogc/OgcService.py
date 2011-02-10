@@ -85,7 +85,6 @@ class OGC(NotCacheable):
         if url and request:
             user_agent = 'Mozilla/4.0 (compatible; MSIE 5.5; Windows NT)'
             headers = {'User-Agent': user_agent}
-            #request = urllib.urlencode(xml)
             req = urllib2.Request(url, request, headers)
             #assuming this works inside a proxy ... otherwise:
             #os.environ["http_proxy"] = "http://myproxy.com:3128"
@@ -101,7 +100,5 @@ class OGC(NotCacheable):
             except Exception, e:
                 self.raiseError('Exception', e)
         else:
-            pass  # ignore and do nothing ... is this right???
+            pass  # ignore and do nothing ... 
         return result
-
-

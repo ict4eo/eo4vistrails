@@ -70,6 +70,11 @@ class SosCommonWidget(QtGui.QWidget):
         """Create datacontainers and layout for displaying SOS-specific data."""
         self.setWindowTitle("SOS Configuration Widget")
         self.setMinimumSize(900, 675)
+        # text for combo boxes
+        self.SPATIAL_OFFERING = 'Use Offering Bounding Box'
+        self.SPATIAL_OWN = 'Use Own Bounding Box'
+        self.TIME_OFFERING = 'Use Offering Time Period'
+        self.TIME_OWN = 'Use Own Time Period'
         # main layout
         self.mainLayout = QtGui.QHBoxLayout()
         self.setLayout(self.mainLayout)
@@ -98,7 +103,10 @@ class SosCommonWidget(QtGui.QWidget):
         self.detailsLayout.addWidget(QtGui.QLabel('Result Model'), 6, 0)
         self.detailsLayout.addWidget(QtGui.QLabel('Observed Property'), 7, 0)
         self.detailsLayout.addWidget(QtGui.QLabel('Feature of Interest'), 8, 0)
-        self.detailsLayout.addWidget(QtGui.QLabel('Request Type'), 9, 0)
+        self.detailsLayout.addWidget(QtGui.QLabel('Time Limit?'), 9, 0)
+        self.detailsLayout.addWidget(QtGui.QLabel('Spatial Delimiter?'), 10, 0)
+        self.detailsLayout.addWidget(QtGui.QLabel('Request Type'), 11, 0)
+
         #   data containers
         self.lblDescription =  QtGui.QLabel('-')
         self.detailsLayout.addWidget(self.lblDescription , 0, 1)
@@ -112,24 +120,24 @@ class SosCommonWidget(QtGui.QWidget):
         self.minLayout = QtGui.QHBoxLayout()
         self.minGroupBox.setLayout(self.minLayout)
         self.boundingLayout.addWidget(self.minGroupBox)
-        self.minLayout.addWidget(QtGui.QLabel('Min X:'))
-        self.lblMinX =  QtGui.QLabel('-')
-        self.minLayout.addWidget(self.lblMinX)
-        self.minLayout.addWidget(QtGui.QLabel('Min Y:'))
-        self.lblMinY =  QtGui.QLabel('-')
-        self.minLayout.addWidget(self.lblMinY)
+        self.minLayout.addWidget(QtGui.QLabel('Top Left X:'))
+        self.lblTL_X =  QtGui.QLabel('-')
+        self.minLayout.addWidget(self.lblTL_X)
+        self.minLayout.addWidget(QtGui.QLabel('Top Left Y:'))
+        self.lblTL_Y =  QtGui.QLabel('-')
+        self.minLayout.addWidget(self.lblTL_Y)
 
         self.maxGroupBox = QtGui.QGroupBox("")
         self.maxGroupBox.setFlat(True)
         self.maxLayout = QtGui.QHBoxLayout()
         self.maxGroupBox.setLayout(self.maxLayout)
         self.boundingLayout.addWidget(self.maxGroupBox)
-        self.maxLayout.addWidget(QtGui.QLabel('Max X:'))
-        self.lblMaxX =  QtGui.QLabel('-')
-        self.maxLayout.addWidget(self.lblMaxX)
-        self.maxLayout.addWidget(QtGui.QLabel('Max Y:'))
-        self.lblMaxY =  QtGui.QLabel('-')
-        self.maxLayout.addWidget(self.lblMaxY)
+        self.maxLayout.addWidget(QtGui.QLabel('Bottom Right X:'))
+        self.lblBR_X =  QtGui.QLabel('-')
+        self.maxLayout.addWidget(self.lblBR_X)
+        self.maxLayout.addWidget(QtGui.QLabel('Bottom Right Y:'))
+        self.lblBR_Y =  QtGui.QLabel('-')
+        self.maxLayout.addWidget(self.lblBR_Y)
 
         self.srsGroupBox = QtGui.QGroupBox("")
         self.srsGroupBox.setFlat(True)
@@ -166,8 +174,20 @@ class SosCommonWidget(QtGui.QWidget):
         self.cbFOI = QtGui.QComboBox()
         self.detailsLayout.addWidget(self.cbFOI, 8, 1)
 
+        self.cbTime = QtGui.QComboBox()
+        self.detailsLayout.addWidget(self.cbTime, 9, 1)
+        self.cbTime.addItem('')
+        self.cbTime.addItem(self.TIME_OFFERING)
+        self.cbTime.addItem(self.TIME_OWN)
+
+        self.cbSpatial = QtGui.QComboBox()
+        self.detailsLayout.addWidget(self.cbSpatial, 10, 1)
+        self.cbSpatial.addItem('')
+        self.cbSpatial.addItem(self.SPATIAL_OFFERING)
+        self.cbSpatial.addItem(self.SPATIAL_OWN)
+
         self.cbRequest = QtGui.QComboBox()
-        self.detailsLayout.addWidget(self.cbRequest, 9, 1)
+        self.detailsLayout.addWidget(self.cbRequest, 11, 1)
         self.cbRequest.addItem('GetFeatureOfInterest')
         self.cbRequest.addItem('GetObservation')
         self.cbRequest.addItem('DescribeSensor')
@@ -179,6 +199,27 @@ class SosCommonWidget(QtGui.QWidget):
             self.offeringsChanged
             )
 
+    def getBoundingBoxOffering(self):
+        """Return a tuple containing box co-ordinates.
+        Format: top-left X, top-left Y, bottom-left X, bottom-left Y
+
+        """
+        return (
+            self.lblTL_X.text(),
+            self.lblTL_Y.text(),
+            self.lblBR_X.text(),
+            self.lblBR_Y.text()
+            )
+
+    def getTimeIntervalOffering(self):
+        """Return a tuple containing begin / end in universal time.
+
+        """
+        return (
+            self.lblStartTime.text(),
+            self.lblEndTime.text(),
+            )
+
     def removeOfferings(self):
         """Remove all offering details when no SOS is selected."""
         self.clearOfferings()
@@ -187,10 +228,10 @@ class SosCommonWidget(QtGui.QWidget):
     def clearOfferings(self):
         """Reset all displayed offering values."""
         self.lblDescription.setText('-')
-        self.lblMinX.setText('-')
-        self.lblMinY.setText('-')
-        self.lblMaxX.setText('-')
-        self.lblMaxY.setText('-')
+        self.lblTL_X.setText('-')
+        self.lblTL_Y.setText('-')
+        self.lblBR_X.setText('-')
+        self.lblBR_Y.setText('-')
         self.lblSRS.setText('-')
         self.lblStartTime.setText('-')
         self.lblEndTime.setText('-')
@@ -200,6 +241,8 @@ class SosCommonWidget(QtGui.QWidget):
         self.cbResultModel.clear()
         self.cbObservedProperty.clear()
         self.cbFOI.clear()
+        #self.cbTime.clear()
+        #self.cbSpatial.clear()
 
     def offeringsChanged(self):
         """Update offering details containers when new offering selected."""
@@ -219,10 +262,10 @@ class SosCommonWidget(QtGui.QWidget):
                         self.lblStartTime.setText(str(content.time[0]))
                         self.lblEndTime.setText(str(content.time[1]))
                     if content.bounding_box:
-                        self.lblMinX.setText(str(content.bounding_box[0]))
-                        self.lblMinY.setText(str(content.bounding_box[1]))
-                        self.lblMaxX.setText(str(content.bounding_box[2]))
-                        self.lblMaxY.setText(str(content.bounding_box[3]))
+                        self.lblTL_X.setText(str(content.bounding_box[0]))
+                        self.lblTL_Y.setText(str(content.bounding_box[1]))
+                        self.lblBR_X.setText(str(content.bounding_box[2]))
+                        self.lblBR_Y.setText(str(content.bounding_box[3]))
                         self.lblSRS.setText(str(content.bounding_box[4]))
                     self.cbProcedure.addItem('')
                     if content.procedure:
@@ -253,7 +296,7 @@ class SosCommonWidget(QtGui.QWidget):
         """Load the offerings from the service metadata."""
         if self.parent_widget.service and self.parent_widget.service.service_valid:
             self.contents = self.parent_widget.service.service.__dict__['contents']
-            print "SOS self.contents", self.contents
+            #print "SOS self.contents", self.contents
             for content in self.contents:
                 item = QtGui.QListWidgetItem(content.id)
                 self.lbxOfferings.addItem(item)
@@ -324,71 +367,136 @@ class SOSConfigurationWidget(OgcConfigurationWidget):
             offering = self.config.lbxOfferings.currentItem().text()
         except:
             offering = None
-        # details
-        WARNING_YES = '%s must be chosen for a "%s" request.'
-        WARNING_NO  = '%s must NOT be chosen for a "%s" request.'
+        try:
+            time_limit = self.config.cbTime.currentText()
+        except:
+            time_limit = None
+        try:
+            spatial_limit = self.config.cbSpatial.currentText()
+        except:
+            spatial_limit = None
+        # primary parameters
+        WARNING_MUST = '%s must be chosen for a "%s" request.'
+        WARNING_NOT  = '%s must NOT be chosen for a "%s" request.'
+        WARNING_CHOICE  = 'Either %s or %s must be chosen for a "%s" request.'
+        WARNING_ONLY_ONE  = 'Cannot select both %s and %s for a "%s" request.'
+        # process by request type
         if type == 'DescribeSensor':
             if procedure:
-                data = data + '<procedure>' + procedure + '</procedure>'
+                data += '<procedure>' + procedure + '</procedure>\n'
             else:
-                self.showWarning(WARNING_YES % ('Procedure', type))
+                self.showWarning(WARNING_MUST % ('Procedure', type))
                 return None
+
         elif type == 'GetFeatureOfInterest':
+            if not(foi) and not(spatial_limit):
+                self.showWarning(WARNING_CHOICE %
+                    ('Spatial Limit','Feature of Interest', type))
+                return None
+            if spatial_limit and foi:
+                self.showWarning(WARNING_ONLY_ONE %
+                    ('Spatial Limit','Feature of Interest', type))
+                return None
             if foi:
-                data = '<FeatureOfInterestId><ObjectID>' + \
+                data += '<FeatureOfInterestId>' + \
                        foi + \
-                       '</ObjectID></FeatureOfInterestId>'
-            else:
-                self.showWarning(WARNING_YES % ('Feature Of Interest', type))
-                return None
+                       '</FeatureOfInterestId>\n'
+            if spatial_limit:  # spatial parameters
+                if spatial_limit == self.config.SPATIAL_OWN:
+                    # see SpatialTemporalConfigurationWidget
+                    bbox = self.getBoundingBox()
+                elif spatial_limit == self.config.SPATIAL_OFFERING:
+                    # see SosCommonWidget (this module)
+                    bbox = self.config.getBoundingBoxOffering()
+                data += '<location>\n <ogc:BBOX>\n' + \
+                    '  <ogc:PropertyName>urn:ogc:data:location</ogc:PropertyName>\n' + \
+                    '  <gml:Envelope srsName="' + \
+                    self.config.lblSRS.text() + '">\n' + \
+                    '   <gml:lowerCorner>' + bbox[2] + ' ' + bbox[3] + \
+                    '</gml:lowerCorner>\n' + \
+                    '   <gml:upperCorner>' + bbox[0] + ' ' + bbox[1] + \
+                    '</gml:upperCorner>\n' + \
+                    '  </gml:Envelope>\n' + ' </ogc:BBOX>\n</location>\n'
+
         elif type == 'GetObservation':
-
             if offering:
-                data = data + '<offering>' + offering + '</offering>'
+                data += '<offering>' + offering + '</offering>\n'
             else:
-                self.showWarning(WARNING_YES % ('Offering', type))
+                self.showWarning(WARNING_MUST % ('Offering', type))
                 return None
-
+            if time_limit:  # time params
+                if time_limit == self.config.TIME_OWN:
+                    # see SpatialTemporalConfigurationWidget
+                    timerange = self.getTimeInterval()
+                elif time_limit == self.config.TIME_OFFERING:
+                    # see SpatialTemporalConfigurationWidget
+                    timerange = self.config.getTimeIntervalOffering()
+                data += '<eventTime>\n <ogc:TM_During>\n'+\
+                    '  <ogc:PropertyName>om:samplingTime</ogc:PropertyName>' + \
+                    '  <gml:TimePeriod>\n' + \
+                    '   <gml:beginPosition>' + timerange[0] + \
+                    '</gml:beginPosition>\n' + \
+                    '   <gml:endPosition>' + timerange[1] + \
+                    '</gml:endPosition>\n' + \
+                    '  </gml:TimePeriod>\n </ogc:TM_During>\n</eventTime>\n'
             if procedure:
-                data = data + '<procedure>' + procedure + '</procedure>'
-
-            if format:
-                data = data + '<responseFormat>' + format + '</responseFormat>'
-            else:
-                self.showWarning(WARNING_YES % ('Response Format', type))
-                return None
-
-            if mode:
-                data = data + '<responseMode>' + mode + '</responseMode>'
-
-                return None
-
-            if model:
-                data = data + '<resultModel>' + model + '</resultModel>'
-
+                if not mode:
+                    self.showWarning(WARNING_MUST + 'If a procedure is chosen'
+                                     % ('Response Mode', type))
+                    return None
+                else:
+                    data += '<procedure>' + procedure + '</procedure>\n'
             if obs_prop:
-                data = data + '<observedProperty>' + obs_prop + '</observedProperty>'
+                data += '<observedProperty>' + obs_prop + '</observedProperty>\n'
             else:
-                self.showWarning(WARNING_YES % ('Observed Property', type))
+                self.showWarning(WARNING_MUST % ('Observed Property', type))
                 return None
-
+            if spatial_limit and foi:
+                self.showWarning(WARNING_ONLY_ONE %
+                    ('Spatial Limit','Feature of Interest', type))
+                return None
             if foi:
-                data = data + '<featureOfInterest><ObjectID>' + foi + '</ObjectID></featureOfInterest>'
+                data += '<featureOfInterest><ObjectID>' + \
+                        foi + \
+                        '</ObjectID></featureOfInterest>\n'
+            if spatial_limit:  # spatial parameters
+                if spatial_limit == self.config.SPATIAL_OWN:
+                    # see SpatialTemporalConfigurationWidget
+                    bbox = self.getBoundingBox()
+                elif spatial_limit == self.config.SPATIAL_OFFERING:
+                    # see SosCommonWidget (this module)
+                    bbox = self.config.getBoundingBoxOffering()
+                data += '<featureOfInterest>\n <ogc:BBOX>\n' + \
+                    '  <ogc:PropertyName>urn:ogc:data:location</ogc:PropertyName>\n' + \
+                    '  <gml:Envelope srsName="' + \
+                    self.config.lblSRS.text() + '">\n' + \
+                    '   <gml:lowerCorner>' + bbox[2] + ' ' + bbox[3] + \
+                    '</gml:lowerCorner>\n' + \
+                    '   <gml:upperCorner>' + bbox[0] + ' ' + bbox[1] + \
+                    '</gml:upperCorner>\n' + \
+                    '  </gml:Envelope>\n' + ' </ogc:BBOX>\n</featureOfInterest>\n'
+            if format:
+                data += '<responseFormat>' + format + '</responseFormat>\n'
+            else:
+                self.showWarning(WARNING_MUST % ('Response Format', type))
+                return None
+            if model:
+                data += '<resultModel>' + model + '</resultModel>\n'
+            if mode:
+                data += '<responseMode>' + mode + '</responseMode>\n'
 
-            # TO DO: time params
-            # TO DO: spatial params
         # wrapper
         if type == 'DescribeSensor':
-            data = \
+            header = \
             """<DescribeSensor service="SOS" version="1.0.0"
             xmlns="http://www.opengis.net/sos/1.0"
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
             xsi:schemaLocation="http://www.opengis.net/sos/1.0
             http://schemas.opengis.net/sos/1.0.0/sosDescribeSensor.xsd"
-            outputFormat="text/xml;subtype=&quot;sensorML/1.0.1&quot;">""" + \
-            data + '</DescribeSensor>'
+            outputFormat="text/xml;subtype=&quot;sensorML/1.0.1&quot;">\n"""
+            data = header + data + '</DescribeSensor>'
         elif type == 'GetFeatureOfInterest':
-            data = \
+            header = \
             """<GetFeatureOfInterest service="SOS" version="1.0.0"
             xmlns="http://www.opengis.net/sos/1.0"
             xmlns:ows="http://www.opengeospatial.net/ows"
@@ -396,10 +504,10 @@ class SOSConfigurationWidget(OgcConfigurationWidget):
             xmlns:ogc="http://www.opengis.net/ogc"
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
             xsi:schemaLocation="http://www.opengis.net/sos/1.0
-            http://schemas.opengis.net/sos/1.0.0/sosGetFeatureOfInterest.xsd">""" + \
-            data + '</GetFeatureOfInterest>'
+            http://schemas.opengis.net/sos/1.0.0/sosGetFeatureOfInterest.xsd">\n"""
+            data = header + data + '</GetFeatureOfInterest>\n'
         elif type == 'GetObservation':
-            data = \
+            header = \
             """<GetObservation service="SOS" version="1.0.0"
             xmlns="http://www.opengis.net/sos/1.0"
             xmlns:ows="http://www.opengis.net/ows/1.1"
@@ -410,14 +518,16 @@ class SOSConfigurationWidget(OgcConfigurationWidget):
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
             xsi:schemaLocation="http://www.opengis.net/sos/1.0
             http://schemas.opengis.net/sos/1.0.0/sosGetObservation.xsd"
-            srsName="urn:ogc:def:crs:EPSG:4326">""" + \
-            data + '</GetObservation>'
+            srsName="%s">\n""" % self.config.lblSRS.text()
+            data = header + data + '</GetObservation>\n'
         else:
             traceback.print_exc()
             raise ModuleError(
                 self,
                 'Unknown request type: check Request combobox' + ': %s' % str(error)
                 )
-        # header
-        data = '<?xml version="1.0" encoding="UTF-8"?>' + data
+        # xml header
+        data = '<?xml version="1.0" encoding="UTF-8"?>\n' + data
+        print data  # show line breaks for testing !!!
+        data = data.replace('\n','')
         return data
