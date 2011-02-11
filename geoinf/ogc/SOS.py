@@ -148,7 +148,7 @@ class SosCommonWidget(QtGui.QWidget):
         self.lblSRS =  QtGui.QLabel('-')
         self.srsLayout.addWidget(self.lblSRS)
 
-        self.boundingLayout.addStretch()  # force all items upwards -does not work?
+        self.boundingLayout.addStretch()  # force items upwards -does not work??
 
         self.timeGroupBox = QtGui.QGroupBox("")
         self.timeGroupBox.setFlat(True)
@@ -466,6 +466,12 @@ class SOSConfigurationWidget(OgcConfigurationWidget):
                 elif spatial_limit == self.config.SPATIAL_OFFERING:
                     # see SosCommonWidget (this module)
                     bbox = self.config.getBoundingBoxOffering()
+                else:
+                    traceback.print_exc()
+                    raise ModuleError(
+                        self,
+                        'Unknown WFS bounding box type' + ': %s' % str(error)
+                        )
                 data += '<featureOfInterest>\n <ogc:BBOX>\n' + \
                     '  <ogc:PropertyName>urn:ogc:data:location</ogc:PropertyName>\n' + \
                     '  <gml:Envelope srsName="' + \

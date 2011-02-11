@@ -23,223 +23,348 @@
 ## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ##
 ############################################################################
-"""This module provides an OGC Web Feature Service Client via owslib.
+"""This module provides an OGC (Open Geospatial Consortium) Web Feature Service
+(WFS) Client via owslib.
 """
 
-import init
 from PyQt4 import QtCore, QtGui
-from packages.eo4vistrails.geoinf.datamodels.Feature import FeatureModel
-from OgcConfigurationWidget import OgcConfigurationWidget, OgcCommonWidget
-from OgcService import OGC
+from packages.eo4vistrails.geoinf.datamodels.Raster import RasterModel
 from packages.eo4vistrails.geoinf.SpatialTemporalConfigurationWidget import SpatialTemporalConfigurationWidget, SpatialWidget
+from OgcConfigurationWidget import OgcConfigurationWidget
+from OgcService import OGC
 from core.modules.vistrails_module import Module, new_module, NotCacheable, ModuleError
+import init
 
+#def ns(tag):
+    #return '{http://www.opengis.net/wcs}'+tag
 
-class WFS(OGC, FeatureModel):
+class WFS(OGC, RasterModel):
     """
     Override for base OGC service class
 
     """
     def __init__(self):
         OGC.__init__(self)
-        FeatureModel.__init__(self)
+        RasterModel.__init__(self)
 
 
 class WFSCommonWidget(QtGui.QWidget):
-    """Enable WCS-specific parameters to be obtained, displayed and selected."""
+    """
+    WFS module allows connection to a web-based OGC (Open Geospatial Consortium)
+    web feature service.
+    Configuration allows the base URL for the service to be set and called.
+    Choosing the appropriate combination of specific service type and other
+    parameters, will cause the input port to be set with a specific POST call,
+    once the configuration interface is closed.
+    Running the WFS will cause the specific, parameterised WFS to be called
+    and output from the request to be available via the output port(s).
 
-    def __init__(self, ogc_widget, spatial_widget,  parent=None):
-        """sets parameters for wfs request"""
+    """
+    def __init__(self, ogc_widget, spatial_widget, parent=None):
+        """sets parameters for wcs request"""
         QtGui.QWidget.__init__(self, parent)
-        self.setObjectName("WFSConfigurationWidget")
+        self.setObjectName("WFSCommonWidget")
         self.parent_widget = ogc_widget
-        self.service = self.parent_widget.service
-        self.coords = spatial_widget
+        #self.service = self.parent_widget.service
+        self.contents = None #  only set in self.loadRequests()
+        self.spatial_widget = spatial_widget
         self.create_wfs_config_window()
 
-        # listener for signal emitted by OgcCommonWidget class
+        # listen for signals emitted by OgcCommonWidget class
         self.connect(
             self.parent_widget,
             QtCore.SIGNAL('serviceActivated'),
-            self.loadRequest
+            self.loadRequests
             )
-           # local signals
         self.connect(
-            self.lstFeatures,
-            QtCore.SIGNAL("itemClicked(QListWidgetItem*)"),
-            self.featureNameChanged
+            self.parent_widget,
+            QtCore.SIGNAL('serviceDeactivated'),
+            self.removeRequests
             )
 
     def create_wfs_config_window(self):
         """TO DO - add docstring"""
-        gridLayout = QtGui.QGridLayout()
-        self.setLayout(gridLayout)
-        gridLayout.addWidget(QtGui.QLabel('TypeNames List:'), 0, 1)
-        gridLayout.addWidget(QtGui.QLabel('TypeName Metadata:'), 0, 3)
-        gridLayout.addWidget(QtGui.QLabel('bbox:'), 3, 0)
-        gridLayout.addWidget(QtGui.QLabel('top_left  X'), 3, 1)
-        gridLayout.addWidget(QtGui.QLabel('top_left  Y'), 3, 3)
-        gridLayout.addWidget(QtGui.QLabel('bottom_right  X'), 4, 1)
-        gridLayout.addWidget(QtGui.QLabel('bottom_right  Y'), 4, 3)
-        gridLayout.addWidget(QtGui.QLabel('Default SRS Code'), 5, 0)
-        self.cbGetFeature = QtGui.QCheckBox("GetFeature bbox-url", self)
-        gridLayout.addWidget(self.cbGetFeature,  7, 0)
+        # text for combo boxes
+        self.SPATIAL_OFFERING = 'Use Offering Bounding Box'
+        self.SPATIAL_OWN = 'Use Own Bounding Box'
+        # add widgets here!
+        self.mainLayout = QtGui.QHBoxLayout()
+        self.setLayout(self.mainLayout)
+        self.requestsGroupBox = QtGui.QGroupBox("WFS Request Features")
+        self.requestsLayout = QtGui.QVBoxLayout()
+        self.requestsGroupBox.setLayout(self.requestsLayout)
+        self.mainLayout.addWidget(self.requestsGroupBox)
+        # add a horizontal split to split the window equally
+        self.split = QtGui.QSplitter(QtCore.Qt.Vertical)
+        self.mainLayout.addWidget(self.split)
+        self.detailsGroupBox = QtGui.QGroupBox("WFS Feature Details")
+        self.mainLayout.addWidget(self.detailsGroupBox)
+        self.detailsLayout = QtGui.QGridLayout()
+        self.detailsGroupBox.setLayout(self.detailsLayout)
+        # WFS Request offerings layout
+        self.requestLbx = QtGui.QListWidget()
+        self.requestsLayout.addWidget(self.requestLbx)
 
-        self.minXEdit = QtGui.QLineEdit('0.0')
-        self.minXEdit.setEnabled(False)
-        self.ESPGEdit = QtGui.QLineEdit('Null')
-        self.ESPGEdit.setEnabled(False)
-        self.minYEdit = QtGui.QLineEdit('0.0')
-        self.minYEdit.setEnabled(False)
-        self.maxXEdit = QtGui.QLineEdit('0.0')
-        self.maxXEdit.setEnabled(False)
-        self.maxYEdit = QtGui.QLineEdit('0.0')
-        self.maxYEdit.setEnabled(False)
-        self.GetFeatureEdit = QtGui.QLineEdit('http://')
+        # WFS Request details layout
+        # Labels
+        self.detailsLayout.addWidget(QtGui.QLabel('Feature ID:'), 0, 0)
+        self.detailsLayout.addWidget(QtGui.QLabel('Feature Description:'), 1, 0)
 
-        gridLayout.addWidget(self.minXEdit, 3,2)
-        gridLayout.addWidget(self.ESPGEdit, 5,1)
-        gridLayout.addWidget(self.minYEdit, 3, 4)
-        gridLayout.addWidget(self.maxXEdit, 4, 2)
-        gridLayout.addWidget(self.maxYEdit, 4, 4)
-        gridLayout.addWidget(self.GetFeatureEdit, 7, 1)
+        self.detailsLayout.addWidget(QtGui.QLabel('BBox - data bounds:'), 2, 0)
+        self.detailsLayout.addWidget(QtGui.QLabel('ULX:'), 3, 0)
+        self.detailsLayout.addWidget(QtGui.QLabel('LRX:'), 3, 2)
+        self.detailsLayout.addWidget(QtGui.QLabel('ULY:'), 4, 0)
+        self.detailsLayout.addWidget(QtGui.QLabel('LRY:'), 4, 2)
 
-        self.lstFeatures = QtGui.QListWidget()
-        gridLayout.addWidget(self.lstFeatures, 1, 1)
-        # view selected typename / FeatureName ContentMetadata
-        self.htmlView = QtGui.QTextEdit()
-        gridLayout.addWidget(self.htmlView, 1, 2,  1,  3)
+        self.detailsLayout.addWidget(QtGui.QLabel('BBox - Spatial Subset:'), 5, 0)
+        self.detailsLayout.addWidget(QtGui.QLabel('ULX:'), 6, 0)
+        self.detailsLayout.addWidget(QtGui.QLabel('LRX:'), 6, 2)
+        self.detailsLayout.addWidget(QtGui.QLabel('ULY:'), 7, 0)
+        self.detailsLayout.addWidget(QtGui.QLabel('LRY:'), 7, 2)
 
-    def loadRequest(self):
-        """ loadRequest() -> None
-        uses service data to populate the config widget fields
+        self.detailsLayout.addWidget(QtGui.QLabel('SRS:'), 8, 0)
+        self.detailsLayout.addWidget(QtGui.QLabel('Required Output SRS:'), 10, 0)
+
+        self.dcRequestFormatLabel = QtGui.QLabel('Required Request Format')
+        self.detailsLayout.addWidget(self.dcRequestFormatLabel, 11, 0)
+        self.dcRequestFormatLabel.setVisible(False)  # not in use for WFS
+        self.detailsLayout.addWidget(QtGui.QLabel('Spatial Delimiter?'), 12, 0)
+        self.detailsLayout.addWidget(QtGui.QLabel('Required Output Format:'), 13, 0)
+
+        # Data containers
+        self.dcLayerId = QtGui.QLabel('__')
+        self.detailsLayout.addWidget(self.dcLayerId, 0, 1)
+        self.dcLayerDescription = QtGui.QLabel('__')
+        self.detailsLayout.addWidget(self.dcLayerDescription, 1,1)
+
+        #Bounding box - Grid Envelope
+        self.dcULX = QtGui.QLineEdit(' ')
+        self.dcULX.setEnabled(False) #sets it not to be editable
+        self.detailsLayout.addWidget(self.dcULX, 3,1)
+        self.dcLRX = QtGui.QLineEdit(' ')
+        self.dcLRX.setEnabled(False)
+        self.detailsLayout.addWidget(self.dcLRX, 3,3)
+        self.dcULY = QtGui.QLineEdit(' ')
+        self.dcULY.setEnabled(False)
+        self.detailsLayout.addWidget(self.dcULY, 4,1)
+        self.dcLRY = QtGui.QLineEdit(' ')
+        self.dcLRY.setEnabled(False)
+        self.detailsLayout.addWidget(self.dcLRY, 4,3)
+
+        #Bounding Box Spatial subset
+        self.ssULX = QtGui.QLabel(' ')
+        #self.ssULX.setEnabled(False) #sets it not to be editable
+        self.detailsLayout.addWidget(self.ssULX, 6,1)
+        self.ssLRX = QtGui.QLabel(' ')
+        #self.ssLRX.setEnabled(False)
+        self.detailsLayout.addWidget(self.ssLRX, 6,3)
+        self.ssULY = QtGui.QLabel(' ')
+        #self.ssULY.setEnabled(False)
+        self.detailsLayout.addWidget(self.ssULY, 7,1)
+        self.ssLRY = QtGui.QLabel(' ')
+        #self.ssLRY.setEnabled(False)
+        self.detailsLayout.addWidget(self.ssLRY, 7,3)
+
+        self.dcSRS = QtGui.QLabel('__')
+        self.detailsLayout.addWidget(self.dcSRS, 8, 1)
+        self.dcSRSreq = QtGui.QComboBox()
+        self.detailsLayout.addWidget(self.dcSRSreq, 10, 1)
+        self.dcReqFormat = QtGui.QComboBox()
+        self.dcReqFormat.setVisible(False)  # not in use for WFS
+        self.detailsLayout.addWidget(self.dcReqFormat, 11, 1)
+
+        self.cbSpatial = QtGui.QComboBox()
+        self.detailsLayout.addWidget(self.cbSpatial, 12, 1)
+        self.cbSpatial.addItem('')
+        self.cbSpatial.addItem(self.SPATIAL_OFFERING)
+        self.cbSpatial.addItem(self.SPATIAL_OWN)
+
+        self.dcRequestType = QtGui.QComboBox()
+        self.detailsLayout.addWidget(self.dcRequestType, 13, 1)
+        self.dcRequestType.addItem('GetCapabilities')
+        self.dcRequestType.addItem('DescribeFeatureType')
+        self.dcRequestType.addItem('GetFeature')
+
+        # local signals
+        self.connect(
+            self.requestLbx,
+            QtCore.SIGNAL("itemClicked(QListWidgetItem*)"),
+            self.featureNameChanged
+            )
+
+        #for message box
+        self.arrowCursor = QtGui.QCursor(QtCore.Qt.ArrowCursor)
+
+    def getBoundingBoxStringFeature(self):
+        """Return a comma-delimited string containing box co-ordinates."""
+        bbox = self.getBoundingBox()
+        return str(self.dcULX.text()) + ',' + str(self.dcULY.text()) + ','\
+            +  str(self.dcLRX.text()) + ',' + str(self.dcLRY.text())
+
+    def getBoundingBoxFeature(self):
+        """Return a tuple containing box co-ordinates for selected lfeature.
+        Format: top-left X, top-left Y, bottom-left X, bottom-left Y
+
         """
-        if self.parent_widget.service and self.parent_widget.service.service_valid:
-            self.contents = self.parent_widget.service.service.__dict__['contents']
-            print "WFS self.contents", self.contents
-            for content in self.contents:
-                self.lstFeatures.addItems([content])
+        return (
+            self.dcULX.text(),
+            self.dcULY.text(),
+            self.dcLRX.text(),
+            self.dcLRY.text()
+            )
+
+    def removeRequests(self):
+        """Remove all details when no WFS is selected."""
+        self.clearRequests()
+        self.requestLbx.clear()
+        #pass
+
+    def clearRequests(self):
+        """To reset the values in the fields"""
+        self.dcLayerId.setText('-')
+        self.dcLayerDescription.setText('-')
+        self.dcULX.setText('-')
+        self.dcLRX.setText('-')
+        self.dcULY.setText('-')
+        self.dcLRY.setText('-')
+        self.dcSRS.setText('-')
+        self.dcSRSreq.clear()
+        self.dcReqFormat.clear()
+        #self.dcRequestType.clear()
 
     def featureNameChanged(self):
         """Update offering details containers when new offering selected."""
-        selected_featureName = self.lstFeatures.selectedItems()[0].text()
-        print "Accessing....: " + selected_featureName
-
-        # update wfs bbox values with SpatialTemporalConfigurationWidget bbox values
-        self.minXEdit.setText(self.coords.bbox_tlx.text())
-        self.minYEdit.setText(self.coords.bbox_tly.text())
-        self.maxXEdit.setText(self.coords.bbox_brx.text())
-        self.maxYEdit.setText(self.coords.bbox_bry.text())
-
+        self.clearRequests()
+        #populate other feature dependent parameters
+        selected_featureName = self.requestLbx.selectedItems()[0].text()
         if self.parent_widget.service and self.parent_widget.service.service_valid and self.contents:
             for content in self.contents:
                 if selected_featureName == content:
-                    meta = self.contents[str(selected_featureName)]
-                    crsCode = self.contents[str(selected_featureName)].crsOptions
-                    name = self.contents[str(selected_featureName)].id
-                    title = self.contents[str(selected_featureName)].title
-                    coordinates = self.contents[str(selected_featureName)].boundingBoxWGS84
-                    operations = self.contents[str(selected_featureName)].verbOptions
+                    self.dcLayerId.setText(self.contents[str(selected_featureName)].id)
+                    self.dcLayerDescription.setText(self.contents[str(selected_featureName)].title)
+                    self.dcULX.setText(str(self.contents[str(selected_featureName)].boundingBoxWGS84[0])) # 1st item in bbox tuple
+                    self.dcLRX.setText(str(self.contents[str(selected_featureName)].boundingBoxWGS84[1]))
+                    self.dcULY.setText(str(self.contents[str(selected_featureName)].boundingBoxWGS84[2]))
+                    self.dcLRY.setText(str(self.contents[str(selected_featureName)].boundingBoxWGS84[3]))
+                    self.dcSRS.setText(self.contents[str(selected_featureName)].crsOptions[0])
+                    self.dcSRSreq.addItems(self.contents[str(selected_featureName)].crsOptions)
+                    #self.dcReqFormat.addItems(self.contents[str(selected_featureName)].supportedFormats) # returns a list of values that are unpacked into a combobo
+                    #print self.contents [str(selected_featureName)].supportedFormats# .__dict__['_service'].__dict__['contents']['sf:sfdem'].__dict__['_elem']#.supportedFormats
 
-            for elem in crsCode:
-                self.ESPGEdit.setText(elem)
-                if name:
-                    self.htmlView.setText("Name: " + name)
-                    self.htmlView.append('')
-                if title:
-                    self.htmlView.append("Title: " + title)
-                    self.htmlView.append('')
-                if elem:
-                    self.htmlView.append("SRS: " + str(elem))
-                    self.htmlView.append('')
-                if operations:
-                    self.htmlView.append("Operations: " + str(operations))
-                    self.htmlView.append('')
-                if coordinates:
-                    self.htmlView.append("LatLongBoundingBox:" + \
-                        '   minx= '+ str(coordinates[0]) + \
-                        '   miny= '+ str(coordinates[1]) + \
-                        '   maxx= '+ str(coordinates[2])  + \
-                        '   maxy= '+ str(coordinates[3])
-                    )
+        #display spatial subset in WFS window and set warning if data out of bounds
+        self.ssULX.setText(str(self.spatial_widget.bbox_tlx.text()))
+        self.ssULY.setText(str(self.spatial_widget.bbox_tly.text()))
+        self.ssLRX.setText(str(self.spatial_widget.bbox_brx.text()))
+        self.ssLRY.setText(str(self.spatial_widget.bbox_bry.text()))
 
-        if self.cbGetFeature.isChecked():
-            selected_featureName = self.lstFeatures.selectedItems()[0].text()
-            top_letf_X = self.minXEdit.text()
-            top_left_Y = self.minYEdit.text()
-            btm_right_X = self.maxXEdit.text()
-            btm_right_Y = self.maxYEdit.text()
-            wfs_url = self.parent_widget.line_edit_OGC_url.text()
-            vers = str(self.parent_widget.launchversion.currentText())
-            espg_number =  self.ESPGEdit.text()
+        #call to check spatial subset coordinates:
+        #   see SpatialTemporalConfigurationWidget for checkCoords()
+        message = self.spatial_widget.checkCoords(self.getBoundingBoxFeature())
+        if message:
+            self.showWarning(message)
 
-            if '?' in wfs_url:
-                parts = wfs_url.split('?')
-                url = parts[0]
-            else:
-                url = wfs_url
-                getFeatureBBoxUrl = wfs_url+ \
-                "?request=GetFeature&version="+vers+ \
-                "&typeName="+str(selected_featureName)+ \
-                "&BBOX="+str(top_letf_X) + ','+ str(top_left_Y) +',' + str(btm_right_X)+','+ str(btm_right_Y)+','+ str(espg_number)
-                self.GetFeatureEdit.setText(str(getFeatureBBoxUrl))
-        else:
-            self.GetFeatureEdit.setText("http://no getfeature request constructed")
+    def showWarning(self, message):
+        """Show user a warning dialog."""
+        self.setCursor(self.arrowCursor)
+        QtGui.QMessageBox.warning(self,"Error",message,QtGui.QMessageBox.Ok)
+
+
+    def loadRequests(self):
+        """ loadRequest() -> None
+        uses service data to populate the config widget populate fields
+        """
+        if self.parent_widget.service and self.parent_widget.service.service_valid:
+            self.contents = self.parent_widget.service.service.__dict__['contents']
+            for content in self.contents:
+                self.requestLbx.addItems([content])
 
 
 class WFSConfigurationWidget(OgcConfigurationWidget):
     """makes use of code style from OgcConfigurationWidget"""
-    def __init__(self,  module, controller, parent=None):
-        OgcConfigurationWidget.__init__(self,  module, controller, parent)
-        # pass in parent widget i.e. OgcCommonWidget class and SpatialWidget Class (read changed coords)
+    def __init__(self, module, controller, parent=None):
+        OgcConfigurationWidget.__init__(self, module, controller, parent)
+        # pass in parent widget i.e. OgcCommonWidget class and SpatialWidget Class to read changed coords
         self.wfs_config_widget = WFSCommonWidget(self.ogc_common_widget,  self.spatial_widget)
         # tabs
         self.tabs.insertTab(1, self.wfs_config_widget, "")
         self.tabs.setTabText(
             self.tabs.indexOf(self.wfs_config_widget),
             QtGui.QApplication.translate(
-                "WFSConfigurationWidget",
-                "WFS",
+                "OgcConfigurationWidget",
+                "WFS Specific Metadata",
                 None,
                 QtGui.QApplication.UnicodeUTF8
                 )
             )
+
         self.tabs.setTabToolTip(
             self.tabs.indexOf(self.wfs_config_widget),
             QtGui.QApplication.translate(
-                "WFSConfigurationWidget",
-                "WFS Configuration",
+                "OgcConfigurationWidget",
+                "Select WFS-specific parameters",
                 None,
                 QtGui.QApplication.UnicodeUTF8
+                    )
                 )
-            )
         self.tabs.setCurrentIndex(0)
 
     def constructRequest(self):
         """Return a URL request from configuration parameters
         Overwrites method defined in OgcConfigurationWidget.
         """
-        if self.wfs_config_widget.lstFeatures.selectedItems() == None or \
-            len(self.wfs_config_widget.lstFeatures.selectedItems()) == 0:
+        wfs_url = self.ogc_common_widget.line_edit_OGC_url.text()
+        WFSversion = str(self.ogc_common_widget.launchversion.currentText())
+        selectedFeatureId = str(self.wfs_config_widget.dcLayerId.text())
+        data = ''
+        # check for data in comboBoxes
+        try:
+            coord_system = self.wfs_config_widget.dcSRSreq.currentText()
+        except:
+            coord_system = None
+        try:
+            formats =  self.wfs_config_widget.dcReqFormat.currentText()
+        except:
+            formats = None
+        try:
+            spatial_limit = self.config.cbSpatial.currentText()
+        except:
+            spatial_limit = None
+
+        # details per request type:
+        rType = self.wfs_config_widget.dcRequestType.currentText()
+        if rType == 'DescribeFeatureType':
+            return wfs_url + \
+            "?service=WFS" + \
+            "&version=" + WFSversion + \
+            "&request=DescribeFeatureType" + \
+            "&typename=" + selectedFeatureId
+
+        elif rType == 'GetFeature':
+            wfs_url += \
+            "?service=WFS" + \
+            "&version=" + WFSversion + \
+            "&request=GetFeature" + \
+            "&typename=" + selectedFeatureId
+            if spatial_limit:  # spatial parameters
+                if spatial_limit == self.config.SPATIAL_OWN:
+                    # see SpatialTemporalConfigurationWidget
+                    bbox = self.getBoundingBoxString()
+                elif spatial_limit == self.config.SPATIAL_OFFERING:
+                    # see SosCommonWidget (this module)
+                    bbox = self.config.getBoundingBoxStringFeature()
+                else:
+                    traceback.print_exc()
+                    raise ModuleError(
+                        self,
+                        'Unknown WFS bounding box type' + ': %s' % str(error)
+                        )
+                wfs_url += "&bbox=" + bbox + \
+                ",urn:ogc:def:crs:=" + coord_system
+            return wfs_url
+
+        else:
+            traceback.print_exc()
             raise ModuleError(
                 self,
-                'Service type not selected'
+                'Unknown WFS request type' + ': %s' % str(error)
                 )
-        selected_type = str(self.wfs_config_widget.lstFeatures.selectedItems()[0].text())
-        espg_number =  str(self.wfs_config_widget.ESPGEdit.text())
-        wfs_url = str(self.ogc_common_widget.line_edit_OGC_url.text())
-        vers = str(self.ogc_common_widget.launchversion.currentText())
-        bbox = self.getBoundingBoxString() # see SpatialTemporalConfigurationWidget
-
-        if '?' in wfs_url:
-            parts = wfs_url.split('?')
-            url = parts[0]
-        else:
-            url = wfs_url
-
-        return url + \
-            "?request=GetFeature&version="+vers+ \
-            "&typeName="+selected_type+ \
-            "&BBOX="+bbox+ \
-            ",urn:ogc:def:crs:"+espg_number
-
