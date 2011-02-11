@@ -36,6 +36,11 @@ try:
 except:
     import geoinf.ogc.init as ogc_init
 
+#brings in dataanalytics modules
+try:
+    from dataanalytics import init as dataanalytics_init
+except:
+    import dataanalytics.init as dataanalytics_init
 
 
 def initialize(*args, **keywords):
@@ -90,7 +95,7 @@ def initialize(*args, **keywords):
     utils_init.initialize(*args, **keywords)
     postgis_init.initialize(*args,  **keywords)
     rpyc_init.initialize(*args, **keywords)
-
+    dataanalytics_init.initialize(*args, **keywords)
 
 
     #reg.add_module(RPyC, configureWidgetType=PythonSourceConfigurationWidget)
