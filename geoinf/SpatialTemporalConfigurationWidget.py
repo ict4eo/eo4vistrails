@@ -110,6 +110,18 @@ class SpatialWidget(QtGui.QWidget):
             message = MSG % 'X2,Y2'
         return message
 
+    def getBoundingBox(self):
+        """Return a tuple containing box co-ordinates.
+        Format: top-left X, top-left Y, bottom-left X, bottom-left Y
+
+        """
+        return (
+            self.bbox_tlx.text(),
+            self.bbox_tly.text(),
+            self.bbox_brx.text(),
+            self.bbox_bry.text()
+            )
+
 
 class TemporalWidget(QtGui.QWidget):
     """Set temporal bounds and interval parameters for querying datasets

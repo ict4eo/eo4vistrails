@@ -338,7 +338,7 @@ class SOSConfigurationWidget(OgcConfigurationWidget):
         Overwrites method defined in OgcConfigurationWidget.
         """
         data = ''
-        type = self.config.cbRequest.currentText()
+        rType = self.config.cbRequest.currentText()
         try:
             procedure = self.config.cbProcedure.currentText()
         except:
@@ -381,21 +381,21 @@ class SOSConfigurationWidget(OgcConfigurationWidget):
         WARNING_CHOICE  = 'Either %s or %s must be chosen for a "%s" request.'
         WARNING_ONLY_ONE  = 'Cannot select both %s and %s for a "%s" request.'
         # process by request type
-        if type == 'DescribeSensor':
+        if rType == 'DescribeSensor':
             if procedure:
                 data += '<procedure>' + procedure + '</procedure>\n'
             else:
-                self.showWarning(WARNING_MUST % ('Procedure', type))
+                self.showWarning(WARNING_MUST % ('Procedure', rType))
                 return None
 
-        elif type == 'GetFeatureOfInterest':
+        elif rType == 'GetFeatureOfInterest':
             if not(foi) and not(spatial_limit):
                 self.showWarning(WARNING_CHOICE %
-                    ('Spatial Limit','Feature of Interest', type))
+                    ('Spatial Limit','Feature of Interest', rType))
                 return None
             if spatial_limit and foi:
                 self.showWarning(WARNING_ONLY_ONE %
-                    ('Spatial Limit','Feature of Interest', type))
+                    ('Spatial Limit','Feature of Interest', rType))
                 return None
             if foi:
                 data += '<FeatureOfInterestId>' + \
@@ -418,11 +418,11 @@ class SOSConfigurationWidget(OgcConfigurationWidget):
                     '</gml:upperCorner>\n' + \
                     '  </gml:Envelope>\n' + ' </ogc:BBOX>\n</location>\n'
 
-        elif type == 'GetObservation':
+        elif rType == 'GetObservation':
             if offering:
                 data += '<offering>' + offering + '</offering>\n'
             else:
-                self.showWarning(WARNING_MUST % ('Offering', type))
+                self.showWarning(WARNING_MUST % ('Offering', rType))
                 return None
             if time_limit:  # time params
                 if time_limit == self.config.TIME_OWN:
@@ -442,18 +442,18 @@ class SOSConfigurationWidget(OgcConfigurationWidget):
             if procedure:
                 if not mode:
                     self.showWarning(WARNING_MUST + 'If a procedure is chosen'
-                                     % ('Response Mode', type))
+                                     % ('Response Mode', rType))
                     return None
                 else:
                     data += '<procedure>' + procedure + '</procedure>\n'
             if obs_prop:
                 data += '<observedProperty>' + obs_prop + '</observedProperty>\n'
             else:
-                self.showWarning(WARNING_MUST % ('Observed Property', type))
+                self.showWarning(WARNING_MUST % ('Observed Property', rType))
                 return None
             if spatial_limit and foi:
                 self.showWarning(WARNING_ONLY_ONE %
-                    ('Spatial Limit','Feature of Interest', type))
+                    ('Spatial Limit','Feature of Interest', rType))
                 return None
             if foi:
                 data += '<featureOfInterest><ObjectID>' + \
@@ -484,7 +484,7 @@ class SOSConfigurationWidget(OgcConfigurationWidget):
             if format:
                 data += '<responseFormat>' + format + '</responseFormat>\n'
             else:
-                self.showWarning(WARNING_MUST % ('Response Format', type))
+                self.showWarning(WARNING_MUST % ('Response Format', rType))
                 return None
             if model:
                 data += '<resultModel>' + model + '</resultModel>\n'
@@ -492,7 +492,7 @@ class SOSConfigurationWidget(OgcConfigurationWidget):
                 data += '<responseMode>' + mode + '</responseMode>\n'
 
         # wrapper
-        if type == 'DescribeSensor':
+        if rType == 'DescribeSensor':
             header = \
             """<DescribeSensor service="SOS" version="1.0.0"
             xmlns="http://www.opengis.net/sos/1.0"
@@ -501,7 +501,7 @@ class SOSConfigurationWidget(OgcConfigurationWidget):
             http://schemas.opengis.net/sos/1.0.0/sosDescribeSensor.xsd"
             outputFormat="text/xml;subtype=&quot;sensorML/1.0.1&quot;">\n"""
             data = header + data + '</DescribeSensor>'
-        elif type == 'GetFeatureOfInterest':
+        elif rType == 'GetFeatureOfInterest':
             header = \
             """<GetFeatureOfInterest service="SOS" version="1.0.0"
             xmlns="http://www.opengis.net/sos/1.0"
@@ -512,7 +512,7 @@ class SOSConfigurationWidget(OgcConfigurationWidget):
             xsi:schemaLocation="http://www.opengis.net/sos/1.0
             http://schemas.opengis.net/sos/1.0.0/sosGetFeatureOfInterest.xsd">\n"""
             data = header + data + '</GetFeatureOfInterest>\n'
-        elif type == 'GetObservation':
+        elif rType == 'GetObservation':
             header = \
             """<GetObservation service="SOS" version="1.0.0"
             xmlns="http://www.opengis.net/sos/1.0"
@@ -527,10 +527,9 @@ class SOSConfigurationWidget(OgcConfigurationWidget):
             srsName="%s">\n""" % self.config.lblSRS.text()
             data = header + data + '</GetObservation>\n'
         else:
-            traceback.print_exc()
             raise ModuleError(
                 self,
-                'Unknown request type: check Request combobox' + ': %s' % str(error)
+                'Unknown SOS request type' + ': %s' % str(rType)
                 )
         # xml header
         data = '<?xml version="1.0" encoding="UTF-8"?>\n' + data

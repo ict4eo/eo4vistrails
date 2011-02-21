@@ -84,6 +84,9 @@ class WCSCommonWidget(QtGui.QWidget):
 
     def create_wcs_config_window(self):
         """TO DO - add docstring"""
+        # text for combo boxes
+        self.SPATIAL_OFFERING = 'Use Coverage Bounding Box'
+        self.SPATIAL_OWN = 'Use Own Bounding Box'
         # add widgets here!
         self.mainLayout = QtGui.QHBoxLayout()
         self.setLayout(self.mainLayout)
@@ -123,7 +126,8 @@ class WCSCommonWidget(QtGui.QWidget):
         self.detailsLayout.addWidget(QtGui.QLabel('Required Bands:'), 9, 0)
         self.detailsLayout.addWidget(QtGui.QLabel('Required Output SRS:'), 10, 0)
         self.detailsLayout.addWidget(QtGui.QLabel('Required Output Format:'), 11, 0)
-        self.detailsLayout.addWidget(QtGui.QLabel('Required Request Type:'), 12, 0)
+        self.detailsLayout.addWidget(QtGui.QLabel('Spatial Delimiter?'), 12, 0)
+        self.detailsLayout.addWidget(QtGui.QLabel('Required Request Type:'), 13, 0)
 
         # Data containers
         self.dcLayerId = QtGui.QLabel('__')
@@ -168,8 +172,14 @@ class WCSCommonWidget(QtGui.QWidget):
         self.dcReqFormat = QtGui.QComboBox()
         self.detailsLayout.addWidget(self.dcReqFormat, 11, 1)
         self.dcRequestType = QtGui.QComboBox()
-        self.detailsLayout.addWidget(self.dcRequestType, 12, 1)
-        self.dcRequestType.addItem('GetCapabilities')
+
+        self.cbSpatial = QtGui.QComboBox()
+        self.detailsLayout.addWidget(self.cbSpatial, 12, 1)
+        self.cbSpatial.addItem(self.SPATIAL_OFFERING)
+        self.cbSpatial.addItem(self.SPATIAL_OWN)
+        self.cbSpatial.addItem('')
+
+        self.detailsLayout.addWidget(self.dcRequestType, 13, 1)
         self.dcRequestType.addItem('DescribeCoverage')
         self.dcRequestType.addItem('GetCoverage')
 
@@ -183,11 +193,14 @@ class WCSCommonWidget(QtGui.QWidget):
         #for message box
         self.arrowCursor = QtGui.QCursor(QtCore.Qt.ArrowCursor)
 
-    def getBoundingBoxStringLayer(self):
-        """Return a comma-delimited string containing box co-ordinates."""
-        bbox = self.getBoundingBox()
-        return str(self.dcULX.text()) + ',' + str(self.dcULY.text()) + ','\
-            +  str(self.dcLRX.text()) + ',' + str(self.dcLRY.text())
+    def getBoundingBoxStringCoverage(self):
+        """Return a comma-delimited string containing box co-ordinates.
+
+        Format: top-left X,Y  bottom-right X,Y
+        """
+        bbox = self.spatial_widget.getBoundingBox()
+        return str(self.dcULX.text()) + ',' + str(self.dcLRX.text()) + ','\
+            +  str(self.dcULY.text()) + ',' + str(self.dcLRY.text())
 
     def removeRequests(self):
         """Remove all details when no WCS is selected."""
@@ -215,8 +228,17 @@ class WCSCommonWidget(QtGui.QWidget):
         selected_coverageName = self.requestLbx.selectedItems()[0].text()
         if self.parent_widget.service and self.parent_widget.service.service_valid and self.contents:
             for content in self.contents:
-                print self.contents[content].supportedFormats
                 if selected_coverageName == content:
+
+                    print "wcs.py:233 coverage\n",selected_coverageName
+                    if self.contents[str(selected_coverageName)].grid:
+                        grid = self.contents[str(selected_coverageName)].grid
+                        print "wcs.py:236 grid info:", grid.dimension, \
+                            type(grid.dimension), grid.axislabels, \
+                            grid.highlimits, grid.lowlimits
+                    print "wcs.py:239 timelimits:", self.contents[str(selected_coverageName)].timelimits
+                    print "wcs.py:240 timepositions:", self.contents[str(selected_coverageName)].timepositions
+
                     self.dcLayerId.setText(self.contents[str(selected_coverageName)].id)
                     self.dcLayerDescription.setText(self.contents[str(selected_coverageName)].title)
                     self.dcULX.setText(str(self.contents[str(selected_coverageName)].boundingBoxWGS84[0])) # 1st item in bbox tuple
@@ -305,13 +327,8 @@ class WCSConfigurationWidget(OgcConfigurationWidget):
         wcs_url = self.ogc_common_widget.line_edit_OGC_url.text()
         WCSversion = str(self.ogc_common_widget.launchversion.currentText())
         selectedCoverageId = str(self.wcs_config_widget.dcLayerId.text())
-        # TO DO": can remove next 4 lines once "return wcs_url" modified...
-        ULX=str(self.wcs_config_widget.dcULX.text())
-        ULY=str(self.wcs_config_widget.dcULY.text())
-        BRX=str(self.wcs_config_widget.dcLRX.text())
-        BRY=str(self.wcs_config_widget.dcLRY.text())
-
         data = ''
+
         # check for data in comboBoxes
         try:
             bands = self.wcs_config_widget.dcBandsreq.currentText()
@@ -326,9 +343,26 @@ class WCSConfigurationWidget(OgcConfigurationWidget):
         except:
             formats = None
         try:
-            spatial_limit = self.config.cbSpatial.currentText()
+            spatial_limit = self.wcs_config_widget.cbSpatial.currentText()
         except:
             spatial_limit = None
+
+        # spatial
+        if spatial_limit:  # spatial parameters
+            if spatial_limit == self.wcs_config_widget.SPATIAL_OWN:
+                # see SpatialTemporalConfigurationWidget
+                self.bbox = self.spatial_widget.getBoundingBoxString()
+            elif spatial_limit == self.wcs_config_widget.SPATIAL_OFFERING:
+                # see WcsCommonWidget (this module)
+                self.bbox = self.wcs_config_widget.getBoundingBoxStringCoverage()
+            else:
+                traceback.print_exc()
+                raise ModuleError(
+                    self,
+                    'Unknown WCS bounding box type' + ': %s' % str(error)
+                    )
+        else:
+            self.bbox = None
 
         # details per request type:
         rType = self.wcs_config_widget.dcRequestType.currentText()
@@ -347,7 +381,7 @@ class WCSConfigurationWidget(OgcConfigurationWidget):
             myWCS = self.wcs_config_widget.parent_widget.service.service
             description = myWCS.getDescribeCoverage(selectedCoverageId)
             #describe_doc= description.read()
-            print description
+            #print "wcs.py:361", description
 
             return wcs_url + \
             "?SERVICE=WCS" + \
@@ -359,28 +393,34 @@ class WCSConfigurationWidget(OgcConfigurationWidget):
             myWCS = self.wcs_config_widget.parent_widget.service.service
             response = myWCS.getCoverage(
                 identifier=selectedCoverageId,
-                bbox=(ULX, ULY, BRX, BRY),
+                bbox=self.bbox,
                 crs= coord_system,
                 format=formats)
-            # TO DO - need to verify that this is how files are handled in VT
+            # TO DO - update this to handle files as per VisTrails "filePool"
+            # http://www.vistrails.org/index.php/UsersGuideVisTrailsPackages#Dealing_with_command_line_tools_and_side_effects
+            # derek->bolelang -- why do we want to do this???
             f=open('myfile.'+ formats,  'wb')
             f.write(response.read())
             f.close()
 
-            # TO DO - modify this as per the equivalent section in WFS
-            return wcs_url + \
-            "?SERVICE=WCS" + \
-            "&version=" + WCSversion + \
-            "&request=GetCoverage" + \
-            "&COVERAGE=" + selectedCoverageId + \
-            "&bbox=" + ULX + "," + ULY + "," + BRX + "," + BRY + \
-            "&crs=" + coord_system + \
-            "&format=" + formats + \
-            "&resx=10&resy=10"
+            wcs_url += \
+                "?service=WCS" + \
+                "&version=" + WCSversion + \
+                "&request=GetCoverage" + \
+                "&coverage=" + selectedCoverageId
+            if self.bbox:
+                #print "wcs.py:400 bbox=", self.bbox
+                wcs_url += "&bbox=" + self.bbox + \
+                    "&crs=" + coord_system
+            #"&bbox=" + ULX + "," + ULY + "," + BRX + "," + BRY + \
+            wcs_url += \
+                "&format=" + formats + \
+                "&resx=10&resy=10"
+                #TO DO -- need a way for user to specify resX and resY or height/width
+            return wcs_url
 
         else:
-            traceback.print_exc()
             raise ModuleError(
                 self,
-                'Unknown WCS request type' + ': %s' % str(error)
+                'Unknown WCS request type' + ': %s' % str(rType)
                 )

@@ -85,7 +85,7 @@ class WFSCommonWidget(QtGui.QWidget):
     def create_wfs_config_window(self):
         """TO DO - add docstring"""
         # text for combo boxes
-        self.SPATIAL_OFFERING = 'Use Offering Bounding Box'
+        self.SPATIAL_OFFERING = 'Use Feature Bounding Box'
         self.SPATIAL_OWN = 'Use Own Bounding Box'
         # add widgets here!
         self.mainLayout = QtGui.QHBoxLayout()
@@ -175,13 +175,12 @@ class WFSCommonWidget(QtGui.QWidget):
 
         self.cbSpatial = QtGui.QComboBox()
         self.detailsLayout.addWidget(self.cbSpatial, 12, 1)
-        self.cbSpatial.addItem('')
         self.cbSpatial.addItem(self.SPATIAL_OFFERING)
         self.cbSpatial.addItem(self.SPATIAL_OWN)
+        self.cbSpatial.addItem('')
 
         self.dcRequestType = QtGui.QComboBox()
         self.detailsLayout.addWidget(self.dcRequestType, 13, 1)
-        self.dcRequestType.addItem('GetCapabilities')
         self.dcRequestType.addItem('DescribeFeatureType')
         self.dcRequestType.addItem('GetFeature')
 
@@ -196,10 +195,13 @@ class WFSCommonWidget(QtGui.QWidget):
         self.arrowCursor = QtGui.QCursor(QtCore.Qt.ArrowCursor)
 
     def getBoundingBoxStringFeature(self):
-        """Return a comma-delimited string containing box co-ordinates."""
-        bbox = self.getBoundingBox()
-        return str(self.dcULX.text()) + ',' + str(self.dcULY.text()) + ','\
-            +  str(self.dcLRX.text()) + ',' + str(self.dcLRY.text())
+        """Return a comma-delimited string containing box co-ordinates.
+
+        Format: top-left X,Y  bottom-right X,Y
+        """
+        bbox = self.spatial_widget.getBoundingBox()
+        return str(self.dcULX.text()) + ',' + str(self.dcLRX.text()) + ','\
+            +  str(self.dcULY.text()) + ',' + str(self.dcLRY.text())
 
     def getBoundingBoxFeature(self):
         """Return a tuple containing box co-ordinates for selected lfeature.
@@ -326,7 +328,7 @@ class WFSConfigurationWidget(OgcConfigurationWidget):
         except:
             formats = None
         try:
-            spatial_limit = self.config.cbSpatial.currentText()
+            spatial_limit = self.wfs_config_widget.cbSpatial.currentText()
         except:
             spatial_limit = None
 
@@ -346,12 +348,12 @@ class WFSConfigurationWidget(OgcConfigurationWidget):
             "&request=GetFeature" + \
             "&typename=" + selectedFeatureId
             if spatial_limit:  # spatial parameters
-                if spatial_limit == self.config.SPATIAL_OWN:
+                if spatial_limit == self.wfs_config_widget.SPATIAL_OWN:
                     # see SpatialTemporalConfigurationWidget
                     bbox = self.getBoundingBoxString()
-                elif spatial_limit == self.config.SPATIAL_OFFERING:
-                    # see SosCommonWidget (this module)
-                    bbox = self.config.getBoundingBoxStringFeature()
+                elif spatial_limit == self.wfs_config_widget.SPATIAL_OFFERING:
+                    # see WfsCommonWidget (this module)
+                    bbox = self.wfs_config_widget.getBoundingBoxStringFeature()
                 else:
                     traceback.print_exc()
                     raise ModuleError(
@@ -363,8 +365,7 @@ class WFSConfigurationWidget(OgcConfigurationWidget):
             return wfs_url
 
         else:
-            traceback.print_exc()
             raise ModuleError(
                 self,
-                'Unknown WFS request type' + ': %s' % str(error)
+                'Unknown WFS request type' + ': %s' % str(rType)
                 )
