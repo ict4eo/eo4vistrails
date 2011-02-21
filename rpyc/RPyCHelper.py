@@ -47,53 +47,6 @@ from core.modules.vistrails_module import *
 from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeModule
 from RPyCNode import RPyCModule, RPyCNode
 
-class OneAbstract(NotCacheable, Module):
-    """TO DO - add docstring"""
-    def __init__(self):
-        Module.__init__(self)
-
-    def runcmd(self, operation):
-        import paramiko   
-        client = paramiko.SSHClient()
-        client.load_system_host_keys()  
-        self.username = self.getInputFromPort("username")
-        self.password = self.getInputFromPort("password")
-        self.server = self.getInputFromPort("server")
-        client.connect(self.server,username=self.username,password=self.password)
-        i,o,e = client.exec_command(operation)
-        self.setResult("stdout", o.readlines())
-        self.setResult("stderr", e.readlines())
-
-    def compute(self):
-        """Vistrails Module Compute, Entry Point Refer, to Vistrails Docs"""
-        pass
-
-
-class OneCmd(OneAbstract):
-    """TO DO - add docstring"""
-    # This constructor is strictly unnecessary. However, some modules
-    # might want to initialize per-object data. When implementing your
-    # own constructor, remember that it must not take any extra
-    # parameters.def __init__(self):
-    def __init__(self):
-        OneAbstract.__init__(self)
-
-    def compute(self):
-        """Vistrails Module Compute, Entry Point Refer, to Vistrails Docs"""
-        operation = self.getInputFromPort("operation")
-        self.runcmd(operation)
-
-
-class OneVM_List(OneAbstract):
-    """TO DO - add docstring"""
-    def __init__(self):
-        OneAbstract.__init__(self)
-
-    def compute(self):
-        """Vistrails Module Compute, Entry Point Refer, to Vistrails Docs"""
-        self.runcmd("source .one-env; onevm list")
-        
-
 ################################################################################
 # RPyC
 #

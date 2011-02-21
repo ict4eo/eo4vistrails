@@ -85,8 +85,6 @@ class PostGisCursor():
         else:
             self.conn_type = "psycopg2"
             
-            
-
     def cursor(self,  PostGisSessionObj):
         
         if self.conn_type == "psycopg2":
@@ -165,11 +163,18 @@ class PostGisBasicReturningCursor(Module, PostGisCursor):
         if self.cursor(self.getInputFromPort("PostGisSessionObject")) == True:
             try:
                 port_input = urllib.unquote(str(self.forceGetInputFromPort('source', '')))
+                '''here we substitute input port values within the source'''
+                for k in self.inputPorts:
+                    value = self.getInputFromPort(k)
+                    print k, type(k), value
+                    port_input = port_input.replace(k, value.__str__())
+                print port_input
                 self.curs.execute(port_input)
                 self.sql_return_list = self.curs.fetchall()
                 self.setResult('records',  self.sql_return_list)
                 self.curs.close()
-            except:
+            except Exception as ex:
+                print ex
                 raise ModuleError,  (PostGisFeatureReturningCursor,  "Could not execute SQL Statement")
                 #set output port to receive this list
 
@@ -211,6 +216,8 @@ class PostGisNonReturningCursor(Module, PostGisCursor):
 
 
 class SQLSourceConfigurationWidget(SourceConfigurationWidget):
-    def __init__(self, module, controller, parent=None):
-        SourceConfigurationWidget.__init__(self, module, controller, None,
-                                           False, False, parent)
+    pass
+'''removed by tvz so as to allow for parameterisation of SQL queries'''
+    #def __init__(self, module, controller, parent=None):
+    #    SourceConfigurationWidget.__init__(self, module, controller, None,
+    #                                       False, False, parent)

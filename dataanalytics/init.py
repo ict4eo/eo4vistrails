@@ -56,7 +56,7 @@ def initialize(*args, **keywords):
     #Add RPyC
     reg.add_module(PySAL.W,
                    namespace=mynamespace)
-    reg.add_input_port(PySAL.W, 'neighbours',
+    reg.add_input_port(PySAL.W, 'neighbors',
                        basic_modules.Dictionary)
     reg.add_input_port(PySAL.W, 'weights',
                        basic_modules.Dictionary)

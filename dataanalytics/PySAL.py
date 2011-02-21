@@ -54,5 +54,4 @@ class W(PySALModule, Module, pysal.W):
     def compute(self):
         self.neighbors = self.forceGetInputFromPort('neighbors')
         self.weights = self.forceGetInputFromPort('weights')
-        self.setResult("value", self)        
-        pass
+        self.setResult("value", self)
