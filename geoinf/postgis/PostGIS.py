@@ -131,12 +131,17 @@ class PostGisFeatureReturningCursor(PostGisCursor, MemFeatureModel):
             try:
                 sql_input = urllib.unquote(str(self.forceGetInputFromPort('source', '')))
                 sql_input = sql_input.split(";")[0]#ogr does not want a trailing ';'
+                '''here we substitute input port values within the source'''
+                for k in self.inputPorts:
+                    value = self.getInputFromPort(k)
+                    sql_input = sql_input.replace(k, value.__str__())
                 #print "got sql input"
                 ogr_conn = self.getInputFromPort("PostGisSessionObject").ogr_connectstr               
                 #print "checking connection: connectstr: %s, sql: %s" % (ogr_conn,  sql_input)
                 self.loadContentFromDB(ogr_conn, sql_input)
 
-            except:
+            except Exception as ex:
+                print ex
                 raise ModuleError,  (PostGisFeatureReturningCursor,  "Could not execute SQL Statement")
             #do stuff with this return list -> make it into an OGR dataset
             #see (http://trac.osgeo.org/postgis/wiki/UsersWikiOGR, http://www.gdal.org/ogr/drv_memory.htm, ogr memory driver python in google)
@@ -166,9 +171,7 @@ class PostGisBasicReturningCursor(Module, PostGisCursor):
                 '''here we substitute input port values within the source'''
                 for k in self.inputPorts:
                     value = self.getInputFromPort(k)
-                    print k, type(k), value
                     port_input = port_input.replace(k, value.__str__())
-                print port_input
                 self.curs.execute(port_input)
                 self.sql_return_list = self.curs.fetchall()
                 self.setResult('records',  self.sql_return_list)
@@ -202,6 +205,9 @@ class PostGisNonReturningCursor(Module, PostGisCursor):
                 port_input = urllib.unquote(str(self.forceGetInputFromPort('source', '')))
                 port_input = port_input.rstrip()
                 port_input = port_input.lstrip()
+                for k in self.inputPorts:
+                    value = self.getInputFromPort(k)
+                    port_input = port_input.replace(k, value.__str__())
                 for query in port_input.split(";"):
                     if len(query) != 0:
                         if query[len(query)-1] != ";": query = query + ";"
