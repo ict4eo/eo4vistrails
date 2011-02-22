@@ -90,14 +90,14 @@ class WCSCommonWidget(QtGui.QWidget):
         # add widgets here!
         self.mainLayout = QtGui.QHBoxLayout()
         self.setLayout(self.mainLayout)
-        self.requestsGroupBox = QtGui.QGroupBox("WCS Request Layers")
+        self.requestsGroupBox = QtGui.QGroupBox("WCS Request Coverages")
         self.requestsLayout = QtGui.QVBoxLayout()
         self.requestsGroupBox.setLayout(self.requestsLayout)
         self.mainLayout.addWidget(self.requestsGroupBox)
         # add a horizontal split to split the window equally
         self.split = QtGui.QSplitter(QtCore.Qt.Vertical)
         self.mainLayout.addWidget(self.split)
-        self.detailsGroupBox = QtGui.QGroupBox("WCS Layer Details")
+        self.detailsGroupBox = QtGui.QGroupBox("WCS Coverage Details")
         self.mainLayout.addWidget(self.detailsGroupBox)
         self.detailsLayout = QtGui.QGridLayout()
         self.detailsGroupBox.setLayout(self.detailsLayout)
@@ -107,8 +107,8 @@ class WCSCommonWidget(QtGui.QWidget):
 
         # WCS Request details layout
         # Labels
-        self.detailsLayout.addWidget(QtGui.QLabel('Layer ID:'), 0, 0)
-        self.detailsLayout.addWidget(QtGui.QLabel('Layer Description:'), 1, 0)
+        self.detailsLayout.addWidget(QtGui.QLabel('Coverage ID:'), 0, 0)
+        self.detailsLayout.addWidget(QtGui.QLabel('Coverage Description:'), 1, 0)
 
         self.detailsLayout.addWidget(QtGui.QLabel('BBox - data bounds:'), 2, 0)
         self.detailsLayout.addWidget(QtGui.QLabel('ULX:'), 3, 0)
@@ -122,12 +122,15 @@ class WCSCommonWidget(QtGui.QWidget):
         self.detailsLayout.addWidget(QtGui.QLabel('ULY:'), 7, 0)
         self.detailsLayout.addWidget(QtGui.QLabel('LRY:'), 7, 2)
 
-        self.detailsLayout.addWidget(QtGui.QLabel('SRS:'), 8, 0)
-        self.detailsLayout.addWidget(QtGui.QLabel('Required Bands:'), 9, 0)
-        self.detailsLayout.addWidget(QtGui.QLabel('Required Output SRS:'), 10, 0)
-        self.detailsLayout.addWidget(QtGui.QLabel('Required Output Format:'), 11, 0)
-        self.detailsLayout.addWidget(QtGui.QLabel('Spatial Delimiter?'), 12, 0)
-        self.detailsLayout.addWidget(QtGui.QLabel('Required Request Type:'), 13, 0)
+        self.detailsLayout.addWidget(QtGui.QLabel('Width:'), 8, 0)
+        self.detailsLayout.addWidget(QtGui.QLabel('Height:'), 8, 2)
+
+        self.detailsLayout.addWidget(QtGui.QLabel('SRS:'), 9, 0)
+        self.detailsLayout.addWidget(QtGui.QLabel('Required Bands:'), 10, 0)
+        self.detailsLayout.addWidget(QtGui.QLabel('Required Output SRS:'), 11, 0)
+        self.detailsLayout.addWidget(QtGui.QLabel('Required Output Format:'), 12, 0)
+        self.detailsLayout.addWidget(QtGui.QLabel('Spatial Delimiter?'), 13, 0)
+        self.detailsLayout.addWidget(QtGui.QLabel('Required Request Type:'), 14, 0)
 
         # Data containers
         self.dcLayerId = QtGui.QLabel('__')
@@ -163,23 +166,30 @@ class WCSCommonWidget(QtGui.QWidget):
         #self.ssLRY.setEnabled(False)
         self.detailsLayout.addWidget(self.ssLRY, 7,3)
 
+        self.dcWidth = QtGui.QLabel(' ')
+        #self.dcWidth.setEnabled(False)
+        self.detailsLayout.addWidget(self.dcWidth, 8,1)
+        self.dcHeight = QtGui.QLabel(' ')
+        #self.dcHeight.setEnabled(False)
+        self.detailsLayout.addWidget(self.dcHeight, 8,3)
+
         self.dcSRS = QtGui.QLabel('__')
-        self.detailsLayout.addWidget(self.dcSRS, 8, 1)
+        self.detailsLayout.addWidget(self.dcSRS, 9, 1)
         self.dcBandsreq = QtGui.QComboBox()
-        self.detailsLayout.addWidget(self.dcBandsreq, 9, 1)
+        self.detailsLayout.addWidget(self.dcBandsreq, 10, 1)
         self.dcSRSreq = QtGui.QComboBox()
-        self.detailsLayout.addWidget(self.dcSRSreq, 10, 1)
+        self.detailsLayout.addWidget(self.dcSRSreq, 11, 1)
         self.dcReqFormat = QtGui.QComboBox()
-        self.detailsLayout.addWidget(self.dcReqFormat, 11, 1)
+        self.detailsLayout.addWidget(self.dcReqFormat, 12, 1)
         self.dcRequestType = QtGui.QComboBox()
 
         self.cbSpatial = QtGui.QComboBox()
-        self.detailsLayout.addWidget(self.cbSpatial, 12, 1)
+        self.detailsLayout.addWidget(self.cbSpatial, 13, 1)
         self.cbSpatial.addItem(self.SPATIAL_OFFERING)
         self.cbSpatial.addItem(self.SPATIAL_OWN)
         self.cbSpatial.addItem('')
 
-        self.detailsLayout.addWidget(self.dcRequestType, 13, 1)
+        self.detailsLayout.addWidget(self.dcRequestType, 14, 1)
         self.dcRequestType.addItem('DescribeCoverage')
         self.dcRequestType.addItem('GetCoverage')
 
@@ -230,14 +240,39 @@ class WCSCommonWidget(QtGui.QWidget):
             for content in self.contents:
                 if selected_coverageName == content:
 
-                    print "wcs.py:233 coverage\n",selected_coverageName
                     if self.contents[str(selected_coverageName)].grid:
                         grid = self.contents[str(selected_coverageName)].grid
+                        self.dcWidth.setText(str(grid.highlimits[0]))
+                        self.dcHeight.setText(str(grid.highlimits[1]))
+
+                    """ NOTE (by Derek Hohls, 2011/2/22):
+
+                    Accessing and interpreting axis information to extract
+                    meaning about bands is NOT a trivial operation.  See pages
+                    37 and 38 (and preceding) in the OGC WCS spec. (ref:
+                    07-067r5_Web_Coverage_Service_WCS_version_1.1_Corrigendum_2.pdf)
+
+                    For the purpose of extracting images, this module assumes
+                    that the two values encoded in <gml:high></gml:high> element
+                    represent the expected width/height of the image.
+
+                    It is not known at present how to extract reasonable values
+                    for the spatial resolution (resX and resY).
+
+                    Time limits are also quite "fiddly" and still need to be
+                    addressed.
+
+                    print "wcs.py:233 coverage\n",selected_coverageName
+
                         print "wcs.py:236 grid info:", grid.dimension, \
                             type(grid.dimension), grid.axislabels, \
                             grid.highlimits, grid.lowlimits
-                    print "wcs.py:239 timelimits:", self.contents[str(selected_coverageName)].timelimits
-                    print "wcs.py:240 timepositions:", self.contents[str(selected_coverageName)].timepositions
+                    print "wcs.py:239 timelimits:", \
+                        self.contents[str(selected_coverageName)].timelimits
+                    print "wcs.py:240 timepositions:", \
+                        self.contents[str(selected_coverageName)].timepositions
+
+                    """
 
                     self.dcLayerId.setText(self.contents[str(selected_coverageName)].id)
                     self.dcLayerDescription.setText(self.contents[str(selected_coverageName)].title)
@@ -327,6 +362,8 @@ class WCSConfigurationWidget(OgcConfigurationWidget):
         wcs_url = self.ogc_common_widget.line_edit_OGC_url.text()
         WCSversion = str(self.ogc_common_widget.launchversion.currentText())
         selectedCoverageId = str(self.wcs_config_widget.dcLayerId.text())
+        width = str(self.wcs_config_widget.dcWidth.text())
+        height = str(self.wcs_config_widget.dcHeight.text())
         data = ''
 
         # check for data in comboBoxes
@@ -367,9 +404,11 @@ class WCSConfigurationWidget(OgcConfigurationWidget):
         # details per request type:
         rType = self.wcs_config_widget.dcRequestType.currentText()
         if rType == 'DescribeCoverage':
-            """was trying to get the contents of getDescribeCoverage to display in xml format on the terminal,
-            but that does not working becasue getDescribeCoverage only returns an element tree object not the actual xml
-            see the printed result on the terminal - therefore we can only get a url out of this request see code below -
+            """was trying to get the contents of getDescribeCoverage to display
+            in xml format on the terminal, but that does not working becasue
+            getDescribeCoverage only returns an element tree object not the
+            actual xml - see the printed result on the terminal -
+            therefore we can only get a url out of this request see code below -
             I stand to be corrected if my research findings are wrong?
 
             NOTE BY DEREK:
@@ -383,11 +422,12 @@ class WCSConfigurationWidget(OgcConfigurationWidget):
             #describe_doc= description.read()
             #print "wcs.py:361", description
 
-            return wcs_url + \
+            wcs_url += \
             "?SERVICE=WCS" + \
             "&version=" + WCSversion + \
             "&request=DescribeCoverage" + \
             "&COVERAGE=" + selectedCoverageId
+            return 'GET', wcs_url
 
         elif rType == 'GetCoverage':
             myWCS = self.wcs_config_widget.parent_widget.service.service
@@ -398,26 +438,28 @@ class WCSConfigurationWidget(OgcConfigurationWidget):
                 format=formats)
             # TO DO - update this to handle files as per VisTrails "filePool"
             # http://www.vistrails.org/index.php/UsersGuideVisTrailsPackages#Dealing_with_command_line_tools_and_side_effects
-            # derek->bolelang -- why do we want to do this???
+            # derek->bolelang -- so why do we want to do this???
             f=open('myfile.'+ formats,  'wb')
             f.write(response.read())
             f.close()
 
             wcs_url += \
-                "?service=WCS" + \
+                "?SERVICE=WCS" + \
                 "&version=" + WCSversion + \
                 "&request=GetCoverage" + \
-                "&coverage=" + selectedCoverageId
+                "&COVERAGE=" + selectedCoverageId
             if self.bbox:
-                #print "wcs.py:400 bbox=", self.bbox
+                # OLD CODE: "&bbox=" + ULX + "," + ULY + "," + BRX + "," + BRY + \
+                #print "wcs.py:450 bbox=", self.bbox
                 wcs_url += "&bbox=" + self.bbox + \
                     "&crs=" + coord_system
-            #"&bbox=" + ULX + "," + ULY + "," + BRX + "," + BRY + \
             wcs_url += \
                 "&format=" + formats + \
-                "&resx=10&resy=10"
-                #TO DO -- need a way for user to specify resX and resY or height/width
-            return wcs_url
+                "&width=" + width + \
+                "&height=" + height
+                #"&resx=10&resy=10"
+                #TO DO -- allow user to specify resX and resY or height/width
+            return 'GET', wcs_url
 
         else:
             raise ModuleError(

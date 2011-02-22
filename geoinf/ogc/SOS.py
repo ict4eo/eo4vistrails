@@ -386,17 +386,17 @@ class SOSConfigurationWidget(OgcConfigurationWidget):
                 data += '<procedure>' + procedure + '</procedure>\n'
             else:
                 self.showWarning(WARNING_MUST % ('Procedure', rType))
-                return None
+                return None, None
 
         elif rType == 'GetFeatureOfInterest':
             if not(foi) and not(spatial_limit):
                 self.showWarning(WARNING_CHOICE %
                     ('Spatial Limit','Feature of Interest', rType))
-                return None
+                return None, None
             if spatial_limit and foi:
                 self.showWarning(WARNING_ONLY_ONE %
                     ('Spatial Limit','Feature of Interest', rType))
-                return None
+                return None, None
             if foi:
                 data += '<FeatureOfInterestId>' + \
                        foi + \
@@ -423,7 +423,7 @@ class SOSConfigurationWidget(OgcConfigurationWidget):
                 data += '<offering>' + offering + '</offering>\n'
             else:
                 self.showWarning(WARNING_MUST % ('Offering', rType))
-                return None
+                return None, None
             if time_limit:  # time params
                 if time_limit == self.config.TIME_OWN:
                     # see SpatialTemporalConfigurationWidget
@@ -443,18 +443,18 @@ class SOSConfigurationWidget(OgcConfigurationWidget):
                 if not mode:
                     self.showWarning(WARNING_MUST + 'If a procedure is chosen'
                                      % ('Response Mode', rType))
-                    return None
+                    return None, None
                 else:
                     data += '<procedure>' + procedure + '</procedure>\n'
             if obs_prop:
                 data += '<observedProperty>' + obs_prop + '</observedProperty>\n'
             else:
                 self.showWarning(WARNING_MUST % ('Observed Property', rType))
-                return None
+                return None, None
             if spatial_limit and foi:
                 self.showWarning(WARNING_ONLY_ONE %
                     ('Spatial Limit','Feature of Interest', rType))
-                return None
+                return None, None
             if foi:
                 data += '<featureOfInterest><ObjectID>' + \
                         foi + \
@@ -485,7 +485,7 @@ class SOSConfigurationWidget(OgcConfigurationWidget):
                 data += '<responseFormat>' + format + '</responseFormat>\n'
             else:
                 self.showWarning(WARNING_MUST % ('Response Format', rType))
-                return None
+                return None, None
             if model:
                 data += '<resultModel>' + model + '</resultModel>\n'
             if mode:
@@ -535,4 +535,4 @@ class SOSConfigurationWidget(OgcConfigurationWidget):
         data = '<?xml version="1.0" encoding="UTF-8"?>\n' + data
         print data  # show line breaks for testing !!!
         data = data.replace('\n','')
-        return data
+        return 'POST', data

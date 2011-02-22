@@ -335,11 +335,12 @@ class WFSConfigurationWidget(OgcConfigurationWidget):
         # details per request type:
         rType = self.wfs_config_widget.dcRequestType.currentText()
         if rType == 'DescribeFeatureType':
-            return wfs_url + \
+            wfs_url += \
             "?service=WFS" + \
             "&version=" + WFSversion + \
             "&request=DescribeFeatureType" + \
             "&typename=" + selectedFeatureId
+            return 'GET', wfs_url
 
         elif rType == 'GetFeature':
             wfs_url += \
@@ -362,7 +363,7 @@ class WFSConfigurationWidget(OgcConfigurationWidget):
                         )
                 wfs_url += "&bbox=" + bbox + \
                 ",urn:ogc:def:crs:=" + coord_system
-            return wfs_url
+            return 'GET', wfs_url
 
         else:
             raise ModuleError(
