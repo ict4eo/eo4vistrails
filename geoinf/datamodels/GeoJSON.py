@@ -36,7 +36,7 @@ This Module holds a geojson type that can be passed around between modules.
 
 """
 #History
-#Derek Hohls, 23 Feb 2011, Version 0.1
+#Derek Hohls, 23 Feb 2011, Version 0.1.1
 
 from core.modules.vistrails_module import Module
 
@@ -45,7 +45,7 @@ class GeoJSONModule(object):
 
 import geojson
 
-class GJFeature(GeoJSONModule, Module, pysal.W):
+class GJFeature(GeoJSONModule, Module, geojson.Feature):
     """ Container class for the geojson.Feature class """
     def __init__(self):
         Module.__init__(self)
