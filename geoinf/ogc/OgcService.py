@@ -42,8 +42,8 @@ class OGC(NotCacheable):
     Choosing the appropriate combination of specific service type and other
     parameters, will cause the input port to be set with a specific POST call,
     once the configuration interface is closed.
-    Running the module will call the specific, parameterised service, and
-    output from the request will be available via the output ports.
+    Running the module will set the (string) values of the URL and data (if any)
+    for access via the output ports.
 
     """
     def __init__(self):
@@ -54,6 +54,38 @@ class OGC(NotCacheable):
         import traceback
         traceback.print_exc()
         raise ModuleError(self, msg + ': %s' % str(error))
+
+    def compute(self):
+        """Execute the module to create the output"""
+        try:
+            post_request = self.getInputFromPort(init.OGC_POST_REQUEST_PORT)
+            #print "OgcService:62 POST Request from port :::", init.OGC_POST_REQUEST_PORT, type(request), request, len(request)
+        except:
+            post_request = None
+
+        try:
+            get_request = self.getInputFromPort(init.OGC_GET_REQUEST_PORT)
+            #print "OgcService:68 GET Request from port :::", init.OGC_GET_REQUEST_PORT, type(request), request, len(request)
+        except:
+            get_request = None
+
+        try:
+            url = self.getInputFromPort(init.URL_PORT)
+            #print "OgcService:73 URL from port :::", init.OGC_URL_PORT, type(url), url, len(url)
+        except:
+            url = None
+
+        if get_request:
+            print "OgcService:79 URL", get_request
+            self.setResult(init.URL_PORT, get_request)
+            self.setResult(init.DATA_PORT, '')
+
+        if post_request and url:
+            self.setResult(init.URL_PORT, url)
+            self.setResult(init.DATA_PORT, post_request)
+
+'''
+    # NOW MOVED TO /util/WebRequest.py
 
     def compute(self):
         """Execute the module to create the output"""
@@ -123,3 +155,4 @@ class OGC(NotCacheable):
         else:
             pass  # ignore and do nothing ...
         return result
+'''
