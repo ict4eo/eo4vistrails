@@ -34,7 +34,7 @@ Module forms part of the eo4vistrails capabilities, used to handle web request
 
 """
 #History
-#Derek Hohls, 23 Feb 2011, Version 0.1.0
+#Derek Hohls, 23 Feb 2011, Version 0.1.1
 
 from core.modules.vistrails_module import Module, NotCacheable
 from packages.eo4vistrails.geoinf.datamodels.Feature \
@@ -52,19 +52,24 @@ class WebRequestModule(Module):
     def __init__(self):
         Module.__init__(self)
 
+    def raiseError(self, msg, error=''):
+        """Raise a VisTrails error."""
+        import traceback
+        traceback.print_exc()
+        raise ModuleError(self, msg + ': %s' % str(error))
+
     def compute(self):
         """Execute the module to create the output"""
         # URL
-        url = self.getInputFromPort('URL')
         try:
-            url = self.getInputFromPort('URL')
-            print "WebRequest:61 -URL from port :::", type(url), len(url), url
+            url = self.getInputFromPort('urls')
+            #print "WebRequest:61 -URL from port :::", type(url), len(url), url
         except:
             url = None
         # data
         try:
             data = self.getInputFromPort('data')
-            print "WebRequest:67 - data from port :::", type(date), len(data), data
+            #print "WebRequest:67 - data from port :::", type(data), len(data), data
         except:
             data = None
         # execute request
@@ -85,7 +90,7 @@ class WebRequestModule(Module):
         import os
         from urllib2 import URLError
         result = None
-        print "WebRequest:88\n", url, request_data, type
+        #print "WebRequest:88\n", url, request_data, type
         if url:
             if type == 'GET':
                 req = urllib2.Request(url)

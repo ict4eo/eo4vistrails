@@ -21,6 +21,8 @@ def initialize(*args, **keywords):
 
     reg = get_module_registry()
 
+    # TO DO => change output ports to WebRequest type - how to handle URL & data ???
+
     # WFS MODULE
     reg.add_input_port(WFS, OGC_GET_REQUEST_PORT,
                      (core.modules.basic_modules.String, 'Configured GET Request'))#, True)

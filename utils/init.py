@@ -55,9 +55,10 @@ def initialize(*args, **keywords):
     reg.add_module(session.Session,  namespace = utils_namespace)
 
     #Add WebRequest
+    # TO DO => change input port to WebRequest type
     reg.add_module(WebRequestModule,
                    namespace = utils_namespace)
-    reg.add_input_port(WebRequestModule, 'URL',
+    reg.add_input_port(WebRequestModule, 'urls',
                         (basic_modules.String,'URL for the request'))
     reg.add_input_port(WebRequestModule, 'data',
                         (basic_modules.String, 'data for a POST request'))
