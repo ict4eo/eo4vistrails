@@ -3,14 +3,22 @@ def initialize(*args, **keywords):
     from core.modules import basic_modules
     from core.vistrail.port import PortEndPoint
 
-
     import ThreadSafe
     import Parallel
     import session
+    import DropDownListWidget
    
     reg = get_module_registry()
     utils_namespace = "utils"
     
+    #Add ComboBox    
+    LinuxDemoComboBox = basic_modules.new_constant('LinuxDemoComboBox', 
+                                                   staticmethod(str),
+                                                   None, 
+                                                   staticmethod(lambda x: type(x) == str),
+                                                   DropDownListWidget.LinuxDemoComboBoxWidget)
+    reg.add_module(LinuxDemoComboBox, namespace = utils_namespace)
+                   
     #Add ThreadSafe
     #reg.add_module(ThreadSafe.ThreadSafe, 
     #               namespace = utils_namespace)
