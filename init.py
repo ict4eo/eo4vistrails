@@ -1,6 +1,7 @@
 import core
 from geoinf.datamodels.Feature import FeatureModel,  FileFeatureModel,  MemFeatureModel
 from geoinf.datamodels.Raster import RasterModel
+from geoinf.datamodels.GeoStrings import GMLString,  GeoJSONString,  GeoString
 from geoinf.ogc.Common import OgcService
 from geoinf.ogc.WFS import WFS,  WFSConfigurationWidget
 from geoinf.ogc.WCS import WCS,  WCSConfigurationWidget
@@ -56,6 +57,9 @@ def initialize(*args, **keywords):
     # we can refer to it in a shorter way.
     reg = core.modules.module_registry.get_module_registry()
 
+    reg.add_module(GeoString)
+    reg.add_module(GMLString)
+    reg.add_module(GeoJSONString)
     #input ports
     reg.add_module(FeatureModel) #abstract
 
@@ -66,6 +70,7 @@ def initialize(*args, **keywords):
     reg.add_input_port(MemFeatureModel,  "sql", core.modules.basic_modules.String )
     reg.add_input_port(MemFeatureModel,  "uri", core.modules.basic_modules.String )
     reg.add_input_port(MemFeatureModel,  "uri_data", core.modules.basic_modules.String)
+    reg.add_input_port(MemFeatureModel,  "gstring", GeoString )
     reg.add_output_port(MemFeatureModel, "feature_dataset", MemFeatureModel)
 
 

@@ -159,6 +159,39 @@ class _OgrMemModel():
         #i.e. fetches from uri, caches, reads from cache
         
         _viaCache()
+    
+    def loadContentFromString(self,  gstr):
+        '''Loads up a string of spatial data of some kind, e.g. GeoJSON, GML.
+        Expects GeoStrings objects such as GMLString, GeoJSONString'''
+        #FIXME: get rid of string truncation by getting conf from the proper widget - for moment make sure strings are small...
+
+        #will write string to temp file , then load it up
+        def _viaCache():
+            temp_filepath = core.system.default_dot_vistrails() + "/eo4vistrails/ogr/"
+            if not os.path.exists(core.system.default_dot_vistrails() + "/eo4vistrails/"):
+                os.mkdir(core.system.default_dot_vistrails() + "/eo4vistrails/")
+            if not os.path.exists(temp_filepath):
+                os.mkdir(temp_filepath)
+            
+            t= str(type(gstr))
+            tl = t.split("'")
+            tll = tl[1].split(".")
+            gstrtype =  tll[len(tll) - 1]
+            
+            def _get_ext():
+                if gstrtype == "GeoJSONString": return "json"
+                if gstrtype == "GMLString": return "gml"
+            
+            temp_filename = temp_filepath + hashlib.sha1(str(len(gstr.__dict__['outputPorts']["value_as_string"]))).hexdigest() +  "." +  _get_ext()#gstr.__name__
+            f = open(temp_filename, 'w')
+            f.write(gstr.__dict__['outputPorts']["value_as_string"])
+            f.close()
+            self.loadContentFromFile(temp_filename)
+            #os.remove(temp_filename)
+        
+        if gstr != "":
+            _viaCache()
+        
         
     def dumpToFile(self,  filesource,  datasetType = "ESRI Shapefile"):
         try:
@@ -202,11 +235,15 @@ class MemFeatureModel(Module):
     def loadContentFromURI(self,  uri,  uri_data=""):
         self.feature_model.loadContentFromURI(uri,  uri_data)
 
-    def dumpToFile(self):
-        print "dumping featuremodel"
-        print self.feature_model
+    def loadContentFromString(self,  gstr):
+        self.feature_model.loadContentFromString(gstr)
+#    def dumpToFile(self):
+#        print "dumping featuremodel"
+#        print self.feature_model
 
     def compute(self):
+        #TODO: make input a file module
+        #TODO add string port
         if (self.hasInputFromPort("source_file") and self.getInputFromPort("source_file")):
             source_file = self.getInputFromPort("source_file")
             #self.feature_model.loadContentFromFile(source_file)
@@ -217,11 +254,12 @@ class MemFeatureModel(Module):
             #sql = self.getInputFromPort("sql")
             #self.feature_model.loadContentFromDB("some connstr",  "some SQL")#get sql to execute
             self.loadContentFromDB(self.getInputFromPort("dbconn"),  self.getInputFromPort("sql"))
-            self.dumpToFile()
+            #self.dumpToFile()
         elif (self.hasInputFromPort("uri") and self.getInputFromPort("uri")) \
             and (self.hasInputFromPort("uri_data") and self.getInputFromPort("uri_data")):
                 self.loadContentFromURI(self.getInputFromPort("uri"),  self.getInputFromPort("uri_data"))
-            
+        elif (self.hasInputFromPort("gstring") and self.getInputFromPort("gstring")) :
+                self.loadContentFromString(self.inputPorts["gstring"][0].obj)
         else:
             raise ModuleError(self, 'No source file is supplied - an OGR dataset cannot be generated')
 
@@ -247,9 +285,10 @@ class FileFeatureModel(File):
 
     def compute(self):
         n = self.get_name()
-
+        #TODO: refactor to point to file port rather than source_file
         if (self.hasInputFromPort("source_file") and self.getInputFromPort("source_file")):
             source_file = self.getInputFromPort("source_file")
+            print source_file
             if not os.path.isfile(source_file):
                 raise ModuleError(self, 'File "%s" does not exist' % source_file)
             ogr  = _OgrMemModel()
@@ -274,6 +313,7 @@ class FileFeatureModel(File):
             #core.system.touch(n)
             success,  fn = ogr.dumpToFile(n,  output_type)
             if success == True:
+                #TODO: check if local_filename is necessary?
                 self.setResult("local_filename", fn)
                 self.setResult("self", self)
                 self.set_results(fn)
