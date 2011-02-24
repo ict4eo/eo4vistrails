@@ -29,7 +29,7 @@
 from PyQt4 import QtCore, QtGui
 from packages.eo4vistrails.geoinf.datamodels.Feature import FeatureModel
 from packages.eo4vistrails.geoinf.datamodels.Raster import RasterModel
-from packages.eo4vistrails.utils.WebRequest import WebRequestModule
+from packages.eo4vistrails.utils.WebRequest import WebRequest
 from OgcConfigurationWidget import OgcConfigurationWidget
 from core.modules.vistrails_module import Module, new_module, NotCacheable, ModuleError
 import init
@@ -76,12 +76,13 @@ class OGC(NotCacheable):
         except:
             self.url = None
 
-        if get_request:
-            self.setResult(init.URL_PORT, self.get_request)
-            self.setResult(init.DATA_PORT, '')
-            self.setResult(init.REQUEST_PORT, (self.get_request,''))
+        if self.get_request:
+            webRequest = WebRequest()
+            webRequest.url = self.get_request
+            webRequest.data = None
+            self.setResult(init.WEB_REQUEST_PORT, webRequest)
 
-        if post_request and url:
+        if self.post_request and self.url:
             self.setResult(init.URL_PORT, self.url)
             self.setResult(init.DATA_PORT, self.post_request)
-            self.setResult(init.REQUEST_PORT, (self.url, self.get_request))
+            self.setResult(init.WEB_REQUEST_PORT, (self.url, self.get_request))

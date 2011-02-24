@@ -3,7 +3,7 @@ OGC_GET_REQUEST_PORT = "ConfiguredGetRequest"
 OGC_URL_PORT = "OGC_URL"
 URL_PORT = "URL"
 DATA_PORT = "OGC_data"
-WEB_REQUEST_PORT = "WebRequest"
+WEB_REQUEST_PORT = "web_request"
 
 def initialize(*args, **keywords):
     """TO DO: Add doc string"""
@@ -20,7 +20,7 @@ def initialize(*args, **keywords):
     from packages.eo4vistrails.geoinf.ogc.OgcConfigurationWidget import OgcConfigurationWidget
     from packages.eo4vistrails.geoinf.datamodels.FeatureImport import FeatureImport, FeatureImportConfigurationWidget
 
-    from packages.eo4vistrails.utils.WebRequest import WebRequestModule
+    from packages.eo4vistrails.utils.WebRequest import WebRequest
 
     reg = get_module_registry()
 
@@ -37,8 +37,8 @@ def initialize(*args, **keywords):
         (core.modules.basic_modules.String, 'Request URL'))#, True)
     reg.add_output_port(
         WFS,
-        URL_PORT,
-        (core.modules.basic_modules.String, 'URL String'))#,True)
+        WEB_REQUEST_PORT,
+        WebRequest)#,True)
 
     # WCS MODULE
     reg.add_input_port(
@@ -56,7 +56,7 @@ def initialize(*args, **keywords):
     reg.add_output_port(
         WCS,
         WEB_REQUEST_PORT,
-        (WebRequestModule, 'Web Request'))#,True)
+        WebRequest)#,True)
 
     # SOS MODULE
     reg.add_input_port(

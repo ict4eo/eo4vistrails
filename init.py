@@ -91,8 +91,8 @@ def initialize(*args, **keywords):
     #Isolate the registration of the modules
     #Note order does count
 
-    ogc_init.initialize(*args, **keywords)  # looks like no-one is willing to mess up this file, so have created ogc specific init.py as well.
     utils_init.initialize(*args, **keywords)
+    ogc_init.initialize(*args, **keywords)  # looks like no-one is willing to mess up this file, so have created ogc specific init.py as well.
     postgis_init.initialize(*args,  **keywords)
     rpyc_init.initialize(*args, **keywords)
     dataanalytics_init.initialize(*args, **keywords)

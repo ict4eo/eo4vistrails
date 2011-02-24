@@ -37,11 +37,11 @@ Module forms part of the eo4vistrails capabilities, used to handle web request
 #Derek Hohls, 24 Feb 2011, Version 0.1.2
 
 from core.modules.vistrails_module import Module, NotCacheable
-from packages.eo4vistrails.geoinf.datamodels.Feature \
-    import MemFeatureModel
+#from packages.eo4vistrails.geoinf.datamodels.Feature \
+#    import MemFeatureModel
 
 
-class WebRequestModule(Module):
+class WebRequest(NotCacheable, Module):
     """This module will process a web-based request.
 
     With only the 'url' port set, the module will execute a GET request.
@@ -74,20 +74,35 @@ class WebRequestModule(Module):
             self.data = None
         # request
         try:
-            self.request = self.getInputFromPort('request')
-            print "WebRequest:78 - data from port request:\n", type(request), len(request), request
+            #self = self.getInputFromPort('request')
+            request = self.getInputFromPort('request')
+            self.url = request.url
+            self.data = request.data
+            #print "WebRequest:78 - data from port request:\n", type(request), len(request), request
         except:
-            self.request = None
+            pass
+            #self.request = None
         # execute request
+                # data
         try:
-            #if self.data:
-            #    out = self.runRequest(url, data, 'POST')
-            #else:
-            #    out = self.runRequest(url, None, 'GET')
+            self.runTheRequest = self.getInputFromPort('runRequest')
+            #print "WebRequest:67 - data from port:data\n", type(data), len(data), data
+        except:
+            self.runTheRequest = False
+        try:
+            if self.runTheRequest:
+                out = self.runRequest()
+                self.setResult('out', out)
             self.setResult('value', self)
         except Exception, e:
             self.raiseError('Cannot set output port: %s' % str(e))
 
+    def requestType(self):
+        request_type = 'GET'
+        if self.data:
+            request_type = 'POST'
+        return request_type
+        
     def runRequest(self):
         """Execute an HTTP POST request for a given URL and data"""
         import urllib
@@ -97,10 +112,7 @@ class WebRequestModule(Module):
         result = None
         #print "WebRequest:88\n", url, request_data, type
         if self.url:
-            request_type = 'GET'
-            if self.data:
-                request_type = 'POST'
-                
+            request_type = self.requestType()
             if request_type == 'GET':
                 req = urllib2.Request(self.url)
             elif request_type == 'POST':

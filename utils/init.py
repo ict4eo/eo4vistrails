@@ -7,7 +7,7 @@ def initialize(*args, **keywords):
     from Parallel import MultiProcessTestModule
     from session import Session
     import DropDownListWidget
-    from WebRequest import WebRequestModule
+    from WebRequest import WebRequest
 
     reg = get_module_registry()
     utils_namespace = "utils"
@@ -63,20 +63,28 @@ def initialize(*args, **keywords):
 
     #Add WebRequest
     # TO DO => change input port to WebRequest type
-    reg.add_module(WebRequestModule, namespace = utils_namespace)
+    reg.add_module(WebRequest, namespace = utils_namespace)
     reg.add_input_port(
-        WebRequestModule,
+        WebRequest,
         'request',
-        (WebRequestModule,'Web Request'))
+        (WebRequest,'Web Request'))
     reg.add_input_port(
-        WebRequestModule,
+        WebRequest,
+        'runRequest', 
+        (basic_modules.Boolean,'Run The Request?'))
+    reg.add_input_port(
+        WebRequest,
         'urls',
         (basic_modules.String,'URL for the request'))
     reg.add_input_port(
-        WebRequestModule,
+        WebRequest,
         'data',
         (basic_modules.String, 'Data for a POST request'))
     reg.add_output_port(
-        WebRequestModule,
+        WebRequest,
         'value',
+        WebRequest)
+    reg.add_output_port(
+        WebRequest,
+        'out',
         basic_modules.Variant)
