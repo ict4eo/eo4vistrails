@@ -91,7 +91,7 @@ class _OgrMemModel():
         conn.ReleaseResultSet(lyr)
         conn = None
 
-    def loadContentFromURI(self, uri, getStatement=""):
+    def loadContentFromURI(self, webrequest):
         """Loads content off web service, feed etc, like a WFS, GeoRSS
         Could use OGR WFS driver here, but incoming url may not be properly setup.
         Also, OGR WFS support requires compiling GDAL/OGR with libcurl support.
@@ -101,29 +101,33 @@ class _OgrMemModel():
         Rather, we need to read in from a temporary file (e.g. a GML file) retrieved 
         by urllib or stream data from urllib into the memory model
         
-        uri: string of the service endpoint
-        getStatement: a string of the xml of the request parameters
-        
+        #uri: string of the service endpoint
+        #getStatement: a string of the xml of the request parameters
+        webrequest: a WebRequest Object, which has url, data attributes
         These two variables allow creation of get/post requests and also allow us 
         to make OGR sensibly deal with the inputs.
         """
         
        
         #to test, just split, but should use elementtree
-        print getStatement
-        test = {
-            'responseformat':('<responseformat>',  '</responseformat>'), 
-            'outputformat':('outputformat="', '"')
+        #print getStatement
+        fmt = ""
+        if webrequest.data:
+            test = {
+                'responseformat':('<responseformat>',  '</responseformat>'), 
+                'outputformat':('outputformat="', '"')
             }
-        
-        for ky in test:
-            try:
-                fmt = getStatement.lower().split(test[ky][0])[1].split(test[ky][1])[0]
-                if fmt:
-                    print fmt
-                    break
-            except:
-                pass
+            getStatement = webrequest.data
+            for ky in test:
+                try:
+                    fmt = getStatement.lower().split(test[ky][0])[1].split(test[ky][1])[0]
+                    if fmt:
+                        #print fmt
+                        break
+                except:
+                    pass
+        else:
+            getStatement = ""
 
         
         #type = getStatement.lower().split('<responseformat>')
@@ -132,28 +136,30 @@ class _OgrMemModel():
         
 
         
-        def _guessOutputType(type_string):
+        def _guessOutputType(type_string = ""):
             print type_string
             if type_string.split(';')[0].lower() == "text/xml":
                 #is gml, O&M etc
                 return ".xml"
             if type_string.split(';')[0].lower() == "gml2":
                 return ".gml"
-        
+            else:
+                return ".gml"
+                
         def _viaCache():
             temp_filepath = core.system.default_dot_vistrails() + "/eo4vistrails/ogr/"
             if not os.path.exists(temp_filepath):
                 os.mkdir(temp_filepath)
-            temp_filename = temp_filepath + hashlib.sha1(urllib.quote_plus(uri+getStatement)).hexdigest() + outputtype
+            temp_filename = temp_filepath + hashlib.sha1(urllib.quote_plus(webrequest.url + getStatement)).hexdigest() + outputtype
             #core.system.touch(temp_filename)
             postdata = urllib.urlencode({'request': getStatement})
-            print postdata
-            u = urllib.urlretrieve(url = uri,  filename = temp_filename,  data = postdata,)
+            #print postdata
+            u = urllib.urlretrieve(url = webrequest.url,  filename = temp_filename,  data = postdata,)
             self.loadContentFromFile(temp_filename)
             
         def _viaStream():
             pass
-            
+        
         outputtype = _guessOutputType(fmt)
         #implement first a non-streaming version of this method, 
         #i.e. fetches from uri, caches, reads from cache
@@ -232,8 +238,8 @@ class MemFeatureModel(Module):
     def loadContentFromFile(self,  source_file):
         self.feature_model.loadContentFromFile(source_file)
 
-    def loadContentFromURI(self,  uri,  uri_data=""):
-        self.feature_model.loadContentFromURI(uri,  uri_data)
+    def loadContentFromURI(self,  webrequest):
+        self.feature_model.loadContentFromURI(webrequest)
 
     def loadContentFromString(self,  gstr):
         self.feature_model.loadContentFromString(gstr)
@@ -255,9 +261,12 @@ class MemFeatureModel(Module):
             #self.feature_model.loadContentFromDB("some connstr",  "some SQL")#get sql to execute
             self.loadContentFromDB(self.getInputFromPort("dbconn"),  self.getInputFromPort("sql"))
             #self.dumpToFile()
-        elif (self.hasInputFromPort("uri") and self.getInputFromPort("uri")) \
-            and (self.hasInputFromPort("uri_data") and self.getInputFromPort("uri_data")):
-                self.loadContentFromURI(self.getInputFromPort("uri"),  self.getInputFromPort("uri_data"))
+#        elif (self.hasInputFromPort("uri") and self.getInputFromPort("uri")) \
+#            and (self.hasInputFromPort("uri_data") and self.getInputFromPort("uri_data")):
+#                self.loadContentFromURI(self.getInputFromPort("uri"),  self.getInputFromPort("uri_data"))
+        elif (self.hasInputFromPort("webrequest") and self.getInputFromPort("webrequest")):
+                self.loadContentFromURI(self.getInputFromPort("webrequest"))
+                
         elif (self.hasInputFromPort("gstring") and self.getInputFromPort("gstring")) :
                 self.loadContentFromString(self.inputPorts["gstring"][0].obj)
         else:

@@ -8,7 +8,7 @@ from geoinf.ogc.WCS import WCS,  WCSConfigurationWidget
 from geoinf.ogc.SOS import SOS,  SOSConfigurationWidget
 from geoinf.ogc.OgcConfigurationWidget import OgcConfigurationWidget
 #from geoinf.datamodels.FeatureImport import FeatureImport, FeatureImportConfigurationWidget
-#from utils.session import Session
+from utils.WebRequest import WebRequest
 #from geoinf.postgis.PostGIS import PostGisSession,  PostGisCursor,  PostGisFeatureReturningCursor,  PostGisBasicReturningCursor,  PostGisNonReturningCursor,  SQLSourceConfigurationWidget
 
 
@@ -52,6 +52,7 @@ def initialize(*args, **keywords):
     # VisTrails know that you created a new module. This is done by calling
     # function addModule:
 
+    utils_init.initialize(*args, **keywords)
 
     # We'll first create a local alias for the module_registry so that
     # we can refer to it in a shorter way.
@@ -68,8 +69,9 @@ def initialize(*args, **keywords):
     #reg.add_input_port(MemFeatureModel,  "output_type", core.modules.basic_modules.String )
     reg.add_input_port(MemFeatureModel,  "dbconn", core.modules.basic_modules.String )
     reg.add_input_port(MemFeatureModel,  "sql", core.modules.basic_modules.String )
-    reg.add_input_port(MemFeatureModel,  "uri", core.modules.basic_modules.String )
-    reg.add_input_port(MemFeatureModel,  "uri_data", core.modules.basic_modules.String)
+    reg.add_input_port(MemFeatureModel, "webrequest",  WebRequest)
+    #reg.add_input_port(MemFeatureModel,  "uri", core.modules.basic_modules.String )
+    #reg.add_input_port(MemFeatureModel,  "uri_data", core.modules.basic_modules.String)
     reg.add_input_port(MemFeatureModel,  "gstring", GeoString )
     reg.add_output_port(MemFeatureModel, "feature_dataset", MemFeatureModel)
 
@@ -96,7 +98,7 @@ def initialize(*args, **keywords):
     #Isolate the registration of the modules
     #Note order does count
 
-    utils_init.initialize(*args, **keywords)
+
     ogc_init.initialize(*args, **keywords)  # looks like no-one is willing to mess up this file, so have created ogc specific init.py as well.
     postgis_init.initialize(*args,  **keywords)
     rpyc_init.initialize(*args, **keywords)
