@@ -1,8 +1,7 @@
 def initialize(*args, **keywords):
     from core.modules.module_registry import get_module_registry
     from core.modules import basic_modules
-    from core.vistrail.port import PortEndPoint
-
+    
     from ThreadSafe import Fork, ThreadTestModule
     from Parallel import MultiProcessTestModule
     from session import Session
@@ -18,11 +17,8 @@ def initialize(*args, **keywords):
                                                    None,
                                                    staticmethod(lambda x: type(x) == str),
                                                    DropDownListWidget.LinuxDemoComboBoxWidget)
-    reg.add_module(LinuxDemoComboBox, namespace = utils_namespace)
-
-    #Add ThreadSafe
-    #reg.add_module(ThreadSafe.ThreadSafe,
-    #               namespace = utils_namespace)
+    reg.add_module(LinuxDemoComboBox, 
+                   namespace = utils_namespace)
 
     #Add Fork
     reg.add_module(Fork, namespace = utils_namespace)
@@ -37,11 +33,6 @@ def initialize(*args, **keywords):
         ThreadTestModule,
         'someModuleAboveMe',
         basic_modules.Module)
-
-
-    #Add MultiProcessSafe
-    #reg.add_module(Parallel.MultiProcessSafe,
-    #               namespace = utils_namespace)
 
     #Add MultiProcessTest
     reg.add_module(MultiProcessTestModule, namespace = utils_namespace)
