@@ -78,5 +78,5 @@ def initialize(*args, **keywords):
         (basic_modules.String, 'Data for a POST request'))
     reg.add_output_port(
         WebRequestModule,
-        'output',
+        'value',
         basic_modules.Variant)

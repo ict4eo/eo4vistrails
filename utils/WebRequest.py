@@ -62,34 +62,33 @@ class WebRequestModule(Module):
         """Execute the module to create the output"""
         # URL
         try:
-            url = self.getInputFromPort('urls')
+            self.url = self.getInputFromPort('urls')
             #print "WebRequest:61 -URL from port url:\n", type(url), len(url), url
         except:
-            url = None
+            self.url = None
         # data
         try:
-            data = self.getInputFromPort('data')
+            self.data = self.getInputFromPort('data')
             #print "WebRequest:67 - data from port:data\n", type(data), len(data), data
         except:
-            data = None
+            self.data = None
         # request
         try:
-            request = self.getInputFromPort('request')
+            self.request = self.getInputFromPort('request')
             print "WebRequest:78 - data from port request:\n", type(request), len(request), request
         except:
-            request = None
+            self.request = None
         # execute request
         try:
-            out = None
-            if data:
-                out = self.runRequest(url, data, 'POST')
-            else:
-                out = self.runRequest(url, None, 'GET')
-            self.setResult('output', out)
+            #if self.data:
+            #    out = self.runRequest(url, data, 'POST')
+            #else:
+            #    out = self.runRequest(url, None, 'GET')
+            self.setResult('value', self)
         except Exception, e:
             self.raiseError('Cannot set output port: %s' % str(e))
 
-    def runRequest(self, url, request_data, type='GET'):
+    def runRequest(self):
         """Execute an HTTP POST request for a given URL and data"""
         import urllib
         import urllib2
@@ -97,13 +96,17 @@ class WebRequestModule(Module):
         from urllib2 import URLError
         result = None
         #print "WebRequest:88\n", url, request_data, type
-        if url:
-            if type == 'GET':
-                req = urllib2.Request(url)
-            elif type == 'POST':
+        if self.url:
+            request_type = 'GET'
+            if self.data:
+                request_type = 'POST'
+                
+            if request_type == 'GET':
+                req = urllib2.Request(self.url)
+            elif request_type == 'POST':
                 user_agent = 'Mozilla/4.0 (compatible; MSIE 5.5; Windows NT)'
                 headers = {'User-Agent': user_agent}
-                req = urllib2.Request(url, request_data, headers)
+                req = urllib2.Request(self.url, self.data, headers)
             else:
                 raise ModuleError(
                     self,

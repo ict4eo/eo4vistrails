@@ -84,4 +84,4 @@ class OGC(NotCacheable):
         if post_request and url:
             self.setResult(init.URL_PORT, self.url)
             self.setResult(init.DATA_PORT, self.post_request)
-            self.setResult(init.REQUEST_PORT, (self.url,self.get_request))
+            self.setResult(init.REQUEST_PORT, (self.url, self.get_request))

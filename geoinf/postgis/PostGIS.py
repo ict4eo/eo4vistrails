@@ -174,6 +174,8 @@ class PostGisBasicReturningCursor(Module, PostGisCursor):
                     port_input = port_input.replace(k, value.__str__())
                 self.curs.execute(port_input)
                 self.sql_return_list = self.curs.fetchall()
+                import sys
+                print sys.getsizeof(self.sql_return_list)
                 self.setResult('records',  self.sql_return_list)
                 self.curs.close()
             except Exception as ex:
