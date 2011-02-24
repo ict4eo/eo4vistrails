@@ -29,6 +29,7 @@
 from PyQt4 import QtCore, QtGui
 from packages.eo4vistrails.geoinf.datamodels.Feature import FeatureModel
 from packages.eo4vistrails.geoinf.datamodels.Raster import RasterModel
+from packages.eo4vistrails.utils.WebRequest import WebRequestModule
 from OgcConfigurationWidget import OgcConfigurationWidget
 from core.modules.vistrails_module import Module, new_module, NotCacheable, ModuleError
 import init
@@ -58,27 +59,29 @@ class OGC(NotCacheable):
     def compute(self):
         """Execute the module to create the output"""
         try:
-            post_request = self.getInputFromPort(init.OGC_POST_REQUEST_PORT)
+            self.post_request = self.getInputFromPort(init.OGC_POST_REQUEST_PORT)
             #print "OgcService:62 POST Request from port :::", init.OGC_POST_REQUEST_PORT, type(request), request, len(request)
         except:
-            post_request = None
+            self.post_request = None
 
         try:
-            get_request = self.getInputFromPort(init.OGC_GET_REQUEST_PORT)
+            self.get_request = self.getInputFromPort(init.OGC_GET_REQUEST_PORT)
             #print "OgcService:68 GET Request from port :::", init.OGC_GET_REQUEST_PORT, type(request), request, len(request)
         except:
-            get_request = None
+            self.get_request = None
 
         try:
-            url = self.getInputFromPort(init.URL_PORT)
+            self.url = self.getInputFromPort(init.URL_PORT)
             #print "OgcService:73 URL from port :::", init.OGC_URL_PORT, type(url), url, len(url)
         except:
-            url = None
+            self.url = None
 
         if get_request:
-            self.setResult(init.URL_PORT, get_request)
+            self.setResult(init.URL_PORT, self.get_request)
             self.setResult(init.DATA_PORT, '')
+            self.setResult(init.REQUEST_PORT, (self.get_request,''))
 
         if post_request and url:
-            self.setResult(init.URL_PORT, url)
-            self.setResult(init.DATA_PORT, post_request)
+            self.setResult(init.URL_PORT, self.url)
+            self.setResult(init.DATA_PORT, self.post_request)
+            self.setResult(init.REQUEST_PORT, (self.url,self.get_request))

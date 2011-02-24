@@ -34,7 +34,7 @@ Module forms part of the eo4vistrails capabilities, used to handle web request
 
 """
 #History
-#Derek Hohls, 23 Feb 2011, Version 0.1.1
+#Derek Hohls, 24 Feb 2011, Version 0.1.2
 
 from core.modules.vistrails_module import Module, NotCacheable
 from packages.eo4vistrails.geoinf.datamodels.Feature \
@@ -44,7 +44,7 @@ from packages.eo4vistrails.geoinf.datamodels.Feature \
 class WebRequestModule(Module):
     """This module will process a web-based request.
 
-    With only the 'URL' port set, the module will execute a GET request.
+    With only the 'url' port set, the module will execute a GET request.
 
     With the 'data' port set as well, the module will execute a POST request.
     """
@@ -63,15 +63,21 @@ class WebRequestModule(Module):
         # URL
         try:
             url = self.getInputFromPort('urls')
-            #print "WebRequest:61 -URL from port :::", type(url), len(url), url
+            #print "WebRequest:61 -URL from port url:\n", type(url), len(url), url
         except:
             url = None
         # data
         try:
             data = self.getInputFromPort('data')
-            #print "WebRequest:67 - data from port :::", type(data), len(data), data
+            #print "WebRequest:67 - data from port:data\n", type(data), len(data), data
         except:
             data = None
+        # request
+        try:
+            request = self.getInputFromPort('request')
+            print "WebRequest:78 - data from port request:\n", type(request), len(request), request
+        except:
+            request = None
         # execute request
         try:
             out = None

@@ -3,10 +3,10 @@
 ###
 ### Copyright (C) 2010 CSIR Meraka Institute. All rights reserved.
 ###
-### This full package extends VisTrails, providing GIS/Earth Observation 
-### ingestion, pre-processing, transformation, analytic and visualisation 
-### capabilities . Included is the abilty to run code transparently in 
-### OpenNebula cloud environments. There are various software 
+### This full package extends VisTrails, providing GIS/Earth Observation
+### ingestion, pre-processing, transformation, analytic and visualisation
+### capabilities . Included is the abilty to run code transparently in
+### OpenNebula cloud environments. There are various software
 ### dependencies, but all are FOSS.
 ###
 ### This file may be used under the terms of the GNU General Public
@@ -63,4 +63,3 @@ class connected_components(NetworkxModule, Module):
     def compute(self):
         self._graph = self.forceGetInputFromPort('graph')
         self.setResult("value", nx.connected_components(self._graph))
-        
