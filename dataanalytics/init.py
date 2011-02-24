@@ -3,10 +3,10 @@
 ###
 ### Copyright (C) 2010 CSIR Meraka Institute. All rights reserved.
 ###
-### This full package extends VisTrails, providing GIS/Earth Observation 
-### ingestion, pre-processing, transformation, analytic and visualisation 
-### capabilities . Included is the abilty to run code transparently in 
-### OpenNebula cloud environments. There are various software 
+### This full package extends VisTrails, providing GIS/Earth Observation
+### ingestion, pre-processing, transformation, analytic and visualisation
+### capabilities . Included is the abilty to run code transparently in
+### OpenNebula cloud environments. There are various software
 ### dependencies, but all are FOSS.
 ###
 ### This file may be used under the terms of the GNU General Public
@@ -32,7 +32,7 @@ Created on Tue Dec 14 09:38:10 2010
 Module forms part of the rpyc vistrails capabilties, used to add multicore
 parallel and distributed processing to vistrails.
 
-This Module is the called by higher level inits to ensure that regsitration with 
+This Module is the called by higher level inits to ensure that regsitration with
 vsitrails takes place
 
 """
@@ -42,14 +42,9 @@ vsitrails takes place
 def initialize(*args, **keywords):
     from core.modules.module_registry import get_module_registry
     from core.modules import basic_modules
-    
     from core.vistrail.port import PortEndPoint
-    
     import PySAL
-    
-    """
-    sets everything up called from the top level initialize
-    """
+
     reg = get_module_registry()
     mynamespace = "pysal"
 
@@ -60,23 +55,23 @@ def initialize(*args, **keywords):
                        basic_modules.Dictionary)
     reg.add_input_port(PySAL.W, 'weights',
                        basic_modules.Dictionary)
-    reg.add_output_port(PySAL.W, "value", 
+    reg.add_output_port(PySAL.W, "value",
                         (PySAL.W, 'value'))
-    
-    import Networkx        
+
+    import Networkx
     mynamespace = "networkx"
-     
+
      #Add Networkx
     reg.add_module(Networkx.Graph,
                    namespace=mynamespace)
     reg.add_input_port(Networkx.Graph, 'neighbors',
                        basic_modules.List)
-    reg.add_output_port(Networkx.Graph, "value", 
+    reg.add_output_port(Networkx.Graph, "value",
                         (Networkx.Graph, 'value'))
-                        
+
     reg.add_module(Networkx.connected_components,
                    namespace=mynamespace)
     reg.add_input_port(Networkx.connected_components, 'graph',
                        Networkx.Graph)
-    reg.add_output_port(Networkx.connected_components, "value", 
+    reg.add_output_port(Networkx.connected_components, "value",
                         (basic_modules.List, 'value'))

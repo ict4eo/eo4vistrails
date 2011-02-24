@@ -30,16 +30,13 @@ Created on Wed Feb 23 14:08:10 2011
 @author: dhohls
 
 Module forms part of the eo4vistrails capabilities, used to handle web request
-(e.g. for WFS or SOS) processing to vistrails.
+(e.g. for WFS, WCS or SOS) processing inside vistrails.
 
 """
 #History
-#Derek Hohls, 24 Feb 2011, Version 0.1.2
+#Derek Hohls, 25 Feb 2011, Version 0.1.3
 
 from core.modules.vistrails_module import Module, NotCacheable
-#from packages.eo4vistrails.geoinf.datamodels.Feature \
-#    import MemFeatureModel
-
 
 class WebRequest(NotCacheable, Module):
     """This module will process a web-based request.
@@ -51,6 +48,9 @@ class WebRequest(NotCacheable, Module):
 
     def __init__(self):
         Module.__init__(self)
+        self.url = None
+        self.data = None
+        self.runTheRequest = False
 
     def raiseError(self, msg, error=''):
         """Raise a VisTrails error."""
@@ -60,33 +60,27 @@ class WebRequest(NotCacheable, Module):
 
     def compute(self):
         """Execute the module to create the output"""
-        # URL
+        # separate URL
         try:
             self.url = self.getInputFromPort('urls')
-            #print "WebRequest:61 -URL from port url:\n", type(url), len(url), url
         except:
-            self.url = None
-        # data
+            pass
+        # separate data
         try:
             self.data = self.getInputFromPort('data')
-            #print "WebRequest:67 - data from port:data\n", type(data), len(data), data
         except:
-            self.data = None
-        # request
+            pass
+        # request (combined data and URL)
         try:
-            #self = self.getInputFromPort('request')
             request = self.getInputFromPort('request')
             self.url = request.url
             self.data = request.data
-            #print "WebRequest:78 - data from port request:\n", type(request), len(request), request
+            #print "\nWebRequest:78\n url:%s\n data: %s" % (self.url, self.data)
         except:
             pass
-            #self.request = None
-        # execute request
-                # data
+        # execute request IF required
         try:
             self.runTheRequest = self.getInputFromPort('runRequest')
-            #print "WebRequest:67 - data from port:data\n", type(data), len(data), data
         except:
             self.runTheRequest = False
         try:
@@ -97,12 +91,6 @@ class WebRequest(NotCacheable, Module):
         except Exception, e:
             self.raiseError('Cannot set output port: %s' % str(e))
 
-    def requestType(self):
-        request_type = 'GET'
-        if self.data:
-            request_type = 'POST'
-        return request_type
-        
     def runRequest(self):
         """Execute an HTTP POST request for a given URL and data"""
         import urllib
@@ -110,7 +98,6 @@ class WebRequest(NotCacheable, Module):
         import os
         from urllib2 import URLError
         result = None
-        #print "WebRequest:88\n", url, request_data, type
         if self.url:
             request_type = self.requestType()
             if request_type == 'GET':
@@ -122,7 +109,7 @@ class WebRequest(NotCacheable, Module):
             else:
                 raise ModuleError(
                     self,
-                    'Unknown web request type: %s (should be GET or POST)' % str(type)
+                    'Unknown web request type: %s (should be GET or POST)' % str(request_type)
                 )
             #assumes this works inside a proxy ... otherwise, try:
             #os.environ["http_proxy"] = "http://myproxy.com:3128"
@@ -140,3 +127,9 @@ class WebRequest(NotCacheable, Module):
         else:
             pass  # ignore and do nothing ...
         return result
+
+    def requestType(self):
+        request_type = 'GET'
+        if self.data:
+            request_type = 'POST'
+        return request_type

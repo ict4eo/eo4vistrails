@@ -1,5 +1,5 @@
-OGC_POST_REQUEST_PORT = "ConfiguredPostRequest"
-OGC_GET_REQUEST_PORT = "ConfiguredGetRequest"
+OGC_POST_DATA_PORT = "PostData"
+OGC_GET_REQUEST_PORT = "GetRequest"
 OGC_URL_PORT = "OGC_URL"
 URL_PORT = "URL"
 DATA_PORT = "OGC_data"
@@ -19,12 +19,9 @@ def initialize(*args, **keywords):
     from packages.eo4vistrails.geoinf.ogc.SOS import SOS, SOSConfigurationWidget
     from packages.eo4vistrails.geoinf.ogc.OgcConfigurationWidget import OgcConfigurationWidget
     from packages.eo4vistrails.geoinf.datamodels.FeatureImport import FeatureImport, FeatureImportConfigurationWidget
-
     from packages.eo4vistrails.utils.WebRequest import WebRequest
 
     reg = get_module_registry()
-
-    # TO DO => change output ports to WebRequest type - how to handle URL & data ???
 
     # WFS MODULE
     reg.add_input_port(
@@ -61,8 +58,8 @@ def initialize(*args, **keywords):
     # SOS MODULE
     reg.add_input_port(
         SOS,
-        OGC_POST_REQUEST_PORT,
-        (core.modules.basic_modules.String, 'Configured POST Request'))#, True)
+        OGC_POST_DATA_PORT,
+        (core.modules.basic_modules.String, 'POST Data'))#, True)
     reg.add_input_port(
         SOS,
         OGC_URL_PORT,
@@ -75,3 +72,7 @@ def initialize(*args, **keywords):
         SOS,
         DATA_PORT,
         (core.modules.basic_modules.String, 'Data String'))#,True)
+    reg.add_output_port(
+        SOS,
+        WEB_REQUEST_PORT,
+        WebRequest)#,True)

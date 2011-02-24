@@ -263,7 +263,7 @@ class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
 
     def okTriggered(self): # , checked=False in parent?
         """Extends method defined in SpatialTemporalConfigurationWidget."""
-        print "=== OK Triggered in OgcConfigurationWidget (line 265) ==="
+        #print "=== OK Triggered in OgcConfigurationWidget (line 265) ==="
         full_url = self.ogc_common_widget.line_edit_OGC_url.text()
         if '?' in full_url:
             parts = full_url.split('?')
@@ -273,8 +273,7 @@ class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
         result = self.constructRequest()
         self.request_type = result[0] or None
         self.data = result[1] or None
-        print "OgcConfigurationWidget.py:276 (url,result,data,type)\n", \
-            self.url, result, self.data, self.request_type
+        #print "OgcConfigurationWidget.py:276 (url,result,data,type)\n",  self.url, result, self.data, self.request_type
         # must not set ports if nothing has been specified, or
         # if there was a problem constructing the request
         if self.data and self.request_type:
@@ -288,7 +287,7 @@ class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
                     )
             elif self.request_type == 'POST':
                 functions.append(
-                    (init.OGC_POST_REQUEST_PORT,[self.data]),
+                    (init.OGC_POST_DATA_PORT,[self.data]),
                     )
             else:
                 raise ModuleError(

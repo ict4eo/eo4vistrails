@@ -29,21 +29,22 @@ Created on Tue Dec 14 09:38:10 2010
 
 @author: tvzyl
 
-Module forms part of the rpyc vistrails capabilties, used to add multicore
+Module forms part of the rpyc eo4vistrails capabilties, used to add multicore
 parallel and distributed processing to vistrails.
 
-This Module hold a rpycnode type that can be past around between modules
+This module holds a rpycnode type that can be passed around between modules.
 
 """
 #History
 #Terence van Zyl, 10 Feb 2011, Version 0.1
 
 from core.modules.vistrails_module import Module
+import networkx as nx
+
 
 class NetworkxModule(object):
     pass
 
-import networkx as nx
 
 class Graph(NetworkxModule, Module, nx.Graph):
     """ Container class for the pysal.W class """
@@ -54,6 +55,7 @@ class Graph(NetworkxModule, Module, nx.Graph):
     def compute(self):
         self.add_edges_from(self.forceGetInputFromPort('neighbors'))
         self.setResult("value", self)
+
 
 class connected_components(NetworkxModule, Module):
     """ Container class for the pysal.W class """

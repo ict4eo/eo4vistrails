@@ -48,7 +48,9 @@ class OGC(NotCacheable):
 
     """
     def __init__(self):
-        pass
+        self.post_data = None
+        self.get_request = None
+        self.url = None
 
     def raiseError(self, msg, error=''):
         """Raise a VisTrails error."""
@@ -58,31 +60,26 @@ class OGC(NotCacheable):
 
     def compute(self):
         """Execute the module to create the output"""
+        # get input
         try:
-            self.post_request = self.getInputFromPort(init.OGC_POST_REQUEST_PORT)
-            #print "OgcService:62 POST Request from port :::", init.OGC_POST_REQUEST_PORT, type(request), request, len(request)
+            self.post_data = self.getInputFromPort(init.OGC_POST_DATA_PORT)
         except:
-            self.post_request = None
-
+            self.post_data = None
         try:
             self.get_request = self.getInputFromPort(init.OGC_GET_REQUEST_PORT)
-            #print "OgcService:68 GET Request from port :::", init.OGC_GET_REQUEST_PORT, type(request), request, len(request)
         except:
             self.get_request = None
-
         try:
-            self.url = self.getInputFromPort(init.URL_PORT)
-            #print "OgcService:73 URL from port :::", init.OGC_URL_PORT, type(url), url, len(url)
+            self.url = self.getInputFromPort(init.OGC_URL_PORT)
         except:
             self.url = None
-
+        # set output
+        #print "OgcService:77\n url: %s, get: %s\n data: %s" % (self.url, self.get_request, self.post_data)
+        webRequest = WebRequest()
         if self.get_request:
-            webRequest = WebRequest()
             webRequest.url = self.get_request
             webRequest.data = None
-            self.setResult(init.WEB_REQUEST_PORT, webRequest)
-
-        if self.post_request and self.url:
-            self.setResult(init.URL_PORT, self.url)
-            self.setResult(init.DATA_PORT, self.post_request)
-            self.setResult(init.WEB_REQUEST_PORT, (self.url, self.get_request))
+        if self.post_data and self.url:
+            webRequest.url = self.url
+            webRequest.data = self.post_data
+        self.setResult(init.WEB_REQUEST_PORT, webRequest)
