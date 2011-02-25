@@ -1,7 +1,5 @@
 import core
-from geoinf.datamodels.Feature import FeatureModel,  FileFeatureModel,  MemFeatureModel
-from geoinf.datamodels.Raster import RasterModel
-from geoinf.datamodels.GeoStrings import GMLString,  GeoJSONString,  GeoString
+
 from geoinf.ogc.Common import OgcService
 from geoinf.ogc.WFS import WFS,  WFSConfigurationWidget
 from geoinf.ogc.WCS import WCS,  WCSConfigurationWidget
@@ -9,7 +7,7 @@ from geoinf.ogc.SOS import SOS,  SOSConfigurationWidget
 from geoinf.ogc.OgcConfigurationWidget import OgcConfigurationWidget
 from geoinf.datamodels.FeatureImport import FeatureImport, FeatureImportConfigurationWidget
 from geoinf.visual.QGISMapCanvasCell import QGISMapCanvasCell
-from utils.WebRequest import WebRequest
+
 #from geoinf.postgis.PostGIS import PostGisSession,  PostGisCursor,  PostGisFeatureReturningCursor,  PostGisBasicReturningCursor,  PostGisNonReturningCursor,  SQLSourceConfigurationWidget
 
 #brings in threading and session modules
@@ -71,32 +69,6 @@ def initialize(*args, **keywords):
     # we can refer to it in a shorter way.
     reg = core.modules.module_registry.get_module_registry()
 
-    reg.add_module(GeoString)
-    reg.add_module(GMLString)
-    reg.add_module(GeoJSONString)
-    #input ports
-    reg.add_module(FeatureModel) #abstract
-
-    reg.add_module(MemFeatureModel)
-    reg.add_input_port(MemFeatureModel,  "source_file", core.modules.basic_modules.String )
-    #reg.add_input_port(MemFeatureModel,  "output_type", core.modules.basic_modules.String )
-    reg.add_input_port(MemFeatureModel,  "dbconn", core.modules.basic_modules.String )
-    reg.add_input_port(MemFeatureModel,  "sql", core.modules.basic_modules.String )
-    reg.add_input_port(MemFeatureModel, "webrequest",  WebRequest)
-    #reg.add_input_port(MemFeatureModel,  "uri", core.modules.basic_modules.String )
-    #reg.add_input_port(MemFeatureModel,  "uri_data", core.modules.basic_modules.String)
-    reg.add_input_port(MemFeatureModel,  "gstring", GeoString )
-    reg.add_output_port(MemFeatureModel, "feature_dataset", MemFeatureModel)
-
-
-    reg.add_module(FileFeatureModel)
-    reg.add_input_port(FileFeatureModel,  "source_file", core.modules.basic_modules.String )
-    reg.add_input_port(FileFeatureModel,  "source_feature_dataset", MemFeatureModel )
-    reg.add_input_port(FileFeatureModel, "webrequest",  WebRequest)
-    reg.add_input_port(FileFeatureModel,  "output_type", core.modules.basic_modules.String )
-
-
-    reg.add_module(RasterModel) #abstract
     reg.add_module(WFS, configureWidgetType=WFSConfigurationWidget)
     reg.add_module(SOS, configureWidgetType=SOSConfigurationWidget)
     reg.add_module(WCS, configureWidgetType=WCSConfigurationWidget)

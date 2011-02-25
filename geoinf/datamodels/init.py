@@ -43,7 +43,14 @@ def initialize(*args, **keywords):
     from core.modules.module_registry import get_module_registry
     from core.modules import basic_modules
     
-    from datamodels import QgsLayer
+    import QgsLayer
+    
+    from Feature import FeatureModel,  FileFeatureModel,  MemFeatureModel
+    from Raster import RasterModel
+    from GeoStrings import GMLString,  GeoJSONString,  GeoString
+    from packages.eo4vistrails.utils.WebRequest import WebRequest
+    from core.modules.basic_modules import String
+    
     """
     sets everything up called from the top level initialize
     """
@@ -65,3 +72,30 @@ def initialize(*args, **keywords):
     #Add QgsRasterLayer
     reg.add_module(QgsLayer.QgsRasterLayer,
                    namespace=mynamespace)
+                   
+    reg.add_module(GeoString)
+    reg.add_module(GMLString)
+    reg.add_module(GeoJSONString)
+    #input ports
+    reg.add_module(FeatureModel) #abstract
+
+    reg.add_module(MemFeatureModel)
+    reg.add_input_port(MemFeatureModel,  "source_file", String )
+    #reg.add_input_port(MemFeatureModel,  "output_type", core.modules.basic_modules.String )
+    reg.add_input_port(MemFeatureModel,  "dbconn", String )
+    reg.add_input_port(MemFeatureModel,  "sql", String )
+    reg.add_input_port(MemFeatureModel, "webrequest",  WebRequest)
+    #reg.add_input_port(MemFeatureModel,  "uri", core.modules.basic_modules.String )
+    #reg.add_input_port(MemFeatureModel,  "uri_data", core.modules.basic_modules.String)
+    reg.add_input_port(MemFeatureModel,  "gstring", GeoString )
+    reg.add_output_port(MemFeatureModel, "feature_dataset", MemFeatureModel)
+
+
+    reg.add_module(FileFeatureModel)
+    reg.add_input_port(FileFeatureModel,  "source_file", String )
+    reg.add_input_port(FileFeatureModel,  "source_feature_dataset", MemFeatureModel )
+    reg.add_input_port(FileFeatureModel, "webrequest",  WebRequest)
+    reg.add_input_port(FileFeatureModel,  "output_type", String )
+
+    reg.add_module(RasterModel) #abstract
+
