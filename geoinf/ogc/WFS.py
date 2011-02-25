@@ -362,7 +362,7 @@ class WFSConfigurationWidget(OgcConfigurationWidget):
                         'Unknown WFS bounding box type' + ': %s' % str(error)
                         )
                 wfs_url += "&bbox=" + bbox + \
-                ",urn:ogc:def:crs:=" + coord_system
+                    "," + coord_system # should yield EPSG:nnnn
             return 'GET', wfs_url
 
         else:
