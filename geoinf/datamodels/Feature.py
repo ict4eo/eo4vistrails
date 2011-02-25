@@ -149,7 +149,7 @@ class _OgrMemModel():
         def _viaCache():
             temp_filepath = core.system.default_dot_vistrails() + "/eo4vistrails/ogr/"
             if not os.path.exists(temp_filepath):
-                os.mkdir(temp_filepath)
+                os.mkdirs(temp_filepath)
             temp_filename = temp_filepath + hashlib.sha1(urllib.quote_plus(webrequest.url + getStatement)).hexdigest() + outputtype
             #core.system.touch(temp_filename)
             postdata = urllib.urlencode({'request': getStatement})
@@ -174,10 +174,9 @@ class _OgrMemModel():
         #will write string to temp file , then load it up
         def _viaCache():
             temp_filepath = core.system.default_dot_vistrails() + "/eo4vistrails/ogr/"
-            if not os.path.exists(core.system.default_dot_vistrails() + "/eo4vistrails/"):
-                os.mkdir(core.system.default_dot_vistrails() + "/eo4vistrails/")
+
             if not os.path.exists(temp_filepath):
-                os.mkdir(temp_filepath)
+                os.mkdirs(temp_filepath)
             
             t= str(type(gstr))
             tl = t.split("'")
@@ -200,6 +199,10 @@ class _OgrMemModel():
         
         
     def dumpToFile(self,  filesource,  datasetType = "ESRI Shapefile"):
+        #always overwrites
+        if not os.path.exists(filesource):
+            os.remove(filesource) #but for shapefiles? maybe the dataset creation process has an override option rather...
+        
         try:
             driver = ogr.GetDriverByName(datasetType)
             if datasetType == "CSV":
