@@ -129,7 +129,7 @@ class WFSCommonWidget(QtGui.QWidget):
         self.detailsLayout.addWidget(self.dcRequestFormatLabel, 11, 0)
         self.dcRequestFormatLabel.setVisible(False)  # not in use for WFS
         self.detailsLayout.addWidget(QtGui.QLabel('Spatial Delimiter?'), 12, 0)
-        self.detailsLayout.addWidget(QtGui.QLabel('Required Output Format:'), 13, 0)
+        self.detailsLayout.addWidget(QtGui.QLabel('Required Command:'), 13, 0)
 
         # Data containers
         self.dcLayerId = QtGui.QLabel('__')
@@ -181,8 +181,8 @@ class WFSCommonWidget(QtGui.QWidget):
 
         self.dcRequestType = QtGui.QComboBox()
         self.detailsLayout.addWidget(self.dcRequestType, 13, 1)
-        self.dcRequestType.addItem('DescribeFeatureType')
         self.dcRequestType.addItem('GetFeature')
+        self.dcRequestType.addItem('DescribeFeatureType')
 
         # local signals
         self.connect(
