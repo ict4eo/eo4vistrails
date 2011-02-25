@@ -87,6 +87,7 @@ def initialize(*args, **keywords):
     reg.add_module(FileFeatureModel)
     reg.add_input_port(FileFeatureModel,  "source_file", core.modules.basic_modules.String )
     reg.add_input_port(FileFeatureModel,  "source_feature_dataset", MemFeatureModel )
+    reg.add_input_port(FileFeatureModel, "webrequest",  WebRequest)
     reg.add_input_port(FileFeatureModel,  "output_type", core.modules.basic_modules.String )
 
 

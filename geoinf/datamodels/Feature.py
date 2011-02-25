@@ -306,6 +306,9 @@ class FileFeatureModel(File):
         elif (self.hasInputFromPort("source_feature_dataset")): #and self.getInputFromPort("source_feature_dataset")):
             ogr = self.getInputFromPort("source_feature_dataset").feature_model #which is the same, an instance of _OgrMemModel
             print ogr
+        elif (self.hasInputFromPort("webrequest") and self.getInputFromPort("webrequest")):
+            ogr  = _OgrMemModel()
+            ogr.loadContentFromURI(self.getInputFromPort("webrequest"))           
         else:
             raise ModuleError(self, 'No feature_dataset or source file is supplied - an OGR dataset cannot be generated')
 

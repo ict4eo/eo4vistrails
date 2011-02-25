@@ -12,10 +12,11 @@ import sys
 import os
 
 
-qgis_prefix = os.getenv("QGISHOME") 
+#qgis_prefix = os.getenv("QGISHOME") 
 
 # Initialize qgis libraries 
-QgsApplication.setPrefixPath(qgis_prefix, True) 
+#QgsApplication.setPrefixPath(qgis_prefix, True) 
+QgsApplication.setPrefixPath("/usr/lib/qgis", True) 
 QgsApplication.initQgis() 
 
 
