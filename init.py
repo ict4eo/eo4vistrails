@@ -7,7 +7,8 @@ from geoinf.ogc.WFS import WFS,  WFSConfigurationWidget
 from geoinf.ogc.WCS import WCS,  WCSConfigurationWidget
 from geoinf.ogc.SOS import SOS,  SOSConfigurationWidget
 from geoinf.ogc.OgcConfigurationWidget import OgcConfigurationWidget
-#from geoinf.datamodels.FeatureImport import FeatureImport, FeatureImportConfigurationWidget
+from geoinf.datamodels.FeatureImport import FeatureImport, FeatureImportConfigurationWidget
+from geoinf.visual.QGISMapCanvasCell import QGISMapCanvasCell
 from utils.WebRequest import WebRequest
 #from geoinf.postgis.PostGIS import PostGisSession,  PostGisCursor,  PostGisFeatureReturningCursor,  PostGisBasicReturningCursor,  PostGisNonReturningCursor,  SQLSourceConfigurationWidget
 
@@ -42,6 +43,12 @@ try:
     from dataanalytics import init as dataanalytics_init
 except:
     import dataanalytics.init as dataanalytics_init
+    
+# brings visual widgets
+try:
+    from visual import init as visuals_init
+except:
+    import visual.init as visual_init  
 
 
 def initialize(*args, **keywords):
@@ -87,25 +94,27 @@ def initialize(*args, **keywords):
     reg.add_module(SOS, configureWidgetType=SOSConfigurationWidget)
     reg.add_module(WCS, configureWidgetType=WCSConfigurationWidget)
 
-    #reg.add_module(FeatureImport, configureWidgetType=FeatureImportConfigurationWidget)
-
+    reg.add_module(FeatureImport, configureWidgetType=FeatureImportConfigurationWidget)
 
     #reg.add_input_port(FeatureModel, "service_version", (core.modules.basic_modules.String, 'Web Map Service version - default 1.1.1'))
     #output ports
     #reg.add_output_port(FeatureModel, "OGRDataset", (ogr.Dataset, 'Feature data in OGR Dataset'))
-
-
+    
     #Isolate the registration of the modules
     #Note order does count
-
 
     ogc_init.initialize(*args, **keywords)  # looks like no-one is willing to mess up this file, so have created ogc specific init.py as well.
     postgis_init.initialize(*args,  **keywords)
     rpyc_init.initialize(*args, **keywords)
     dataanalytics_init.initialize(*args, **keywords)
-
+    #visual_init.initialize(*args, **keywords)
 
     #reg.add_module(RPyC, configureWidgetType=PythonSourceConfigurationWidget)
     #reg.add_input_port(RPyC, 'rPyCServer', (core.modules.basic_modules.String, 'The RPyC Server IP'))
     #reg.add_input_port(RPyC, 'source', core.modules.basic_modules.String, True)
     #reg.add_output_port(RPyC, 'self', core.modules.basic_modules.Module)
+
+
+
+
+

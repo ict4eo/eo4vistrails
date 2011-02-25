@@ -23,13 +23,9 @@
 ## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ##
 ############################################################################
-"""This package provides GIS visualisation capabilities for eo4vistrails.
-In particular, provides visualisation capabilities through the QGIS API,
-so there is a dependency on the QGIS python bindings.
-"""
 
-identifier = 'za.co.csir.eo4vistrails.geoinf.visual'
-name = 'eo4vistrails.geoinf.visual'
+identifier = 'za.co.csir.eo4vistrails.geoinf'
+name = 'eo4vistrails.geoinf'
 version = '0.0.1'
 
 def package_requirements():

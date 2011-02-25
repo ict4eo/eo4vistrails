@@ -42,6 +42,11 @@ from packages.eo4vistrails.geoinf.datamodels.Feature import FeatureModel
 from packages.eo4vistrails.geoinf.ogc.OgcConfigurationWidget import OgcConfigurationWidget
 from core.modules.vistrails_module import Module, new_module, NotCacheable, ModuleError
 #from geoinf.datamodels.Raster import RasterModel
+import os, sys
+from numpy import *
+from osgeo import ogr, gdal
+import fnmatch
+from scipy import *
 
 
 #need to import the configuration widget we develop
@@ -66,6 +71,7 @@ class FeatureImportCommonWidget(QtGui.QWidget):
         self.parent_widget = ogc_widget
         self.contents = None #  only set in self.loadOfferings()
         self.create_config_window()
+
         # listen for signals emitted by OgcCommonWidget class
         """self.connect(
             self.parent_widget,
@@ -79,53 +85,141 @@ class FeatureImportCommonWidget(QtGui.QWidget):
         )"""
 
     def create_config_window(self):
-        """Create datacontainers and layout for displaying Feature data."""
-        self.setWindowTitle("FeatureImport Configuration Widget")
-        self.setMinimumSize(900, 675)
-        # main layout
-        self.mainLayout = QtGui.QHBoxLayout()
-        self.setLayout(self.mainLayout)
-        self.placesGroupBox = QtGui.QGroupBox("Places")
-        self.placesLayout = QtGui.QVBoxLayout()
-        self.placesGroupBox.setLayout(self.placesLayout)
-        self.mainLayout.addWidget(self.placesGroupBox)
-        self.split = QtGui.QSplitter(QtCore.Qt.Vertical)
-        self.mainLayout.addWidget(self.split)
-        self.detailsGroupBox = QtGui.QGroupBox("Places Details")
-        self.mainLayout.addWidget(self.detailsGroupBox)
-        self.detailsLayout = QtGui.QGridLayout()
-        self.detailsGroupBox.setLayout(self.detailsLayout)
-        # places
-        self.lbxPlaces = QtGui.QListWidget()
-        self.placesLayout.addWidget(self.lbxPlaces)
-        self.btnPlaces = QtGui.QPushButton("Add");
-        self.placesLayout.addWidget(self.btnPlaces)
-        # places details layout
-        #   labels
-        #   data containers
-        self.lbxDetails = QtGui.QListWidget()
-        self.detailsLayout.addWidget(self.lbxDetails)
-        self.cbxPlaces = QtGui.QComboBox();
-        self.detailsLayout.addWidget(self.cbxPlaces)
+       """Create datacontainers and layout for displaying Feature data."""
+       self.setWindowTitle("FeatureImport Configuration Widget")
+       self.setMinimumSize(900, 675)
+       # main layout
+       self.mainLayout = QtGui.QVBoxLayout()
+       self.setLayout(self.mainLayout)
+       self.placesGroupBoxButton = QtGui.QPushButton("Load Shape File")
+       self.placesGroupBox = QtGui.QLineEdit("Select Shapefile")
+       self.placesLayout = QtGui.QHBoxLayout()
+       self.placesGroupBox.setLayout(self.placesLayout)
+       self.mainLayout.addWidget(self.placesGroupBoxButton)
+       self.mainLayout.addWidget(self.placesGroupBox)
 
-        self.buttonGroupBox = QtGui.QGroupBox("")
-        self.buttonLayout = QtGui.QHBoxLayout()
-        self.buttonGroupBox.setLayout(self.buttonLayout)
-        self.detailsLayout.addWidget(self.buttonGroupBox)
-        self.btnCancel = QtGui.QPushButton("Cancel");
-        self.btnOpen = QtGui.QPushButton("Open");
-        self.buttonLayout.addWidget(self.btnCancel)
-        self.buttonLayout.addWidget(self.btnOpen)
+       #self.split = QtGui.QSplitter(QtCore.Qt.Vertical)
+       #self.mainLayout.addWidget(self.split)
+       self.detailsGroupBox = QtGui.QGroupBox("Shapefile Metadata")
+       self.mainLayout.addWidget(self.detailsGroupBox)
+       self.detailsLayout = QtGui.QGridLayout()
+       self.detailsGroupBox.setLayout(self.detailsLayout)
+       # places
+       #self.lbxPlaces = QtGui.QListWidget()
+       #self.placesLayout.addWidget(self.lbxPlaces)
+       #self.btnPlaces = QtGui.QPushButton("Add");
+       #self.placesLayout.addWidget(self.btnPlaces)
+       # places details layout
+       #   labels
+       #   data containers
+       self.lbxDetails = QtGui.QListWidget()
+       self.detailsLayout.addWidget(self.lbxDetails)
+       # self.cbxPlaces = QtGui.QComboBox();
+       #self.detailsLayout.addWidget(self.cbxPlaces)
+
+       self.buttonGroupBox = QtGui.QGroupBox("")
+       self.buttonLayout = QtGui.QHBoxLayout()
+       self.buttonGroupBox.setLayout(self.buttonLayout)
+       self.detailsLayout.addWidget(self.buttonGroupBox)
+       self.btnCancel = QtGui.QPushButton("Cancel");
+       self.btnExecute = QtGui.QPushButton("Execute");
+       self.buttonLayout.addWidget(self.btnCancel)
+       self.buttonLayout.addWidget(self.btnExecute)
+
+       self.connect(self.placesGroupBoxButton, QtCore.SIGNAL('clicked(bool)'), self.showDialog)
+
+       self.connect(self.btnExecute, QtCore.SIGNAL('clicked(bool)'), self.getShapeFileMetaData)
 
 
+    def showDialog(self):
 
-        # local signals
-        '''self.connect(
-            self.lbxOfferings,
-            QtCore.SIGNAL("itemClicked(QListWidgetItem*)"),
-            self.offeringsChanged'''
-            #)
-            
+        filename = QtGui.QFileDialog.getOpenFileName(self, 'Open file','/home')
+
+        self.placesGroupBox.setText(str(filename))
+
+        fname = open(filename)
+
+        data = fname.read()
+
+        self.lbxDetails.addItem(str(data))
+
+
+    def getShapeFileMetaData(self):
+
+        shpfile = self.placesGroupBox.text()
+
+        browser = MetaDataBrowser("ESRI Shapefile")
+
+        data = browser.get_metadata(shpfile)
+
+        self.lbxDetails.addItem(str(data))
+
+
+class MetaDataBrowser():
+
+    def __init__(self, ogr_driver_name ):
+        """
+        Valid driver names are: ESRI_Shapefile, GTiff, GRASS, PostgreSQL, etc.
+        """
+        self.ogr_driver_name = ogr_driver_name
+
+        self.driver = ogr.GetDriverByName(ogr_driver_name)
+
+        if self.driver is None:
+
+            raise ValueError("Invalid driver name: %s" % ogr_driver_name)
+
+        #FeatureImportCommonWidget.__init__(self,  ogr_driver_name)
+        # pass in parent widget i.e. OgcCommonWidget class and SpatialWidget Class (read changed coords)
+
+        self.c = FeatureImportCommonWidget(self.placesGroupBox.text())
+
+        f = self.c.placesGroupBox.text()
+
+        print f
+
+    def get_metadata(self, filename):
+        """
+        Returns a dictionary containing the meta data in
+        the given filename
+        """
+        # fix this to get path from self.placesGroupBox.text() text field
+        # replace path with your local path to shapefile
+
+
+        filename ="/home/bcwele/Downloads/GIS_data/Rivers/main_rivers.shp"
+
+        #self.placesGroupBox.text() #"/home/bcwele/Downloads/GIS_data/Rivers/main_rivers.shp" #self.placesGroupBox.text()
+
+        ds = self.driver.Open(filename)
+
+        result = {
+        'file': ds.name
+        }
+
+        for l in xrange(ds.GetLayerCount()):
+            layer = ds.GetLayerByIndex(l)
+
+            sr = layer.GetSpatialRef()
+            proj4 = ''
+            if sr: proj4 = sr.ExportToProj4()
+
+            for f in xrange(layer.GetFeatureCount()):
+                feat = layer.GetFeature(f)
+                fldnames = []
+                for fld in xrange(feat.GetFieldCount()):
+                    flddef = feat.GetFieldDefnRef(fld)
+                    fldnames.append(flddef.name)
+
+            result["layer %d"%l] = {
+            'name'    : layer.GetName(),
+            'extent': layer.GetExtent(),
+            'proj4'    : proj4,
+            'fields': fldnames
+            }
+        return result
+
+
 def initialize(*args, **keywords):
     """sets everything up"""
     # We'll first create a local alias for the module_registry so that
@@ -133,8 +227,8 @@ def initialize(*args, **keywords):
     reg = core.modules.module_registry.get_module_registry()
     reg.add_module(FeatureImport)
     #input ports
-    
-    #reg.add_input_port(FeatureModel, "service_version", (core.modules.basic_modules.String, 'Web Map Service version - default 1.1.1'))   
+
+    #reg.add_input_port(FeatureModel, "service_version", (core.modules.basic_modules.String, 'Web Map Service version - default 1.1.1'))
     #output ports
     reg.add_output_port(
         FeatureImport,
@@ -164,7 +258,8 @@ class FeatureImportConfigurationWidget(OgcConfigurationWidget):
         self.tabs.setTabToolTip(
             self.tabs.indexOf(self.wfs_config),
             QtGui.QApplication.translate(
-               
+               "cConfigurationWidget",
+               "FeatureImportCommonWidget",
                 None,
                 QtGui.QApplication.UnicodeUTF8
             )

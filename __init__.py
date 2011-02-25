@@ -39,5 +39,5 @@ OpenNebula cloud environments.
 identifier = 'za.co.csir.eo4vistrails'
 name = 'eo4vistrails'
 version = '0.0.1'
-author_list = 'tvanzyl,avahed' 
+author_list = 'tvanzyl,avahed,bcwele' 
 
