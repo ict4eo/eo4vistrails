@@ -46,13 +46,13 @@ try:
 except:
     import dataanalytics.init as dataanalytics_init
     
-'''    
+   
 # brings visual widgets
 try:
-    from visual import init as visuals_init
+    from geoinf.visual import init as visual_init
 except:
-    import visual.init as visual_init  
-'''
+    import geoinf.visual.init as visual_init  
+
 
 def initialize(*args, **keywords):
     '''sets everything up'''
@@ -84,6 +84,7 @@ def initialize(*args, **keywords):
 
     ogc_init.initialize(*args, **keywords)  # looks like no-one is willing to mess up this file, so have created ogc specific init.py as well.
     postgis_init.initialize(*args,  **keywords)
+    visual_init.initialize(*args,  **keywords)
     rpyc_init.initialize(*args, **keywords)
     dataanalytics_init.initialize(*args, **keywords)
     

@@ -16,8 +16,8 @@ import os
 
 # Initialize qgis libraries 
 #QgsApplication.setPrefixPath(qgis_prefix, True) 
-QgsApplication.setPrefixPath("/usr", True)
-QgsApplication.initQgis()
+QgsApplication.setPrefixPath("/usr", True) 
+QgsApplication.initQgis() 
 
 
 class QGISMapCanvasCell(SpreadsheetCell):
@@ -42,7 +42,6 @@ class QGISMapCanvasCellWidget(QCellWidget, QMainWindow):
     
     def __init__(self, parent=None):
             
-       
         QCellWidget.__init__(self, parent)
         
         QMainWindow.__init__(self)
@@ -52,7 +51,7 @@ class QGISMapCanvasCellWidget(QCellWidget, QMainWindow):
         self.canvas.show() 
         
         self.tools = QMainWindow()          
-        path_png_icon = "/home/bcwele/scientific-workflows/vistrails-src-1.6/vistrails/packages/spreadsheet/widgets/QgsCanvasWidget/"             
+        path_png_icon = "/packages/eovistrails/geoinf/visual/"             
         actionZoomIn = QAction(QIcon( path_png_icon + "mActionZoomIn.png"), "Zoom In", self)        
         actionZoomOut = QAction(QIcon( path_png_icon + "mActionZoomOut.png"), "Zoom Out", self)  
         actionPan = QAction(QIcon( path_png_icon + "mActionPan.png"), "Pan ", self) 
@@ -95,7 +94,7 @@ class QGISMapCanvasCellWidget(QCellWidget, QMainWindow):
         print "Succeeded "
         
         # Add layer to the registry                
-        QgsMapLayerRegistry.instance().addMapLayer(layer);
+        QgsMapLayerRegistry.instance().addMapLayer(layer); 
         
         # Set extent to the extent of our layer 
         self.canvas.setExtent(layer.extent()) 
