@@ -16,8 +16,8 @@ import os
 
 # Initialize qgis libraries 
 #QgsApplication.setPrefixPath(qgis_prefix, True) 
-QgsApplication.setPrefixPath("/usr/lib/qgis", True) 
-QgsApplication.initQgis() 
+QgsApplication.setPrefixPath("/usr", True)
+QgsApplication.initQgis()
 
 
 class QGISMapCanvasCell(SpreadsheetCell):

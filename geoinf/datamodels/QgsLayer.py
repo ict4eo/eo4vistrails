@@ -33,36 +33,44 @@ Created on Wed Feb 23 14:08:10 2011
 #History
 
 from core.modules.vistrails_module import Module, ModuleError
-from qgis.core import QgsVectorLayer, QgsRasterLayer
+import qgis.core
 from PyQt4.QtCore import QFileInfo
+
+#export set PYTHONPATH=/usr/lib/python2.6
+qgis.core.QgsApplication.setPrefixPath("/usr", True) 
+qgis.core.QgsApplication.initQgis() 
 
 class QgsMapLayer(Module):
     """This module will create a QGIS layer from a file
     """
+    def __init__(self):
+        Module.__init__(self)
+        
     def raiseError(self, msg, error=''):
         """Raise a VisTrails error."""
         import traceback
         traceback.print_exc()
         raise ModuleError(self, msg + ': %s' % str(error))
  
-class QgsVectorLayer(QgsMapLayer, QgsVectorLayer):
+class QgsVectorLayer(QgsMapLayer):
+    
      def compute(self):
         """Execute the module to create the output"""
         try:
-            thefile = self.getInputFromPort('file')
-            fileInfo = QFileInfo(thefile) 
-            QgsVectorLayer.__init__(thefile, fileInfo.fileName(), "ogr")                
+            thefile = self.getInputFromPort('file').get_name()
+            fileInfo = QFileInfo(thefile)   
+            self.value = qgis.core.QgsVectorLayer(thefile, fileInfo.fileName(), "ogr")
             self.setResult('value', self)
         except Exception, e:
             self.raiseError('Cannot set output port: %s' % str(e))
             
-class QgsRasterLayer(QgsMapLayer, QgsRasterLayer):
+class QgsRasterLayer(QgsMapLayer):
      def compute(self):
         """Execute the module to create the output"""
         try:
             thefile = self.getInputFromPort('file')
             fileInfo = QFileInfo(thefile) 
-            QgsRasterLayer.__init__(thefile, fileInfo.fileName(), "ogr")                
+            qgis.core.QgsRasterLayer.__init__(thefile, fileInfo.fileName(), "ogr")                
             self.setResult('value', self)
         except Exception, e:
             self.raiseError('Cannot set output port: %s' % str(e))

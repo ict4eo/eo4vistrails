@@ -79,7 +79,7 @@ def initialize(*args, **keywords):
     #input ports
     reg.add_module(FeatureModel) #abstract
 
-    reg.add_module(MemFeatureModel)
+    reg.add_module(MemFeatureModel, namespace=mynamespace)
     reg.add_input_port(MemFeatureModel,  "source_file", String )
     #reg.add_input_port(MemFeatureModel,  "output_type", core.modules.basic_modules.String )
     reg.add_input_port(MemFeatureModel,  "dbconn", String )
