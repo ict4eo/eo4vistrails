@@ -44,12 +44,13 @@ try:
 except:
     import dataanalytics.init as dataanalytics_init
     
+'''    
 # brings visual widgets
 try:
     from visual import init as visuals_init
 except:
     import visual.init as visual_init  
-
+'''
 
 def initialize(*args, **keywords):
     '''sets everything up'''
@@ -107,7 +108,7 @@ def initialize(*args, **keywords):
     postgis_init.initialize(*args,  **keywords)
     rpyc_init.initialize(*args, **keywords)
     dataanalytics_init.initialize(*args, **keywords)
-    #visual_init.initialize(*args, **keywords)
+    
 
     #reg.add_module(RPyC, configureWidgetType=PythonSourceConfigurationWidget)
     #reg.add_input_port(RPyC, 'rPyCServer', (core.modules.basic_modules.String, 'The RPyC Server IP'))

@@ -1,34 +1,19 @@
-###########################################################################
-##
-## Copyright (C) 2010 CSIR Meraka Institute. All rights reserved.
-##
-## eo4vistrails extends VisTrails, providing GIS/Earth Observation 
-## ingestion, pre-processing, transformation, analytic and visualisation 
-## capabilities . Included is the abilty to run code transparently in 
-## OpenNebula cloud environments. There are various software 
-## dependencies, but all are FOSS.
-##
-## This file may be used under the terms of the GNU General Public
-## License version 2.0 as published by the Free Software Foundation
-## and appearing in the file LICENSE.GPL included in the packaging of
-## this file.  Please review the following to ensure GNU General Public
-## Licensing requirements will be met:
-## http://www.opensource.org/licenses/gpl-license.php
-##
-## If you are unsure which license is appropriate for your use (for
-## instance, you are interested in developing a commercial derivative
-## of VisTrails), please contact us at vistrails@sci.utah.edu.
-##
-## This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-##
-############################################################################
+from QGISMapCanvasCell import QGISMapCanvasCell
 
-identifier = 'za.co.csir.eo4vistrails.geoinf'
-name = 'eo4vistrails.geoinf'
-version = '0.0.1'
+def widgetName():
+    """ widgetName() -> str
+    Return the name of this widget plugin
+    
+    """
+    return 'QGIS Map Canvas'
 
-def package_requirements():
-    import core.requirements
-    if not core.requirements.python_module_exists('qgis'):
-        raise core.requirements.MissingRequirement('qgis')
+def registerWidget(reg, basicModules, basicWidgets):
+    """ registerWidget(reg: module_registry,
+                       basicModules: python package,
+                       basicWidgets: python package) -> None
+    Register all widgets in this package to VisTrails module_registry
+    
+    """
+    reg.add_module(QGISMapCanvasCell)
+    reg.add_input_port(QGISMapCanvasCell, "Location", basicWidgets.CellLocation)
+    reg.add_input_port(QGISMapCanvasCell, "File", basicModules.File)    
