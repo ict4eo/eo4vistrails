@@ -12,8 +12,6 @@ from geoinf.visual.QGISMapCanvasCell import QGISMapCanvasCell
 from utils.WebRequest import WebRequest
 #from geoinf.postgis.PostGIS import PostGisSession,  PostGisCursor,  PostGisFeatureReturningCursor,  PostGisBasicReturningCursor,  PostGisNonReturningCursor,  SQLSourceConfigurationWidget
 
-
-
 #brings in threading and session modules
 try:
     from utils import init as utils_init
@@ -32,11 +30,17 @@ try:
 except:
     import geoinf.postgis.init as postgis_init
 
-    #brings in ogc modules
+#brings in ogc modules
 try:
     from geoinf.ogc import init as ogc_init
 except:
     import geoinf.ogc.init as ogc_init
+
+#brings in datamodels modules
+try:
+    from geoinf.datamodels import init as datamodels_init
+except:
+    import geoinf.datamodels.init as datamodels_init
 
 #brings in dataanalytics modules
 try:
@@ -61,7 +65,8 @@ def initialize(*args, **keywords):
     # function addModule:
 
     utils_init.initialize(*args, **keywords)
-
+    datamodels_init.initialize(*args, **keywords)
+    
     # We'll first create a local alias for the module_registry so that
     # we can refer to it in a shorter way.
     reg = core.modules.module_registry.get_module_registry()

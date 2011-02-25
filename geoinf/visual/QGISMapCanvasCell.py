@@ -95,7 +95,7 @@ class QGISMapCanvasCellWidget(QCellWidget, QMainWindow):
         print "Succeeded "
         
         # Add layer to the registry                
-        QgsMapLayerRegistry.instance().addMapLayer(layer); 
+        QgsMapLayerRegistry.instance().addMapLayer(layer);
         
         # Set extent to the extent of our layer 
         self.canvas.setExtent(layer.extent()) 

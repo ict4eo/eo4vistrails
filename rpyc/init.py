@@ -53,7 +53,7 @@ def initialize(*args, **keywords):
     """
     reg = get_module_registry()
     mynamespace = "rpyc"
-
+    
     #Add RPyC
     reg.add_module(RPyCNode.RPyCNode,
                    namespace=mynamespace)
@@ -63,6 +63,7 @@ def initialize(*args, **keywords):
                        basic_modules.Integer)
     reg.add_output_port(RPyCNode.RPyCNode, "value", 
                         (RPyCNode.RPyCNode, 'value'))
+                        
                         
     #Dummy Module Mixed into all RPYCSafeModules to get a possible RPyC Node
     RPyCModule_descriptor = reg.add_module(RPyCNode.RPyCModule,
