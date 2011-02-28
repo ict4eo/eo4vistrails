@@ -81,12 +81,13 @@ class QGISMapCanvasCellWidget(QCellWidget, QMainWindow):
         self.toolZoomOut.setAction(actionZoomOut)
     
                 
-        File = QFileDialog.getOpenFileName(self, "Open file", ".", "files(*.*)") 
+        #File = QFileDialog.getOpenFileName(self, "Open file", ".", "files(*.*)") 
         
-        fileInfo = QFileInfo(File) 
+        #fileInfo = QFileInfo(File) 
          
         # Add the layer       
-        layer = QgsVectorLayer(File, fileInfo.fileName(), "ogr")
+        #layer = QgsVectorLayer(File, fileInfo.fileName(), "ogr")
+        #layer =  self.getInputFromPort('layer')
               
         print "Accessing layer"
         if not layer.isValid(): 
