@@ -29,13 +29,13 @@ class QGISMapCanvasCell(SpreadsheetCell):
         Dispatch the HTML contents to the spreadsheet
         """
                 
-        if self.hasInputFromPort("File"):
-            fileValue = self.getInputFromPort("File")
+        if self.hasInputFromPort("layer"):
+            layers = self.getInputFromPort("layer")
         else:
-            fileValue = None
+            layers = None
 
               
-        self.cellWidget = self.displayAndWait(QGISMapCanvasCellWidget, (fileValue,))
+        self.cellWidget = self.displayAndWait(QGISMapCanvasCellWidget, (layers,))
 
 
 class QGISMapCanvasCellWidget(QCellWidget, QMainWindow):
@@ -79,33 +79,7 @@ class QGISMapCanvasCellWidget(QCellWidget, QMainWindow):
         
         self.toolZoomOut = QgsMapToolZoom(self.canvas, True) # true = out
         self.toolZoomOut.setAction(actionZoomOut)
-    
-                
-        #File = QFileDialog.getOpenFileName(self, "Open file", ".", "files(*.*)") 
-        
-        #fileInfo = QFileInfo(File) 
-         
-        # Add the layer       
-        #layer = QgsVectorLayer(File, fileInfo.fileName(), "ogr")
-        #layer =  self.getInputFromPort('layer')
-              
-        print "Accessing layer"
-        if not layer.isValid(): 
-            return 
-        print "Succeeded "
-        
-        # Add layer to the registry                
-        QgsMapLayerRegistry.instance().addMapLayer(layer); 
-        
-        # Set extent to the extent of our layer 
-        self.canvas.setExtent(layer.extent()) 
-        
-        # Set up the map canvas layer set 
-        cl = QgsMapCanvasLayer(layer) 
-        layers = [cl] 
-        self.canvas.setLayerSet(layers) 
-        #self.canvas.setVisible(True)
-        
+          
         
     def zoomIn(self):
         self.canvas.setMapTool(self.toolZoomIn)
@@ -124,19 +98,37 @@ class QGISMapCanvasCellWidget(QCellWidget, QMainWindow):
         Updates the contents with a new changed in filename
         
         """
-        (fileValue, ) = inputPorts
-        '''
-        if fileValue:
-            img = QtGui.QImage()
-            if img.load(fileValue.name):
-                self.originalPix = QtGui.QPixmap.fromImage(img)
-                self.tools.setPixmap(self.originalPix.scaled(self.tools.size(),
-                                                         QtCore.Qt.KeepAspectRatio,
-                                                         QtCore.Qt.SmoothTransformation))
-            else:
-                self.tools.setText("Invalid image file!")
-        '''
-
-        QCellWidget.updateContents(self, inputPorts)
+        (inputLayers, ) = inputPorts
+         
+        # Add the layer       
+        #layer = QgsVectorLayer(File, fileInfo.fileName(), "ogr")
+        if type(inputLayers) != list:
+            print "One Layer"
+            inputLayers = [inputLayers] #TODO handle the list case..
+        
+        mapCanvasLayers = [] 
+        for layer in inputLayers:
+            
+            print "Accessing layer"
+            if not layer.isValid(): 
+                return 
+            print "Succeeded "
+            
+            # Add layer to the registry
+            QgsMapLayerRegistry.instance().addMapLayer(layer)
+            
+            # Set extent to the extent of our layer
+            self.canvas.setExtent(layer.extent())
+        
+            # Set up the map canvas layer set 
+            cl = QgsMapCanvasLayer(layer)
+            
+            mapCanvasLayers.append(cl)
+        
+        self.canvas.setLayerSet(mapCanvasLayers) 
+        #self.canvas.setVisible(True)
+  
+        self.update()
+        #QCellWidget.updateContents(self, inputPorts)
         
         

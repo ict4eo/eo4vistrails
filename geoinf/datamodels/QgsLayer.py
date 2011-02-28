@@ -53,7 +53,7 @@ class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
     def compute(self):
         """Execute the module to create the output"""
         try:
-            thefile = self.getInputFromPort('file').get_name()
+            thefile = self.getInputFromPort('file').name
             fileInfo = QFileInfo(thefile)   
             qgis.core.QgsVectorLayer.__init__(self, thefile, fileInfo.fileName(), "ogr")
             self.setResult('value', self)
