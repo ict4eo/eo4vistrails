@@ -50,52 +50,47 @@ def initialize(*args, **keywords):
     from GeoStrings import GMLString,  GeoJSONString,  GeoString
     from packages.eo4vistrails.utils.WebRequest import WebRequest
     from core.modules.basic_modules import String
-    
+    from packages.eo4vistrails.geoinf.datamodels.FeatureImport import FeatureImport, FeatureImportConfigurationWidget
+
     """
     sets everything up called from the top level initialize
     """
     reg = get_module_registry()
-    mynamespace = "geoinf"
+    mynamespace = "datamodels"
+
+    reg.add_module(FeatureModel, namespace=mynamespace) #abstract
+
+    reg.add_module(FeatureImport, configureWidgetType=FeatureImportConfigurationWidget, namespace = mynamespace)
 
     #Add QgsMapLayer
-    reg.add_module(QgsLayer.QgsMapLayer,
-                   namespace=mynamespace)
-    reg.add_input_port(QgsLayer.QgsMapLayer, 'file',
-                       basic_modules.File)
-    reg.add_output_port(QgsLayer.QgsMapLayer, "value", 
-                        QgsLayer.QgsMapLayer)
+    reg.add_module(QgsLayer.QgsMapLayer, namespace=mynamespace)
+    reg.add_input_port(QgsLayer.QgsMapLayer, 'file', basic_modules.File)
+    reg.add_output_port(QgsLayer.QgsMapLayer, "value", QgsLayer.QgsMapLayer)
 
     #Add QgsVectorLayer
-    reg.add_module(QgsLayer.QgsVectorLayer,
-                   namespace=mynamespace)
+    reg.add_module(QgsLayer.QgsVectorLayer, namespace=mynamespace)
                    
     #Add QgsRasterLayer
-    reg.add_module(QgsLayer.QgsRasterLayer,
-                   namespace=mynamespace)
+    reg.add_module(QgsLayer.QgsRasterLayer, namespace=mynamespace)
                    
-    reg.add_module(GeoString)
-    reg.add_module(GMLString)
-    reg.add_module(GeoJSONString)
+    reg.add_module(GeoString, namespace=mynamespace)
+    reg.add_module(GMLString, namespace=mynamespace)
+    reg.add_module(GeoJSONString, namespace=mynamespace)
     #input ports
-    reg.add_module(FeatureModel) #abstract
 
     reg.add_module(MemFeatureModel, namespace=mynamespace)
     reg.add_input_port(MemFeatureModel,  "source_file", String )
-    #reg.add_input_port(MemFeatureModel,  "output_type", core.modules.basic_modules.String )
     reg.add_input_port(MemFeatureModel,  "dbconn", String )
     reg.add_input_port(MemFeatureModel,  "sql", String )
     reg.add_input_port(MemFeatureModel, "webrequest",  WebRequest)
-    #reg.add_input_port(MemFeatureModel,  "uri", core.modules.basic_modules.String )
-    #reg.add_input_port(MemFeatureModel,  "uri_data", core.modules.basic_modules.String)
     reg.add_input_port(MemFeatureModel,  "gstring", GeoString )
     reg.add_output_port(MemFeatureModel, "feature_dataset", MemFeatureModel)
 
-
-    reg.add_module(FileFeatureModel)
+    reg.add_module(FileFeatureModel, namespace=mynamespace)
     reg.add_input_port(FileFeatureModel,  "source_file", String )
     reg.add_input_port(FileFeatureModel,  "source_feature_dataset", MemFeatureModel )
     reg.add_input_port(FileFeatureModel, "webrequest",  WebRequest)
     reg.add_input_port(FileFeatureModel,  "output_type", String )
 
-    reg.add_module(RasterModel) #abstract
+    reg.add_module(RasterModel, namespace=mynamespace) #abstract
 
