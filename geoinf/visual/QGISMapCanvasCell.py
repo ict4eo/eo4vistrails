@@ -26,14 +26,11 @@ class QGISMapCanvasCell(SpreadsheetCell):
         
     def compute(self):
         """ compute() -> None
-        Dispatch the HTML contents to the spreadsheet
         """
-                
         if self.hasInputFromPort("layer"):
             layers = self.getInputFromPort("layer")
         else:
             layers = None
-
               
         self.cellWidget = self.displayAndWait(QGISMapCanvasCellWidget, (layers,))
 
@@ -41,17 +38,16 @@ class QGISMapCanvasCell(SpreadsheetCell):
 class QGISMapCanvasCellWidget(QCellWidget, QMainWindow):
     
     def __init__(self, parent=None):
-            
+
         QCellWidget.__init__(self, parent)
-        
         QMainWindow.__init__(self)
                        
         self.canvas = QgsMapCanvas()
         self.canvas.setCanvasColor(QColor(200,200,255))        
         self.canvas.show() 
         
-        self.tools = QMainWindow()          
-        path_png_icon = "/packages/eovistrails/geoinf/visual/"             
+        self.tools = QMainWindow()
+        path_png_icon = "./packages/eovistrails/geoinf/visual/"
         actionZoomIn = QAction(QIcon( path_png_icon + "mActionZoomIn.png"), "Zoom In", self)        
         actionZoomOut = QAction(QIcon( path_png_icon + "mActionZoomOut.png"), "Zoom Out", self)  
         actionPan = QAction(QIcon( path_png_icon + "mActionPan.png"), "Pan ", self) 

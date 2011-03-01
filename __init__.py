@@ -39,5 +39,13 @@ OpenNebula cloud environments.
 identifier = 'za.co.csir.eo4vistrails'
 name = 'eo4vistrails'
 version = '0.0.1'
-author_list = 'tvanzyl,avahed,bcwele' 
+author_list = 'tvanzyl,bcwele' 
 
+def package_dependencies():
+    return ['edu.utah.sci.vistrails.spreadsheet']
+#    import core.packagemanager
+#    manager = core.packagemanager.get_package_manager()
+#    if manager.has_package('edu.utah.sci.vistrails.spreadsheet'):
+#        return ['edu.utah.sci.vistrails.spreadsheet']
+#    else:
+#        return []
