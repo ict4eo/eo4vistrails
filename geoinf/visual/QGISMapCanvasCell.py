@@ -28,7 +28,7 @@ class QGISMapCanvasCell(SpreadsheetCell):
         """ compute() -> None
         """
         if self.hasInputFromPort("layer"):
-            layers = self.getInputFromPort("layer")
+            layers = self.getInputListFromPort("layer")
         else:
             layers = None
               
