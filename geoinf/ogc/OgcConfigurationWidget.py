@@ -42,7 +42,7 @@ class OgcCommonWidget(QtGui.QWidget):
     def __init__(self, module, parent=None):
         '''parses modules attributes to fetch parameters'''
         QtGui.QWidget.__init__(self, parent)
-        self.launchtype = str(module).split(" ")[1].split(":")[1][0:3].lower()
+        self.launchtype = str(module).split("|")[1].split("'")[0][0:3].lower()  # class-dependant code!
         #self.module = module
         self.setObjectName("OgcCommonWidget")
         self.parent_widget = module
