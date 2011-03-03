@@ -57,21 +57,22 @@ class OgcCommonWidget(QtGui.QWidget):
         self.mainLayout = QtGui.QVBoxLayout()
         self.setLayout(self.mainLayout)
 
+        self.line_edit_OGC_url = QtGui.QLineEdit("") #default
+        self.urlGroupBox = QtGui.QGroupBox("OGC %s Service:" % self.launchtype)
+
         if self.launchtype == "sos":
             self.urlGroupBox = QtGui.QGroupBox("OGC Sensor Observation Service:")
             self.line_edit_OGC_url = QtGui.QLineEdit(
-                "http://giv-sos.uni-muenster.de:8080/52nSOSv3/sos" #?request=GetCapabilities&service=SOS"
-                )
+                "http://giv-sos.uni-muenster.de:8080/52nSOSv3/sos") #?request=GetCapabilities&service=SOS"
         elif self.launchtype == "wfs":
             self.urlGroupBox = QtGui.QGroupBox("OGC Web Feature Service:")
             self.line_edit_OGC_url = QtGui.QLineEdit(
-                'http://ict4eo.meraka.csir.co.za:8080/geoserver/wfs'
-                )
+                'http://ict4eo.meraka.csir.co.za:8080/geoserver/wfs')
         elif self.launchtype == "wcs":
             self.urlGroupBox = QtGui.QGroupBox("OGC Web Coverage Service:")
-            self.line_edit_OGC_url = QtGui.QLineEdit('http://afis.meraka.org.za/geoserver/wcs')
-        else:
-            self.urlGroupBox = QtGui.QGroupBox("OGC Service:")
+            self.line_edit_OGC_url = QtGui.QLineEdit(
+                'http://afis.meraka.org.za/geoserver/wcs')
+
         self.fetchUrlLayout = QtGui.QHBoxLayout()
 
         self.label_OGC_url = QtGui.QLabel('URL & Version:')
