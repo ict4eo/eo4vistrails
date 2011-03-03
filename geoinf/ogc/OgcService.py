@@ -83,3 +83,7 @@ class OGC(NotCacheable):
             webRequest.url = self.url
             webRequest.data = self.post_data
         self.setResult(init.WEB_REQUEST_PORT, webRequest)
+        # text ports
+        self.setResult(init.URL_PORT, webRequest.url)
+        if webRequest.data:
+            self.setResult(init.DATA_PORT, webRequest.data)

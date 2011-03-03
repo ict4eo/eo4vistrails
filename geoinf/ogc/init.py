@@ -35,6 +35,10 @@ def initialize(*args, **keywords):
         (core.modules.basic_modules.String, 'Request URL'))#, True)
     reg.add_output_port(
         WFS,
+        URL_PORT,
+        (core.modules.basic_modules.String, 'URL String'))#,True)
+    reg.add_output_port(
+        WFS,
         WEB_REQUEST_PORT,
         WebRequest)#,True)
 
