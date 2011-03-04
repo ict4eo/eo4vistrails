@@ -23,6 +23,9 @@
 ## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ##
 ############################################################################
+"""This module provides an OGC (Open Geospatial Consortium) Web Feature Service
+(WFS) Client via owslib.
+"""
 
 # vistrails imports
 import core.modules.module_registry
@@ -30,7 +33,8 @@ from core.modules.vistrails_module import Module, ModuleError
 
 # to use for config window
 from core.modules.module_configure import StandardModuleConfigurationWidget
-
+from core.modules.vistrails_module import Module, new_module, NotCacheable, ModuleError
+import init
 
 # Qt import statements
 from PyQt4.QtCore import *
@@ -70,9 +74,9 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
     "for configuration widget on vistrails module"
     def __init__(self, module,  controller,  parent=None):
         StandardModuleConfigurationWidget.__init__(self, module, controller, parent)
-        self.create_config_window()
         self.setObjectName("WpsConfigWidget")
-        
+        self.create_config_window()
+    
     def create_config_window(self):
         self.setWindowTitle("OGC WPS Configuration Widget")
         self.setWindowModality(Qt.WindowModal)
@@ -86,50 +90,50 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         self.btnNew = QPushButton(self.GroupBox1)
         self.btnNew.setObjectName("btnNew")
         self.btnNew.setText("New")
-        self.mainLayout.addWidget(self.btnNew, 1, 1, 1, 1)
+        self.mainLayout.addWidget(self.btnNew, 2, 1, 1, 1)
         self.btnEdit = QPushButton(self.GroupBox1)
         #self.btnEdit.setEnabled(False)
         self.btnEdit.setObjectName("btnEdit")
         self.btnEdit.setText("Edit")
-        self.mainLayout.addWidget(self.btnEdit, 1, 2, 1, 1)
+        self.mainLayout.addWidget(self.btnEdit, 2, 2, 1, 1)
         #spacer - to provide blank space in the layout
         spacerItem = QSpacerItem(171, 30, QSizePolicy.Expanding, QSizePolicy.Minimum)
-        self.mainLayout.addItem(spacerItem, 1, 4, 1, 1)
+        self.mainLayout.addItem(spacerItem, 2, 4, 1, 1)
         self.btnConnect = QPushButton(self.GroupBox1)
         self.btnConnect.setEnabled(True)
         self.btnConnect.setObjectName("btnConnect")
         self.btnConnect.setText("Connect")
-        self.mainLayout.addWidget(self.btnConnect, 1, 0, 1, 1)
+        self.mainLayout.addWidget(self.btnConnect, 2, 0, 1, 1)
         self.btnDelete = QPushButton(self.GroupBox1)
         #self.btnDelete.setEnabled(False)
         self.btnDelete.setObjectName("btnDelete")
         self.btnDelete.setText("Delete")
-        self.mainLayout.addWidget(self.btnDelete, 1, 3, 1, 1)
+        self.mainLayout.addWidget(self.btnDelete, 2, 3, 1, 1)
         self.cmbConnections = QComboBox(self.GroupBox1)
         self.cmbConnections.setObjectName("cmbConnections")
-        self.mainLayout.addWidget(self.cmbConnections, 0, 0, 1, 5)
+        self.mainLayout.addWidget(self.cmbConnections, 1, 0, 1, 5)
         
-        self.hboxlayout = QHBoxLayout()
-        self.hboxlayout.setSpacing(6)
-        self.hboxlayout.setMargin(0)
-        self.hboxlayout.setObjectName("hboxlayout")
-        self.mainLayout.addLayout(self.hboxlayout, 3, 0, 1, 1)
+        #self.hboxlayout = QHBoxLayout()
+        #self.hboxlayout.setSpacing(6)
+        #self.hboxlayout.setMargin(0)
+        #self.hboxlayout.setObjectName("hboxlayout")
+        #self.mainLayout.addLayout(self.hboxlayout, 3, 0, 1, 1)
         self.btnAbout = QPushButton()
         self.btnAbout.setObjectName("btnAbout")
         self.btnAbout.setText("About")
-        self.hboxlayout.addWidget(self.btnAbout)
-        spacerItem1 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
-        self.hboxlayout.addItem(spacerItem1)
+        self.mainLayout.addWidget(self.btnAbout, 4, 0, 1, 1)
+        #spacerItem1 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        #self.hboxlayout.addItem(spacerItem1)
         self.buttonBox = QDialogButtonBox()
         self.buttonBox.setEnabled(True)
         self.buttonBox.setStandardButtons(QDialogButtonBox.Cancel|QDialogButtonBox.Ok)
         self.buttonBox.setObjectName("buttonBox")
-        self.hboxlayout.addWidget(self.buttonBox)
+        self.mainLayout.addWidget(self.buttonBox, 4, 4, 1, 1)
         
         self.treeWidget = QTreeWidget()
         self.treeWidget.setColumnCount(3)
         self.treeWidget.setObjectName("treeWidget")
-        self.mainLayout.addWidget(self.treeWidget, 2, 0, 1, 1)
+        self.mainLayout.addWidget(self.treeWidget, 3, 0, 1, -1)
         self.treeWidget.setSortingEnabled(True)
         self.treeWidget.headerItem().setText(0,"Identifier")
         self.treeWidget.headerItem().setText(1, "Title")
