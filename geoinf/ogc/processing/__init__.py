@@ -27,8 +27,8 @@
 works with GRASS geoprocessing modules 
 """
 
-identifier = 'za.co.csir.eo4vistrails.geoinf.wps'
-name = 'eo4vistrails.geoinf.wps'
+identifier = 'za.co.csir.eo4vistrails.geoinf.ogc.processing'
+name = 'eo4vistrails.geoinf.ogc.processing'
 version = '0.0.1'
 
 def package_requirements():
