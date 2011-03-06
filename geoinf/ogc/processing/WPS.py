@@ -23,8 +23,8 @@
 ## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ##
 ############################################################################
-"""This module provides an OGC (Open Geospatial Consortium) Web Feature Service
-(WFS) Client via owslib.
+"""This module provides an OGC (Open Geospatial Consortium) Web Processing Service
+(WPS) Client via pyWPS.
 """
 
 # vistrails imports
@@ -87,15 +87,16 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         self.mainLayout.addWidget(self.GroupBox1, 0, 0, 1, 1)
         self.mainLayout.setMargin(9)
         self.mainLayout.setSpacing(6)
-        self.btnNew = QPushButton(self.GroupBox1)
-        self.btnNew.setObjectName("btnNew")
-        self.btnNew.setText("New")
-        self.mainLayout.addWidget(self.btnNew, 2, 1, 1, 1)
-        self.btnEdit = QPushButton(self.GroupBox1)
+        """Do not need the NEW, EDIT, DELETE buttons for now"""
+        ##self.btnNew = QPushButton(self.GroupBox1)
+        ##self.btnNew.setObjectName("btnNew")
+        ##self.btnNew.setText("New")
+        ##self.mainLayout.addWidget(self.btnNew, 2, 1, 1, 1)
+        ##self.btnEdit = QPushButton(self.GroupBox1)
         #self.btnEdit.setEnabled(False)
-        self.btnEdit.setObjectName("btnEdit")
-        self.btnEdit.setText("Edit")
-        self.mainLayout.addWidget(self.btnEdit, 2, 2, 1, 1)
+        ##self.btnEdit.setObjectName("btnEdit")
+        ##self.btnEdit.setText("Edit")
+        ##self.mainLayout.addWidget(self.btnEdit, 2, 2, 1, 1)
         #spacer - to provide blank space in the layout
         spacerItem = QSpacerItem(171, 30, QSizePolicy.Expanding, QSizePolicy.Minimum)
         self.mainLayout.addItem(spacerItem, 2, 4, 1, 1)
@@ -104,14 +105,21 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         self.btnConnect.setObjectName("btnConnect")
         self.btnConnect.setText("Connect")
         self.mainLayout.addWidget(self.btnConnect, 2, 0, 1, 1)
-        self.btnDelete = QPushButton(self.GroupBox1)
+        ##self.btnDelete = QPushButton(self.GroupBox1)
         #self.btnDelete.setEnabled(False)
-        self.btnDelete.setObjectName("btnDelete")
-        self.btnDelete.setText("Delete")
-        self.mainLayout.addWidget(self.btnDelete, 2, 3, 1, 1)
-        self.cmbConnections = QComboBox(self.GroupBox1)
-        self.cmbConnections.setObjectName("cmbConnections")
-        self.mainLayout.addWidget(self.cmbConnections, 1, 0, 1, 5)
+        ##self.btnDelete.setObjectName("btnDelete")
+        ##self.btnDelete.setText("Delete")
+        ##self.mainLayout.addWidget(self.btnDelete, 2, 3, 1, 1)
+        
+        """decided to change the comboBox to a  line edit because at runtime will not be 
+        chosing from a list bt rather parsing a url"""
+        ##self.cmbConnections = QComboBox(self.GroupBox1)
+        ##self.cmbConnections.setObjectName("cmbConnections")
+        ##self.mainLayout.addWidget(self.cmbConnections, 1, 0, 1, 5)
+        self.mainLayout.addWidget(QLabel('WPS URL:'), 1, 0, 1, 1)
+        self.URLConnect= QLineEdit(' ')
+        self.URLConnect.setEnabled(False) #sets it not to be editable
+        self.mainLayout.addWidget(self.URLConnect, 1,1, 1, 5)
         
         #self.hboxlayout = QHBoxLayout()
         #self.hboxlayout.setSpacing(6)
@@ -122,13 +130,30 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         self.btnAbout.setObjectName("btnAbout")
         self.btnAbout.setText("About")
         self.mainLayout.addWidget(self.btnAbout, 4, 0, 1, 1)
-        #spacerItem1 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
-        #self.hboxlayout.addItem(spacerItem1)
-        self.buttonBox = QDialogButtonBox()
+        spacerItem1 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.mainLayout.addItem(spacerItem1, 4, 2, 1, 1)
+        """self.buttonBox = QDialogButtonBox()
         self.buttonBox.setEnabled(True)
         self.buttonBox.setStandardButtons(QDialogButtonBox.Cancel|QDialogButtonBox.Ok)
         self.buttonBox.setObjectName("buttonBox")
         self.mainLayout.addWidget(self.buttonBox, 4, 4, 1, 1)
+        """
+        self.btnCancel = QPushButton('&Cancel', self)
+        #self.btnCancel.setText("Cancel")
+        self.btnCancel.setAutoDefault(False)
+        self.btnCancel.setShortcut('Esc')
+        self.btnCancel.setMinimumWidth(100)
+        self.btnCancel.setMaximumWidth(100)
+        self.mainLayout.addWidget(self.btnCancel, 4, 4, 1, 1)
+        
+        self.btnOk = QPushButton('&OK', self)
+        #self.btnOk.setText("OK")
+        self.btnOk.setMinimumWidth(100)
+        self.btnOk.setMaximumWidth(100)
+        self.btnOk.setAutoDefault(False)
+        self.mainLayout.addWidget(self.btnOk, 4, 5, 1, 1)
+
+
         
         self.treeWidget = QTreeWidget()
         self.treeWidget.setColumnCount(3)
@@ -138,4 +163,45 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         self.treeWidget.headerItem().setText(0,"Identifier")
         self.treeWidget.headerItem().setText(1, "Title")
         self.treeWidget.headerItem().setText(2, "Abstract")
+        
+        
+        # Signals
+        ##Connect button
+        self.connect(
+            self.btnConnect,
+            SIGNAL('clicked(bool)'),
+            self.btnConnect_clicked
+            )
+        
+        ## OK button
+        self.connect(
+            self.btnOk,
+            SIGNAL('clicked(bool)'),
+            self.buttonBox_accepted
+            )
+        ## Cancel Button
+        self.connect(
+            self.btnCancel,
+            SIGNAL('clicked(bool)'),
+            self.close
+            )
+        
+    def btnConnect_clicked(self):
+        self.connectServer()
+        
+    def connectServer(self):
+        print "show me the URL"
+        
+    
+    def buttonBox_accepted(self):
+        #pass
+        print 'Execute WPS'
+    
+    def getDescription(self):
+        pass
+        
+    """def buttonBox_rejected(self):
+        self.close()"""
+        
+
 
