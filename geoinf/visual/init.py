@@ -14,5 +14,8 @@ def initialize(*args, **keywords):
     reg.add_module(QGISMapCanvasCell)
     reg.add_input_port(QGISMapCanvasCell, "Location", basic_widgets.CellLocation)
     reg.add_input_port(QGISMapCanvasCell, "layer", QgsMapLayer)    
+    
+     
+    
 
 
