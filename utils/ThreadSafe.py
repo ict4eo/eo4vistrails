@@ -46,30 +46,41 @@ from core.modules.vistrails_module import Module, NotCacheable, \
 global globalThreadLock
 globalThreadLock = RLock()
 
-class ThreadSafeModule():
+class ThreadSafeModule(object):
     def __init__(self):
         pass
 
     def __call__(self, clazz):
-        if ThreadSafeMixin not in clazz.__bases__:
-            clazz._oldthreadinit = clazz.__init__
-            clazz.__init__ = ThreadSafeMixin.__init__
-            clazz.__bases__ = (ThreadSafeMixin,) + clazz.__bases__
         
-        return clazz
+        if ThreadSafeMixin not in clazz.__bases__:
+            new__bases__ = (ThreadSafeMixin,) + clazz.__bases__
+            newclazz = type(clazz.__name__, new__bases__, clazz.__dict__.copy())
+        
+            if newclazz.__init__:
+                old__init__ = newclazz.__init__
+                
+                def replace__init__(self, *args, **kwargs):
+                    self.computeLock = RLock()
+                    old__init__(self, *args, **kwargs)
+                
+                newclazz.__init__ = replace__init__
+            else:
+                
+                def new__init__(self, *args, **kwargs):
+                    self.computeLock = RLock()
+                
+                newclazz.__init__ = new__init__
+        
+        return newclazz
     
 class ThreadSafeMixin(object):
     """TODO. """
-    def __init__(self, *args, **kwargs):
-        self._oldthreadinit(*args, **kwargs)
-        self.computeLock = RLock()
-    
     def globalThread(self, module):            
         global globalThreadLock
         globalThreadLock.acquire()
         module.update()
         globalThreadLock.release()
-            
+    
     def updateUpstream(self):
         """ TODO. """
         threadList = []
@@ -80,7 +91,7 @@ class ThreadSafeMixin(object):
                 if not foundFirstModule:
                     foundFirstModule = True
                     firstModule = connector.obj
-                elif isinstance(connector.obj, ThreadSafe):
+                elif isinstance(connector.obj, ThreadSafeMixin):
                     thread = Thread(target=connector.obj.lockedUpdate)
                     thread.start()
                     threadList.append(thread)
@@ -90,7 +101,7 @@ class ThreadSafeMixin(object):
                     threadList.append(thread)
 
         if foundFirstModule:
-            if isinstance(firstModule, ThreadSafe):
+            if isinstance(firstModule, ThreadSafeMixin):
                 firstModule.lockedUpdate()
             else:
                 self.globalThread(firstModule)
@@ -156,18 +167,16 @@ class ThreadSafeMixin(object):
             self.logging.signalSuccess(self)
         print self, " release compute lock"
 
-class ThreadSafe(ThreadSafeMixin):
-    """TODO. """
-    def __init__(self):
-        Module.__init__(self)
-        self.computeLock = RLock()
+#class ThreadSafe(ThreadSafeMixin):
+#    """TODO. """
+#    def __init__(self):
+#        Module.__init__(self)
+#        self.computeLock = RLock()
 
 @ThreadSafeModule()
 class Fork(NotCacheable, Module):
     """TODO:"""
     pass
-
-from time import ctime, sleep
 
 @ThreadSafeModule()
 class ThreadTestModule(NotCacheable, Module):
@@ -178,7 +187,8 @@ class ThreadTestModule(NotCacheable, Module):
     #    print "I just got inited"
     
     def compute(self):
-         print ctime()," ", currentThread().name, " Started ThreadSafe Module, Waiting 2 Seconds"
-         sleep(2)
-         print ctime()," ", currentThread().name, " Stoped ThreadSafe Module"
+        from time import ctime, sleep
+        print ctime()," ", currentThread().name, " Started ThreadSafe Module, Waiting 2 Seconds"
+        sleep(2)
+        print ctime()," ", currentThread().name, " Stoped ThreadSafe Module"
 

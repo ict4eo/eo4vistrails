@@ -33,6 +33,7 @@ Module forms part of the rpyc vistrails capabilties, used to add multicore
 parallel and distributed processing to vistrails.
 
 This Module holds some helper classes to make working with rpyc easier
+It also has the rpyc remote code that is used 
 
 """
 #History
@@ -41,99 +42,10 @@ This Module holds some helper classes to make working with rpyc easier
 from core import packagemanager
 from core.modules.module_registry import get_module_registry
 from core.modules import basic_modules
-from PyQt4 import QtCore, QtGui
-from core.modules.vistrails_module import *
+from core.modules.vistrails_module import Module, NotCacheable, ModuleError
 
 from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeModule
-from RPyCNode import RPyCModule, RPyCNode
-
-################################################################################
-# RPyC
-#
-# A VisTrails name, globals, locals, fromlist, level))
-# Module.  For this class to be executable, it must define a method
-# compute(self) that will perform the appropriate computations and set
-# the results.
-#
-# Extra helper methods can be defined, as usual. In this case, we're
-# using a helper method op(self, v1, v2) that performs the right
-# operations.
-################################################################################
-from core.modules.module_configure import StandardModuleConfigurationWidget
-class RPyCConfigurationWidget(StandardModuleConfigurationWidget):
-    """makes use of code style from TupleConfigurationWidget"""
-    def __init__(self, module, controller, parent=None):
-        StandardModuleConfigurationWidget.__init__(self, module, controller, parent)
-        #initialise the setup necessary for all geoinf widgets that follow
-        self.setWindowTitle('RPyC Configuration Window ')
-        self.setToolTip("Setup RPyC Configuration paramaters for working with cloud")
-        self.createTabs()
-        self.createButtons()
-        self.setLayout(QtGui.QVBoxLayout())
-        self.layout().addLayout(self.tabLayout)
-        self.layout().addLayout(self.buttonLayout)
-
-    def updateVistrail(self):
-        """TO DO - add docstring"""
-        msg = "Must implement updateVistrail in subclass"
-        
-    def createTabs(self):
-        """ createTabs() -> None
-        create and polulate with widgets the necessary 
-        tabs for spatial and temporal paramaterisation
-        
-        """        
-        self.tabs.addTab(self.spatial_widget, "")
-        self.tabs.addTab(self.temporal_widget, "")
-        
-        self.tabs.setTabText(self.tabs.indexOf(self.spatial_widget), QtGui.QApplication.translate("SpatialTemporalConfigurationWidget", "Bounding Coordinates", None, QtGui.QApplication.UnicodeUTF8))
-        self.tabs.setTabToolTip(self.tabs.indexOf(self.spatial_widget), QtGui.QApplication.translate("SpatialTemporalConfigurationWidget", "Gather coordinates of a bounding box, or in the case of GRASS, a location", None, QtGui.QApplication.UnicodeUTF8))
-        self.tabs.setTabText(self.tabs.indexOf(self.temporal_widget), QtGui.QApplication.translate("SpatialTemporalConfigurationWidget", "Temporal Bounds and Intervals", None, QtGui.QApplication.UnicodeUTF8))
-        self.tabs.setTabToolTip(self.tabs.indexOf(self.temporal_widget), QtGui.QApplication.translate("SpatialTemporalConfigurationWidget", "Choose and set temporal bounds and interval paramaters", None, QtGui.QApplication.UnicodeUTF8))       
-        
-        self.tabLayout = QtGui.QHBoxLayout()
-        self.tabLayout.addWidget(self.tabs)        
-        self.tabs.setCurrentIndex(0)
-        self.tabs.setVisible(True)
-
-    def createButtons(self):
-        """ createButtons() -> None
-        Create and connect signals to Ok & Cancel button
-        
-        """
-        self.buttonLayout = QtGui.QHBoxLayout()
-        #self.buttonLayout.setGeometry(QtCore.QRect(10, 765, 980, 32))
-        self.buttonLayout.setGeometry(QtCore.QRect(300, 500, 780, 680))
-        self.buttonLayout.setMargin(5)
-        self.cancelButton = QtGui.QPushButton('&Cancel', self)
-        self.cancelButton.setAutoDefault(False)
-        self.cancelButton.setShortcut('Esc')
-        self.cancelButton.setFixedWidth(100)
-        self.buttonLayout.addWidget(self.cancelButton)  
-        self.okButton = QtGui.QPushButton('&OK', self)
-        self.okButton.setAutoDefault(False)
-        self.okButton.setFixedWidth(100)
-        self.buttonLayout.addWidget(self.okButton)
-        self.connect(self.okButton, QtCore.SIGNAL('clicked(bool)'),
-                     self.okTriggered)
-        self.connect(self.cancelButton, QtCore.SIGNAL('clicked(bool)'),
-                     self.close)        
-
-    def sizeHint(self):
-        """ sizeHint() -> QSize
-        Return the recommended size of the configuration window
-        
-        """
-        return QtCore.QSize(800, 600)
-
-    def okTriggered(self, checked = False):
-        """ okTriggered(checked: bool) -> None
-        Update vistrail controller and module when the user click Ok
-        
-        """
-        if self.updateVistrail():
-            self.emit(QtCore.SIGNAL('doneConfigure()'))
-            self.close()
+from RPyC import RPyCModule, RPyCNode, RPyCSafeModule
 
 @ThreadSafeModule()
 class RPyCDiscover(NotCacheable, Module):
@@ -154,8 +66,8 @@ class RPyCDiscover(NotCacheable, Module):
         discoveredSlaves = []
         for slave in discoveredSlavesTuple:
             rpycnode = RPyCNode()
-            rpycnode.ip = slave[0]
-            rpycnode.port = slave[1]
+            rpycnode.set_ip( slave[0] )
+            rpycnode.set_port( slave[1] )
             discoveredSlaves.append(rpycnode)
         return discoveredSlaves
 
@@ -164,19 +76,22 @@ class RPyCDiscover(NotCacheable, Module):
         self.setResult("rpycslaves", self.getSlaves())
 
 @ThreadSafeModule()
-class RPyCCode(NotCacheable, RPyCModule):
+class RPyCCode(RPyCModule):
     """
     RPyC is a Module that executes an arbitrary piece of Python code remotely.
-    TODO: If you want a PythonSource execution to fail, call fail(error_message).
-    TODO: If you want a PythonSource execution to be cached, call cache_this().
     """
+    #TODO: If you want a PythonSource execution to fail, call fail(error_message).
+    #TODO: If you want a PythonSource execution to be cached, call cache_this().
+    
       
-    # This constructor is strictly unnecessary. However, some modules
-    # might want to initialize per-object data. When implementing your
-    # own constructor, remember that it must not take any extra
-    # parameters.
-    #def __init__(self):
-    #    RPyCModule.__init__(self)
+    '''
+    This constructor is strictly unnecessary. However, some modules
+    might want to initialize per-object data. When implementing your
+    own constructor, remember that it must not take any extra
+    parameters.
+    '''
+    def __init__(self):
+        RPyCModule.__init__(self)
 
     def run_code(self, code_str, use_input=False, use_output=False):
         """
@@ -193,50 +108,48 @@ class RPyCCode(NotCacheable, RPyCModule):
         def cache_this():
             self.is_cacheable = lambda *args, **kwargs: True
         
-        rpycnodein = self.forceGetInputFromPort('rpycnode')
-        if type(rpycnodein) == list:
-            rpycnode = rpycnodein[0]
-        else:
-            rpycnode = rpycnodein
-        
-        isSubProc = False
-        if rpycnode == None:
-            isSubProc = True
-            conn = rpyc.classic.connect_subproc()
-        else:
-            conn = rpyc.classic.connect(rpycnode.get_ip(), rpycnode.get_port())
+        #input from rpycmodule
+        self.conn = self.forceGetInputFromPort('rpycsession', None)
+                
+        #if we don't get a good node then we need to create a subprocess
+        self.isSubProc = False
+        if self.conn == None:
+            print 'executing in single mode'
+            self.isSubProc = True
+            self.conn = rpyc.classic.connect_subproc()
 
+        #TODO: changed to demo that this is in the cloud!!!!
+        #rpyc.classic.redirected_stdio(self.conn)
+        
         if use_input:
             inputDict = dict([(k, self.getInputFromPort(k)) for k in self.inputPorts])
-            conn.namespace.update(inputDict)
+            self.conn.namespace.update(inputDict)
         
         if use_output:
             outputDict = dict([(k, self.get_output(k)) for k in self.outputPorts])
-            conn.namespace.update(outputDict)
+            self.conn.namespace.update(outputDict)
 
         _m = packagemanager.get_package_manager()
         reg = get_module_registry()
-        conn.namespace.update({'fail': fail,
+        self.conn.namespace.update({'fail': fail,
                         'package_manager': _m,
                         'cache_this': cache_this,
                         'registry': reg,
                         'self': self})
-        del conn.namespace['source']
-
-        #TODO: changed to demo that this is in the cloud!!!!
-        rpyc.classic.redirected_stdio(conn)
-
-        conn.execute(code_str)
+        del self.conn.namespace['source']
+        
+        print code_str
+        self.conn.execute(code_str)
         
         if use_output:
             for k in outputDict.iterkeys():
-                if conn.namespace[k] != None:
-                    self.setResult(k, conn.namespace[k])
+                if self.conn.namespace[k] != None:
+                    self.setResult(k, self.conn.namespace[k])
 
-        if isSubProc:
-            conn.proc.terminate()
-            conn.proc.wait()
-        conn.close()
+        if self.isSubProc:
+            self.conn.proc.terminate()
+            self.conn.proc.wait()
+            self.conn.close()
 
     def compute(self):
         """
@@ -244,6 +157,23 @@ class RPyCCode(NotCacheable, RPyCModule):
         """
         s = basic_modules.urllib.unquote(
             str(self.forceGetInputFromPort('source', ''))
-        )
+            )
         self.run_code(s, use_input=True, use_output=True)
         
+
+@RPyCSafeModule()
+@ThreadSafeModule()
+class RPyCTestModule(Module):
+    """This Test Module is to check that ThreadSafe is working and also provides
+    a template for others to use ThreadSafe"""
+    
+    def compute(self):
+        from time import ctime, sleep
+        import os
+        print self.__class__.__bases__
+        print "Hello ", self.getInputFromPort("input")
+        print self.getInputConnector("input")
+        print ctime()," ", os.getpid(), " Started RPyCSafe Module, Waiting 2 Seconds"
+        sleep(2)
+        print ctime()," ", os.getpid(), " Stoped RPyCSafe Module"
+
