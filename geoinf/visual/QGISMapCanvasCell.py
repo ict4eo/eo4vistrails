@@ -14,6 +14,8 @@ import core.system
 import os.path
 import core.modules.module_registry
 
+import packages.eo4vistrails.geoinf.visual
+path_png_icon = packages.eo4vistrails.geoinf.visual.__path__[0]
 
 #qgis_prefix = os.getenv("QGISHOME") 
 
@@ -55,18 +57,19 @@ class QGISMapCanvasCellWidget(QCellWidget, QMainWindow):
         
         #path_png_icon = core.system.default_dot_vistrails() + "/eo4vistrails/geoinf/visual/"
     
-        '''
-        actionAddLayer = QAction(QIcon(path_png_icon + "mActionAddLayer.png"), "Add Layer", self.tools)
+        print path_png_icon
+        actionAddLayer = QAction(QIcon(path_png_icon + "/mActionAddLayer.png"), "Add Layer", self.tools)
         
-        actionZoomIn = QAction(QIcon(path_png_icon + "mActionZoomIn.png"), "Zoom In", self.tools) 
+        actionZoomIn = QAction(QIcon(path_png_icon + "/mActionZoomIn.png"), "Zoom In", self.tools) 
         
-        actionZoomOut = QAction(QIcon(path_png_icon + "mActionZoomOut.png"), "Zoom Out", self.tools)  
-        actionPan = QAction(QIcon(path_png_icon + "mActionPan.png"), "Pan", self.tools) 
+        actionZoomOut = QAction(QIcon(path_png_icon + "/mActionZoomOut.png"), "Zoom Out", self.tools)  
+        actionPan = QAction(QIcon(path_png_icon + "/mActionPan.png"), "Pan", self.tools) 
         '''
         actionAddLayer = QAction(QString("Add Layer"), self.tools)
         actionZoomIn = QAction(QString("Zoom In"), self.tools)
         actionZoomOut = QAction(QString("Zoom Out"), self.tools)
         actionPan = QAction(QString("Pan"), self.tools)
+        '''
         
         self.toolbar = self.tools.addToolBar("Canvas actions")  
         self.toolbar.addAction(actionAddLayer)
