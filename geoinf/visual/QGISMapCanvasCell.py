@@ -53,15 +53,21 @@ class QGISMapCanvasCellWidget(QCellWidget, QMainWindow):
         
         self.tools = QMainWindow()
         
-        path_png_icon = core.system.default_dot_vistrails() + "/eo4vistrails/geoinf/visual/"
+        #path_png_icon = core.system.default_dot_vistrails() + "/eo4vistrails/geoinf/visual/"
+    
+        '''
+        actionAddLayer = QAction(QIcon(path_png_icon + "mActionAddLayer.png"), "Add Layer", self.tools)
         
-        actionAddLayer = QAction(QIcon(path_png_icon + "mActionAddLayer.png"), "Add Layer", self)
+        actionZoomIn = QAction(QIcon(path_png_icon + "mActionZoomIn.png"), "Zoom In", self.tools) 
         
-        actionZoomIn = QAction(QIcon(path_png_icon + "mActionZoomIn.png"), "Zoom In", self) 
+        actionZoomOut = QAction(QIcon(path_png_icon + "mActionZoomOut.png"), "Zoom Out", self.tools)  
+        actionPan = QAction(QIcon(path_png_icon + "mActionPan.png"), "Pan", self.tools) 
+        '''
+        actionAddLayer = QAction(QString("Add Layer"), self.tools)
+        actionZoomIn = QAction(QString("Zoom In"), self.tools)
+        actionZoomOut = QAction(QString("Zoom Out"), self.tools)
+        actionPan = QAction(QString("Pan"), self.tools)
         
-        actionZoomOut = QAction(QIcon(path_png_icon + "mActionZoomOut.png"), "Zoom Out", self)  
-        actionPan = QAction(QIcon(path_png_icon + "mActionPan.png"), "Pan", self) 
-                   
         self.toolbar = self.tools.addToolBar("Canvas actions")  
         self.toolbar.addAction(actionAddLayer)
         self.toolbar.addAction(actionZoomIn)
@@ -89,7 +95,7 @@ class QGISMapCanvasCellWidget(QCellWidget, QMainWindow):
                 
     def addLayer(self):
                      
-        QtGui.QMessageBox.warning(self,"INFOMATION:","Functionality still Under Implementation",QtGui.QMessageBox.Ok)
+        QtGui.QMessageBox.information(self,"INFOMATION:","Functionality still Under Implementation",QtGui.QMessageBox.Ok)
         
     def zoomIn(self):
         self.canvas.setMapTool(self.toolZoomIn)
@@ -139,10 +145,10 @@ class QGISMapCanvasCellWidget(QCellWidget, QMainWindow):
             label.setLabelField(QgsLabel.Text,  0)
             
             # set the colour of the label text
-            labelAttributes.setColor(QtCore.Qt.blue)      
+            labelAttributes.setColor(QtCore.Qt.black)      
             
             layer.enableLabels(True)        
-            
+                       
             # Add layer to the registry
             QgsMapLayerRegistry.instance().addMapLayer(layer)
             
