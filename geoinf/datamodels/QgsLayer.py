@@ -64,7 +64,7 @@ class QgsRasterLayer(QgsMapLayer, qgis.core.QgsRasterLayer):
     def compute(self):
         """Execute the module to create the output"""
         try:
-            thefile = self.getInputFromPort('file').get_name()
+            thefile = self.getInputFromPort('file').name
             fileInfo = QFileInfo(thefile)   
             qgis.core.QgsRasterLayer.__init__(self, thefile, fileInfo.fileName())
             self.setResult('value', self)
