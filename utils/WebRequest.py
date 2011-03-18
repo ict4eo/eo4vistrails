@@ -30,12 +30,17 @@ Created on Wed Feb 23 14:08:10 2011
 @author: dhohls
 
 Module forms part of the eo4vistrails capabilities, used to handle web request
-(e.g. for WFS, WCS or SOS) processing inside vistrails.
+processing inside vistrails (e.g. for WFS, WCS or SOS)
 
 """
 #History
 #Derek Hohls, 25 Feb 2011, Version 0.1.3
+#Derek Hohls, 18 Mar 2011, Version 0.1.4
 
+import os
+import urllib
+import urllib2
+from urllib2 import URLError
 from core.modules.vistrails_module import Module, NotCacheable
 
 class WebRequest(NotCacheable, Module):
@@ -92,11 +97,7 @@ class WebRequest(NotCacheable, Module):
             self.raiseError('Cannot set output port: %s' % str(e))
 
     def runRequest(self):
-        """Execute an HTTP POST request for a given URL and data"""
-        import urllib
-        import urllib2
-        import os
-        from urllib2 import URLError
+        """Execute HTTP GET or POST request for a URL and (optional) data."""
         result = None
         if self.url:
             request_type = self.requestType()
