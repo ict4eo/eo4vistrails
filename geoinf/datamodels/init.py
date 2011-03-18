@@ -48,7 +48,7 @@ def initialize(*args, **keywords):
     from Feature import FeatureModel,  FileFeatureModel,  MemFeatureModel
     from Raster import RasterModel
     from GeoStrings import GMLString,  GeoJSONString,  GeoString
-    from packages.eo4vistrails.utils.WebRequest import WebRequest
+    from packages.eo4vistrails.utils.WebRequest import WebRequest, DataRequest 
     from core.modules.basic_modules import String
     from packages.eo4vistrails.geoinf.datamodels.FeatureImport import FeatureImport, FeatureImportConfigurationWidget
 
@@ -65,6 +65,7 @@ def initialize(*args, **keywords):
     #Add QgsMapLayer
     reg.add_module(QgsLayer.QgsMapLayer, namespace=mynamespace)
     reg.add_input_port(QgsLayer.QgsMapLayer, 'file', basic_modules.File)
+    reg.add_input_port(QgsLayer.QgsMapLayer, 'dataRequest', DataRequest)
     reg.add_output_port(QgsLayer.QgsMapLayer, "value", QgsLayer.QgsMapLayer)
 
     #Add QgsVectorLayer

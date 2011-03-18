@@ -45,35 +45,12 @@ from core.modules.vistrails_module import Module, NotCacheable, \
 
 global globalThreadLock
 globalThreadLock = RLock()
-
-class ThreadSafeModule(object):
-    def __init__(self):
-        pass
-
-    def __call__(self, clazz):
-        
-        if ThreadSafeMixin not in clazz.__bases__:
-            new__bases__ = (ThreadSafeMixin,) + clazz.__bases__
-            newclazz = type(clazz.__name__, new__bases__, clazz.__dict__.copy())
-        
-            if newclazz.__init__:
-                old__init__ = newclazz.__init__
-                
-                def replace__init__(self, *args, **kwargs):
-                    self.computeLock = RLock()
-                    old__init__(self, *args, **kwargs)
-                
-                newclazz.__init__ = replace__init__
-            else:
-                
-                def new__init__(self, *args, **kwargs):
-                    self.computeLock = RLock()
-                
-                newclazz.__init__ = new__init__
-        
-        return newclazz
     
 class ThreadSafeMixin(object):
+
+    def __init__(self):
+        self.computeLock = RLock()
+    
     """TODO. """
     def globalThread(self, module):            
         global globalThreadLock
@@ -131,7 +108,7 @@ class ThreadSafeMixin(object):
     
     def lockedUpdate(self):
         print self, " get compute lock"
-        with self.computeLock:    
+        with self.computeLock:
             self.logging.begin_update(self)
             self.updateUpstream()
             if self.upToDate:
@@ -167,24 +144,18 @@ class ThreadSafeMixin(object):
             self.logging.signalSuccess(self)
         print self, " release compute lock"
 
-#class ThreadSafe(ThreadSafeMixin):
-#    """TODO. """
-#    def __init__(self):
-#        Module.__init__(self)
-#        self.computeLock = RLock()
-
-@ThreadSafeModule()
-class Fork(NotCacheable, Module):
+class Fork(ThreadSafeMixin, NotCacheable, Module):
     """TODO:"""
-    pass
+    def __init__(self):
+        ThreadSafeMixin.__init__(self)
+        Module.__init__(self)
 
-@ThreadSafeModule()
-class ThreadTestModule(NotCacheable, Module):
+class ThreadTestModule(ThreadSafeMixin, NotCacheable, Module):
     """This Test Module is to check that ThreadSafe is working and also provides
     a template for others to use ThreadSafe"""
-    #def __init__(self):
-    #    Module.__init__(self)
-    #    print "I just got inited"
+    def __init__(self):
+        ThreadSafeMixin.__init__(self)
+        Module.__init__(self)
     
     def compute(self):
         from time import ctime, sleep

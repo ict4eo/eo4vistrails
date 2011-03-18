@@ -34,11 +34,14 @@ Created on Wed Feb 23 14:08:10 2011
 
 from core.modules.vistrails_module import Module, ModuleError
 import qgis.core
+import osgeo.ogr
 from PyQt4.QtCore import QFileInfo
+from packages.eo4vistrails.utils.WebRequest import WebRequest, PostGISRequest
 
 #export set PYTHONPATH=/usr/lib/python2.6
-qgis.core.QgsApplication.setPrefixPath("/usr", True) 
-qgis.core.QgsApplication.initQgis() 
+qgis.core.QgsApplication.setPrefixPath("/usr", True)
+qgis.core.QgsApplication.initQgis()
+
 
 class QgsMapLayer(Module):
     """This module will create a QGIS layer from a file
@@ -50,12 +53,35 @@ class QgsMapLayer(Module):
         raise ModuleError(self, msg + ': %s' % str(error))
  
 class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
+    
+    def __init__(self, uri=None, layername=None, driver=None):
+        QgsMapLayer.__init__(self)
+        if uri and layername and driver:
+            qgis.core.QgsVectorLayer.__init__(self, uri, layername, driver)
+    
     def compute(self):
         """Execute the module to create the output"""
-        try:
-            thefile = self.getInputFromPort('file').name
-            fileInfo = QFileInfo(thefile)   
-            qgis.core.QgsVectorLayer.__init__(self, thefile, fileInfo.fileName(), "ogr")
+        try:     
+            thefile = self.forceGetInputFromPort('file', None)
+            thedataRequest = self.forceGetInputFromPort('dataRequest', None)
+
+            isOGR = (thefile != None) and (thefile.name != '')
+            isWFS = isinstance(thedataRequest, WebRequest)
+            isPOSTGRES  = isinstance(thedataRequest, PostGISRequest)
+
+            if isOGR:            
+                thefilepath = thefile.name
+                thefilename = QFileInfo(thefilepath).fileName()
+                qgis.core.QgsVectorLayer.__init__(self, thefilepath, thefilename, "ogr")
+            elif isPOSTGRES:
+                uri = qgis.core.QgsDataSourceURI()
+                uri.setConnection('146.64.28.204', '5432', 'experiments', 'ict4eo', 'ict4eo')
+                uri.setDataSource('', '(select * from ba_modis_giglio limit 10000)', 'the_geom', '', 'gid')
+                qgis.core.QgsVectorLayer.__init__(self, uri.uri(), 'postgis layer', "postgres")
+            elif isWFS:
+                #Note this is case sensative -> "WFS"
+                qgis.core.QgsVectorLayer.__init__(self, thedataRequest.url, 'wfs layer', "WFS")
+            
             self.setResult('value', self)
         except Exception, e:
             self.raiseError('Cannot set output port: %s' % str(e))

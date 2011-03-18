@@ -34,6 +34,9 @@ executed against the chosen database.
 import psycopg2
 from PyQt4 import QtCore, QtGui
 from packages.eo4vistrails.geoinf.datamodels.Feature import FeatureModel,  MemFeatureModel
+from packages.eo4vistrails.geoinf.datamodels.QgsLayer import QgsVectorLayer
+import qgis
+
 from packages.eo4vistrails.utils.session import Session
 from core.modules.vistrails_module import Module, new_module, NotCacheable, ModuleError
 from core.modules.source_configure import SourceConfigurationWidget
@@ -49,16 +52,17 @@ class PostGisSession(Session):
 
     def compute(self):
         '''fetches psycopg connection'''
-        host = self.forceGetInputFromPort('postgisHost', 'localhost')
-        port = self.forceGetInputFromPort('postgisPort', '5432')
-        user = self.forceGetInputFromPort('postgisUser', 'default')
-        pwd =  self.forceGetInputFromPort('postgisPassword', 'default')
-        database = self.forceGetInputFromPort('postgisDatabase', 'default')
+        self.host = self.forceGetInputFromPort('postgisHost', 'localhost')
+        self.port = self.forceGetInputFromPort('postgisPort', '5432')
+        self.user = self.forceGetInputFromPort('postgisUser', 'default')
+        self.pwd =  self.forceGetInputFromPort('postgisPassword', 'default')
+        self.database = self.forceGetInputFromPort('postgisDatabase', 'default')
 
-        self.connectstr = "host=" + host+ " dbname=" + database + " user=" + user + " password=" + pwd
+        self.connectstr = "host=" + self.host+ " dbname=" + self.database + " user=" + self.user + " password=" + self.pwd
         #PG:"dbname='databasename' host='addr' port='5432' user='x' password='y'"
         #PG:'host=myserver.velocet.ca user=postgres dbname=warmerda'
-        self.ogr_connectstr = "PG:host='%s' port='%s' dbname='%s' user='%s' password='%s'" % (host,  port,  database,  user,  pwd)
+        self.ogr_connectstr = "PG:host='%s' port='%s' dbname='%s' user='%s' password='%s'" % (self.host,  self.port,  self.database,  self.user,  self.pwd)
+        
         try:
             self.pgconn = psycopg2.connect(self.connectstr)
         except:
@@ -115,40 +119,59 @@ class PostGisCursor():
             pass
 
 
-class PostGisFeatureReturningCursor(PostGisCursor, MemFeatureModel):
+class PostGisFeatureReturningCursor(Module):
     """Returns data in the form of a eo4vistrails FeatureModel if user binds to self output port"""
     #multi inheritance of module subclasses is a problem
     def __init__(self):
-        PostGisCursor.__init__(self,   conn_type = "ogr")
-        MemFeatureModel.__init__(self)
+        #PostGisCursor.__init__(self,   conn_type = "ogr")
+        Module.__init__(self)
         
 
     def compute(self):
         """Will need to fetch a PostGisSession object on its input port
         Overrides supers method"""
-        if self.cursor(self.getInputFromPort("PostGisSessionObject")) == True:
-            #print "got cursor"
-            try:
-                sql_input = urllib.unquote(str(self.forceGetInputFromPort('source', '')))
-                sql_input = sql_input.split(";")[0]#ogr does not want a trailing ';'
-                '''here we substitute input port values within the source'''
-                for k in self.inputPorts:
-                    value = self.getInputFromPort(k)
-                    sql_input = sql_input.replace(k, value.__str__())
-                #print "got sql input"
-                ogr_conn = self.getInputFromPort("PostGisSessionObject").ogr_connectstr               
-                #print "checking connection: connectstr: %s, sql: %s" % (ogr_conn,  sql_input)
-                self.loadContentFromDB(ogr_conn, sql_input)
+        pgsession = self.getInputFromPort("PostGisSessionObject")
+        try:
+            sql_input = urllib.unquote(str(self.forceGetInputFromPort('source', '')))
+            sql_input = sql_input.split(";")[0]#ogr does not want a trailing ';'
+            '''here we substitute input port values within the source'''
+            for k in self.inputPorts:
+                value = self.getInputFromPort(k)
+                sql_input = sql_input.replace(k, value.__str__())
+            #print "got sql input"
+            #ogr_conn = self.getInputFromPort("PostGisSessionObject").ogr_connectstr          
+            #print "checking connection: connectstr: %s, sql: %s" % (ogr_conn,  sql_input)
+            #self.loadContentFromDB(ogr_conn, sql_input)
+            
+            uri = qgis.core.QgsDataSourceURI()
+            uri.setConnection(pgsession.host, 
+                              pgsession.port, 
+                              pgsession.database, 
+                              pgsession.user, 
+                              pgsession.pwd)
+            uri.setDataSource('',                 #schema must be blank
+                              '('+sql_input+')', 
+                              'the_geom',         #TODO: assuming the_geom, this mus be looked up
+                              '',                 #where clause must be blank
+                              'gid')              #TODO: assuming gid, this mus be looked up
+            
+            #select * from ba_modis_giglio limit 10000
+            #TODO: make sure that the user can select a layer name or we generate a random one
+            qgsVectorLayer = QgsVectorLayer(uri.uri(), 'postgis layer', "postgres")
+            print qgsVectorLayer
+            
+            self.setResult('QgsVectorLayer', qgsVectorLayer)
+            
+        except Exception as ex:
+            print ex
+            raise ModuleError,  (PostGisFeatureReturningCursor,  "Could not execute SQL Statement")
 
-            except Exception as ex:
-                print ex
-                raise ModuleError,  (PostGisFeatureReturningCursor,  "Could not execute SQL Statement")
-            #do stuff with this return list -> make it into an OGR dataset
-            #see (http://trac.osgeo.org/postgis/wiki/UsersWikiOGR, http://www.gdal.org/ogr/drv_memory.htm, ogr memory driver python in google)
-            #for now, to test, print to stdout
-            #could be implemented directy via OGR's SQL capability
-            #print "data are: "
-            #print self.sql_return_list
+        #do stuff with this return list -> make it into an OGR dataset
+        #see (http://trac.osgeo.org/postgis/wiki/UsersWikiOGR, http://www.gdal.org/ogr/drv_memory.htm, ogr memory driver python in google)
+        #for now, to test, print to stdout
+        #could be implemented directy via OGR's SQL capability
+        #print "data are: "
+        #print self.sql_return_list
 
 
 class PostGisBasicReturningCursor(Module, PostGisCursor):

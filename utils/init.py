@@ -5,7 +5,7 @@ def initialize(*args, **keywords):
     from ThreadSafe import Fork, ThreadTestModule
     from session import Session
     import DropDownListWidget
-    from WebRequest import WebRequest
+    from WebRequest import DataRequest, WebRequest, PostGISRequest
 
     reg = get_module_registry()
     utils_namespace = "utils"
@@ -49,6 +49,14 @@ def initialize(*args, **keywords):
     
     #Add Session
     reg.add_module(Session, namespace = utils_namespace)
+
+    reg.add_module(DataRequest, namespace = utils_namespace)
+
+    reg.add_module(PostGISRequest, namespace = utils_namespace)
+    reg.add_output_port(
+        PostGISRequest,
+        'value',
+        PostGISRequest)
 
     #Add WebRequest
     reg.add_module(WebRequest, namespace = utils_namespace)

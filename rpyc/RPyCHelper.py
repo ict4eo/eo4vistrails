@@ -39,16 +39,11 @@ It also has the rpyc remote code that is used
 #History
 #Terence van Zyl, 15 Dec 2010, Version 1.0
 
-from core import packagemanager
-from core.modules.module_registry import get_module_registry
-from core.modules import basic_modules
 from core.modules.vistrails_module import Module, NotCacheable, ModuleError
-
-from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeModule
+from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
 from RPyC import RPyCModule, RPyCNode, RPyCSafeModule
 
-@ThreadSafeModule()
-class RPyCDiscover(NotCacheable, Module):
+class RPyCDiscover(ThreadSafeMixin, NotCacheable, Module):
     """
     RPyCDiscover is a Module that allow one to discover RPyC
     servers
@@ -58,6 +53,7 @@ class RPyCDiscover(NotCacheable, Module):
     # own constructor, remember that it must not take any extra
     # parameters.
     def __init__(self):
+        ThreadSafeMixin.__init__(self)
         Module.__init__(self)
         
     def getSlaves(self):
@@ -75,8 +71,7 @@ class RPyCDiscover(NotCacheable, Module):
         """Vistrails Module Compute, Entry Point Refer, to Vistrails Docs"""
         self.setResult("rpycslaves", self.getSlaves())
 
-@ThreadSafeModule()
-class RPyCCode(RPyCModule):
+class RPyCCode(ThreadSafeMixin, RPyCModule):
     """
     RPyC is a Module that executes an arbitrary piece of Python code remotely.
     """
@@ -91,6 +86,7 @@ class RPyCCode(RPyCModule):
     parameters.
     '''
     def __init__(self):
+        ThreadSafeMixin.__init__(self)
         RPyCModule.__init__(self)
 
     def run_code(self, code_str, use_input=False, use_output=False):
@@ -109,7 +105,12 @@ class RPyCCode(RPyCModule):
             self.is_cacheable = lambda *args, **kwargs: True
         
         #input from rpycmodule
-        self.conn = self.forceGetInputFromPort('rpycsession', None)
+        self.conn = None
+        rpycsession = self.forceGetInputFromPort('rpycsession', None)        
+        if rpycsession:
+            self.conn = rpycsession._connection
+
+        #self.conn = self.forceGetInputFromPort('rpycsession', None)
                 
         #if we don't get a good node then we need to create a subprocess
         self.isSubProc = False
@@ -119,7 +120,7 @@ class RPyCCode(RPyCModule):
             self.conn = rpyc.classic.connect_subproc()
 
         #TODO: changed to demo that this is in the cloud!!!!
-        #rpyc.classic.redirected_stdio(self.conn)
+        rpyc.classic.redirected_stdio(self.conn)
         
         if use_input:
             inputDict = dict([(k, self.getInputFromPort(k)) for k in self.inputPorts])
@@ -128,17 +129,19 @@ class RPyCCode(RPyCModule):
         if use_output:
             outputDict = dict([(k, self.get_output(k)) for k in self.outputPorts])
             self.conn.namespace.update(outputDict)
-
+        
+        from core import packagemanager
         _m = packagemanager.get_package_manager()
+        from core.modules.module_registry import get_module_registry
         reg = get_module_registry()
         self.conn.namespace.update({'fail': fail,
                         'package_manager': _m,
                         'cache_this': cache_this,
                         'registry': reg,
                         'self': self})
+               
         del self.conn.namespace['source']
         
-        print code_str
         self.conn.execute(code_str)
         
         if use_output:
@@ -155,17 +158,19 @@ class RPyCCode(RPyCModule):
         """
         Vistrails Module Compute, Entry Point Refer, to Vistrails Docs
         """
+        from core.modules import basic_modules
         s = basic_modules.urllib.unquote(
             str(self.forceGetInputFromPort('source', ''))
             )
         self.run_code(s, use_input=True, use_output=True)
         
-
 @RPyCSafeModule()
-@ThreadSafeModule()
-class RPyCTestModule(Module):
+class RPyCTestModule(ThreadSafeMixin, RPyCModule):
     """This Test Module is to check that ThreadSafe is working and also provides
     a template for others to use ThreadSafe"""
+    def __init__(self):
+        ThreadSafeMixin.__init__(self)
+        RPyCModule.__init__(self)
     
     def compute(self):
         from time import ctime, sleep

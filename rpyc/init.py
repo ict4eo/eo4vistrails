@@ -62,19 +62,12 @@ def initialize(*args, **keywords):
     reg.add_output_port(RPyC.RPyCNode, "value", 
                         RPyC.RPyCNode)
 
-    #Add RPyCSession
-    reg.add_module(RPyC.RPyCSession,
-                   namespace=mynamespace)
-    reg.add_input_port(RPyC.RPyCSession, 'rpycnode',
-                       (RPyC.RPyCNode, 'an rpyc node'))
-    reg.add_output_port(RPyC.RPyCSession, "value",
-                        RPyC.RPyCSession)
     
     #Dummy Module Mixed into all RPYCSafeModules
     reg.add_module(RPyC.RPyCModule, 
                    namespace=mynamespace)
     reg.add_input_port(RPyC.RPyCModule, 'rpycsession',
-                      (RPyC.RPyCSession, 'A valid RPYC Session, if not given will execute locally'))
+                      (RPyC.RPyCNode, 'A valid RPYC Session, if not given will execute locally'))
     
     #Add RPyCCode
     reg.add_module(RPyCHelper.RPyCCode,

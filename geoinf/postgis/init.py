@@ -35,6 +35,7 @@ import core
 #from core.modules.python_source_configure import PythonSourceConfigurationWidget
 #from utils.session import Session
 from PostGIS import PostGisSession,  PostGisCursor,  PostGisFeatureReturningCursor,  PostGisBasicReturningCursor,  PostGisNonReturningCursor,  SQLSourceConfigurationWidget
+from packages.eo4vistrails.geoinf.datamodels.QgsLayer import QgsVectorLayer
 
 def initialize(*args, **keywords):
     """Sets up PostGIS modules"""
@@ -63,6 +64,7 @@ def initialize(*args, **keywords):
     reg.add_module(PostGisFeatureReturningCursor,  namespace = postgis_namespace,  configureWidgetType=SQLSourceConfigurationWidget)
     reg.add_input_port(PostGisFeatureReturningCursor,  "PostGisSessionObject",  PostGisSession)
     reg.add_input_port(PostGisFeatureReturningCursor,  "source",  core.modules.basic_modules.String)
+    reg.add_output_port(PostGisFeatureReturningCursor,  "QgsVectorLayer",  QgsVectorLayer)
     reg.add_output_port(PostGisFeatureReturningCursor, 'self', PostGisFeatureReturningCursor)#supports ControlFlow ExecuteInOrder
     
     reg.add_module(PostGisBasicReturningCursor,  namespace = postgis_namespace,  configureWidgetType=SQLSourceConfigurationWidget)

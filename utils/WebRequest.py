@@ -30,20 +30,23 @@ Created on Wed Feb 23 14:08:10 2011
 @author: dhohls
 
 Module forms part of the eo4vistrails capabilities, used to handle web request
-processing inside vistrails (e.g. for WFS, WCS or SOS)
+(e.g. for WFS, WCS or SOS) processing inside vistrails.
 
 """
 #History
 #Derek Hohls, 25 Feb 2011, Version 0.1.3
-#Derek Hohls, 18 Mar 2011, Version 0.1.4
 
-import os
-import urllib
-import urllib2
-from urllib2 import URLError
 from core.modules.vistrails_module import Module, NotCacheable
+from qgis.core import QgsDataSourceURI
 
-class WebRequest(NotCacheable, Module):
+class DataRequest(NotCacheable, Module):
+    pass
+
+class PostGISRequest(DataRequest):
+    def compute(self):
+        self.setResult('value', self)
+
+class WebRequest(DataRequest):
     """This module will process a web-based request.
 
     With only the 'url' port set, the module will execute a GET request.
@@ -97,7 +100,11 @@ class WebRequest(NotCacheable, Module):
             self.raiseError('Cannot set output port: %s' % str(e))
 
     def runRequest(self):
-        """Execute HTTP GET or POST request for a URL and (optional) data."""
+        """Execute an HTTP POST request for a given URL and data"""
+        import urllib
+        import urllib2
+        import os
+        from urllib2 import URLError
         result = None
         if self.url:
             request_type = self.requestType()
