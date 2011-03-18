@@ -40,6 +40,10 @@ import init
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
+# Qt imports for wpstools
+from PyQt4.QtNetwork import *
+from PyQt4 import QtXml
+
 # not sure what these do yet but sure we need them
 from httplib import *
 from urlparse import urlparse
@@ -58,17 +62,7 @@ class WpsWidget(QWidget): #,  QtCore.QObject):
     def __init__(self,  parent=None):
         QWidget.__init__(self,  parent)
         self.setObjectName("WpsWidget")
-        #self.create_config_window()
-    
-    
         
-        # connect object to slots. Dont need it yet
-        #QMetaObject.connectSlotsByName()
-
-#app = QApplication(sys.argv)
-#qb = WpsWidget()
-#qb.show()
-#sys.exit(app.exec_())
 
 class WPSConfigurationWidget(StandardModuleConfigurationWidget):
     "for configuration widget on vistrails module"
@@ -76,7 +70,10 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         StandardModuleConfigurationWidget.__init__(self, module, controller, parent)
         self.setObjectName("WpsConfigWidget")
         self.create_config_window()
+        #self.doc = QtXml.QDomDocument()
     
+    #####################################################
+    ## Config widget
     def create_config_window(self):
         self.setWindowTitle("OGC WPS Configuration Widget")
         self.setWindowModality(Qt.WindowModal)
@@ -99,12 +96,12 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         ##self.mainLayout.addWidget(self.btnEdit, 2, 2, 1, 1)
         #spacer - to provide blank space in the layout
         spacerItem = QSpacerItem(171, 30, QSizePolicy.Expanding, QSizePolicy.Minimum)
-        self.mainLayout.addItem(spacerItem, 2, 4, 1, 1)
+        self.mainLayout.addItem(spacerItem, 3, 4, 1, 1)
         self.btnConnect = QPushButton(self.GroupBox1)
         self.btnConnect.setEnabled(True)
         self.btnConnect.setObjectName("btnConnect")
         self.btnConnect.setText("Connect")
-        self.mainLayout.addWidget(self.btnConnect, 2, 0, 1, 1)
+        self.mainLayout.addWidget(self.btnConnect, 3, 0, 1, 1)
         ##self.btnDelete = QPushButton(self.GroupBox1)
         #self.btnDelete.setEnabled(False)
         ##self.btnDelete.setObjectName("btnDelete")
@@ -118,8 +115,18 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         ##self.mainLayout.addWidget(self.cmbConnections, 1, 0, 1, 5)
         self.mainLayout.addWidget(QLabel('WPS URL:'), 1, 0, 1, 1)
         self.URLConnect= QLineEdit(' ')
-        self.URLConnect.setEnabled(False) #sets it not to be editable
-        self.mainLayout.addWidget(self.URLConnect, 1,1, 1, 5)
+        self.URLConnect.setEnabled(True) #sets it not to be editable
+        self.mainLayout.addWidget(self.URLConnect, 1,1, 1, -1)
+        
+        #self.mainLayout.addWidget(QLabel('Connection Name:'), 2, 0, 1, 1)
+        #self.URLName= QLineEdit(' ')
+        #self.URLName.setEnabled(True) #sets it not to be editable
+        #self.mainLayout.addWidget(self.URLName, 2,1, 1, -1)
+        
+        self.mainLayout.addWidget(QLabel('WPS Version:'), 2, 0, 1, 1)
+        self.launchversion = QComboBox()
+        self.launchversion.addItems(['1.0.0',])
+        self.mainLayout.addWidget(self.launchversion, 2,1, 1, 1)
         
         #self.hboxlayout = QHBoxLayout()
         #self.hboxlayout.setSpacing(6)
@@ -129,9 +136,9 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         self.btnAbout = QPushButton()
         self.btnAbout.setObjectName("btnAbout")
         self.btnAbout.setText("About")
-        self.mainLayout.addWidget(self.btnAbout, 4, 0, 1, 1)
+        self.mainLayout.addWidget(self.btnAbout, 5, 0, 1, 1)
         spacerItem1 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
-        self.mainLayout.addItem(spacerItem1, 4, 2, 1, 1)
+        self.mainLayout.addItem(spacerItem1, 5, 2, 1, 1)
         """self.buttonBox = QDialogButtonBox()
         self.buttonBox.setEnabled(True)
         self.buttonBox.setStandardButtons(QDialogButtonBox.Cancel|QDialogButtonBox.Ok)
@@ -144,21 +151,19 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         self.btnCancel.setShortcut('Esc')
         self.btnCancel.setMinimumWidth(100)
         self.btnCancel.setMaximumWidth(100)
-        self.mainLayout.addWidget(self.btnCancel, 4, 4, 1, 1)
+        self.mainLayout.addWidget(self.btnCancel, 5, 4, 1, 1)
         
         self.btnOk = QPushButton('&OK', self)
         #self.btnOk.setText("OK")
         self.btnOk.setMinimumWidth(100)
         self.btnOk.setMaximumWidth(100)
         self.btnOk.setAutoDefault(False)
-        self.mainLayout.addWidget(self.btnOk, 4, 5, 1, 1)
+        self.mainLayout.addWidget(self.btnOk, 5, 5, 1, 1)
 
-
-        
         self.treeWidget = QTreeWidget()
         self.treeWidget.setColumnCount(3)
         self.treeWidget.setObjectName("treeWidget")
-        self.mainLayout.addWidget(self.treeWidget, 3, 0, 1, -1)
+        self.mainLayout.addWidget(self.treeWidget, 4, 0, 1, -1)
         self.treeWidget.setSortingEnabled(True)
         self.treeWidget.headerItem().setText(0,"Identifier")
         self.treeWidget.headerItem().setText(1, "Title")
@@ -170,7 +175,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         self.connect(
             self.btnConnect,
             SIGNAL('clicked(bool)'),
-            self.btnConnect_clicked
+            self.connectServer
             )
         
         ## OK button
@@ -186,22 +191,215 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
             self.close
             )
         
-    def btnConnect_clicked(self):
-        self.connectServer()
+    #######################################
+    #### Connecting to the WPS Server and accessing capabilities
+    
+    #def btnConnect_clicked(self):
+        #self.connectServer()
         
-    def connectServer(self):
+    def connectServer(self,  connection):
+        """this is where to use code for adding items to treeWidget
+        see qgswps.py:: createCapabilities Gui"""
+
         print "show me the URL"
         
+        connection = self.URLConnect.text()
+        # pass version here
+        version = self.launchversion.currentText()
+        
+        print connection
+        
+        if not self.webConnectionExists(connection):
+            return 0
+        
+        print connection
+        
+        itemListAll = self.getCapabilities(connection)
     
+        #    QMessageBox.information(None, '', itemListAll)
+        self.initTreeWPSServices(itemListAll)
+        
+    def webConnectionExists(self,  connection):
+        try:
+            xmlString = self.getServiceXML(connection,"GetCapabilities")
+            print 'connection exists'
+            return True
+        except:
+            QMessageBox.critical(None,'','Web Connection Failed')
+            return False
+        
+    def  getServiceXML(self,  name, request,  identifier=''):
+        """ Gets Server and Connection Info from Stored Server Connections
+        Param: String ConnectionName
+        Return: Array Server Information (http,www....,/cgi-bin/...,Post||Get,Service Version)
+        """
+        print 'getServiceXML - name'
+        print name
+        print 'getServiceXML - request'
+        print request
+        
+        result = self.getServer(name)
+        print 'getServiceXML - result'
+        print result
+        
+        path = result["path"]
+        server = result["server"]
+        method = result["method"]
+        version = result["version"]
+        if identifier <> '':
+            myRequest = "?Request="+request+"&identifier="+identifier+"&Service=WPS&Version="+version
+        else:
+            myRequest = "?Request="+request+"&Service=WPS&Version="+version
+    
+        myPath = path+myRequest
+        print 'getServiceXML - myPath'
+        print myPath
+        
+        self.verbindung = HTTPConnection(str(server))
+        self.verbindung.request(str(method),str(myPath))
+        results = self.verbindung.getresponse()
+        #print result
+        print 'endXML'
+        return results.read()
+        
+    def getServer(self, name):
+        """get server name"""
+        
+        settings = QSettings()
+        # name = self.URLName.text() # this needs to be passed down from connection
+        print 'getserver -name'
+        print name
+        
+        myURL = urlparse(str(name))
+        print myURL
+        
+        mySettings = "/WPS/"+name
+        #    settings.setValue("WPS/connections/selected", QVariant(name) )
+        ##settings.setValue(mySettings+"/scheme",  QVariant(myURL.scheme))
+        ##settings.setValue(mySettings+"/server",  QVariant(myURL.netloc))
+        ##settings.setValue(mySettings+"/path", QVariant(myURL.path))
+        settings.setValue(mySettings+"/method",QVariant("GET"))
+        
+        ##mySettings =  name # "/WPS/" +name
+        print 'getserver - mysettings'
+        print mySettings
+        
+        result = {}
+        result["scheme"] = myURL.scheme #str(settings.value(mySettings+"/scheme").toString()) # str(mySettings+"/scheme")
+        result["server"] = myURL.netloc # str(mySettings+"/server") # str(settings.value(mySettings+"/server").toString()) # 
+        result["path"] = myURL.path #str(settings.value(mySettings+"/path").toString()) # str(mySettings+"/path") #
+        result["method"] = str(settings.value(mySettings+"/method").toString()) #str(mySettings+"/method")
+        result["version"] = str(self.launchversion.currentText()) # str(mySettings+"/version") #settings.value(mySettings+"/version").toString()
+        
+        print 'getserver - result'
+        print result
+        
+        return result
+        
+
+    def getCapabilities(self,  connection):
+        xmlString = self.getServiceXML(connection, "GetCapabilities")
+        #print xmlString
+        self.doc = QtXml.QDomDocument()
+        test = self.doc.setContent(xmlString,  True)
+        #test parsing of xml doc
+        if test == True:
+            print 'XML document parsed'
+        else:
+            print 'document not parsed'
+
+        if self.getServiceVersion() != "1.0.0":
+            QMessageBox.information(None, 'Error', 'Only WPS Version 1.0.0 is supprted')
+            return 0
+      
+        version    = self.doc.elementsByTagNameNS("http://www.opengis.net/wps/1.0.0","Process")
+        title      = self.doc.elementsByTagNameNS("http://www.opengis.net/ows/1.1","Title")    
+        identifier = self.doc.elementsByTagNameNS("http://www.opengis.net/ows/1.1","Identifier")
+        abstract   = self.doc.elementsByTagNameNS("http://www.opengis.net/ows/1.1","Abstract")
+
+        itemListAll = []
+        
+        print itemListAll
+    
+        for i in range(version.size()):
+            print 'test loop'
+            v_element = version.at(i).toElement()
+            print v_element.text()
+            i_element = identifier.at(i).toElement()
+            print i_element.text()
+            t_element = title.at(i+1).toElement()
+            print t_element.text()
+            a_element = abstract.at(i+1).toElement()
+            print a_element.text()
+            itemList = []
+            itemList.append(i_element.text()) 
+            itemList.append(t_element.text()) 
+            itemList.append(a_element.text()) 
+            # print i_element.text()
+            itemListAll.append(itemList)
+            
+        return itemListAll
+        
+    def getServiceVersion(self):
+        #self.doc = QtXml.QDomDocument()
+        #root = self.doc.documentElement()
+        version = self.launchversion.currentText() #root.attribute("version")
+        return version
+        
+    def initTreeWPSServices(self, taglist):
+        self.treeWidget.setColumnCount(self.treeWidget.columnCount())
+        itemList = []
+        for items in taglist:
+            item = QTreeWidgetItem()
+            ident = unicode(items[0],'latin1')
+            title = unicode(items[1],'latin1')
+            abstract = unicode(items[2],'latin1')
+            item.setText(0,ident.strip())
+            item.setText(1,title.strip())  
+            item.setText(2,abstract.strip())  
+            itemList.append(item)
+        self.treeWidget.addTopLevelItems(itemList)
+        
+
+    """def initWpsConnections(self):    
+        ##    self.btnOk.setEnabled(False)
+        #self.btnConnect.setEnabled(False)
+        settings = QSettings()
+        #settings.beginGroup("WPS")
+        connections = settings.childGroups()
+        #self.cmbConnections.clear()
+        self.URLConnect.addItems(connections)
+        
+    
+        if self.cmbConnections.size() > 0:
+            self.btnConnect.setEnabled(True)
+            self.btnEdit.setEnabled(True)
+            self.btnDelete.setEnabled(True)
+        return 1 
+        """
+
+    #######################################################################
+    ## Open the Process GUI
     def buttonBox_accepted(self):
         #pass
-        print 'Execute WPS'
+        print 'Open process GUI'
+        #call processGUI function
+        self.process = WPSProcessing()
+        self.process.processGUI()
+        
+    #######################################################################
     
     def getDescription(self):
         pass
         
-    """def buttonBox_rejected(self):
-        self.close()"""
+    #########################################################################
+    ## Processing Class
+    
+class WPSProcessing():
+    
+    def processGUI(self):
+        print 'process dummy'
+        #pass
         
-
-
+    def processTools(self):
+        pass
