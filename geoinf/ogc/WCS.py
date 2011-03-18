@@ -264,16 +264,17 @@ class WCSCommonWidget(QtGui.QWidget):
                     Time limits are also quite "fiddly" and still need to be
                     addressed.
 
-                    print "wcs.py:233 coverage\n",selected_coverageName
+                    """
 
-                        print "wcs.py:236 grid info:", grid.dimension, \
+                    """
+                    print "wcs.py:233 coverage\n",selected_coverageName
+                    print "wcs.py:236 grid info:", grid.dimension, \
                             type(grid.dimension), grid.axislabels, \
                             grid.highlimits, grid.lowlimits
                     print "wcs.py:239 timelimits:", \
                         self.contents[str(selected_coverageName)].timelimits
                     print "wcs.py:240 timepositions:", \
                         self.contents[str(selected_coverageName)].timepositions
-
                     """
 
                     self.dcLayerId.setText(self.contents[str(selected_coverageName)].id)

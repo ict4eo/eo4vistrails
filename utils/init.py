@@ -1,7 +1,7 @@
 def initialize(*args, **keywords):
     from core.modules.module_registry import get_module_registry
     from core.modules import basic_modules
-    
+
     from ThreadSafe import Fork, ThreadTestModule
     from session import Session
     import DropDownListWidget
@@ -16,7 +16,7 @@ def initialize(*args, **keywords):
                                                    None,
                                                    staticmethod(lambda x: type(x) == str),
                                                    DropDownListWidget.LinuxDemoComboBoxWidget)
-    reg.add_module(LinuxDemoComboBox, 
+    reg.add_module(LinuxDemoComboBox,
                    namespace = utils_namespace)
 
     #Add Fork
@@ -51,7 +51,6 @@ def initialize(*args, **keywords):
     reg.add_module(Session, namespace = utils_namespace)
 
     #Add WebRequest
-    # TO DO => change input port to WebRequest type
     reg.add_module(WebRequest, namespace = utils_namespace)
     reg.add_input_port(
         WebRequest,
@@ -59,7 +58,7 @@ def initialize(*args, **keywords):
         (WebRequest,'Web Request'))
     reg.add_input_port(
         WebRequest,
-        'runRequest', 
+        'runRequest',
         (basic_modules.Boolean,'Run The Request?'))
     reg.add_input_port(
         WebRequest,
