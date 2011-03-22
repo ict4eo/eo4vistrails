@@ -17,16 +17,13 @@ import packages.eo4vistrails.geoinf.visual
 
 
 path_png_icon = packages.eo4vistrails.geoinf.visual.__path__[0]
-
 QgsApplication.setPrefixPath("/usr", True)
-
 QgsApplication.initQgis()
 
 
 class QGISMapCanvasCell(SpreadsheetCell):
-    '''
-    '''
-
+    """TO DO: Add doc string
+    """
     def compute(self):
         """ compute() -> None
         """
@@ -34,27 +31,24 @@ class QGISMapCanvasCell(SpreadsheetCell):
             layers = self.getInputListFromPort("layer")
         else:
             layers = None
-
         self.cellWidget = self.displayAndWait(QGISMapCanvasCellWidget, (layers,))
 
 
 class QGISMapCanvasCellWidget(QCellWidget, QMainWindow):
-
+    """TO DO: Add doc string
+    """
     def __init__(self, parent=None):
-
+        """TO DO: Add doc string"""
         QCellWidget.__init__(self, parent)
         QMainWindow.__init__(self)
 
         self.canvas = QgsMapCanvas()
         self.canvas.setCanvasColor(QColor(200,200,255))
         self.canvas.show()
-
         self.tools = QMainWindow()
 
         actionAddLayer = QAction(QIcon(path_png_icon + "/mActionAddLayer.png"), "Add Layer", self.tools)
-
         actionZoomIn = QAction(QIcon(path_png_icon + "/mActionZoomIn.png"), "Zoom In", self.tools)
-
         actionZoomOut = QAction(QIcon(path_png_icon + "/mActionZoomOut.png"), "Zoom Out", self.tools)
         actionPan = QAction(QIcon(path_png_icon + "/mActionPan.png"), "Pan", self.tools)
 
@@ -84,80 +78,65 @@ class QGISMapCanvasCellWidget(QCellWidget, QMainWindow):
         self.toolZoomOut.setAction(actionZoomOut)
 
     def addLayer(self):
-
+        """TO DO: Add doc string"""
         QtGui.QMessageBox.information(self,"INFOMATION:","Functionality still Under Implementation",QtGui.QMessageBox.Ok)
 
     def zoomIn(self):
+        """TO DO: Add doc string"""
         self.canvas.setMapTool(self.toolZoomIn)
 
     def zoomOut(self):
+        """TO DO: Add doc string"""
         self.canvas.setMapTool(self.toolZoomOut)
 
-
     def pan(self):
+        """TO DO: Add doc string"""
         self.canvas.setMapTool(self.toolPan)
-
 
     def updateContents(self, inputPorts):
         """ updateContents(inputPorts: tuple) -> None
-        Updates the contents with a new changed in filename
-
+        Updates the contents with a new, changed filename
         """
-
         (inputLayers, ) = inputPorts
-
-        
         if type(inputLayers) != list:
-
-            print "One Layer"
-            
-            inputLayers = [inputLayers] #TODO handle the list case..
+            #print "One Layer"
+            inputLayers = [inputLayers]
+        else:
+            pass
+            #TODO handle the list case.
 
         mapCanvasLayers = []
-
         for layer in inputLayers:
-                            
             print "Accessing layer" + '*********' + layer.name()
-            
             if not layer.isValid():
                 return
-            print "Succeeded "
-            
+            print "Success!"
+
             file_extension = str(layer.name())
-            
             if file_extension.endswith(".shp"):
-                         
                 #get the label instance associated with the layer a
                 label = layer.label()
-    
                 labelAttributes = label.layerAttributes()
-    
                 #using first field (specified by index 0) as the label field
                 label.setLabelField(QgsLabel.Text,  0)
-    
                 # set the colour of the label text
                 labelAttributes.setColor(QtCore.Qt.black)
-    
                 layer.enableLabels(True)
-                                   
-            
+
             # Add layer to the registry
             QgsMapLayerRegistry.instance().addMapLayer(layer, False)
-    
+
             # Set up the map canvas layer set
             cl = QgsMapCanvasLayer(layer, True)
-
             mapCanvasLayers.append(cl)
-            
+
             # Set extent to the extent of our layer
             self.canvas.setExtent(layer.extent())
             self.canvas.enableAntiAliasing(True)
             self.canvas.freeze(False)
 
             self.canvas.setLayerSet(mapCanvasLayers)
-            self.canvas.refresh()                            
+            self.canvas.refresh()
             self.update()
-        
-        #QCellWidget.updateContents(self, inputPorts)
 
-    
+        #QCellWidget.updateContents(self, inputPorts)

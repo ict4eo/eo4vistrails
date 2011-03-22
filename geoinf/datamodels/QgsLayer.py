@@ -51,17 +51,19 @@ class QgsMapLayer(Module):
         import traceback
         traceback.print_exc()
         raise ModuleError(self, msg + ': %s' % str(error))
- 
+
+
 class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
-    
+    """TO DO: Add doc string
+    """
     def __init__(self, uri=None, layername=None, driver=None):
         QgsMapLayer.__init__(self)
         if uri and layername and driver:
             qgis.core.QgsVectorLayer.__init__(self, uri, layername, driver)
-    
+
     def compute(self):
         """Execute the module to create the output"""
-        try:     
+        try:
             thefile = self.forceGetInputFromPort('file', None)
             thedataRequest = self.forceGetInputFromPort('dataRequest', None)
 
@@ -69,29 +71,39 @@ class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
             isWFS = isinstance(thedataRequest, WebRequest)
             isPOSTGRES  = isinstance(thedataRequest, PostGISRequest)
 
-            if isOGR:            
+            if isOGR:
                 thefilepath = thefile.name
                 thefilename = QFileInfo(thefilepath).fileName()
                 qgis.core.QgsVectorLayer.__init__(self, thefilepath, thefilename, "ogr")
             elif isPOSTGRES:
                 uri = qgis.core.QgsDataSourceURI()
-                uri.setConnection('146.64.28.204', '5432', 'experiments', 'ict4eo', 'ict4eo')
-                uri.setDataSource('', '(select * from ba_modis_giglio limit 10000)', 'the_geom', '', 'gid')
+                uri.setConnection(
+                    '146.64.28.204', '5432', 'experiments', 'ict4eo', 'ict4eo')
+                uri.setDataSource(
+                    '',
+                    '(select * from ba_modis_giglio limit 10000)',
+                    'the_geom',
+                    '',
+                    'gid')
                 qgis.core.QgsVectorLayer.__init__(self, uri.uri(), 'postgis layer', "postgres")
             elif isWFS:
-                #Note this is case sensative -> "WFS"
-                qgis.core.QgsVectorLayer.__init__(self, thedataRequest.url, 'wfs layer', "WFS")
-            
+                #Note this is case sensitive -> "WFS"
+                qgis.core.QgsVectorLayer.__init__(
+                    self, thedataRequest.url, 'wfs layer', "WFS")
+
             self.setResult('value', self)
         except Exception, e:
             self.raiseError('Cannot set output port: %s' % str(e))
-            
+
+
 class QgsRasterLayer(QgsMapLayer, qgis.core.QgsRasterLayer):
+    """TO DO: Add doc string
+    """
     def compute(self):
         """Execute the module to create the output"""
         try:
             thefile = self.getInputFromPort('file').name
-            fileInfo = QFileInfo(thefile)   
+            fileInfo = QFileInfo(thefile)
             qgis.core.QgsRasterLayer.__init__(self, thefile, fileInfo.fileName())
             self.setResult('value', self)
         except Exception, e:
