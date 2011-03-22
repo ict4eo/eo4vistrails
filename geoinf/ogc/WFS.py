@@ -314,7 +314,7 @@ class WFSConfigurationWidget(OgcConfigurationWidget):
         """Return a URL request from configuration parameters
         Overwrites method defined in OgcConfigurationWidget.
         """
-        wfs_url = self.ogc_common_widget.line_edit_OGC_url.text()
+        wfs_url = self.url  # defined in OgcConfigurationWidget : okTriggered()
         WFSversion = str(self.ogc_common_widget.launchversion.currentText())
         selectedFeatureId = str(self.wfs_config_widget.dcLayerId.text())
         data = ''
@@ -340,6 +340,7 @@ class WFSConfigurationWidget(OgcConfigurationWidget):
             "&version=" + WFSversion + \
             "&request=DescribeFeatureType" + \
             "&typename=" + selectedFeatureId
+            #print "WFS:343 -return URL for DescribeFeatureType", wfs_url
             return 'GET', wfs_url
 
         elif rType == 'GetFeature':
@@ -361,6 +362,7 @@ class WFSConfigurationWidget(OgcConfigurationWidget):
                         self,
                         'Unknown WFS bounding box type' + ': %s' % str(error)
                         )
+                #print "WFS:365 -return URL for GetFeature", wfs_url
                 wfs_url += "&bbox=" + bbox + \
                     "," + coord_system # should yield EPSG:nnnn
             return 'GET', wfs_url

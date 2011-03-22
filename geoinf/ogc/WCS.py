@@ -362,7 +362,7 @@ class WCSConfigurationWidget(OgcConfigurationWidget):
         """Return a URL request from configuration parameters
         Overwrites method defined in OgcConfigurationWidget.
         """
-        wcs_url = self.ogc_common_widget.line_edit_OGC_url.text()
+        wcs_url = self.url # defined in OgcConfigurationWidget : okTriggered()
         WCSversion = str(self.ogc_common_widget.launchversion.currentText())
         selectedCoverageId = str(self.wcs_config_widget.dcLayerId.text())
         width = str(self.wcs_config_widget.dcWidth.text())
@@ -414,7 +414,7 @@ class WCSConfigurationWidget(OgcConfigurationWidget):
             therefore we can only get a url out of this request see code below -
             I stand to be corrected if my research findings are wrong?
 
-            NOTE BY DEREK:
+            NOTE:
             A URL is actually all we want to get - this is the configuration
             part of the workflow - once it is executed then the XML data will be
             created and it is then up to "downstream" components connected to
@@ -423,7 +423,7 @@ class WCSConfigurationWidget(OgcConfigurationWidget):
             myWCS = self.wcs_config_widget.parent_widget.service.service
             description = myWCS.getDescribeCoverage(selectedCoverageId)
             #describe_doc= description.read()
-            #print "wcs.py:361", description
+            #print "wcs.py:426", description
 
             wcs_url += \
             "?SERVICE=WCS" + \
@@ -441,7 +441,7 @@ class WCSConfigurationWidget(OgcConfigurationWidget):
                 format=formats)
             # TO DO - update this to handle files as per VisTrails "filePool"
             # http://www.vistrails.org/index.php/UsersGuideVisTrailsPackages#Dealing_with_command_line_tools_and_side_effects
-            # derek->bolelang -- so why do we want to do this???
+            # derek->bolelang -- but why do we want to do this???
             f=open('myfile.'+ formats,  'wb')
             f.write(response.read())
             f.close()
@@ -452,8 +452,7 @@ class WCSConfigurationWidget(OgcConfigurationWidget):
                 "&request=GetCoverage" + \
                 "&COVERAGE=" + selectedCoverageId
             if self.bbox:
-                # OLD CODE: "&bbox=" + ULX + "," + ULY + "," + BRX + "," + BRY + \
-                #print "wcs.py:450 bbox=", self.bbox
+                #print "wcs.py:455 bbox=", self.bbox
                 wcs_url += "&bbox=" + self.bbox + \
                     "&crs=" + coord_system
             wcs_url += \

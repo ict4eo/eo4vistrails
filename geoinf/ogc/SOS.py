@@ -533,6 +533,6 @@ class SOSConfigurationWidget(OgcConfigurationWidget):
                 )
         # xml header
         data = '<?xml version="1.0" encoding="UTF-8"?>\n' + data
-        print data  # show line breaks for testing !!!
+        #print data  # show line breaks for testing !!!
         data = data.replace('\n','')
         return 'POST', data
