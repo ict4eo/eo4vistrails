@@ -185,7 +185,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         self.connect(
             self.btnOk,
             SIGNAL('clicked(bool)'),
-            self.buttonBox_accepted
+            self.okButton_clicked
             )
         ## Cancel Button
         self.connect(
@@ -364,32 +364,593 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
             itemList.append(item)
         self.treeWidget.addTopLevelItems(itemList)
 
-
-    """def initWpsConnections(self):
-        ##    self.btnOk.setEnabled(False)
-        #self.btnConnect.setEnabled(False)
-        settings = QSettings()
-        #settings.beginGroup("WPS")
-        connections = settings.childGroups()
-        #self.cmbConnections.clear()
-        self.URLConnect.addItems(connections)
-
-
-        if self.cmbConnections.size() > 0:
-            self.btnConnect.setEnabled(True)
-            self.btnEdit.setEnabled(True)
-            self.btnDelete.setEnabled(True)
-        return 1
-        """
-
     #######################################################################
     ## Open the Process GUI
-    def buttonBox_accepted(self):
+    def okButton_clicked(self, bool):
+        """ Use code to create process gui - Create the GUI for a selected WPS process based on the DescribeProcess
+       response document. Mandatory inputs are marked as red, default is black"""
         #pass
-        print 'Open process GUI'
+        print 'OPEN PROCESS GUI'
         #call processGUI function
-        self.process = WPSProcessing()
-        self.process.processGUI()
+        
+        name= self.URLConnect.text()
+        item= self.treeWidget.currentItem()
+
+        #self.process = WPSProcessing()
+        #self.process.create_process_GUI(self, pName, item)
+        ####Will need to move this to class WPSProcessing later when refactoring
+        #self.create_process_GUI(self, name, item)
+        
+        #def create_process_GUI(self,name, item):
+
+        #pass
+       
+        try:
+            self.processIdentifier = item.text(0)
+            print self.processIdentifier
+        except:
+            QMessageBox.warning(None,'',QCoreApplication.translate("QgsWps",'Please select a Process'))
+        #return 0
+        
+        print 'test inputs and outputs'
+        
+        # Lists which store the inputs and meta information (format, occurs, ...)
+        # This list is initialized every time the GUI is created
+        self.complexInputComboBoxList = [] # complex input for single raster and vector maps
+        self.complexInputListWidgetList = [] # complex input for multiple raster and vector maps
+        self.complexInputTextBoxList = [] # complex inpt of type text/plain
+        self.literalInputComboBoxList = [] # literal value list with selectable answers
+        self.literalInputLineEditList = [] # literal value list with single text line input
+        self.complexOutputComboBoxList = [] # list combo box
+        self.inputDataTypeList = {}
+        self.inputsMetaInfo = {} # dictionary for input metainfo, key is the input identifier
+        self.outputsMetaInfo = {} # dictionary for output metainfo, key is the output identifier
+        self.outputDataTypeList = {}
+
+        self.processName = name
+        
+        
+        flags = Qt.WindowTitleHint | Qt.WindowSystemMenuHint | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint  # QgisGui.ModalDialogFlags
+        # Recive the XML process description
+        self.pDoc = QtXml.QDomDocument()
+        self.pDoc.setContent(self.getServiceXML(self.processName,"DescribeProcess",self.processIdentifier), True)     
+        DataInputs = self.pDoc.elementsByTagName("Input")
+        DataOutputs = self.pDoc.elementsByTagName("Output")
+        
+
+        # Create the layouts and the scroll area
+        ##self.dlgProcess = QgsWpsDescribeProcessGui(self.dlg, flags) ## don't need this now, maybe later
+        self.dlgProcess = QDialog()
+        self.dlgProcessLayout = QGridLayout()
+        # Two tabs, one for the process inputs and one for the documentation
+        # TODO: add a tab for literal outputs
+        self.dlgProcessTab = QTabWidget()
+        self.dlgProcessTabFrame = QFrame()
+        self.dlgProcessTabFrameLayout = QGridLayout()
+        # The process description can be very long, so we make it scrollable
+        self.dlgProcessScrollArea = QScrollArea(self.dlgProcessTab)
+
+        self.dlgProcessScrollAreaWidget = QFrame()
+        self.dlgProcessScrollAreaWidgetLayout = QGridLayout()
+
+        # First part of the gui is a short overview about the process
+        identifier, title, abstract = self.getIdentifierTitleAbstractFromElement(self.pDoc)
+        self.addIntroduction(identifier, title)
+        
+        # If no Input Data  are requested
+        if DataInputs.size()==0:
+            self.startProcess()
+        #return 0
+        
+        print 'add intro test'
+  
+        # Generate the input GUI buttons and widgets
+        self.generateProcessInputsGUI(DataInputs)
+        # Generate the editable outpt widgets, you can set the output to none if it is not requested
+        self.generateProcessOutputsGUI(DataOutputs)
+    
+        self.dlgProcessScrollAreaWidgetLayout.setSpacing(10)
+        self.dlgProcessScrollAreaWidget.setLayout(self.dlgProcessScrollAreaWidgetLayout)
+        self.dlgProcessScrollArea.setWidget(self.dlgProcessScrollAreaWidget)
+        self.dlgProcessScrollArea.setWidgetResizable(True)
+
+        self.dlgProcessTabFrameLayout.addWidget(self.dlgProcessScrollArea)
+
+        self.addOkCancelButtons()
+
+        self.dlgProcessTabFrame.setLayout(self.dlgProcessTabFrameLayout)
+        self.dlgProcessTab.addTab(self.dlgProcessTabFrame, "Process")
+
+        self.addDocumentationTab(abstract)
+
+        self.dlgProcessLayout.addWidget(self.dlgProcessTab)
+        self.dlgProcess.setLayout(self.dlgProcessLayout)
+        self.dlgProcess.setGeometry(QRect(190,100,800,600))
+        self.dlgProcess.show()
+        
+        
+    def generateProcessInputsGUI(self, DataInputs):
+        """Generate the GUI for all Inputs defined in the process description XML file"""
+        # Create the complex inputs at first
+        for i in range(DataInputs.size()):
+            f_element = DataInputs.at(i).toElement()
+
+            inputIdentifier, title, abstract = self.getIdentifierTitleAbstractFromElement(f_element)
+
+            complexData = f_element.elementsByTagName("ComplexData")
+            minOccurs = int(f_element.attribute("minOccurs"))
+            maxOccurs = int(f_element.attribute("maxOccurs"))
+
+            # Iterate over all complex inputs and add combo boxes, text boxes or list widgets 
+            if complexData.size() > 0:
+                # Das i-te ComplexData Objekt auswerten
+                complexDataTypeElement = complexData.at(0).toElement()
+                complexDataFormat = self.getDefaultMimeType(complexDataTypeElement)
+                supportedComplexDataFormat = self.getSupportedMimeTypes(complexDataTypeElement)
+
+                # Store the input formats
+                self.inputsMetaInfo[inputIdentifier] = supportedComplexDataFormat
+                self.inputDataTypeList[inputIdentifier] = complexDataFormat
+
+                # Attach the selected vector or raster maps
+                #if self.isMimeTypeVector(complexDataFormat["MimeType"]) != None:
+                # Vector inputs
+                    #layerNamesList = self.getLayerNameList(0)
+                    #if maxOccurs == 1:
+                        #self.complexInputComboBoxList.append(self.addComplexInputComboBox(title, inputIdentifier, str(complexDataFormat), layerNamesList, minOccurs))
+                    #else:
+                        #self.complexInputListWidgetList.append(self.addComplexInputListWidget(title, inputIdentifier, str(complexDataFormat), layerNamesList, minOccurs))
+                #elif self.isMimeTypeText(complexDataFormat["MimeType"]) != None:
+                    # Text inputs
+                    #self.complexInputTextBoxList.append(self.addComplexInputTextBox(title, inputIdentifier, minOccurs))
+                #elif self.isMimeTypeRaster(complexDataFormat["MimeType"]) != None:
+                    # Raster inputs
+                    #layerNamesList = self.getLayerNameList(1)
+                    #if maxOccurs == 1:
+                        #self.complexInputComboBoxList.append(self.addComplexInputComboBox(title, inputIdentifier, str(complexDataFormat), layerNamesList, minOccurs))
+                    #else:
+                        #self.complexInputListWidgetList.append(self.addComplexInputListWidget(title, inputIdentifier, str(complexDataFormat), layerNamesList, minOccurs))
+                #else:
+                    # We assume text inputs in case of an unknown mime type
+                    #self.complexInputTextBoxList.append(self.addComplexInputTextBox(title, inputIdentifier, minOccurs))            
+
+        # Create the literal inputs as second
+        for i in range(DataInputs.size()):
+            f_element = DataInputs.at(i).toElement()
+
+            inputIdentifier, title, abstract = self.getIdentifierTitleAbstractFromElement(f_element)
+
+            literalData = f_element.elementsByTagName("LiteralData")
+            minOccurs = int(f_element.attribute("minOccurs"))
+            maxOccurs = int(f_element.attribute("maxOccurs"))
+
+            if literalData.size() > 0:
+                allowedValuesElement = literalData.at(0).toElement()
+                aValues = allowedValuesElement.elementsByTagNameNS("http://www.opengis.net/ows/1.1","AllowedValues")
+                dValue = str(allowedValuesElement.elementsByTagName("DefaultValue").at(0).toElement().text())
+                print "Checking allowed values " + str(aValues.size())
+                if aValues.size() > 0:
+                    valList = self.allowedValues(aValues)
+                    if len(valList) > 0:
+                        if len(valList[0]) > 0:
+                            self.literalInputComboBoxList.append(self.addLiteralComboBox(title, inputIdentifier, valList, minOccurs))
+                        else:
+                            self.literalInputLineEditList.append(self.addLiteralLineEdit(title, inputIdentifier, minOccurs, str(valList)))
+                else:
+                    self.literalInputLineEditList.append(self.addLiteralLineEdit(title, inputIdentifier, minOccurs, dValue))
+
+    # At last, create the bounding box inputs
+        for i in range(DataInputs.size()):
+            f_element = DataInputs.at(i).toElement()
+
+            inputIdentifier, title, abstract = self.getIdentifierTitleAbstractFromElement(f_element)
+      
+            bBoxData = f_element.elementsByTagName("BoundingBoxData")
+            minOccurs = int(f_element.attribute("minOccurs"))
+            maxOccurs = int(f_element.attribute("maxOccurs"))
+
+            if bBoxData.size() > 0:
+                crsListe = []
+                bBoxElement = bBoxData.at(0).toElement()
+                defaultCrsElement = bBoxElement.elementsByTagName("Default").at(0).toElement()
+                defaultCrs = defaultCrsElement.elementsByTagName("CRS").at(0).toElement().attributeNS("http://www.w3.org/1999/xlink", "href")
+                crsListe.append(defaultCrs)
+                self.addLiteralLineEdit(title+"(minx,miny,maxx,maxy)", inputIdentifier, minOccurs)
+
+                supportedCrsElements = bBoxElement.elementsByTagName("Supported")
+
+                for i in range(supportedCrsElements.size()):
+                    crsListe.append(supportedCrsElements.at(i).toElement().elementsByTagName("CRS").at(0).toElement().attributeNS("http://www.w3.org/1999/xlink", "href"))
+
+                    self.literalInputComboBoxList.append(self.addLiteralComboBox("Supported CRS", inputIdentifier,crsListe, minOccurs))
+
+
+        self.addCheckBox(QCoreApplication.translate("QgsWps","Process selected objects only"), QCoreApplication.translate("QgsWps","Selected"))
+        
+    def generateProcessOutputsGUI(self, DataOutputs):
+        print 'get outputs'
+        
+    def addOkCancelButtons(self):
+        #print 'ok'
+        groupbox = QFrame()
+        layout = QHBoxLayout()
+
+        btnOk = QPushButton(groupbox)
+        btnOk.setText(QString("Run"))
+        btnOk.setMinimumWidth(100)
+        btnOk.setMaximumWidth(100)
+
+        btnCancel = QPushButton(groupbox)
+        btnCancel.setText("Back")
+        btnCancel.setMinimumWidth(100)
+        btnCancel.setMaximumWidth(100)
+
+        layout.addWidget(btnOk)
+        layout.addStretch(1)
+        layout.addWidget(btnCancel)
+
+        groupbox.setLayout(layout)
+        self.dlgProcessTabFrameLayout.addWidget(groupbox)
+
+        QObject.connect(btnOk,SIGNAL("clicked()"),self.startProcess)
+        QObject.connect(btnCancel,SIGNAL("clicked()"),self.dlgProcess.close)
+        
+    def startProcess(self):
+        print 'start'
+        
+    def addDocumentationTab(self, abstract):
+        # Check for URL
+        if str(abstract).find("http://") == 0:
+            textBox = QtWebKit.QWebView(self.dlgProcessTab)
+            textBox.load(QUrl(abstract))
+            textBox.show()
+        else:
+            textBox = QTextBrowser(self.dlgProcessTab)
+            textBox.setText(QString(abstract))
+
+        self.dlgProcessTab.addTab(textBox, "Documentation")
+        
+    def addComplexInputComboBox(self, title, name, mimeType, namesList, minOccurs):
+        """Adds a combobox to select a raster or vector map as input to the process tab"""
+        groupbox = QGroupBox(self.dlgProcessScrollAreaWidget)
+        #groupbox.setTitle(name)
+        groupbox.setMinimumHeight(25)
+        layout = QHBoxLayout()
+      
+        # This input is optional
+        if minOccurs == 0:
+            namesList.append("<None>")
+
+        comboBox = QComboBox(groupbox)
+        comboBox.addItems(namesList)
+        comboBox.setObjectName(name)
+        comboBox.setMinimumWidth(179)
+        comboBox.setMaximumWidth(179)
+        comboBox.setMinimumHeight(25)
+      
+        myLabel = QLabel(self.dlgProcessScrollAreaWidget)
+        myLabel.setObjectName("qLabel"+name)
+
+        if minOccurs > 0:
+            string = "[" + name + "] <br>" + title
+            myLabel.setText("<font color='Red'>" + string + "</font>" + " <br>(" + mimeType + ")")
+        else:
+            string = "[" + name + "]\n" + title + " <br>(" + mimeType + ")"
+            myLabel.setText(string)
+
+        myLabel.setWordWrap(True)
+        myLabel.setMinimumWidth(400)
+        myLabel.setMinimumHeight(25)
+
+        layout.addWidget(myLabel)
+        layout.addStretch(1)
+        layout.addWidget(comboBox)
+      
+        groupbox.setLayout(layout)
+
+        self.dlgProcessScrollAreaWidgetLayout.addWidget(groupbox)
+
+        return comboBox
+        
+    def addComplexInputListWidget(self, title, name, mimeType, namesList, minOccurs):
+        """Adds a widget for multiple raster or vector selections as inputs to the process tab"""
+        groupbox = QGroupBox(self.dlgProcessScrollAreaWidget)
+        #groupbox.setTitle(name)
+        groupbox.setMinimumHeight(25)
+        layout = QHBoxLayout()
+
+        # This input is optional
+        if minOccurs == 0:
+            namesList.append("<None>")
+
+        listWidget = QListWidget(groupbox)
+        listWidget.addItems(namesList)
+        listWidget.setObjectName(name)
+        listWidget.setMinimumWidth(179)
+        listWidget.setMaximumWidth(179)
+        listWidget.setMinimumHeight(120)
+        listWidget.setMaximumHeight(120)
+        listWidget.setSelectionMode(QAbstractItemView.ExtendedSelection)
+
+        myLabel = QLabel(self.dlgProcessScrollAreaWidget)
+        myLabel.setObjectName("qLabel"+name)
+
+        if minOccurs > 0:
+            string = "[" + name + "] <br>" + title
+            myLabel.setText("<font color='Red'>" + string + "</font>" + " <br>(" + mimeType + ")")
+        else:
+            string = "[" + name + "]\n" + title + " <br>(" + mimeType + ")"
+            myLabel.setText(string)
+
+        myLabel.setWordWrap(True)
+        myLabel.setMinimumWidth(400)
+        myLabel.setMinimumHeight(25)
+
+        layout.addWidget(myLabel)
+        layout.addStretch(1)
+        layout.addWidget(listWidget)
+
+        groupbox.setLayout(layout)
+
+        self.dlgProcessScrollAreaWidgetLayout.addWidget(groupbox)
+
+        return listWidget
+        
+    def addComplexInputTextBox(self, title, name, minOccurs):
+        """Adds a widget to insert text as complex inputs to the process tab"""
+        groupbox = QGroupBox(self.dlgProcessScrollAreaWidget)
+        #groupbox.setTitle(name)
+        groupbox.setMinimumHeight(50)
+        layout = QHBoxLayout()
+
+        textBox = QTextEdit(groupbox)
+        textBox.setObjectName(name)
+        textBox.setMinimumWidth(200)
+        textBox.setMaximumWidth(200)
+        textBox.setMinimumHeight(50)
+
+        myLabel = QLabel(self.dlgProcessScrollAreaWidget)
+        myLabel.setObjectName("qLabel"+name)
+
+        if minOccurs > 0:
+            string = "[" + name + "] <br>" + title
+            myLabel.setText("<font color='Red'>" + string + "</font>")
+        else:
+            string = "[" + name + "]\n" + title
+            myLabel.setText(string)
+
+        myLabel.setWordWrap(True)
+        myLabel.setMinimumWidth(400)
+        myLabel.setMinimumHeight(25)
+
+        layout.addWidget(myLabel)
+        layout.addStretch(1)
+        layout.addWidget(textBox)
+
+        groupbox.setLayout(layout)
+
+        self.dlgProcessScrollAreaWidgetLayout.addWidget(groupbox)
+
+        return textBox
+        
+    def addLiteralComboBox(self, title, name, namesList, minOccurs):
+        
+        groupbox = QGroupBox(self.dlgProcessScrollAreaWidget)
+        #groupbox.setTitle(name)
+        groupbox.setMinimumHeight(25)
+        layout = QHBoxLayout()
+
+        comboBox = QComboBox(self.dlgProcessScrollAreaWidget)
+        comboBox.addItems(namesList)
+        comboBox.setObjectName(name)
+        comboBox.setMinimumWidth(179)
+        comboBox.setMaximumWidth(179)
+        comboBox.setMinimumHeight(25)
+
+        myLabel = QLabel(self.dlgProcessScrollAreaWidget)
+        myLabel.setObjectName("qLabel"+name)
+
+        if minOccurs > 0:
+            string = "[" + name + "] <br>" + title
+            myLabel.setText("<font color='Red'>" + string + "</font>")
+        else:
+            string = "[" + name + "]\n" + title
+            myLabel.setText(string)
+        
+        myLabel.setWordWrap(True)
+        myLabel.setMinimumWidth(400)
+        myLabel.setMinimumHeight(25)
+
+        layout.addWidget(myLabel)
+        layout.addStretch(1)
+        layout.addWidget(comboBox)
+
+        groupbox.setLayout(layout)
+
+        self.dlgProcessScrollAreaWidgetLayout.addWidget(groupbox)
+
+        return comboBox
+        
+    def addLiteralLineEdit(self, title, name, minOccurs, defaultValue=""):
+        
+        groupbox = QGroupBox(self.dlgProcessScrollAreaWidget)
+        #groupbox.setTitle(name)
+        groupbox.setMinimumHeight(25)
+        layout = QHBoxLayout()
+        
+        myLineEdit = QLineEdit(groupbox)
+        myLineEdit.setObjectName(name)
+        myLineEdit.setMinimumWidth(179)
+        myLineEdit.setMaximumWidth(179)
+        myLineEdit.setMinimumHeight(25)
+        myLineEdit.setText(defaultValue)
+        
+        myLabel = QLabel(groupbox)
+        myLabel.setObjectName("qLabel"+name)
+        
+        if minOccurs > 0:
+            string = "[" + name + "] <br>" + title
+            myLabel.setText("<font color='Red'>" + string + "</font>")
+        else:
+            string = "[" + name + "]\n" + title
+            myLabel.setText(string)
+        
+        myLabel.setWordWrap(True)
+        myLabel.setMinimumWidth(400)
+        myLabel.setMinimumHeight(25)
+        
+        layout.addWidget(myLabel)
+        layout.addStretch(1)
+        layout.addWidget(myLineEdit)
+        
+        groupbox.setLayout(layout)
+        
+        self.dlgProcessScrollAreaWidgetLayout.addWidget(groupbox)
+        
+        return myLineEdit
+        
+    def addCheckBox(self,  title,  name):
+        
+        groupbox = QGroupBox(self.dlgProcessScrollAreaWidget)
+        #groupbox.setTitle(name)
+        groupbox.setMinimumHeight(25)
+        layout = QHBoxLayout()
+      
+        myCheckBox = QCheckBox(groupbox)
+        myCheckBox.setObjectName("chkBox"+name)
+        myCheckBox.setChecked(False)
+        
+        myLabel = QLabel(groupbox)
+        myLabel.setObjectName("qLabel"+name)  
+        myLabel.setText("(" + name + ")" + "\n" + title)
+        myLabel.setMinimumWidth(400)
+        myLabel.setMinimumHeight(25)
+        myLabel.setWordWrap(True)
+        
+        layout.addWidget(myLabel)
+        layout.addStretch(1)
+        layout.addWidget(myCheckBox)
+        
+        groupbox.setLayout(layout)
+        
+        self.dlgProcessScrollAreaWidgetLayout.addWidget(groupbox)
+        
+    def getIdentifierTitleAbstractFromElement(self, element):
+        inputIdentifier = element.elementsByTagNameNS("http://www.opengis.net/ows/1.1","Identifier").at(0).toElement().text().simplified()
+        title      = element.elementsByTagNameNS("http://www.opengis.net/ows/1.1","Title").at(0).toElement().text().simplified()
+        abstract   = element.elementsByTagNameNS("http://www.opengis.net/ows/1.1","Abstract").at(0).toElement().text().simplified()
+        
+        return inputIdentifier, title, abstract
+        
+    def addIntroduction(self,  name, title):
+        groupbox = QGroupBox(self.dlgProcessScrollAreaWidget)
+        groupbox.setTitle(name)
+        layout = QVBoxLayout()
+
+        myLabel = QLabel(groupbox)
+        myLabel.setObjectName("qLabel"+name)
+        myLabel.setText(QString(title))
+        myLabel.setMinimumWidth(600)
+        myLabel.setMinimumHeight(25)
+        myLabel.setWordWrap(True)
+
+        layout.addWidget(myLabel)
+
+        groupbox.setLayout(layout)
+
+        self.dlgProcessScrollAreaWidgetLayout.addWidget(groupbox)
+        
+    def getDefaultMimeType(self,  inElement):
+        myElement = inElement.elementsByTagName("Default").at(0).toElement()
+        return self._getMimeTypeSchemaEncoding(myElement)
+        
+    def getSupportedMimeTypes(self,  inElement):
+        mimeTypes = []
+        myElements = inElement.elementsByTagName("Supported").at(0).toElement()
+        myFormats = myElements.elementsByTagName('Format')
+        for i in range(myFormats.size()):
+            myElement = myFormats.at(i).toElement()
+            mimeTypes.append(self._getMimeTypeSchemaEncoding(myElement))
+        return mimeTypes
+        
+    def _getMimeTypeSchemaEncoding(self,  Element):
+        mimeType = ""
+        schema = ""
+        encoding = ""
+        try:
+            mimeType = str(Element.elementsByTagName("MimeType").at(0).toElement().text().simplified().toLower())
+            schema = str(Element.elementsByTagName("Schema").at(0).toElement().text().simplified().toLower())
+            encoding = str(Element.elementsByTagName("Encoding").at(0).toElement().text().simplified().toLower())
+        except:
+            pass
+    
+        return {"MimeType":mimeType,"Schema":schema,"Encoding":encoding}
+        
+    def isMimeTypeVector(self, mimeType):
+        """Check for vector input. Zipped shapefiles must be extracted"""
+        for vectorType in VECTOR_MIMETYPES:
+            if mimeType.upper() == vectorType["MIMETYPE"]:
+                return vectorType["GDALID"]
+        return None
+        
+    def getLayerNameList(self, dataType=0, all=False):
+        myLayerList = []    
+        
+        if all:
+            mapLayers = QgsMapLayerRegistry.instance().mapLayers()      
+            for (k, layer) in mapLayers.iteritems():
+                myLayerList.append(layer.name())
+        else:
+            mc=self.iface.mapCanvas()
+            nLayers=mc.layerCount()
+      
+            for l in range(nLayers):
+                # Nur die Layer des gewnschten Datentypes auswhlen 0=Vectorlayer 1=Rasterlayer
+                if mc.layer(l).type() == dataType:
+                    myLayerList.append(mc.layer(l).name())
+    
+        return myLayerList
+        
+    def allowedValues(self, aValues):
+        valList = []
+
+        # Manage a value list defined by a range
+        value_element = aValues.at(0).toElement()
+        v_range_element = value_element.elementsByTagNameNS("http://www.opengis.net/ows/1.1","Range")
+     
+        if v_range_element.size() > 0:
+            min_val = value_element.elementsByTagNameNS("http://www.opengis.net/ows/1.1","MinimumValue").at(0).toElement().text()
+            max_val = value_element.elementsByTagNameNS("http://www.opengis.net/ows/1.1","MaximumValue").at(0).toElement().text()
+        #       QMessageBox.information(None, '', min_val+' - '+max_val)
+            for n in range(int(min_val),int(max_val)+1):
+                myVal = QString()
+                myVal.append(str(n))
+                valList.append(myVal)
+
+        # Manage a value list defined by single values
+        v_element = value_element.elementsByTagNameNS("http://www.opengis.net/ows/1.1","Value")
+        if v_element.size() > 0:
+            for n in range(v_element.size()):
+                mv_element = v_element.at(n).toElement() 
+                valList.append(unicode(mv_element.text(),'latin1').strip())
+         
+        print str(valList)
+        return valList 
+        
+    def isMimeTypeText(self, mimeType):
+        """Check for text file input"""
+        if mimeType.upper() == "TEXT/PLAIN":
+            return "TXT"
+        else:
+            return None
+            
+    def isMimeTypeRaster(self, mimeType):
+        """Check for raster input"""
+        for rasterType in RASTER_MIMETYPES:
+            if mimeType.upper() == rasterType["MIMETYPE"]:
+                return rasterType["GDALID"]
+        return None
+        
 
     #######################################################################
 
