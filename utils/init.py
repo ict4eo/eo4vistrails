@@ -5,7 +5,8 @@ def initialize(*args, **keywords):
     from ThreadSafe import Fork, ThreadTestModule
     from session import Session
     import DropDownListWidget
-    from WebRequest import DataRequest, WebRequest, PostGISRequest
+    from WebRequest import WebRequest
+    from DataRequest import DataRequest, PostGISRequest
 
     reg = get_module_registry()
     utils_namespace = "utils"
