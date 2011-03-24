@@ -32,22 +32,7 @@ def initialize(*args, **keywords):
         ThreadTestModule,
         'someModuleAboveMe',
         basic_modules.Module)
-    
-    #Add MultiProcessTest
-#    reg.add_module(MultiProcessTestModule, namespace = utils_namespace)
-#    reg.add_input_port(
-#        MultiProcessTestModule,
-#        'someModuleAboveMe',
-#        basic_modules.Module)
-#    reg.add_input_port(
-#        MultiProcessTestModule,
-#        'someStringAboveMe',
-#        basic_modules.String)
-#    reg.add_output_port(
-#        MultiProcessTestModule,
-#        'someString',
-#        basic_modules.String)
-    
+   
     #Add Session
     reg.add_module(Session, namespace = utils_namespace)
 

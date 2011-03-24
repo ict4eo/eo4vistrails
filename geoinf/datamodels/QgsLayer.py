@@ -34,9 +34,8 @@ Created on Wed Feb 23 14:08:10 2011
 
 from core.modules.vistrails_module import Module, ModuleError
 import qgis.core
-import osgeo.ogr
 from PyQt4.QtCore import QFileInfo
-from packages.eo4vistrails.utils.WebRequest import WebRequest, PostGISRequest
+from packages.eo4vistrails.utils.DataRequest import DataRequest
 
 #export set PYTHONPATH=/usr/lib/python2.6
 qgis.core.QgsApplication.setPrefixPath("/usr", True)
@@ -65,26 +64,26 @@ class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
         """Execute the module to create the output"""
         try:
             thefile = self.forceGetInputFromPort('file', None)
-            thedataRequest = self.forceGetInputFromPort('dataRequest', None)
+            dataReq = self.forceGetInputFromPort('dataRequest', None)
 
-            isOGR = (thefile != None) and (thefile.name != '')
-            isWFS = isinstance(thedataRequest, WebRequest)
-            isPOSTGRES  = isinstance(thedataRequest, PostGISRequest)
+            isFILE = (thefile != None) and (thefile.name != '')
+            #Note this is case sensitive -> "WFS"
+            isQGISSuported = isinstance(dataReq, DataRequest) and dataReq.get_driver() in ['WFS','postgres', 'ogr']
 
-            if isOGR:
+            if isFILE:
                 thefilepath = thefile.name
                 thefilename = QFileInfo(thefilepath).fileName()
                 qgis.core.QgsVectorLayer.__init__(
                     self, thefilepath, thefilename, "ogr")
-            elif isPOSTGRES:
-                uri = thedataRequest
+            elif isQGISSuported:
                 qgis.core.QgsVectorLayer.__init__(
-                    self, uri.uri(), 'postgis layer', "postgres")
-            elif isWFS:
-                #Note this is case sensitive -> "WFS"
-                qgis.core.QgsVectorLayer.__init__(
-                    self, thedataRequest.url, 'wfs layer', "WFS")
-
+                    self, 
+                    dataReq.get_uri(), 
+                    dataReq.get_layername(),
+                    dataReq.get_driver())
+            else:
+                self.raiseError('vector Layer Driver %s not supported' % str(dataReq.get_driver()))
+            
             self.setResult('value', self)
         except Exception, e:
             self.raiseError('Cannot set output port: %s' % str(e))
@@ -101,10 +100,25 @@ class QgsRasterLayer(QgsMapLayer, qgis.core.QgsRasterLayer):
     def compute(self):
         """Execute the module to create the output"""
         try:
-            thefile = self.forceGetInputFromPort('file', None)            
-            fileInfo = QFileInfo(thefile)
-            qgis.core.QgsRasterLayer.__init__(self, thefile, fileInfo.fileName())
+            thefile = self.forceGetInputFromPort('file', None)
+            dataReq = self.forceGetInputFromPort('dataRequest', None)
             
+            isFILE = (thefile != None) and (thefile.name != '')
+            isQGISSuported = isinstance(dataReq, DataRequest) and dataReq.get_driver() in ['WCS', None]
+            
+            if isFILE:
+                thefilepath = thefile.name
+                thefilename = QFileInfo(thefilepath).fileName()
+                qgis.core.QgsRasterLayer.__init__(
+                    self, thefilepath, thefilename)
+            elif isQGISSuported:
+                qgis.core.QgsRasterLayer.__init__(
+                    self, 
+                    dataReq.get_uri(), 
+                    dataReq.get_layername())
+            else:
+                self.raiseError('Raster Layer Driver %s not supported' % str(dataReq.get_driver()))
+                
             self.setResult('value', self)
         except Exception, e:
             self.raiseError('Cannot set output port: %s' % str(e))

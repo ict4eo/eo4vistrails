@@ -36,7 +36,7 @@ import core
 #from utils.session import Session
 from PostGIS import PostGisSession,  PostGisCursor,  PostGisFeatureReturningCursor,  PostGisBasicReturningCursor,  PostGisNonReturningCursor,  SQLSourceConfigurationWidget
 from packages.eo4vistrails.geoinf.datamodels.QgsLayer import QgsVectorLayer
-from packages.eo4vistrails.utils.WebRequest import PostGISRequest
+from packages.eo4vistrails.utils.DataRequest import PostGISRequest
 
 def initialize(*args, **keywords):
     """Sets up PostGIS modules"""
