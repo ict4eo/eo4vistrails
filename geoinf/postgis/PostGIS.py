@@ -24,24 +24,29 @@
 ##
 ############################################################################
 """This package provides GIS capabilities for eo4vistrails.
-In particular, provides PostGIS clients via psycopg2.
-This is not a SQL Builder - it assumes you know SQL
-and in particular, spatial SQL as provided by PostGIS.
-You will need to write raw sql by hand. Provsions a session
-a.k.a. a postgis connection and allows random queries to be
-executed against the chosen database.
+In particular, this module provides PostGIS clients via psycopg2.
+This is not a SQL Builder - it assumes you know SQL and, in particular,
+spatial SQL as provided by PostGIS.
+You will need to write raw sql by hand. Provides a session a.k.a. a postgis
+connection and allows random queries to be executed against the chosen database.
 """
+
+# library
+# third party
 import psycopg2
 from PyQt4 import QtCore, QtGui
+import qgis
+import urllib
+# vistrails
+from core.modules.vistrails_module import Module, new_module, NotCacheable, ModuleError
+from core.modules.source_configure import SourceConfigurationWidget
+# eo4vistrails
 from packages.eo4vistrails.geoinf.datamodels.Feature import FeatureModel,  MemFeatureModel
 from packages.eo4vistrails.geoinf.datamodels.QgsLayer import QgsVectorLayer
 from packages.eo4vistrails.utils.DataRequest import PostGISRequest
-import qgis
-
 from packages.eo4vistrails.utils.session import Session
-from core.modules.vistrails_module import Module, new_module, NotCacheable, ModuleError
-from core.modules.source_configure import SourceConfigurationWidget
-import urllib
+# local
+
 
 class PostGisSession(Session):
     """Responsible for making a connection to a postgis database.
@@ -63,12 +68,12 @@ class PostGisSession(Session):
         #PG:"dbname='databasename' host='addr' port='5432' user='x' password='y'"
         #PG:'host=myserver.velocet.ca user=postgres dbname=warmerda'
         self.ogr_connectstr = "PG:host='%s' port='%s' dbname='%s' user='%s' password='%s'" % (self.host,  self.port,  self.database,  self.user,  self.pwd)
-        
+
         try:
             self.pgconn = psycopg2.connect(self.connectstr)
         except:
             raise ModuleError,  (self, "cannot access a PostGIS connection")
-            
+
         self.setResult("PostGisSession",  self)
 
     def __del__(self):
@@ -89,9 +94,9 @@ class PostGisCursor():
             self.conn_type = "ogr"
         else:
             self.conn_type = "psycopg2"
-            
+
     def cursor(self,  PostGisSessionObj):
-        
+
         if self.conn_type == "psycopg2":
             try:
                 self.curs = PostGisSessionObj.pgconn.cursor()
@@ -106,7 +111,7 @@ class PostGisCursor():
                 return True
             except:
                 return False
-                
+
 
     def __del__(self):
         try:
@@ -126,7 +131,7 @@ class PostGisFeatureReturningCursor(Module):
     def __init__(self):
         #PostGisCursor.__init__(self,   conn_type = "ogr")
         Module.__init__(self)
-        
+
 
     def compute(self):
         """Will need to fetch a PostGisSession object on its input port
@@ -140,32 +145,32 @@ class PostGisFeatureReturningCursor(Module):
                 value = self.getInputFromPort(k)
                 sql_input = sql_input.replace(k, value.__str__())
             #print "got sql input"
-            #ogr_conn = self.getInputFromPort("PostGisSessionObject").ogr_connectstr          
+            #ogr_conn = self.getInputFromPort("PostGisSessionObject").ogr_connectstr
             #print "checking connection: connectstr: %s, sql: %s" % (ogr_conn,  sql_input)
             #self.loadContentFromDB(ogr_conn, sql_input)
-            
+
             postGISRequest = PostGISRequest()
-            postGISRequest.setConnection(pgsession.host, 
-                              pgsession.port, 
-                              pgsession.database, 
-                              pgsession.user, 
+            postGISRequest.setConnection(pgsession.host,
+                              pgsession.port,
+                              pgsession.database,
+                              pgsession.user,
                               pgsession.pwd)
             postGISRequest.setDataSource('',                 #schema must be blank
-                              '('+sql_input+')', 
+                              '('+sql_input+')',
                               'the_geom',         #TODO: assuming the_geom, this mus be looked up
                               '',                 #where clause must be blank
                               'gid')              #TODO: assuming gid, this mus be looked up
-            
+
             #select * from ba_modis_giglio limit 10000
             #TODO: make sure that the user can select a layer name or we generate a random one
             qgsVectorLayer = QgsVectorLayer(
-                postGISRequest.get_uri(), 
-                postGISRequest.get_layername(), 
+                postGISRequest.get_uri(),
+                postGISRequest.get_layername(),
                 postGISRequest.get_driver())
-            
+
             self.setResult('PostGISRequest', postGISRequest)
             self.setResult('QgsVectorLayer', qgsVectorLayer)
-            
+
         except Exception as ex:
             print ex
             raise ModuleError,  (PostGisFeatureReturningCursor,  "Could not execute SQL Statement")
@@ -181,7 +186,7 @@ class PostGisFeatureReturningCursor(Module):
 class PostGisBasicReturningCursor(Module, PostGisCursor):
     """
     Returns data in the form of a python list (as per psycopg2).
-    Only one dataset per module is allowed, defined by the SQL 
+    Only one dataset per module is allowed, defined by the SQL
     statement in the editor
     """
 
@@ -216,10 +221,10 @@ class PostGisNonReturningCursor(Module, PostGisCursor):
     used as a way to do an insert, update, delete operation on the
     database, for example
 
-    Unlike the 'returning' cursors, can support multiple SQL 
+    Unlike the 'returning' cursors, can support multiple SQL
     statements, separated by the ';', as expected by PostgreSQL
     """
-    
+
     def __init__(self):
         Module.__init__(self)
         PostGisCursor.__init__(self)

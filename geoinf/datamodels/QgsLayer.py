@@ -24,17 +24,20 @@
 ### WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ###
 #############################################################################
+"""This package provides GIS capabilities for eo4vistrails.
+This module provides a data structure for storing raster and vector data
+in the format defined by QGIS.
 """
-Created on Wed Feb 23 14:08:10 2011
-
-@author: tvanzyl
-
-"""
-#History
-
-from core.modules.vistrails_module import Module, ModuleError
+# library
+# third party
 import qgis.core
 from PyQt4.QtCore import QFileInfo
+# vistrails
+from core.modules.vistrails_module import Module, ModuleError
+# eo4vistrails
+# local
+
+
 from packages.eo4vistrails.utils.DataRequest import DataRequest
 
 #export set PYTHONPATH=/usr/lib/python2.6
@@ -77,13 +80,13 @@ class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
                     self, thefilepath, thefilename, "ogr")
             elif isQGISSuported:
                 qgis.core.QgsVectorLayer.__init__(
-                    self, 
-                    dataReq.get_uri(), 
+                    self,
+                    dataReq.get_uri(),
                     dataReq.get_layername(),
                     dataReq.get_driver())
             else:
                 self.raiseError('vector Layer Driver %s not supported' % str(dataReq.get_driver()))
-            
+
             self.setResult('value', self)
         except Exception, e:
             self.raiseError('Cannot set output port: %s' % str(e))
@@ -96,16 +99,16 @@ class QgsRasterLayer(QgsMapLayer, qgis.core.QgsRasterLayer):
         QgsMapLayer.__init__(self)
         if uri and layername and driver is None:
             qgis.core.QgsRasterLayer.__init__(self, uri, layername)
-    
+
     def compute(self):
         """Execute the module to create the output"""
         try:
             thefile = self.forceGetInputFromPort('file', None)
             dataReq = self.forceGetInputFromPort('dataRequest', None)
-            
+
             isFILE = (thefile != None) and (thefile.name != '')
             isQGISSuported = isinstance(dataReq, DataRequest) and dataReq.get_driver() in ['WCS', None]
-            
+
             if isFILE:
                 thefilepath = thefile.name
                 thefilename = QFileInfo(thefilepath).fileName()
@@ -113,12 +116,12 @@ class QgsRasterLayer(QgsMapLayer, qgis.core.QgsRasterLayer):
                     self, thefilepath, thefilename)
             elif isQGISSuported:
                 qgis.core.QgsRasterLayer.__init__(
-                    self, 
-                    dataReq.get_uri(), 
+                    self,
+                    dataReq.get_uri(),
                     dataReq.get_layername())
             else:
                 self.raiseError('Raster Layer Driver %s not supported' % str(dataReq.get_driver()))
-                
+
             self.setResult('value', self)
         except Exception, e:
             self.raiseError('Cannot set output port: %s' % str(e))

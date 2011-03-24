@@ -24,22 +24,14 @@
 ### WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ###
 #############################################################################
-"""
-Created on Tue Dec 14 09:38:10 2010
-
-@author: tvzyl
-
-Module forms part of the rpyc eo4vistrails capabilties, used to add multicore
-parallel and distributed processing to vistrails.
+"""This module forms part of the rpyc eo4vistrails capabilties;
+used to add multicore parallel and distributed processing to vistrails.
 
 This module holds a rpycnode type that can be passed around between modules.
-
 """
-#History
-#Terence van Zyl, 10 Feb 2011, Version 0.1
 
-from core.modules.vistrails_module import Module
 import networkx as nx
+from core.modules.vistrails_module import Module
 
 
 class NetworkxModule(object):

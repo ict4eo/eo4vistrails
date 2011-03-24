@@ -28,14 +28,13 @@
 """
 
 from PyQt4 import QtCore, QtGui
-from packages.eo4vistrails.geoinf.SpatialTemporalConfigurationWidget import SpatialTemporalConfigurationWidget, SpatialWidget
+from packages.eo4vistrails.geoinf.SpatialTemporalConfigurationWidget import \
+    SpatialTemporalConfigurationWidget, SpatialWidget
 from OgcConfigurationWidget import OgcConfigurationWidget
 from OgcService import OGC
 from core.modules.vistrails_module import Module, new_module, NotCacheable, ModuleError
 import init
 
-#def ns(tag):
-    #return '{http://www.opengis.net/wcs}'+tag
 
 class WFS(OGC, Module):
     """
@@ -202,9 +201,9 @@ class WFSCommonWidget(QtGui.QWidget):
             +  str(self.dcULY.text()) + ',' + str(self.dcLRY.text())
 
     def getBoundingBoxFeature(self):
-        """Return a tuple containing box co-ordinates for selected lfeature.
-        Format: top-left X, top-left Y, bottom-left X, bottom-left Y
+        """Return a tuple containing box co-ordinates for selected feature.
 
+        Format: top-left X,Y, bottom-right X,Y
         """
         return (
             self.dcULX.text(),
@@ -309,9 +308,10 @@ class WFSConfigurationWidget(OgcConfigurationWidget):
         self.tabs.setCurrentIndex(0)
 
     def constructRequest(self):
-        """Return a URL request from configuration parameters
-        Overwrites method defined in OgcConfigurationWidget.
+        """Returns request details from configuration parameters;
+        overwrites method defined in OgcConfigurationWidget.
         """
+        result = {}
         wfs_url = self.url  # defined in OgcConfigurationWidget : okTriggered()
         WFSversion = str(self.ogc_common_widget.launchversion.currentText())
         selectedFeatureId = str(self.wfs_config_widget.dcLayerId.text())
@@ -339,7 +339,8 @@ class WFSConfigurationWidget(OgcConfigurationWidget):
             "&request=DescribeFeatureType" + \
             "&typename=" + selectedFeatureId
             #print "WFS:343 -return URL for DescribeFeatureType", wfs_url
-            return 'GET', wfs_url
+            result['request_type'] = 'GET'
+            result['full_url'] = wfs_url
 
         elif rType == 'GetFeature':
             wfs_url += \
@@ -363,10 +364,14 @@ class WFSConfigurationWidget(OgcConfigurationWidget):
                 #print "WFS:365 -return URL for GetFeature", wfs_url
                 wfs_url += "&bbox=" + bbox + \
                     "," + coord_system # should yield EPSG:nnnn
-            return 'GET', wfs_url
+            result['request_type'] = 'GET'
+            result['full_url'] = wfs_url
 
         else:
             raise ModuleError(
                 self,
                 'Unknown WFS request type' + ': %s' % str(rType)
                 )
+
+        result['layername'] = selectedFeatureId
+        return result

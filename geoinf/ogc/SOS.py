@@ -27,11 +27,16 @@
 Service (SOS) client, making use of the owslib library.
 """
 
+# library
+# third party
 from PyQt4 import QtCore, QtGui
+# vistrails
+from core.modules.vistrails_module import Module, new_module, NotCacheable, ModuleError
+# eo4vistrails
 from packages.eo4vistrails.geoinf.datamodels.Feature import FeatureModel
+# local
 from OgcConfigurationWidget import OgcConfigurationWidget
 from OgcService import OGC
-from core.modules.vistrails_module import Module, new_module, NotCacheable, ModuleError
 import init
 import traceback
 
@@ -337,6 +342,7 @@ class SOSConfigurationWidget(OgcConfigurationWidget):
 
         Overwrites method defined in OgcConfigurationWidget.
         """
+        result = {}
         data = ''
         rType = self.config.cbRequest.currentText()
         try:
@@ -386,7 +392,7 @@ class SOSConfigurationWidget(OgcConfigurationWidget):
                 data += '<procedure>' + procedure + '</procedure>\n'
             else:
                 self.showWarning(WARNING_MUST % ('Procedure', rType))
-                return None, None
+                return result
 
         elif rType == 'GetFeatureOfInterest':
             if not(foi) and not(spatial_limit):
@@ -534,5 +540,7 @@ class SOSConfigurationWidget(OgcConfigurationWidget):
         # xml header
         data = '<?xml version="1.0" encoding="UTF-8"?>\n' + data
         #print data  # show line breaks for testing !!!
-        data = data.replace('\n','')
-        return 'POST', data
+        data = data.replace('\n','')  # remove line breaks
+        result['request_type'] = 'POST'
+        result['data'] = data
+        return result

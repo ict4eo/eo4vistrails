@@ -28,13 +28,22 @@ selection widgets for configuring geoinf.ogc modules.
 
 This refers primarily to GetCapabilities requests
 """
-
+# library
+# third party
 from PyQt4 import QtCore, QtGui
+# vistrails
+from core.modules.vistrails_module import ModuleError
+# eo4vistrails
 from packages.eo4vistrails.geoinf.SpatialTemporalConfigurationWidget \
     import SpatialTemporalConfigurationWidget
-from Common import OgcService  # include owslib .wfs, .sos, .wcs
-from core.modules.vistrails_module import ModuleError
+# local
+from Common import OgcService
 import init
+
+
+DEFAULT_URL_SOS = 'http://giv-sos.uni-muenster.de:8080/52nSOSv3/sos'
+DEFAULT_URL_WFS = 'http://ict4eo.meraka.csir.co.za:8080/geoserver/wfs'
+DEFAULT_URL_WCS = 'http://afis.meraka.org.za/geoserver/wcs'
 
 
 class OgcCommonWidget(QtGui.QWidget):
@@ -62,16 +71,13 @@ class OgcCommonWidget(QtGui.QWidget):
 
         if self.launchtype == "sos":
             self.urlGroupBox = QtGui.QGroupBox("OGC Sensor Observation Service:")
-            self.line_edit_OGC_url = QtGui.QLineEdit(
-                "http://giv-sos.uni-muenster.de:8080/52nSOSv3/sos") #?request=GetCapabilities&service=SOS"
+            self.line_edit_OGC_url = QtGui.QLineEdit(DEFAULT_URL_SOS)
         elif self.launchtype == "wfs":
             self.urlGroupBox = QtGui.QGroupBox("OGC Web Feature Service:")
-            self.line_edit_OGC_url = QtGui.QLineEdit(
-                'http://ict4eo.meraka.csir.co.za:8080/geoserver/wfs')
+            self.line_edit_OGC_url = QtGui.QLineEdit(DEFAULT_URL_WFS)
         elif self.launchtype == "wcs":
             self.urlGroupBox = QtGui.QGroupBox("OGC Web Coverage Service:")
-            self.line_edit_OGC_url = QtGui.QLineEdit(
-                'http://afis.meraka.org.za/geoserver/wcs')
+            self.line_edit_OGC_url = QtGui.QLineEdit(DEFAULT_URL_WCS)
 
         self.fetchUrlLayout = QtGui.QHBoxLayout()
 
@@ -271,16 +277,24 @@ class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
             self.url = parts[0]
         else:
             self.url = full_url
+        # constructRequest() method must be fully defined in sub-class
         result = self.constructRequest()
-        self.request_type = result[0] or None
-        self.data = result[1] or None
-        #print "OgcConfigurationWidget.py:276 (url,result,data,type)\n",  self.url, result, self.data, self.request_type
+        self.request_type = result.get('request_type', None)
+        self.data = result.get('data', None)
+        self.full_url = result.get('full_url', None)
+        self.layername = result.get('layername', None)
+        if not self.data:
+            self.data = self.full_url
+        print "OgcConfigurationWidget.py:284", self.request_type, self.layername,'\nURL:',self.full_url,'\nDATA:',self.data
         # must not set ports if nothing has been specified, or
         # if there was a problem constructing the request
         if self.data and self.request_type:
             functions = []
             functions.append(
                 (init.OGC_URL_PORT,[self.url]),
+                )
+            functions.append(
+                (init.OGC_LAYERNAME_PORT,[self.layername]),
                 )
             if self.request_type == 'GET':
                 functions.append(
@@ -293,7 +307,8 @@ class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
             else:
                 raise ModuleError(
                     self,
-                    'Unknown OgcService request type' + ': %s' % str(self.request_type)
+                    'Unknown OgcConfigurationWidget request type' + ': %s' %
+                        str(self.request_type)
                 )
             # see: gui.vistrails_controller.py
             self.controller.update_ports_and_functions(
@@ -301,11 +316,15 @@ class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
                 )
             SpatialTemporalConfigurationWidget.okTriggered(self)
         else:
-            pass # TO DO - is this correct?  need to inform user?
+            self.showWarning('The service is not sufficiently specified')
 
     def constructRequest(self):
-        """Return a request type (GET/POST) and request from parameters.
+        """Return a dictionary of results:
+            * request type (GET/POST)
+            * data (for a POST)
+            * full_url (for a GET)
+            * layer name (for WFS, WCS)
 
         Overwrite in a subclass to set the service specific parameters.
         """
-        return None, None
+        return {}

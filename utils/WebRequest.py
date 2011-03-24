@@ -24,17 +24,9 @@
 ### WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ###
 #############################################################################
+"""This module forms part of the eo4vistrails capabilities  - it is used to
+handle web request (e.g. for WFS, WCS or SOS) processing inside vistrails.
 """
-Created on Wed Feb 23 14:08:10 2011
-
-@author: dhohls
-
-Module forms part of the eo4vistrails capabilities, used to handle web request
-(e.g. for WFS, WCS or SOS) processing inside vistrails.
-
-"""
-#History
-#Derek Hohls, 25 Feb 2011, Version 0.1.3
 
 from DataRequest import DataRequest
 from core.modules.vistrails_module import ModuleError
@@ -48,11 +40,11 @@ class WebRequest(DataRequest):
     """
 
     def __init__(self, url=None, data=None, runTheRequest=False):
-        WebRequest.__init__(self)
+        DataRequest.__init__(self)
         self.url = url
         self.data = data
         self.runTheRequest = runTheRequest
-        
+
     def compute(self):
         """Execute the module to create the output"""
         # separate URL

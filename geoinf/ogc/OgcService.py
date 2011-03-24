@@ -26,13 +26,18 @@
 """This module provides a base OGC (Open Geospatial Consortium) service class.
 """
 
+# library
+import init
+# third-party
 from PyQt4 import QtCore, QtGui
+# vistrails
+from core.modules.vistrails_module import Module, new_module, NotCacheable, ModuleError
+# eo4vistrails
 from packages.eo4vistrails.geoinf.datamodels.Feature import FeatureModel
 from packages.eo4vistrails.geoinf.datamodels.Raster import RasterModel
+from packages.eo4vistrails.geoinf.datamodels.QgsLayer import QgsVectorLayer, QgsRasterLayer
+from packages.eo4vistrails.geoinf.ogc.OgcConfigurationWidget import OgcConfigurationWidget
 from packages.eo4vistrails.utils.WebRequest import WebRequest
-from OgcConfigurationWidget import OgcConfigurationWidget
-from core.modules.vistrails_module import Module, new_module, NotCacheable, ModuleError
-import init
 
 
 class OGC(NotCacheable):
@@ -51,6 +56,7 @@ class OGC(NotCacheable):
         self.post_data = None
         self.get_request = None
         self.url = None
+        self.layername = None
 
     def raiseError(self, msg, error=''):
         """Raise a VisTrails error."""
@@ -73,8 +79,9 @@ class OGC(NotCacheable):
             self.url = self.getInputFromPort(init.OGC_URL_PORT)
         except:
             self.url = None
-        # set output
         #print "OgcService:77\n url: %s, get: %s\n data: %s" % (self.url, self.get_request, self.post_data)
+
+        # web request port
         webRequest = WebRequest()
         if self.get_request:
             webRequest.url = self.get_request
@@ -83,7 +90,24 @@ class OGC(NotCacheable):
             webRequest.url = self.url
             webRequest.data = self.post_data
         self.setResult(init.WEB_REQUEST_PORT, webRequest)
-        # text ports
+
+        # text port
         self.setResult(init.URL_PORT, webRequest.url)
         if webRequest.data:
             self.setResult(init.DATA_PORT, webRequest.data)
+
+        # layer port
+        if self.url:
+            self.layername = self.getInputFromPort(init.OGC_LAYERNAME_PORT) or 'ogc_layer'  #TODO: add random no.
+            try:
+                qgsVectorLayer = QgsVectorLayer(self.url, self.layername, 'WFS')
+                #print qgsVectorLayer
+                self.setResult(init.VECTOR_PORT, qgsVectorLayer)
+            except:
+                pass
+            try:
+                qgsRasterLayer = QgsRasterLayer(self.url, self.layername)
+                #print qgsRasterLayer
+                self.setResult(init.RASTER_PORT, qgsRasterLayer)
+            except:
+                pass

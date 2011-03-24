@@ -27,18 +27,21 @@
 (WCS) Client via owslib.
 """
 
+# library
+# third party
 from PyQt4 import QtCore, QtGui
+# vistrails
+from core.modules.vistrails_module import Module, new_module, NotCacheable, ModuleError
+# eo4vistrails
 from packages.eo4vistrails.geoinf.datamodels.Raster import RasterModel
 from packages.eo4vistrails.geoinf.SpatialTemporalConfigurationWidget import \
     SpatialTemporalConfigurationWidget, SpatialWidget
 from packages.eo4vistrails.utils.WebRequest import WebRequest
+# local
 from OgcConfigurationWidget import OgcConfigurationWidget
 from OgcService import OGC
-from core.modules.vistrails_module import Module, new_module, NotCacheable, ModuleError
 import init
 
-#def ns(tag):
-    #return '{http://www.opengis.net/wcs}'+tag
 
 class WCS(OGC, RasterModel):
     """
@@ -359,9 +362,10 @@ class WCSConfigurationWidget(OgcConfigurationWidget):
         self.tabs.setCurrentIndex(0)
 
     def constructRequest(self):
-        """Return a URL request from configuration parameters
+        """Returns request from configuration parameters;
         Overwrites method defined in OgcConfigurationWidget.
         """
+        result = {}
         wcs_url = self.url # defined in OgcConfigurationWidget : okTriggered()
         WCSversion = str(self.ogc_common_widget.launchversion.currentText())
         selectedCoverageId = str(self.wcs_config_widget.dcLayerId.text())
@@ -430,7 +434,8 @@ class WCSConfigurationWidget(OgcConfigurationWidget):
             "&version=" + WCSversion + \
             "&request=DescribeCoverage" + \
             "&COVERAGE=" + selectedCoverageId
-            return 'GET', wcs_url
+            result['request_type'] = 'GET'
+            result['full_url'] = wcs_url
 
         elif rType == 'GetCoverage':
             myWCS = self.wcs_config_widget.parent_widget.service.service
@@ -461,10 +466,14 @@ class WCSConfigurationWidget(OgcConfigurationWidget):
                 "&height=" + height
                 #"&resx=10&resy=10"
                 #TO DO -- allow user to specify resX and resY or height/width
-            return 'GET', wcs_url
+            result['request_type'] = 'GET'
+            result['full_url'] = wcs_url
 
         else:
             raise ModuleError(
                 self,
                 'Unknown WCS request type' + ': %s' % str(rType)
                 )
+
+        result['layername'] = selectedCoverageId
+        return result
