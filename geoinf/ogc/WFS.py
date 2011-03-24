@@ -28,7 +28,6 @@
 """
 
 from PyQt4 import QtCore, QtGui
-from packages.eo4vistrails.geoinf.datamodels.Raster import RasterModel
 from packages.eo4vistrails.geoinf.SpatialTemporalConfigurationWidget import SpatialTemporalConfigurationWidget, SpatialWidget
 from OgcConfigurationWidget import OgcConfigurationWidget
 from OgcService import OGC
@@ -38,15 +37,14 @@ import init
 #def ns(tag):
     #return '{http://www.opengis.net/wcs}'+tag
 
-class WFS(OGC, RasterModel):
+class WFS(OGC, Module):
     """
     Override for base OGC service class
 
     """
     def __init__(self):
+        Module.__init__(self)
         OGC.__init__(self)
-        RasterModel.__init__(self)
-
 
 class WFSCommonWidget(QtGui.QWidget):
     """

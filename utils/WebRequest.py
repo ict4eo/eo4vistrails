@@ -36,15 +36,8 @@ Module forms part of the eo4vistrails capabilities, used to handle web request
 #History
 #Derek Hohls, 25 Feb 2011, Version 0.1.3
 
-from core.modules.vistrails_module import Module, NotCacheable
-from qgis.core import QgsDataSourceURI
-
-class DataRequest(NotCacheable, Module):
-    pass
-
-class PostGISRequest(DataRequest):
-    def compute(self):
-        self.setResult('value', self)
+from DataRequest import DataRequest
+from core.modules.vistrails_module import ModuleError
 
 class WebRequest(DataRequest):
     """This module will process a web-based request.
@@ -54,18 +47,12 @@ class WebRequest(DataRequest):
     With the 'data' port set as well, the module will execute a POST request.
     """
 
-    def __init__(self):
-        Module.__init__(self)
-        self.url = None
-        self.data = None
-        self.runTheRequest = False
-
-    def raiseError(self, msg, error=''):
-        """Raise a VisTrails error."""
-        import traceback
-        traceback.print_exc()
-        raise ModuleError(self, msg + ': %s' % str(error))
-
+    def __init__(self, url=None, data=None, runTheRequest=False):
+        WebRequest.__init__(self)
+        self.url = url
+        self.data = data
+        self.runTheRequest = runTheRequest
+        
     def compute(self):
         """Execute the module to create the output"""
         # separate URL

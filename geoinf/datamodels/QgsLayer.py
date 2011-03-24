@@ -74,18 +74,12 @@ class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
             if isOGR:
                 thefilepath = thefile.name
                 thefilename = QFileInfo(thefilepath).fileName()
-                qgis.core.QgsVectorLayer.__init__(self, thefilepath, thefilename, "ogr")
+                qgis.core.QgsVectorLayer.__init__(
+                    self, thefilepath, thefilename, "ogr")
             elif isPOSTGRES:
-                uri = qgis.core.QgsDataSourceURI()
-                uri.setConnection(
-                    '146.64.28.204', '5432', 'experiments', 'ict4eo', 'ict4eo')
-                uri.setDataSource(
-                    '',
-                    '(select * from ba_modis_giglio limit 10000)',
-                    'the_geom',
-                    '',
-                    'gid')
-                qgis.core.QgsVectorLayer.__init__(self, uri.uri(), 'postgis layer', "postgres")
+                uri = thedataRequest
+                qgis.core.QgsVectorLayer.__init__(
+                    self, uri.uri(), 'postgis layer', "postgres")
             elif isWFS:
                 #Note this is case sensitive -> "WFS"
                 qgis.core.QgsVectorLayer.__init__(
@@ -99,12 +93,18 @@ class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
 class QgsRasterLayer(QgsMapLayer, qgis.core.QgsRasterLayer):
     """TO DO: Add doc string
     """
+    def __init__(self, uri=None, layername=None, driver=None):
+        QgsMapLayer.__init__(self)
+        if uri and layername and driver is None:
+            qgis.core.QgsRasterLayer.__init__(self, uri, layername)
+    
     def compute(self):
         """Execute the module to create the output"""
         try:
-            thefile = self.getInputFromPort('file').name
+            thefile = self.forceGetInputFromPort('file', None)            
             fileInfo = QFileInfo(thefile)
             qgis.core.QgsRasterLayer.__init__(self, thefile, fileInfo.fileName())
+            
             self.setResult('value', self)
         except Exception, e:
             self.raiseError('Cannot set output port: %s' % str(e))

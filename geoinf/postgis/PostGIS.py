@@ -35,6 +35,7 @@ import psycopg2
 from PyQt4 import QtCore, QtGui
 from packages.eo4vistrails.geoinf.datamodels.Feature import FeatureModel,  MemFeatureModel
 from packages.eo4vistrails.geoinf.datamodels.QgsLayer import QgsVectorLayer
+from packages.eo4vistrails.utils.DataRequest import PostGISRequest
 import qgis
 
 from packages.eo4vistrails.utils.session import Session
@@ -143,13 +144,13 @@ class PostGisFeatureReturningCursor(Module):
             #print "checking connection: connectstr: %s, sql: %s" % (ogr_conn,  sql_input)
             #self.loadContentFromDB(ogr_conn, sql_input)
             
-            uri = qgis.core.QgsDataSourceURI()
-            uri.setConnection(pgsession.host, 
+            postGISRequest = PostGISRequest()
+            postGISRequest.setConnection(pgsession.host, 
                               pgsession.port, 
                               pgsession.database, 
                               pgsession.user, 
                               pgsession.pwd)
-            uri.setDataSource('',                 #schema must be blank
+            postGISRequest.setDataSource('',                 #schema must be blank
                               '('+sql_input+')', 
                               'the_geom',         #TODO: assuming the_geom, this mus be looked up
                               '',                 #where clause must be blank
@@ -157,9 +158,12 @@ class PostGisFeatureReturningCursor(Module):
             
             #select * from ba_modis_giglio limit 10000
             #TODO: make sure that the user can select a layer name or we generate a random one
-            qgsVectorLayer = QgsVectorLayer(uri.uri(), 'postgis layer', "postgres")
-            print qgsVectorLayer
+            qgsVectorLayer = QgsVectorLayer(
+                postGISRequest.get_uri(), 
+                postGISRequest.get_layername(), 
+                postGISRequest.get_driver())
             
+            self.setResult('PostGISRequest', postGISRequest)
             self.setResult('QgsVectorLayer', qgsVectorLayer)
             
         except Exception as ex:
