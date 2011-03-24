@@ -415,7 +415,9 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         self.pDoc = QtXml.QDomDocument()
         self.pDoc.setContent(self.getServiceXML(self.processName,"DescribeProcess",self.processIdentifier), True)     
         DataInputs = self.pDoc.elementsByTagName("Input")
+        print DataInputs.size()
         DataOutputs = self.pDoc.elementsByTagName("Output")
+        print DataOutputs.length()
         
 
         # Create the layouts and the scroll area
@@ -569,6 +571,41 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         
     def generateProcessOutputsGUI(self, DataOutputs):
         print 'get outputs'
+        """Generate the GUI for all complex ouputs defined in the process description XML file"""
+
+        if DataOutputs.size() < 1:
+            return
+
+        groupbox = QGroupBox(self.dlgProcessScrollAreaWidget)
+        groupbox.setTitle("Complex output(s)")
+        layout = QVBoxLayout()
+
+        # Add all complex outputs
+        for i in range(DataOutputs.size()):
+            f_element = DataOutputs.at(i).toElement()
+
+            outputIdentifier, title, abstract = self.getIdentifierTitleAbstractFromElement(f_element)
+            complexOutput = f_element.elementsByTagName("ComplexOutput")
+
+            # Iterate over all complex inputs and add combo boxes, text boxes or list widgets 
+            if complexOutput.size() > 0:
+                # Das i-te ComplexData Objekt auswerten
+                complexOutputTypeElement = complexOutput.at(0).toElement()
+                complexOutputFormat = self.getDefaultMimeType(complexOutputTypeElement)
+                supportedcomplexOutputFormat = self.getSupportedMimeTypes(complexOutputTypeElement)
+
+                # Store the input formats
+                self.outputsMetaInfo[outputIdentifier] = supportedcomplexOutputFormat
+                self.outputDataTypeList[outputIdentifier] = complexOutputFormat
+        
+                widget, comboBox = self.addComplexOutputComboBox(groupbox, outputIdentifier, title, str(complexOutputFormat))
+                self.complexOutputComboBoxList.append(comboBox)
+                layout.addWidget(widget)
+    
+        # Set the layout
+        groupbox.setLayout(layout)
+        # Add the outputs
+        self.dlgProcessScrollAreaWidgetLayout.addWidget(groupbox)
         
     def addOkCancelButtons(self):
         #print 'ok'
@@ -732,6 +769,45 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         self.dlgProcessScrollAreaWidgetLayout.addWidget(groupbox)
 
         return textBox
+        
+    def addComplexOutputComboBox(self, widget, name, title, mimeType):
+        
+        """Adds a combobox to select a raster or vector map as input to the process tab"""
+
+        groupbox = QGroupBox(widget)
+        groupbox.setMinimumHeight(25)
+        layout = QHBoxLayout()
+      
+        namesList = []
+        # Generate a unique name for the layer
+        #namesList.append(self.uniqueLayerName(self.processIdentifier + "_" + name + "_"))
+        namesList.append("<None>")
+
+        comboBox = QComboBox(groupbox)
+        comboBox.setEditable(True)
+        comboBox.addItems(namesList)
+        comboBox.setObjectName(name)
+        comboBox.setMinimumWidth(250)
+        comboBox.setMaximumWidth(250)
+        comboBox.setMinimumHeight(25)
+      
+        myLabel = QLabel(widget)
+        myLabel.setObjectName("qLabel"+name)
+
+        string = "[" + name + "] <br>" + title
+        myLabel.setText("<font color='Green'>" + string + "</font>" + " <br>(" + mimeType + ")")
+
+        myLabel.setWordWrap(True)
+        myLabel.setMinimumWidth(400)
+        myLabel.setMinimumHeight(25)
+
+        layout.addWidget(myLabel)
+        layout.addStretch(1)
+        layout.addWidget(comboBox)
+      
+        groupbox.setLayout(layout)
+
+        return groupbox, comboBox  
         
     def addLiteralComboBox(self, title, name, namesList, minOccurs):
         
@@ -910,6 +986,28 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
                     myLayerList.append(mc.layer(l).name())
     
         return myLayerList
+        
+    def uniqueLayerName(self, name):
+        """TO DO: Check the output ports and assign a new unique name to the output layer
+        We need to discuss how to go about this"""
+        
+        print 'output layer'
+        
+        """mapLayers = QgsMapLayerRegistry.instance().mapLayers()
+        i=1
+        layerNameList = []    
+        for (k, layer) in mapLayers.iteritems():
+            layerNameList.append(layer.name())
+    
+        layerNameList.sort()
+    
+        for layerName in layerNameList:
+            if layerName == name+unicode(str(i),'latin1'):    
+                i += 1
+    
+        newName = name+unicode(str(i),'latin1')
+        return newName
+        """
         
     def allowedValues(self, aValues):
         valList = []
