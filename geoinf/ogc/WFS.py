@@ -27,12 +27,17 @@
 (WFS) Client via owslib.
 """
 
+# library
+# third party
 from PyQt4 import QtCore, QtGui
+# vistrails
+from core.modules.vistrails_module import Module, new_module, NotCacheable, ModuleError
+# eo4vistrails
 from packages.eo4vistrails.geoinf.SpatialTemporalConfigurationWidget import \
     SpatialTemporalConfigurationWidget, SpatialWidget
+# local
 from OgcConfigurationWidget import OgcConfigurationWidget
 from OgcService import OGC
-from core.modules.vistrails_module import Module, new_module, NotCacheable, ModuleError
 import init
 
 

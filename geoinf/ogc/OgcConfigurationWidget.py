@@ -44,6 +44,7 @@ import init
 DEFAULT_URL_SOS = 'http://giv-sos.uni-muenster.de:8080/52nSOSv3/sos'
 DEFAULT_URL_WFS = 'http://ict4eo.meraka.csir.co.za:8080/geoserver/wfs'
 DEFAULT_URL_WCS = 'http://afis.meraka.org.za/geoserver/wcs'
+DEFAULT_URL = ''
 
 
 class OgcCommonWidget(QtGui.QWidget):
@@ -66,7 +67,7 @@ class OgcCommonWidget(QtGui.QWidget):
         self.mainLayout = QtGui.QVBoxLayout()
         self.setLayout(self.mainLayout)
 
-        self.line_edit_OGC_url = QtGui.QLineEdit("") #default
+        self.line_edit_OGC_url = QtGui.QLineEdit(DEFAULT_URL)
         self.urlGroupBox = QtGui.QGroupBox("OGC %s Service:" % self.launchtype)
 
         if self.launchtype == "sos":

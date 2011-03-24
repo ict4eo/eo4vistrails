@@ -50,6 +50,7 @@ from packages.eo4vistrails.utils.session import Session
 
 class PostGisSession(Session):
     """Responsible for making a connection to a postgis database.
+    
     Ultimately, objects of this class will need to be passed from
     execution step to execution step, so may need to be a constant?
     """
@@ -64,10 +65,12 @@ class PostGisSession(Session):
         self.pwd =  self.forceGetInputFromPort('postgisPassword', 'default')
         self.database = self.forceGetInputFromPort('postgisDatabase', 'default')
 
-        self.connectstr = "host=" + self.host+ " dbname=" + self.database + " user=" + self.user + " password=" + self.pwd
+        self.connectstr = "host=" + self.host+ " dbname=" + self.database + \
+                          " user=" + self.user + " password=" + self.pwd
         #PG:"dbname='databasename' host='addr' port='5432' user='x' password='y'"
         #PG:'host=myserver.velocet.ca user=postgres dbname=warmerda'
-        self.ogr_connectstr = "PG:host='%s' port='%s' dbname='%s' user='%s' password='%s'" % (self.host,  self.port,  self.database,  self.user,  self.pwd)
+        self.ogr_connectstr = "PG:host='%s' port='%s' dbname='%s' user='%s' password='%s'" % \
+                              (self.host,  self.port,  self.database,  self.user,  self.pwd)
 
         try:
             self.pgconn = psycopg2.connect(self.connectstr)
@@ -86,7 +89,7 @@ class PostGisSession(Session):
 
 class PostGisCursor():
     """MixIn class responsible for opening a cursor
-        on the PostGisSession/ connection"""
+    on the PostGisSession/ connection"""
 
     def __init__(self,  conn_type = "psycopg2"):
 
@@ -126,7 +129,10 @@ class PostGisCursor():
 
 
 class PostGisFeatureReturningCursor(Module):
-    """Returns data in the form of a eo4vistrails FeatureModel if user binds to self output port"""
+    """Returns data in the form of a eo4vistrails FeatureModel
+    if user binds to self output port
+    """
+
     #multi inheritance of module subclasses is a problem
     def __init__(self):
         #PostGisCursor.__init__(self,   conn_type = "ogr")
@@ -173,10 +179,13 @@ class PostGisFeatureReturningCursor(Module):
 
         except Exception as ex:
             print ex
-            raise ModuleError,  (PostGisFeatureReturningCursor,  "Could not execute SQL Statement")
+            raise ModuleError,  (PostGisFeatureReturningCursor, \
+                                 "Could not execute SQL Statement")
 
         #do stuff with this return list -> make it into an OGR dataset
-        #see (http://trac.osgeo.org/postgis/wiki/UsersWikiOGR, http://www.gdal.org/ogr/drv_memory.htm, ogr memory driver python in google)
+        #see (http://trac.osgeo.org/postgis/wiki/UsersWikiOGR,
+        #   http://www.gdal.org/ogr/drv_memory.htm,
+        #   ogr memory driver python in google)
         #for now, to test, print to stdout
         #could be implemented directy via OGR's SQL capability
         #print "data are: "
@@ -195,7 +204,8 @@ class PostGisBasicReturningCursor(Module, PostGisCursor):
         PostGisCursor.__init__(self)
 
     def compute(self):
-        """Will need to fetch a PostGisSession object on its input port
+        """Fetches and executes a PostGisSession object on the input port
+
         Overrides supers method"""
         if self.cursor(self.getInputFromPort("PostGisSessionObject")) == True:
             try:
@@ -212,17 +222,19 @@ class PostGisBasicReturningCursor(Module, PostGisCursor):
                 self.curs.close()
             except Exception as ex:
                 print ex
-                raise ModuleError,  (PostGisFeatureReturningCursor,  "Could not execute SQL Statement")
+                raise ModuleError,  (PostGisFeatureReturningCursor,\
+                                     "Could not execute SQL Statement")
                 #set output port to receive this list
 
 
 class PostGisNonReturningCursor(Module, PostGisCursor):
-    """Returns a list of result strings to indicate success or failure; usually to be
-    used as a way to do an insert, update, delete operation on the
-    database, for example
+    """Returns a list of result strings to indicate success or failure.
 
-    Unlike the 'returning' cursors, can support multiple SQL
-    statements, separated by the ';', as expected by PostgreSQL
+    Usually to be used as a way to do an insert, update, delete operation
+    on the database, for example
+
+    Unlike the 'returning' cursors, can support multiple SQL statements,
+    separated by a ';' (as expected by PostgreSQL)
     """
 
     def __init__(self):
@@ -234,7 +246,8 @@ class PostGisNonReturningCursor(Module, PostGisCursor):
         Overrides supers method"""
         if self.cursor(self.getInputFromPort("PostGisSessionObject")) == True:
             try:
-                #we could be dealing with multiple requests here, so parse string and execute requests one by one
+                # we could be dealing with multiple requests here,
+                #   so parse string and execute requests one by one
                 resultstatus =[]
                 port_input = urllib.unquote(str(self.forceGetInputFromPort('source', '')))
                 port_input = port_input.rstrip()
@@ -252,12 +265,14 @@ class PostGisNonReturningCursor(Module, PostGisCursor):
                 self.setResult('status', resultstatus)
                 self.curs.close()
             except:
-                raise ModuleError,  (PostGisFeatureReturningCursor,  "Could not execute SQL Statement")
+                raise ModuleError,  (PostGisFeatureReturningCursor,\
+                                     "Could not execute SQL Statement")
 
 
 class SQLSourceConfigurationWidget(SourceConfigurationWidget):
+    """NOT IN USE"""
     pass
-'''removed by tvz so as to allow for parameterisation of SQL queries'''
+    '''removed by tvz so as to allow for parameterisation of SQL queries'''
     #def __init__(self, module, controller, parent=None):
     #    SourceConfigurationWidget.__init__(self, module, controller, None,
     #                                       False, False, parent)

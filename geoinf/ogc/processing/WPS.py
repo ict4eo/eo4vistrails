@@ -52,6 +52,7 @@ from httplib import *
 from urlparse import urlparse
 import os, sys, string, tempfile, urllib2, urllib,  mimetypes
 
+DEFAULT_URL = 'http://ict4eo.meraka.csir.co.za/cgi-bin/wps.py'
 
 class WPS(Module):
 
@@ -111,13 +112,13 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         ##self.btnDelete.setText("Delete")
         ##self.mainLayout.addWidget(self.btnDelete, 2, 3, 1, 1)
 
-        """decided to change the comboBox to a  line edit because at runtime will not be
-        chosing from a list bt rather parsing a url"""
+        """decided to change the comboBox to a line edit because at runtime will
+        not be choosing from a list, but rather parsing a url"""
         ##self.cmbConnections = QComboBox(self.GroupBox1)
         ##self.cmbConnections.setObjectName("cmbConnections")
         ##self.mainLayout.addWidget(self.cmbConnections, 1, 0, 1, 5)
         self.mainLayout.addWidget(QLabel('WPS URL:'), 1, 0, 1, 1)
-        self.URLConnect= QLineEdit(' ')
+        self.URLConnect = QLineEdit(DEFAULT_URL)
         self.URLConnect.setEnabled(True) #sets it not to be editable
         self.mainLayout.addWidget(self.URLConnect, 1,1, 1, -1)
 
@@ -372,7 +373,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         #pass
         print 'OPEN PROCESS GUI'
         #call processGUI function
-        
+
         name= self.URLConnect.text()
         item= self.treeWidget.currentItem()
 
@@ -380,20 +381,20 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         #self.process.create_process_GUI(self, pName, item)
         ####Will need to move this to class WPSProcessing later when refactoring
         #self.create_process_GUI(self, name, item)
-        
+
         #def create_process_GUI(self,name, item):
 
         #pass
-       
+
         try:
             self.processIdentifier = item.text(0)
             print self.processIdentifier
         except:
             QMessageBox.warning(None,'',QCoreApplication.translate("QgsWps",'Please select a Process'))
         #return 0
-        
+
         print 'test inputs and outputs'
-        
+
         # Lists which store the inputs and meta information (format, occurs, ...)
         # This list is initialized every time the GUI is created
         self.complexInputComboBoxList = [] # complex input for single raster and vector maps
@@ -408,17 +409,17 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         self.outputDataTypeList = {}
 
         self.processName = name
-        
-        
+
+
         flags = Qt.WindowTitleHint | Qt.WindowSystemMenuHint | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint  # QgisGui.ModalDialogFlags
         # Recive the XML process description
         self.pDoc = QtXml.QDomDocument()
-        self.pDoc.setContent(self.getServiceXML(self.processName,"DescribeProcess",self.processIdentifier), True)     
+        self.pDoc.setContent(self.getServiceXML(self.processName,"DescribeProcess",self.processIdentifier), True)
         DataInputs = self.pDoc.elementsByTagName("Input")
         print DataInputs.size()
         DataOutputs = self.pDoc.elementsByTagName("Output")
         print DataOutputs.length()
-        
+
 
         # Create the layouts and the scroll area
         ##self.dlgProcess = QgsWpsDescribeProcessGui(self.dlg, flags) ## don't need this now, maybe later
@@ -438,19 +439,19 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         # First part of the gui is a short overview about the process
         identifier, title, abstract = self.getIdentifierTitleAbstractFromElement(self.pDoc)
         self.addIntroduction(identifier, title)
-        
+
         # If no Input Data  are requested
         if DataInputs.size()==0:
             self.startProcess()
         #return 0
-        
+
         print 'add intro test'
-  
+
         # Generate the input GUI buttons and widgets
         self.generateProcessInputsGUI(DataInputs)
         # Generate the editable outpt widgets, you can set the output to none if it is not requested
         self.generateProcessOutputsGUI(DataOutputs)
-    
+
         self.dlgProcessScrollAreaWidgetLayout.setSpacing(10)
         self.dlgProcessScrollAreaWidget.setLayout(self.dlgProcessScrollAreaWidgetLayout)
         self.dlgProcessScrollArea.setWidget(self.dlgProcessScrollAreaWidget)
@@ -469,8 +470,8 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         self.dlgProcess.setLayout(self.dlgProcessLayout)
         self.dlgProcess.setGeometry(QRect(190,100,800,600))
         self.dlgProcess.show()
-        
-        
+
+
     def generateProcessInputsGUI(self, DataInputs):
         """Generate the GUI for all Inputs defined in the process description XML file"""
         # Create the complex inputs at first
@@ -483,7 +484,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
             minOccurs = int(f_element.attribute("minOccurs"))
             maxOccurs = int(f_element.attribute("maxOccurs"))
 
-            # Iterate over all complex inputs and add combo boxes, text boxes or list widgets 
+            # Iterate over all complex inputs and add combo boxes, text boxes or list widgets
             if complexData.size() > 0:
                 # Das i-te ComplexData Objekt auswerten
                 complexDataTypeElement = complexData.at(0).toElement()
@@ -514,7 +515,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
                         #self.complexInputListWidgetList.append(self.addComplexInputListWidget(title, inputIdentifier, str(complexDataFormat), layerNamesList, minOccurs))
                 #else:
                     # We assume text inputs in case of an unknown mime type
-                    #self.complexInputTextBoxList.append(self.addComplexInputTextBox(title, inputIdentifier, minOccurs))            
+                    #self.complexInputTextBoxList.append(self.addComplexInputTextBox(title, inputIdentifier, minOccurs))
 
         # Create the literal inputs as second
         for i in range(DataInputs.size()):
@@ -546,7 +547,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
             f_element = DataInputs.at(i).toElement()
 
             inputIdentifier, title, abstract = self.getIdentifierTitleAbstractFromElement(f_element)
-      
+
             bBoxData = f_element.elementsByTagName("BoundingBoxData")
             minOccurs = int(f_element.attribute("minOccurs"))
             maxOccurs = int(f_element.attribute("maxOccurs"))
@@ -568,7 +569,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
 
 
         self.addCheckBox(QCoreApplication.translate("QgsWps","Process selected objects only"), QCoreApplication.translate("QgsWps","Selected"))
-        
+
     def generateProcessOutputsGUI(self, DataOutputs):
         print 'get outputs'
         """Generate the GUI for all complex ouputs defined in the process description XML file"""
@@ -587,7 +588,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
             outputIdentifier, title, abstract = self.getIdentifierTitleAbstractFromElement(f_element)
             complexOutput = f_element.elementsByTagName("ComplexOutput")
 
-            # Iterate over all complex inputs and add combo boxes, text boxes or list widgets 
+            # Iterate over all complex inputs and add combo boxes, text boxes or list widgets
             if complexOutput.size() > 0:
                 # Das i-te ComplexData Objekt auswerten
                 complexOutputTypeElement = complexOutput.at(0).toElement()
@@ -597,16 +598,16 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
                 # Store the input formats
                 self.outputsMetaInfo[outputIdentifier] = supportedcomplexOutputFormat
                 self.outputDataTypeList[outputIdentifier] = complexOutputFormat
-        
+
                 widget, comboBox = self.addComplexOutputComboBox(groupbox, outputIdentifier, title, str(complexOutputFormat))
                 self.complexOutputComboBoxList.append(comboBox)
                 layout.addWidget(widget)
-    
+
         # Set the layout
         groupbox.setLayout(layout)
         # Add the outputs
         self.dlgProcessScrollAreaWidgetLayout.addWidget(groupbox)
-        
+
     def addOkCancelButtons(self):
         #print 'ok'
         groupbox = QFrame()
@@ -631,10 +632,10 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
 
         QObject.connect(btnOk,SIGNAL("clicked()"),self.startProcess)
         QObject.connect(btnCancel,SIGNAL("clicked()"),self.dlgProcess.close)
-        
+
     def startProcess(self):
         print 'start'
-        
+
     def addDocumentationTab(self, abstract):
         # Check for URL
         if str(abstract).find("http://") == 0:
@@ -646,14 +647,14 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
             textBox.setText(QString(abstract))
 
         self.dlgProcessTab.addTab(textBox, "Documentation")
-        
+
     def addComplexInputComboBox(self, title, name, mimeType, namesList, minOccurs):
         """Adds a combobox to select a raster or vector map as input to the process tab"""
         groupbox = QGroupBox(self.dlgProcessScrollAreaWidget)
         #groupbox.setTitle(name)
         groupbox.setMinimumHeight(25)
         layout = QHBoxLayout()
-      
+
         # This input is optional
         if minOccurs == 0:
             namesList.append("<None>")
@@ -664,7 +665,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         comboBox.setMinimumWidth(179)
         comboBox.setMaximumWidth(179)
         comboBox.setMinimumHeight(25)
-      
+
         myLabel = QLabel(self.dlgProcessScrollAreaWidget)
         myLabel.setObjectName("qLabel"+name)
 
@@ -682,13 +683,13 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         layout.addWidget(myLabel)
         layout.addStretch(1)
         layout.addWidget(comboBox)
-      
+
         groupbox.setLayout(layout)
 
         self.dlgProcessScrollAreaWidgetLayout.addWidget(groupbox)
 
         return comboBox
-        
+
     def addComplexInputListWidget(self, title, name, mimeType, namesList, minOccurs):
         """Adds a widget for multiple raster or vector selections as inputs to the process tab"""
         groupbox = QGroupBox(self.dlgProcessScrollAreaWidget)
@@ -732,7 +733,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         self.dlgProcessScrollAreaWidgetLayout.addWidget(groupbox)
 
         return listWidget
-        
+
     def addComplexInputTextBox(self, title, name, minOccurs):
         """Adds a widget to insert text as complex inputs to the process tab"""
         groupbox = QGroupBox(self.dlgProcessScrollAreaWidget)
@@ -769,15 +770,15 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         self.dlgProcessScrollAreaWidgetLayout.addWidget(groupbox)
 
         return textBox
-        
+
     def addComplexOutputComboBox(self, widget, name, title, mimeType):
-        
+
         """Adds a combobox to select a raster or vector map as input to the process tab"""
 
         groupbox = QGroupBox(widget)
         groupbox.setMinimumHeight(25)
         layout = QHBoxLayout()
-      
+
         namesList = []
         # Generate a unique name for the layer
         #namesList.append(self.uniqueLayerName(self.processIdentifier + "_" + name + "_"))
@@ -790,7 +791,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         comboBox.setMinimumWidth(250)
         comboBox.setMaximumWidth(250)
         comboBox.setMinimumHeight(25)
-      
+
         myLabel = QLabel(widget)
         myLabel.setObjectName("qLabel"+name)
 
@@ -804,13 +805,13 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         layout.addWidget(myLabel)
         layout.addStretch(1)
         layout.addWidget(comboBox)
-      
+
         groupbox.setLayout(layout)
 
-        return groupbox, comboBox  
-        
+        return groupbox, comboBox
+
     def addLiteralComboBox(self, title, name, namesList, minOccurs):
-        
+
         groupbox = QGroupBox(self.dlgProcessScrollAreaWidget)
         #groupbox.setTitle(name)
         groupbox.setMinimumHeight(25)
@@ -832,7 +833,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         else:
             string = "[" + name + "]\n" + title
             myLabel.setText(string)
-        
+
         myLabel.setWordWrap(True)
         myLabel.setMinimumWidth(400)
         myLabel.setMinimumHeight(25)
@@ -846,78 +847,78 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         self.dlgProcessScrollAreaWidgetLayout.addWidget(groupbox)
 
         return comboBox
-        
+
     def addLiteralLineEdit(self, title, name, minOccurs, defaultValue=""):
-        
+
         groupbox = QGroupBox(self.dlgProcessScrollAreaWidget)
         #groupbox.setTitle(name)
         groupbox.setMinimumHeight(25)
         layout = QHBoxLayout()
-        
+
         myLineEdit = QLineEdit(groupbox)
         myLineEdit.setObjectName(name)
         myLineEdit.setMinimumWidth(179)
         myLineEdit.setMaximumWidth(179)
         myLineEdit.setMinimumHeight(25)
         myLineEdit.setText(defaultValue)
-        
+
         myLabel = QLabel(groupbox)
         myLabel.setObjectName("qLabel"+name)
-        
+
         if minOccurs > 0:
             string = "[" + name + "] <br>" + title
             myLabel.setText("<font color='Red'>" + string + "</font>")
         else:
             string = "[" + name + "]\n" + title
             myLabel.setText(string)
-        
+
         myLabel.setWordWrap(True)
         myLabel.setMinimumWidth(400)
         myLabel.setMinimumHeight(25)
-        
+
         layout.addWidget(myLabel)
         layout.addStretch(1)
         layout.addWidget(myLineEdit)
-        
+
         groupbox.setLayout(layout)
-        
+
         self.dlgProcessScrollAreaWidgetLayout.addWidget(groupbox)
-        
+
         return myLineEdit
-        
+
     def addCheckBox(self,  title,  name):
-        
+
         groupbox = QGroupBox(self.dlgProcessScrollAreaWidget)
         #groupbox.setTitle(name)
         groupbox.setMinimumHeight(25)
         layout = QHBoxLayout()
-      
+
         myCheckBox = QCheckBox(groupbox)
         myCheckBox.setObjectName("chkBox"+name)
         myCheckBox.setChecked(False)
-        
+
         myLabel = QLabel(groupbox)
-        myLabel.setObjectName("qLabel"+name)  
+        myLabel.setObjectName("qLabel"+name)
         myLabel.setText("(" + name + ")" + "\n" + title)
         myLabel.setMinimumWidth(400)
         myLabel.setMinimumHeight(25)
         myLabel.setWordWrap(True)
-        
+
         layout.addWidget(myLabel)
         layout.addStretch(1)
         layout.addWidget(myCheckBox)
-        
+
         groupbox.setLayout(layout)
-        
+
         self.dlgProcessScrollAreaWidgetLayout.addWidget(groupbox)
-        
+
     def getIdentifierTitleAbstractFromElement(self, element):
         inputIdentifier = element.elementsByTagNameNS("http://www.opengis.net/ows/1.1","Identifier").at(0).toElement().text().simplified()
         title      = element.elementsByTagNameNS("http://www.opengis.net/ows/1.1","Title").at(0).toElement().text().simplified()
         abstract   = element.elementsByTagNameNS("http://www.opengis.net/ows/1.1","Abstract").at(0).toElement().text().simplified()
-        
+
         return inputIdentifier, title, abstract
-        
+
     def addIntroduction(self,  name, title):
         groupbox = QGroupBox(self.dlgProcessScrollAreaWidget)
         groupbox.setTitle(name)
@@ -935,11 +936,11 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         groupbox.setLayout(layout)
 
         self.dlgProcessScrollAreaWidgetLayout.addWidget(groupbox)
-        
+
     def getDefaultMimeType(self,  inElement):
         myElement = inElement.elementsByTagName("Default").at(0).toElement()
         return self._getMimeTypeSchemaEncoding(myElement)
-        
+
     def getSupportedMimeTypes(self,  inElement):
         mimeTypes = []
         myElements = inElement.elementsByTagName("Supported").at(0).toElement()
@@ -948,7 +949,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
             myElement = myFormats.at(i).toElement()
             mimeTypes.append(self._getMimeTypeSchemaEncoding(myElement))
         return mimeTypes
-        
+
     def _getMimeTypeSchemaEncoding(self,  Element):
         mimeType = ""
         schema = ""
@@ -959,63 +960,63 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
             encoding = str(Element.elementsByTagName("Encoding").at(0).toElement().text().simplified().toLower())
         except:
             pass
-    
+
         return {"MimeType":mimeType,"Schema":schema,"Encoding":encoding}
-        
+
     def isMimeTypeVector(self, mimeType):
         """Check for vector input. Zipped shapefiles must be extracted"""
         for vectorType in VECTOR_MIMETYPES:
             if mimeType.upper() == vectorType["MIMETYPE"]:
                 return vectorType["GDALID"]
         return None
-        
+
     def getLayerNameList(self, dataType=0, all=False):
-        myLayerList = []    
-        
+        myLayerList = []
+
         if all:
-            mapLayers = QgsMapLayerRegistry.instance().mapLayers()      
+            mapLayers = QgsMapLayerRegistry.instance().mapLayers()
             for (k, layer) in mapLayers.iteritems():
                 myLayerList.append(layer.name())
         else:
             mc=self.iface.mapCanvas()
             nLayers=mc.layerCount()
-      
+
             for l in range(nLayers):
                 # Nur die Layer des gewnschten Datentypes auswhlen 0=Vectorlayer 1=Rasterlayer
                 if mc.layer(l).type() == dataType:
                     myLayerList.append(mc.layer(l).name())
-    
+
         return myLayerList
-        
+
     def uniqueLayerName(self, name):
         """TO DO: Check the output ports and assign a new unique name to the output layer
         We need to discuss how to go about this"""
-        
+
         print 'output layer'
-        
+
         """mapLayers = QgsMapLayerRegistry.instance().mapLayers()
         i=1
-        layerNameList = []    
+        layerNameList = []
         for (k, layer) in mapLayers.iteritems():
             layerNameList.append(layer.name())
-    
+
         layerNameList.sort()
-    
+
         for layerName in layerNameList:
-            if layerName == name+unicode(str(i),'latin1'):    
+            if layerName == name+unicode(str(i),'latin1'):
                 i += 1
-    
+
         newName = name+unicode(str(i),'latin1')
         return newName
         """
-        
+
     def allowedValues(self, aValues):
         valList = []
 
         # Manage a value list defined by a range
         value_element = aValues.at(0).toElement()
         v_range_element = value_element.elementsByTagNameNS("http://www.opengis.net/ows/1.1","Range")
-     
+
         if v_range_element.size() > 0:
             min_val = value_element.elementsByTagNameNS("http://www.opengis.net/ows/1.1","MinimumValue").at(0).toElement().text()
             max_val = value_element.elementsByTagNameNS("http://www.opengis.net/ows/1.1","MaximumValue").at(0).toElement().text()
@@ -1029,26 +1030,26 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         v_element = value_element.elementsByTagNameNS("http://www.opengis.net/ows/1.1","Value")
         if v_element.size() > 0:
             for n in range(v_element.size()):
-                mv_element = v_element.at(n).toElement() 
+                mv_element = v_element.at(n).toElement()
                 valList.append(unicode(mv_element.text(),'latin1').strip())
-         
+
         print str(valList)
-        return valList 
-        
+        return valList
+
     def isMimeTypeText(self, mimeType):
         """Check for text file input"""
         if mimeType.upper() == "TEXT/PLAIN":
             return "TXT"
         else:
             return None
-            
+
     def isMimeTypeRaster(self, mimeType):
         """Check for raster input"""
         for rasterType in RASTER_MIMETYPES:
             if mimeType.upper() == rasterType["MIMETYPE"]:
                 return rasterType["GDALID"]
         return None
-        
+
 
     #######################################################################
 

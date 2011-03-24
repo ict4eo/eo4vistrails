@@ -83,13 +83,15 @@ class OGC(NotCacheable):
 
         # web request port
         webRequest = WebRequest()
-        if self.get_request:
-            webRequest.url = self.get_request
-            webRequest.data = None
-        if self.post_data and self.url:
-            webRequest.url = self.url
-            webRequest.data = self.post_data
-        self.setResult(init.WEB_REQUEST_PORT, webRequest)
+        if init.WEB_REQUEST_PORT in self.outputPorts:
+            if self.get_request:
+                webRequest.url = self.get_request
+                webRequest.data = None
+            if self.post_data and self.url:
+                webRequest.url = self.url
+                webRequest.data = self.post_data
+            print "webRequest",webRequest
+            self.setResult(init.WEB_REQUEST_PORT, webRequest)
 
         # text port
         self.setResult(init.URL_PORT, webRequest.url)
@@ -99,15 +101,12 @@ class OGC(NotCacheable):
         # layer port
         if self.url:
             self.layername = self.getInputFromPort(init.OGC_LAYERNAME_PORT) or 'ogc_layer'  #TODO: add random no.
-            try:
+            # conditional execution: only setResult if downstream connection
+            if init.VECTOR_PORT in self.outputPorts:
                 qgsVectorLayer = QgsVectorLayer(self.url, self.layername, 'WFS')
-                #print qgsVectorLayer
+                print "qgsVectorLayer", qgsVectorLayer
                 self.setResult(init.VECTOR_PORT, qgsVectorLayer)
-            except:
-                pass
-            try:
+            if init.RASTER_PORT in self.outputPorts:
                 qgsRasterLayer = QgsRasterLayer(self.url, self.layername)
-                #print qgsRasterLayer
+                print "qgsRasterLayer", qgsRasterLayer
                 self.setResult(init.RASTER_PORT, qgsRasterLayer)
-            except:
-                pass
