@@ -147,17 +147,19 @@ class FeatureImportCommonWidget(QtGui.QWidget):
     def getShapeFileMetaData(self):
 
         shpfile = self.placesGroupBox.text()
+        
+        #ogr_driver_name = ogr.GetDriverByName("ESRI Shapefile")
 
         browser = MetaDataBrowser("ESRI Shapefile")
 
-        data = browser.get_metadata(shpfile)
+        data = browser.get_metadata(str(shpfile))
 
         self.lbxDetails.addItem(str(data))
 
 
-class MetaDataBrowser():
-
-    def __init__(self, ogr_driver_name ):
+class MetaDataBrowser:
+ 
+    def __init__(self, ogr_driver_name):
         """
         Valid driver names are: ESRI_Shapefile, GTiff, GRASS, PostgreSQL, etc.
         """
@@ -169,14 +171,6 @@ class MetaDataBrowser():
 
             raise ValueError("Invalid driver name: %s" % ogr_driver_name)
 
-        #FeatureImportCommonWidget.__init__(self,  ogr_driver_name)
-        # pass in parent widget i.e. OgcCommonWidget class and SpatialWidget Class (read changed coords)
-
-        self.c = FeatureImportCommonWidget(self.placesGroupBox.text())
-
-        f = self.c.placesGroupBox.text()
-
-        print f
 
     def get_metadata(self, filename):
         """
@@ -185,11 +179,8 @@ class MetaDataBrowser():
         """
         # fix this to get path from self.placesGroupBox.text() text field
         # replace path with your local path to shapefile
-
-
-        filename ="/home/bcwele/Downloads/GIS_data/Rivers/main_rivers.shp"
-
-        #self.placesGroupBox.text() #"/home/bcwele/Downloads/GIS_data/Rivers/main_rivers.shp" #self.placesGroupBox.text()
+        #get_metadata = FeatureImportCommonWidget(QtGui.QWidget)
+        #filename = self.placesGroupBox.text() #"/home/petrus/Desktop/GIS_data/Rivers/main_rivers.shp"
 
         ds = self.driver.Open(filename)
 
@@ -218,8 +209,7 @@ class MetaDataBrowser():
             'fields': fldnames
             }
         return result
-
-
+        
 def initialize(*args, **keywords):
     """sets everything up"""
     # We'll first create a local alias for the module_registry so that
@@ -230,12 +220,7 @@ def initialize(*args, **keywords):
 
     #reg.add_input_port(FeatureModel, "service_version", (core.modules.basic_modules.String, 'Web Map Service version - default 1.1.1'))
     #output ports
-    reg.add_output_port(
-        FeatureImport,
-        "OGRDataset",
-        (ogr.Dataset, 'Feature data in OGR Dataset')
-    )
-
+    reg.add_output_port(FeatureImport, "OGRDataset", (ogr.Dataset, 'Feature data in OGR Dataset'))
 
 class FeatureImportConfigurationWidget(OgcConfigurationWidget):
 
@@ -246,22 +231,6 @@ class FeatureImportConfigurationWidget(OgcConfigurationWidget):
         self.wfs_config = FeatureImportCommonWidget(self.ogc_common_widget)
         # tabs
         self.tabs.insertTab(1, self.wfs_config, "")
-        self.tabs.setTabText(
-            self.tabs.indexOf(self.wfs_config),
-            QtGui.QApplication.translate(
-                "cConfigurationWidget",
-                "FeatureImportCommonWidget",
-                None,
-                QtGui.QApplication.UnicodeUTF8
-            )
-        )
-        self.tabs.setTabToolTip(
-            self.tabs.indexOf(self.wfs_config),
-            QtGui.QApplication.translate(
-               "cConfigurationWidget",
-               "FeatureImportCommonWidget",
-                None,
-                QtGui.QApplication.UnicodeUTF8
-            )
-        )
+        self.tabs.setTabText(self.tabs.indexOf(self.wfs_config), QtGui.QApplication.translate("cConfigurationWidget","FeatureImportCommonWidget", None, QtGui.QApplication.UnicodeUTF8))
+        self.tabs.setTabToolTip( self.tabs.indexOf(self.wfs_config), QtGui.QApplication.translate( "cConfigurationWidget", "FeatureImportCommonWidget", None, QtGui.QApplication.UnicodeUTF8 ))
         self.tabs.setCurrentIndex(0)
