@@ -44,15 +44,35 @@ from PyQt4.QtGui import *
 from PyQt4.QtNetwork import *
 from PyQt4 import QtXml
 
-# not sure what these do yet but sure we need them
-
 # TO DO - PLEASE DONT USE "from xxx import *"  - rather "from xxx import A,B.C"
 
 from httplib import *
 from urlparse import urlparse
 import os, sys, string, tempfile, urllib2, urllib,  mimetypes
 
-DEFAULT_URL = 'http://ict4eo.meraka.csir.co.za/cgi-bin/wps.py'
+# QGIS Imports
+from qgis.core import *
+from qgis.gui import *
+#from wpstools import *
+
+# All supported import raster formats
+RASTER_MIMETYPES =        [{"MIMETYPE":"IMAGE/TIFF", "GDALID":"GTiff"},
+                           {"MIMETYPE":"IMAGE/PNG", "GDALID":"PNG"}, \
+                           {"MIMETYPE":"IMAGE/GIF", "GDALID":"GIF"}, \
+                           {"MIMETYPE":"IMAGE/JPEG", "GDALID":"JPEG"}, \
+                           {"MIMETYPE":"IMAGE/GEOTIFF", "GDALID":"GTiff"}, \
+                           {"MIMETYPE":"APPLICATION/X-ERDAS-HFA", "GDALID":"HFA"}, \
+                           {"MIMETYPE":"APPLICATION/NETCDF", "GDALID":"netCDF"}, \
+                           {"MIMETYPE":"APPLICATION/X-NETCDF", "GDALID":"netCDF"}, \
+                           {"MIMETYPE":"APPLICATION/GEOTIFF", "GDALID":"GTiff"}, \
+                           {"MIMETYPE":"APPLICATION/X-GEOTIFF", "GDALID":"GTiff"}]
+# All supported input vector formats [mime type, schema]
+VECTOR_MIMETYPES =        [{"MIMETYPE":"TEXT/XML", "SCHEMA":"GML", "GDALID":"GML"}, \
+                           {"MIMETYPE":"TEXT/XML", "SCHEMA":"KML", "GDALID":"KML"}, \
+                           {"MIMETYPE":"APPLICATION/DGN", "SCHEMA":"", "GDALID":"DGN"}, \
+                           #{"MIMETYPE":"APPLICATION/X-ZIPPED-SHP", "SCHEMA":"", "GDALID":"ESRI_Shapefile"}, \
+                           {"MIMETYPE":"APPLICATION/SHP", "SCHEMA":"", "GDALID":"ESRI_Shapefile"}]
+
 
 class WPS(Module):
 
@@ -112,13 +132,13 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         ##self.btnDelete.setText("Delete")
         ##self.mainLayout.addWidget(self.btnDelete, 2, 3, 1, 1)
 
-        """decided to change the comboBox to a line edit because at runtime will
-        not be choosing from a list, but rather parsing a url"""
+        """decided to change the comboBox to a  line edit because at runtime will not be
+        chosing from a list bt rather parsing a url"""
         ##self.cmbConnections = QComboBox(self.GroupBox1)
         ##self.cmbConnections.setObjectName("cmbConnections")
         ##self.mainLayout.addWidget(self.cmbConnections, 1, 0, 1, 5)
         self.mainLayout.addWidget(QLabel('WPS URL:'), 1, 0, 1, 1)
-        self.URLConnect = QLineEdit(DEFAULT_URL)
+        self.URLConnect= QLineEdit(' ')
         self.URLConnect.setEnabled(True) #sets it not to be editable
         self.mainLayout.addWidget(self.URLConnect, 1,1, 1, -1)
 
@@ -496,26 +516,26 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
                 self.inputDataTypeList[inputIdentifier] = complexDataFormat
 
                 # Attach the selected vector or raster maps
-                #if self.isMimeTypeVector(complexDataFormat["MimeType"]) != None:
+                if self.isMimeTypeVector(complexDataFormat["MimeType"]) != None:
                 # Vector inputs
-                    #layerNamesList = self.getLayerNameList(0)
-                    #if maxOccurs == 1:
-                        #self.complexInputComboBoxList.append(self.addComplexInputComboBox(title, inputIdentifier, str(complexDataFormat), layerNamesList, minOccurs))
-                    #else:
-                        #self.complexInputListWidgetList.append(self.addComplexInputListWidget(title, inputIdentifier, str(complexDataFormat), layerNamesList, minOccurs))
-                #elif self.isMimeTypeText(complexDataFormat["MimeType"]) != None:
+                    layerNamesList = self.getLayerNameList(0)
+                    if maxOccurs == 1:
+                        self.complexInputComboBoxList.append(self.addComplexInputComboBox(title, inputIdentifier, str(complexDataFormat), layerNamesList, minOccurs))
+                    else:
+                        self.complexInputListWidgetList.append(self.addComplexInputListWidget(title, inputIdentifier, str(complexDataFormat), layerNamesList, minOccurs))
+                elif self.isMimeTypeText(complexDataFormat["MimeType"]) != None:
                     # Text inputs
-                    #self.complexInputTextBoxList.append(self.addComplexInputTextBox(title, inputIdentifier, minOccurs))
-                #elif self.isMimeTypeRaster(complexDataFormat["MimeType"]) != None:
+                    self.complexInputTextBoxList.append(self.addComplexInputTextBox(title, inputIdentifier, minOccurs))
+                elif self.isMimeTypeRaster(complexDataFormat["MimeType"]) != None:
                     # Raster inputs
-                    #layerNamesList = self.getLayerNameList(1)
-                    #if maxOccurs == 1:
-                        #self.complexInputComboBoxList.append(self.addComplexInputComboBox(title, inputIdentifier, str(complexDataFormat), layerNamesList, minOccurs))
-                    #else:
-                        #self.complexInputListWidgetList.append(self.addComplexInputListWidget(title, inputIdentifier, str(complexDataFormat), layerNamesList, minOccurs))
-                #else:
+                    layerNamesList = self.getLayerNameList(1)
+                    if maxOccurs == 1:
+                        self.complexInputComboBoxList.append(self.addComplexInputComboBox(title, inputIdentifier, str(complexDataFormat), layerNamesList, minOccurs))
+                    else:
+                        self.complexInputListWidgetList.append(self.addComplexInputListWidget(title, inputIdentifier, str(complexDataFormat), layerNamesList, minOccurs))
+                else:
                     # We assume text inputs in case of an unknown mime type
-                    #self.complexInputTextBoxList.append(self.addComplexInputTextBox(title, inputIdentifier, minOccurs))
+                    self.complexInputTextBoxList.append(self.addComplexInputTextBox(title, inputIdentifier, minOccurs))
 
         # Create the literal inputs as second
         for i in range(DataInputs.size()):
@@ -635,6 +655,173 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
 
     def startProcess(self):
         print 'start'
+        """Create the execute request"""
+        self.doc.setContent(self.getServiceXML(self.processName,"DescribeProcess",self.processIdentifier))
+        dataInputs = self.doc.elementsByTagName("Input")
+        dataOutputs = self.doc.elementsByTagName("Output")
+
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        result = self.getServer(self.processName)
+        scheme = result["scheme"]
+        path = result["path"]
+        server = result["server"]
+
+        checkBoxes = self.dlgProcess.findChildren(QCheckBox)
+
+        if len(checkBoxes) > 0:
+            useSelected = checkBoxes[0].isChecked()
+
+        postString = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"
+        postString += "<wps:Execute service=\"WPS\" version=\""+ self.getServiceVersion() + "\"" + \
+                   " xmlns:wps=\"http://www.opengis.net/wps/1.0.0\"" + \
+                   " xmlns:ows=\"http://www.opengis.net/ows/1.1\"" +\
+                   " xmlns:xlink=\"http://www.w3.org/1999/xlink\"" +\
+                   " xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\""\
+                   " xsi:schemaLocation=\"http://www.opengis.net/wps/1.0.0" +\
+                   " http://schemas.opengis.net/wps/1.0.0/wpsExecute_request.xsd\">"
+
+        postString += "<ows:Identifier>"+self.processIdentifier+"</ows:Identifier>\n"
+        postString += "<wps:DataInputs>"
+
+        # text/plain inputs ########################################################
+        for textBox in self.complexInputTextBoxList:
+
+        # Do not add undefined inputs
+            if textBox == None or str(textBox.document().toPlainText()) == "":
+                continue
+
+            postString += self.xmlExecuteRequestInputStart(textBox.objectName())
+            postString += "<wps:ComplexData>" + textBox.document().toPlainText() + "</wps:ComplexData>\n"
+            postString += self.xmlExecuteRequestInputEnd()
+
+
+        # Single raster and vector inputs ##########################################
+        for comboBox in self.complexInputComboBoxList:
+        # Do not add undefined inputs
+            if comboBox == None or unicode(comboBox.currentText(), 'latin1') == "<None>":
+                continue
+
+            postString += self.xmlExecuteRequestInputStart(comboBox.objectName())
+
+            # TODO: Check for more types
+            mimeType = self.inputDataTypeList[comboBox.objectName()]["MimeType"]
+            schema = self.inputDataTypeList[comboBox.objectName()]["Schema"]
+            encoding = self.inputDataTypeList[comboBox.objectName()]["Encoding"]
+
+            if self.isMimeTypeVector(mimeType) != None and mimeType == "text/xml":
+                postString += "<wps:ComplexData mimeType=\"" + mimeType + "\" schema=\"" + schema + "\" enconding=\"" + encoding + "\">"
+                postString += self.createTmpGML(comboBox.currentText(), useSelected).replace("> <","><")
+                postString = postString.replace("xsi:schemaLocation=\"http://ogr.maptools.org/ qt_temp.xsd\"", "xsi:schemaLocation=\"http://schemas.opengis.net/gml/3.1.1/base/ gml.xsd\"")
+            elif self.isMimeTypeVector(mimeType) != None or self.isMimeTypeRaster(mimeType) != None:
+                postString += "<wps:ComplexData mimeType=\"" + mimeType + "\" encoding=\"base64\">\n"
+                postString += self.createTmpBase64(comboBox.currentText())
+
+            postString += "</wps:ComplexData>\n"
+            postString += self.xmlExecuteRequestInputEnd()
+
+        # Multiple raster and vector inputs ########################################
+        for listWidgets in self.complexInputListWidgetList:
+        # Do not add undefined inputs
+            if listWidgets == None:
+                continue
+
+            mimeType = self.inputDataTypeList[listWidgets.objectName()]["MimeType"]
+            schema = self.inputDataTypeList[listWidgets.objectName()]["Schema"]
+            encoding = self.inputDataTypeList[listWidgets.objectName()]["Encoding"]
+
+        # Iterate over each seletced item
+        for i in range(listWidgets.count()):
+            listWidget = listWidgets.item(i)
+            if listWidget == None or listWidget.isSelected() == False or str(listWidget.text()) == "<None>":
+                continue
+
+            postString += self.xmlExecuteRequestInputStart(listWidgets.objectName())
+
+            # TODO: Check for more types
+            if self.isMimeTypeVector(mimeType) != None and mimeType == "text/xml":
+                postString += "<wps:ComplexData mimeType=\"" + mimeType + "\" schema=\"" + schema + "\" enconding=\"" + encoding + "\">"
+                postString += self.tools.createTmpGML(listWidget.text(), useSelected).replace("> <","><").replace("http://ogr.maptools.org/ qt_temp.xsd","http://ogr.maptools.org/qt_temp.xsd")
+            elif self.isMimeTypeVector(mimeType) != None or self.isMimeTypeRaster(mimeType) != None:
+                postString += "<wps:ComplexData mimeType=\"" + mimeType + "\" encoding=\"base64\">\n"
+                postString += self.createTmpBase64(listWidget.text())
+
+            postString += "</wps:ComplexData>\n"
+            postString += self.xmlExecuteRequestInputEnd()
+
+        # Literal data as combo box choice #########################################
+        for comboBox in self.literalInputComboBoxList:
+            if comboBox == None or comboBox.currentText() == "":
+                continue
+
+            postString += self.xmlExecuteRequestInputStart(comboBox.objectName())
+            postString += "<wps:LiteralData>"+comboBox.currentText()+"</wps:LiteralData>\n"
+            postString += self.xmlExecuteRequestInputEnd()
+
+        # Literal data as combo box choice #########################################
+        for lineEdit in self.literalInputLineEditList:
+            if lineEdit == None or lineEdit.text() == "":
+                continue
+
+            postString += self.xmlExecuteRequestInputStart(lineEdit.objectName())
+            postString += "<wps:LiteralData>"+lineEdit.text()+"</wps:LiteralData>\n"
+            postString += self.xmlExecuteRequestInputEnd()
+
+        postString += "</wps:DataInputs>\n"
+
+        # Attach only defined outputs
+        if dataOutputs.size() > 0 and len(self.complexOutputComboBoxList) > 0:
+            postString += "<wps:ResponseForm>\n"
+            # The server should store the result. No lineage should be returned or status
+            postString += "<wps:ResponseDocument lineage=\"false\" storeExecuteResponse=\"true\" status=\"false\">\n"
+
+            # Attach ALL literal outputs #############################################
+            for i in range(dataOutputs.size()):
+                f_element = dataOutputs.at(i).toElement()
+                outputIdentifier = f_element.elementsByTagName("ows:Identifier").at(0).toElement().text().simplified()
+                literalOutputType = f_element.elementsByTagName("LiteralOutput")
+
+                # Complex data is always requested as reference
+                if literalOutputType.size() != 0:
+                    postString += "<wps:Output>\n"
+                    postString += "<ows:Identifier>"+outputIdentifier+"</ows:Identifier>\n"
+                    postString += "</wps:Output>\n"
+
+            # Attach selected complex outputs ########################################
+            for comboBox in self.complexOutputComboBoxList:
+                # Do not add undefined outputs
+                if comboBox == None or str(comboBox.currentText()) == "<None>":
+                    continue
+                outputIdentifier = comboBox.objectName()
+
+                mimeType = self.outputDataTypeList[outputIdentifier]["MimeType"]
+                schema = self.outputDataTypeList[outputIdentifier]["Schema"]
+                encoding = self.outputDataTypeList[outputIdentifier]["Encoding"]
+
+                postString += "<wps:Output asReference=\"true\" mimeType=\"" + mimeType + "\" schema=\"" + schema + "\">"
+                postString += "<ows:Identifier>" + outputIdentifier + "</ows:Identifier>\n"
+                postString += "</wps:Output>\n"
+
+            postString += "</wps:ResponseDocument>\n"
+            postString  += "</wps:ResponseForm>\n"
+
+        postString += "</wps:Execute>\n"
+
+        # This is for debug purpose only
+        if DEBUG == True:
+            self.tools.popUpMessageBox("Execute request", postString)
+            # Write the request into a file
+            outFile = open('/tmp/qwps_execute_request.xml', 'w')
+            outFile.write(postString)
+            outFile.close()
+
+        f = urllib.urlopen( str(scheme)+"://"+str(server)+""+str(path), unicode(postString, "latin1").replace('<wps:ComplexData>\n','<wps:ComplexData>'))
+
+        # Read the results back.
+        wpsRequestResult = f.read()
+        QApplication.restoreOverrideCursor()
+        QApplication .setOverrideCursor(Qt.ArrowCursor)
+        self.resultHandler(wpsRequestResult)
+        print 'end processing'
 
     def addDocumentationTab(self, abstract):
         # Check for URL
@@ -978,7 +1165,8 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
             for (k, layer) in mapLayers.iteritems():
                 myLayerList.append(layer.name())
         else:
-            mc=self.iface.mapCanvas()
+            #mc=self.iface.mapCanvas()
+            mc = QgsMapCanvas()
             nLayers=mc.layerCount()
 
             for l in range(nLayers):
@@ -994,7 +1182,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
 
         print 'output layer'
 
-        """mapLayers = QgsMapLayerRegistry.instance().mapLayers()
+        mapLayers = QgsMapLayerRegistry.instance().mapLayers()
         i=1
         layerNameList = []
         for (k, layer) in mapLayers.iteritems():
@@ -1008,7 +1196,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
 
         newName = name+unicode(str(i),'latin1')
         return newName
-        """
+
 
     def allowedValues(self, aValues):
         valList = []
@@ -1050,11 +1238,176 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
                 return rasterType["GDALID"]
         return None
 
+    def popUpMessageBox(self, title, detailedText):
+        """A message box used for debugging"""
+        mbox = WPSMessageBox()
+        mbox.setText(title)
+        mbox.setDetailedText(detailedText)
+        mbox.exec_()
+
+    def xmlExecuteRequestInputStart(self, identifier):
+        string = ""
+        string += "<wps:Input>\n"
+        string += "<ows:Identifier>"+identifier+"</ows:Identifier>\n"
+        string += "<ows:Title>"+identifier+"</ows:Title>\n"
+        string += "<wps:Data>\n"
+        return string
+
+    def xmlExecuteRequestInputEnd(self):
+        string = ""
+        string += "</wps:Data>\n"
+        string += "</wps:Input>\n"
+        return string
+
+    def createTmpBase64(self,  layer):
+        try:
+            filename = tempfile.mktemp(prefix="base64")
+            rLayer = self.getVLayer(layer)
+            infile = open(rLayer.source())
+            outfile = open(filename, 'w')
+            base64.encode(infile,outfile)
+            outfile.close()
+            outfile =  open(filename, 'r')
+            base64String = outfile.read()
+            os.remove(filename)
+        except:
+            QMessageBox.error(None, '', "Unable to create temporal file: " + filename + " for base64 encoding")
+        return base64String
+
+    def getVLayer(self,name):
+        #   Die sichtbaren Layer der Legende zur weiteren Bearbeitung holen
+        # get the map canvas
+        mc=QgsMapCanvas()
+
+        # how many layers are there?
+        nLayers=mc.layerCount()
+
+        for l in range(nLayers):
+            layer = mc.layer(l)
+            if layer.name() == name:
+                return layer
+
+    def createTmpGML(self, layer, processSelection="False"):
+        myQTempFile = QTemporaryFile()
+        myQTempFile.open()
+        tmpFile = unicode(myQTempFile.fileName(),'latin1')
+
+        vLayer = self.getVLayer(layer)
+        fieldList = self.getFieldList(vLayer)
+
+        if vLayer.dataProvider().name() == "postgres":
+            encoding = self.getDBEncoding(vLayer.dataProvider())
+        else:
+            encoding = vLayer.dataProvider().encoding()
+
+        writer = self.createGMLFileWriter(tmpFile, fieldList, vLayer.dataProvider().geometryType(),encoding)
+
+        ##    print "TEMP-GML-File Name: "+tmpFile
+
+        provider = vLayer.dataProvider()
+
+        feat = QgsFeature()
+        allAttrs = provider.attributeIndexes()
+        provider.select(allAttrs)
+
+        featureList = vLayer.selectedFeatures()
+
+        if processSelection and vLayer.selectedFeatureCount() > 0:
+            for feat in featureList:
+                writer.addFeature(feat)
+        else:
+            while provider.nextFeature(feat):
+                writer.addFeature(feat)
+
+        del writer
+
+        myFile = QFile(tmpFile)
+        if (not myFile.open(QIODevice.ReadOnly | QIODevice.Text)):
+            pass
+
+        myGML = QTextStream(myFile)
+        gmlString = ""
+
+        # Overread the first Line of GML Result
+        dummy = myGML.readLine()
+        gmlString += myGML.readAll()
+        myFile.close()
+        myQTempFile.close()
+        return gmlString.simplified()
+
+    def createGMLFileWriter(self, myTempFile, fields, geometryType, encoding):
+
+        writer = QgsVectorFileWriter(myTempFile, encoding, fields, geometryType, None, "GML")
+        if writer.hasError() != QgsVectorFileWriter.NoError:
+            message = self.writerErrorMessage(writer.hasError())
+            QMessageBox.warning(None, '', message)
+            return 0
+        return writer
+
+    def getDBEncoding(self, layerProvider):
+        dbConnection = QgsDataSourceURI(layerProvider.dataSourceUri())
+        db = QSqlDatabase.addDatabase("QPSQL","WPSClient")
+        db.setHostName(dbConnection.host())
+        db.setDatabaseName(dbConnection.database())
+        db.setUserName(dbConnection.username())
+        db.setPassword(dbConnection.password())
+        db.setPort(int(dbConnection.port()))
+        db.open()
+
+        query =  "select pg_encoding_to_char(encoding) as encoding "
+        query += "from pg_catalog.pg_database "
+        query += "where datname = '"+dbConnection.database()+"' "
+
+        result = QSqlQuery(query,db)
+        result.first()
+        encoding = result.value(0).toString()
+        db.close()
+
+        return encoding
+
+    # Get the List of Fields
+    # Return: QGsFieldMap
+    def getFieldList(self, vlayer):
+        fProvider = vlayer.dataProvider()
+        feat = QgsFeature()
+        allAttrs = fProvider.attributeIndexes()
+        # start data retrieval: all attributes for each feature
+        fProvider.select(allAttrs, QgsRectangle(), False)
+        # retrieve every feature with its attributes
+        myFields = fProvider.fields()
+        return myFields
 
     #######################################################################
 
     def getDescription(self):
         pass
+
+###############################################
+####Other Helper classes
+class WPSMessageBox(QMessageBox):
+    """A resizable message box to show debug info"""
+    def __init__(self):
+        QMessageBox.__init__(self)
+        self.setSizeGripEnabled(True)
+
+    def event(self, e):
+        result = QMessageBox.event(self, e)
+
+        self.setMinimumHeight(600)
+        self.setMaximumHeight(16777215)
+        self.setMinimumWidth(800)
+        self.setMaximumWidth(16777215)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+        textEdit = self.findChild(QTextEdit)
+        if textEdit != None :
+            textEdit.setMinimumHeight(300)
+            textEdit.setMaximumHeight(16777215)
+            textEdit.setMinimumWidth(300)
+            textEdit.setMaximumWidth(16777215)
+            textEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+        return result
 
     #########################################################################
     ## Processing Class

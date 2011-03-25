@@ -3,10 +3,10 @@
 ###
 ### Copyright (C) 2010 CSIR Meraka Institute. All rights reserved.
 ###
-### This full package extends VisTrails, providing GIS/Earth Observation 
-### ingestion, pre-processing, transformation, analytic and visualisation 
-### capabilities . Included is the abilty to run code transparently in 
-### OpenNebula cloud environments. There are various software 
+### This full package extends VisTrails, providing GIS/Earth Observation
+### ingestion, pre-processing, transformation, analytic and visualisation
+### capabilities . Included is the abilty to run code transparently in
+### OpenNebula cloud environments. There are various software
 ### dependencies, but all are FOSS.
 ###
 ### This file may be used under the terms of the GNU General Public
@@ -26,31 +26,28 @@
 #############################################################################
 """
 Created on Tue Dec 14 09:38:10 2010
-
 @author: tvzyl
 
-Module forms part of the rpyc vistrails capabilties, used to add multicore
+This module forms part of the rpyc vistrails capabilties, used to add multicore
 parallel and distributed processing to vistrails.
 
-This Module is the called by higher level inits to ensure that regsitration with 
-vsitrails takes place
-
+This Module is the called by higher level inits to ensure that registration with
+vistrails takes place
 """
-#History
-#Terence van Zyl, 15 Dec 2010, Version 1.0
 
 def initialize(*args, **keywords):
+    # vistrails
     from core.modules.module_registry import get_module_registry
-    from core.modules import basic_modules
-    
-    import QgsLayer
-    
-    from Feature import FeatureModel,  FileFeatureModel,  MemFeatureModel
+    from core.modules.basic_modules import String, File
+    # eo4vistrails
+    from packages.eo4vistrails.utils.WebRequest import WebRequest, DataRequest
+    from packages.eo4vistrails.geoinf.datamodels.FeatureImport import \
+        FeatureImport, FeatureImportConfigurationWidget
+    # local
+    from Feature import FeatureModel, FileFeatureModel, MemFeatureModel
     from Raster import RasterModel
-    from GeoStrings import GMLString,  GeoJSONString,  GeoString
-    from packages.eo4vistrails.utils.WebRequest import WebRequest, DataRequest 
-    from core.modules.basic_modules import String
-    from packages.eo4vistrails.geoinf.datamodels.FeatureImport import FeatureImport, FeatureImportConfigurationWidget
+    from GeoStrings import GMLString, GeoJSONString, GeoString
+    import QgsLayer
 
     """
     sets everything up called from the top level initialize
@@ -58,40 +55,45 @@ def initialize(*args, **keywords):
     reg = get_module_registry()
     mynamespace = "datamodels"
 
+    # Features
     reg.add_module(FeatureModel, namespace=mynamespace) #abstract
-
     reg.add_module(FeatureImport, configureWidgetType=FeatureImportConfigurationWidget, namespace = mynamespace)
 
-    #Add QgsMapLayer
+    # QgsMapLayer
     reg.add_module(QgsLayer.QgsMapLayer, namespace=mynamespace)
-    reg.add_input_port(QgsLayer.QgsMapLayer, 'file', basic_modules.File)
+    reg.add_input_port(QgsLayer.QgsMapLayer, 'file', File)
     reg.add_input_port(QgsLayer.QgsMapLayer, 'dataRequest', DataRequest)
     reg.add_output_port(QgsLayer.QgsMapLayer, "value", QgsLayer.QgsMapLayer)
 
-    #Add QgsVectorLayer
+    # QgsLayers
     reg.add_module(QgsLayer.QgsVectorLayer, namespace=mynamespace)
-                   
-    #Add QgsRasterLayer
     reg.add_module(QgsLayer.QgsRasterLayer, namespace=mynamespace)
-                   
+
+    # QgsLayerWriter
+    reg.add_module(QgsLayerWriter, namespace=mynamespace)
+    reg.add_input_port(QgsLayerWriter, "value", QgsLayer.QgsMapLayer)
+    reg.add_input_port(QgsLayerWriter, 'file', File)
+
+    # misc.
     reg.add_module(GeoString, namespace=mynamespace)
     reg.add_module(GMLString, namespace=mynamespace)
     reg.add_module(GeoJSONString, namespace=mynamespace)
-    #input ports
 
+    # MemFeatureModel
     reg.add_module(MemFeatureModel, namespace=mynamespace)
-    reg.add_input_port(MemFeatureModel,  "source_file", String )
-    reg.add_input_port(MemFeatureModel,  "dbconn", String )
-    reg.add_input_port(MemFeatureModel,  "sql", String )
-    reg.add_input_port(MemFeatureModel, "webrequest",  WebRequest)
-    reg.add_input_port(MemFeatureModel,  "gstring", GeoString )
+    reg.add_input_port(MemFeatureModel, "source_file", String )
+    reg.add_input_port(MemFeatureModel, "dbconn", String )
+    reg.add_input_port(MemFeatureModel, "sql", String )
+    reg.add_input_port(MemFeatureModel, "webrequest", WebRequest)
+    reg.add_input_port(MemFeatureModel, "gstring", GeoString )
     reg.add_output_port(MemFeatureModel, "feature_dataset", MemFeatureModel)
 
+    # FileFeatureModel
     reg.add_module(FileFeatureModel, namespace=mynamespace)
-    reg.add_input_port(FileFeatureModel,  "source_file", String )
-    reg.add_input_port(FileFeatureModel,  "source_feature_dataset", MemFeatureModel )
-    reg.add_input_port(FileFeatureModel, "webrequest",  WebRequest)
-    reg.add_input_port(FileFeatureModel,  "output_type", String )
+    reg.add_input_port(FileFeatureModel, "source_file", String )
+    reg.add_input_port(FileFeatureModel, "source_feature_dataset", MemFeatureModel )
+    reg.add_input_port(FileFeatureModel, "webrequest", WebRequest)
+    reg.add_input_port(FileFeatureModel, "output_type", String )
 
+    # RasterModel
     reg.add_module(RasterModel, namespace=mynamespace) #abstract
-
