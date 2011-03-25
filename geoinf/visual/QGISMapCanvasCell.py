@@ -27,12 +27,74 @@ class QGISMapCanvasCell(SpreadsheetCell):
     def compute(self):
         """ compute() -> None
         """
-        if self.hasInputFromPort("layer"):
-            layers = self.getInputListFromPort("layer")
-        else:
-            layers = None
-        self.cellWidget = self.displayAndWait(QGISMapCanvasCellWidget, (layers,))
 
+        if self.hasInputFromPort("baselayer"):  
+        
+            bslayer = self.getInputFromPort("baselayer")
+            
+            print bslayer.getLayerID()
+            
+            crsDest = QgsCoordinateReferenceSystem(bslayer.srs())
+
+            
+            print unicode(bslayer.srs())
+            
+                                    
+            if self.hasInputFromPort("layer"):
+                
+                layers = self.getInputListFromPort("layer")
+                
+                for lyr in layers:
+                    
+                    print unicode(lyr.srs().toProj4())
+                    
+                    crsSrc = QgsCoordinateReferenceSystem(lyr.srs())
+                    
+                    xform = QgsCoordinateTransform(crsSrc, crsDest)
+
+                    #xform.transform(lyr)
+                    
+                    
+                
+                  
+                    
+                    
+                    
+                                               
+                layers.append(bslayer)              
+                  
+                
+                '''
+                
+                    
+                    print "list of layers:" + lyr.getLayerID()
+                    
+                    #print "layer type :" + type(lyr)
+                    
+                    if lyr.getLayerID() == bslayer.getLayerID():
+                        
+                        print "Found ID Match "
+                 '''   
+                
+                print len(layers)                        
+                        
+                    
+                    
+                    
+            else:
+                
+                layers = None
+
+            self.cellWidget = self.displayAndWait(QGISMapCanvasCellWidget, (layers,))
+            
+        else:
+            
+            print "Need to set base layer"           
+            
+            return
+                        
+                                    
+            
 
 class QGISMapCanvasCellWidget(QCellWidget, QMainWindow):
     """TO DO: Add doc string
@@ -43,7 +105,16 @@ class QGISMapCanvasCellWidget(QCellWidget, QMainWindow):
         QMainWindow.__init__(self)
 
         self.canvas = QgsMapCanvas()
+        
+        myrender = self.canvas.mapRenderer()
+        
+        myrender.setProjectionsEnabled(True)
+        
         self.canvas.setCanvasColor(QColor(200,200,255))
+        
+                
+        print self.canvas.hasCrsTransformEnabled()
+        
         self.canvas.show()
         self.tools = QMainWindow()
 
@@ -98,20 +169,35 @@ class QGISMapCanvasCellWidget(QCellWidget, QMainWindow):
         Updates the contents with a new, changed filename
         """
         (inputLayers, ) = inputPorts
+        
         if type(inputLayers) != list:
+            
             #print "One Layer"
             inputLayers = [inputLayers]
+            
         else:
             pass
             #TODO handle the list case.
 
         mapCanvasLayers = []
+        
         for layer in inputLayers:
+            
             print "Accessing layer" + '*********' + layer.name()
+            
+            print "Layer ID: " + layer.getLayerID()
+            
             if not layer.isValid():
                 return
             print "Success!"
-
+                       
+            # check type of layer, as opposed to using file extension
+            
+            #if layer and layer.type() == QgsMapLayer.RasterLayer:
+                
+                #extent = layer.extent()
+                       
+            '''
             file_extension = str(layer.name())
             if file_extension.endswith(".shp"):
                 #get the label instance associated with the layer a
@@ -122,14 +208,16 @@ class QGISMapCanvasCellWidget(QCellWidget, QMainWindow):
                 # set the colour of the label text
                 labelAttributes.setColor(QtCore.Qt.black)
                 layer.enableLabels(True)
-
+            '''
             # Add layer to the registry
-            QgsMapLayerRegistry.instance().addMapLayer(layer, False)
+            QgsMapLayerRegistry.instance().addMapLayer(layer, True)
 
+              
             # Set up the map canvas layer set
-            cl = QgsMapCanvasLayer(layer, True)
+            cl = QgsMapCanvasLayer(layer)
             mapCanvasLayers.append(cl)
-
+                                             
+                     
             # Set extent to the extent of our layer
             self.canvas.setExtent(layer.extent())
             self.canvas.enableAntiAliasing(True)
