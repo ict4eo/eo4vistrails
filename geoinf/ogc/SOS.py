@@ -49,6 +49,7 @@ class SOS(OGC, FeatureModel):
     def __init__(self):
         OGC.__init__(self)
         FeatureModel.__init__(self)
+        self.webRequest._driver = 'SOS'
 
 
 class SosCommonWidget(QtGui.QWidget):

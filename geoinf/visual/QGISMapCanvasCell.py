@@ -62,7 +62,7 @@ class QGISMapCanvasCell(SpreadsheetCell):
         """
         if self.hasInputFromPort("baselayer"):
             base_layer = self.getInputFromPort("baselayer")
-            #print "base layer id/type/srs :", base_layer.getLayerID(), type(base_layer), base_layer.srs()
+            #print "base_layer id/type/srs :", base_layer.getLayerID(), type(base_layer), base_layer.srs()
             crsDest = QgsCoordinateReferenceSystem(base_layer.srs())
             if self.hasInputFromPort("layer"):
                 layers = self.getInputListFromPort("layer")
@@ -74,7 +74,7 @@ class QGISMapCanvasCell(SpreadsheetCell):
                     #xform.transform(lyr)  # cannot transform/reproject a whole layer ???
                 layers.append(base_layer)
             else:
-                layers = None
+                layers = self.getInputFromPort("baselayer")
             self.cellWidget = self.displayAndWait(QGISMapCanvasCellWidget, (layers,))
         else:
             raise ModuleError(

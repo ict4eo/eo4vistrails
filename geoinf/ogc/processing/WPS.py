@@ -37,7 +37,7 @@ import string
 import tempfile
 import urllib2
 import urllib
-#from httplib import * ??? are we using this
+from httplib import * #??? are we using this
 from urlparse import urlparse
 # third party
 from PyQt4.QtCore import *
@@ -73,6 +73,7 @@ VECTOR_MIMETYPES =        [{"MIMETYPE":"TEXT/XML", "SCHEMA":"GML", "GDALID":"GML
                            #{"MIMETYPE":"APPLICATION/X-ZIPPED-SHP", "SCHEMA":"", "GDALID":"ESRI_Shapefile"}, \
                            {"MIMETYPE":"APPLICATION/SHP", "SCHEMA":"", "GDALID":"ESRI_Shapefile"}]
 DEBUG = False
+DEFAULT_URL = 'http://ict4eo.meraka.csir.co.za/cgi-bin/wps.py'
 
 class WPS(Module):
 
@@ -131,13 +132,13 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         ##self.btnDelete.setText("Delete")
         ##self.mainLayout.addWidget(self.btnDelete, 2, 3, 1, 1)
 
-        """decided to change the comboBox to a  line edit because at runtime will not be
-        chosing from a list bt rather parsing a url"""
+        """decided to change the comboBox to a line edit because at runtime
+        will not be choosing from a list, but rather parsing a url"""
         ##self.cmbConnections = QComboBox(self.GroupBox1)
         ##self.cmbConnections.setObjectName("cmbConnections")
         ##self.mainLayout.addWidget(self.cmbConnections, 1, 0, 1, 5)
         self.mainLayout.addWidget(QLabel('WPS URL:'), 1, 0, 1, 1)
-        self.URLConnect= QLineEdit(' ')
+        self.URLConnect = QLineEdit(DEFAULT_URL)
         self.URLConnect.setEnabled(True) #sets it not to be editable
         self.mainLayout.addWidget(self.URLConnect, 1,1, 1, -1)
 
@@ -307,38 +308,41 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         test = self.doc.setContent(xmlString, True)
         #test parsing of xml doc
         if test == True:
-            #print 'XML document parsed'
-            if self.getServiceVersion() != "1.0.0":
-                QMessageBox.information(None, 'Error', 'Only WPS Version 1.0.0 is supprted')
-                return 0
+            print 'XML document parsed'
 
-            version    = self.doc.elementsByTagNameNS("http://www.opengis.net/wps/1.0.0","Process")
-            title      = self.doc.elementsByTagNameNS("http://www.opengis.net/ows/1.1","Title")
-            identifier = self.doc.elementsByTagNameNS("http://www.opengis.net/ows/1.1","Identifier")
-            abstract   = self.doc.elementsByTagNameNS("http://www.opengis.net/ows/1.1","Abstract")
+        if self.getServiceVersion() != "1.0.0":
+            QMessageBox.information(None, 'Error', 'Only WPS Version 1.0.0 is supported')
+            return 0
 
-            itemListAll = []
-            for i in range(version.size()):
-                #print 'test loop'
-                v_element = version.at(i).toElement()
-                #print v_element.text()
-                i_element = identifier.at(i).toElement()
-                #print i_element.text()
-                t_element = title.at(i+1).toElement()
-                #print t_element.text()
-                a_element = abstract.at(i+1).toElement()
-                #print a_element.text()
-                itemList = []
-                itemList.append(i_element.text())
-                itemList.append(t_element.text())
-                itemList.append(a_element.text())
-                #print i_element.text()
-                itemListAll.append(itemList)
+        version    = self.doc.elementsByTagNameNS("http://www.opengis.net/wps/1.0.0","Process")
+        title      = self.doc.elementsByTagNameNS("http://www.opengis.net/ows/1.1","Title")
+        identifier = self.doc.elementsByTagNameNS("http://www.opengis.net/ows/1.1","Identifier")
+        abstract   = self.doc.elementsByTagNameNS("http://www.opengis.net/ows/1.1","Abstract")
 
-            return itemListAll
+        itemListAll = []
+        for i in range(version.size()):
+            #print 'test loop'
+            v_element = version.at(i).toElement()
+            #print v_element.text()
+            i_element = identifier.at(i).toElement()
+            #print i_element.text()
+            t_element = title.at(i+1).toElement()
+            #print t_element.text()
+            a_element = abstract.at(i+1).toElement()
+            #print a_element.text()
+            itemList = []
+            itemList.append(i_element.text())
+            itemList.append(t_element.text())
+            itemList.append(a_element.text())
+            #print i_element.text()
+            itemListAll.append(itemList)
+
+        return itemListAll
+        """link this to parsing?
         else:
             # raise error ???
             return []
+        """
 
     def getServiceVersion(self):
         """TODO: add doc string"""

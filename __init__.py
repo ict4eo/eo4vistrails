@@ -2,10 +2,10 @@
 ##
 ## Copyright (C) 2010 CSIR Meraka Institute. All rights reserved.
 ##
-## This full package extends VisTrails, providing GIS/Earth Observation 
-## ingestion, pre-processing, transformation, analytic and visualisation 
-## capabilities . Included is the abilty to run code transparently in 
-## OpenNebula cloud environments. There are various software 
+## This full package extends VisTrails, providing GIS/Earth Observation
+## ingestion, pre-processing, transformation, analytic and visualisation
+## capabilities . Included is the abilty to run code transparently in
+## OpenNebula cloud environments. There are various software
 ## dependencies, but all are FOSS.
 ##
 ## This file may be used under the terms of the GNU General Public
@@ -23,23 +23,25 @@
 ## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ##
 ############################################################################
-"""This full package extends VisTrails, providing GIS/Earth Observation 
-ingestion, pre-processing, transformation, analytic and visualisation 
-capabilities . Included is the abilty to run code transparently in 
+"""This full package extends VisTrails, providing GIS/Earth
+Observation ingestion, pre-processing, transformation,
+analytic and visualisation capabilities.
+
+Also included is the ability to run code transparently in
 OpenNebula cloud environments.
 """
 # Authors:
     # Terence van Zyl
-    # Graeme Mcferren
-    # Bolelang Sibolla
+    # Graeme McFerren
+    # Bheki C'wele
     # Derek Hohls
     # Petrus Shabangu
-    # Bheki C'wele
+    # Bolelang Sibolla
 
 identifier = 'za.co.csir.eo4vistrails'
 name = 'eo4vistrails'
 version = '0.0.1'
-author_list = 'tvanzyl,bcwele' 
+author_list = 'tvanzyl,bcwele'
 
 def package_dependencies():
     return ['edu.utah.sci.vistrails.spreadsheet','edu.utah.sci.vistrails.numpyscipy']

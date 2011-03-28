@@ -28,6 +28,7 @@
 
 # library
 import init
+import random
 # third-party
 from PyQt4 import QtCore, QtGui
 # vistrails
@@ -83,7 +84,7 @@ class OGC(NotCacheable):
         #print "OgcService:77\n url: %s, get: %s\n data: %s" % (self.url, self.get_request, self.post_data)
 
         # web request port
-        
+
         if init.WEB_REQUEST_PORT in self.outputPorts:
             if self.get_request:
                 self.webRequest.url = self.get_request
@@ -101,13 +102,17 @@ class OGC(NotCacheable):
 
         # layer port
         if self.url:
-            self.layername = self.getInputFromPort(init.OGC_LAYERNAME_PORT) or 'ogc_layer'  #TODO: add random no.
+            random.seed()
+            #self.layername = self.getInputFromPort(init.OGC_LAYERNAME_PORT) or 'ogc_layer'  #TODO: add random no.
+            self.layername = self.getInputFromPort(init.OGC_LAYERNAME_PORT) or \
+                self.webRequest.get_layername() or \
+                'ogc_layer' + str(random.randint(0,10000))
             # conditional execution: only setResult if downstream connection
             if init.VECTOR_PORT in self.outputPorts:
                 qgsVectorLayer = QgsVectorLayer(self.url, self.layername, self.webRequest.get_driver())
                 #print "qgsVectorLayer", qgsVectorLayer
                 self.setResult(init.VECTOR_PORT, qgsVectorLayer)
             if init.RASTER_PORT in self.outputPorts:
-                qgsRasterLayer = QgsRasterLayer(self.url, self.layername)
+                qgsRasterLayer = QgsRasterLayer(self.url, self.layername, self.webRequest.get_driver())
                 #print "qgsRasterLayer", qgsRasterLayer
                 self.setResult(init.RASTER_PORT, qgsRasterLayer)

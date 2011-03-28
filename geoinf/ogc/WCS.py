@@ -51,6 +51,7 @@ class WCS(OGC, RasterModel):
     def __init__(self):
         OGC.__init__(self)
         RasterModel.__init__(self)
+        self.webRequest._driver = 'WCS'
 
 
 class WCSCommonWidget(QtGui.QWidget):

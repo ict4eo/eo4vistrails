@@ -1,5 +1,4 @@
 def initialize(*args, **keywords):
-
     """TO DO: Add doc string"""
 
     from core.modules.module_registry import get_module_registry
@@ -12,12 +11,6 @@ def initialize(*args, **keywords):
     reg = get_module_registry()
     #global basicWidgets
     reg.add_module(QGISMapCanvasCell)
-    reg.add_input_port(QGISMapCanvasCell, "baselayer", QgsMapLayer)    
-    reg.add_input_port(QGISMapCanvasCell, "layer", QgsMapLayer)  
+    reg.add_input_port(QGISMapCanvasCell, "baselayer", QgsMapLayer)
+    reg.add_input_port(QGISMapCanvasCell, "layer", QgsMapLayer)
     reg.add_input_port(QGISMapCanvasCell, "Location", basic_widgets.CellLocation)
-    
-    
-     
-    
-
-
