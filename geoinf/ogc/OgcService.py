@@ -103,7 +103,7 @@ class OGC(NotCacheable):
         # layer port
         if self.url:
             random.seed()
-            #self.layername = self.getInputFromPort(init.OGC_LAYERNAME_PORT) or 'ogc_layer'  #TODO: add random no.
+            #self.layername = self.getInputFromPort(init.OGC_LAYERNAME_PORT) or 'ogc_layer'  #TODO: add random no.            
             self.layername = self.getInputFromPort(init.OGC_LAYERNAME_PORT) or \
                 self.webRequest.get_layername() or \
                 'ogc_layer' + str(random.randint(0,10000))

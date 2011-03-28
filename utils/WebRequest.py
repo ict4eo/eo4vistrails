@@ -45,6 +45,16 @@ class WebRequest(DataRequest):
         self.data = data
         self.runTheRequest = runTheRequest
 
+    def get_uri(self): 
+        return self.url
+
+    def get_layername(self):
+        if not self._layername:
+            import random
+            random.seed()
+            self._layername = 'web_layer' + str(random.randint(0,10000))
+        return self._layername
+    
     def compute(self):
         """Execute the module to create the output"""
         # separate URL

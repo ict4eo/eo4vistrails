@@ -75,7 +75,7 @@ class QGISMapCanvasCell(SpreadsheetCell):
                 layers.append(base_layer)
             else:
                 layers = self.getInputFromPort("baselayer")
-            self.cellWidget = self.displayAndWait(QGISMapCanvasCellWidget, (layers,))
+            self.cellWidget = self.displayAndWait(QGISMapCanvasCellWidget, (layers,crsDest))
         else:
             raise ModuleError(
                 self,
@@ -92,10 +92,6 @@ class QGISMapCanvasCellWidget(QCellWidget, QMainWindow):
         QMainWindow.__init__(self)
 
         self.canvas = QgsMapCanvas()
-        # attempt to use "auto (on the fly) reprojection" (not working ???)
-        myrender = self.canvas.mapRenderer()
-        myrender.setProjectionsEnabled(True)
-        #print self.canvas.hasCrsTransformEnabled()
         self.canvas.setCanvasColor(QColor(200,200,255))
         self.canvas.show()
         self.tools = QMainWindow()
@@ -153,12 +149,18 @@ class QGISMapCanvasCellWidget(QCellWidget, QMainWindow):
         """ updateContents(inputPorts: tuple) -> None
         Updates the contents with a new, changed filename
         """
-        (inputLayers, ) = inputPorts
+        (inputLayers, crsDest) = inputPorts
         if type(inputLayers) != list:
             inputLayers = [inputLayers]
         else:
             pass
             #TODO handle the list case.
+
+        # attempt to use "auto (on the fly) reprojection" (not working ???)
+        myrender = self.canvas.mapRenderer()
+        myrender.setProjectionsEnabled(True)
+        myrender.setDestinationSrs(crsDest)
+        #print self.canvas.hasCrsTransformEnabled()
 
         mapCanvasLayers = []
         for layer in inputLayers:
