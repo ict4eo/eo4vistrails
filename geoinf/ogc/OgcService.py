@@ -57,6 +57,7 @@ class OGC(NotCacheable):
         self.get_request = None
         self.url = None
         self.layername = None
+        self.webRequest = WebRequest()
 
     def raiseError(self, msg, error=''):
         """Raise a VisTrails error."""
@@ -82,28 +83,28 @@ class OGC(NotCacheable):
         #print "OgcService:77\n url: %s, get: %s\n data: %s" % (self.url, self.get_request, self.post_data)
 
         # web request port
-        webRequest = WebRequest()
+        
         if init.WEB_REQUEST_PORT in self.outputPorts:
             if self.get_request:
-                webRequest.url = self.get_request
-                webRequest.data = None
+                self.webRequest.url = self.get_request
+                self.webRequest.data = None
             if self.post_data and self.url:
-                webRequest.url = self.url
-                webRequest.data = self.post_data
+                self.webRequest.url = self.url
+                self.webRequest.data = self.post_data
             #print "webRequest",webRequest
-            self.setResult(init.WEB_REQUEST_PORT, webRequest)
+            self.setResult(init.WEB_REQUEST_PORT, self.webRequest)
 
         # text port
-        self.setResult(init.URL_PORT, webRequest.url)
-        if webRequest.data:
-            self.setResult(init.DATA_PORT, webRequest.data)
+        self.setResult(init.URL_PORT, self.webRequest.url)
+        if self.webRequest.data:
+            self.setResult(init.DATA_PORT, self.webRequest.data)
 
         # layer port
         if self.url:
             self.layername = self.getInputFromPort(init.OGC_LAYERNAME_PORT) or 'ogc_layer'  #TODO: add random no.
             # conditional execution: only setResult if downstream connection
             if init.VECTOR_PORT in self.outputPorts:
-                qgsVectorLayer = QgsVectorLayer(self.url, self.layername, 'WFS')
+                qgsVectorLayer = QgsVectorLayer(self.url, self.layername, self.webRequest.get_driver())
                 #print "qgsVectorLayer", qgsVectorLayer
                 self.setResult(init.VECTOR_PORT, qgsVectorLayer)
             if init.RASTER_PORT in self.outputPorts:

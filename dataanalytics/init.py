@@ -45,6 +45,8 @@ def initialize(*args, **keywords):
     from core.vistrail.port import PortEndPoint
     import PySAL
 
+    from packages.NumSciPy.Array import NDArray
+
     reg = get_module_registry()
     mynamespace = "pysal"
 
@@ -65,7 +67,7 @@ def initialize(*args, **keywords):
     reg.add_module(Networkx.Graph,
                    namespace=mynamespace)
     reg.add_input_port(Networkx.Graph, 'neighbors',
-                       basic_modules.List)
+                       NDArray)
     reg.add_output_port(Networkx.Graph, "value",
                         (Networkx.Graph, 'value'))
 

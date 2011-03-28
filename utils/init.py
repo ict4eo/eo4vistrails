@@ -36,7 +36,7 @@ def initialize(*args, **keywords):
     #Add Session
     reg.add_module(Session, namespace = utils_namespace)
 
-    reg.add_module(DataRequest, namespace = utils_namespace)
+    reg.add_module(DataRequest, namespace = utils_namespace, abstract=True)
 
     reg.add_module(PostGISRequest, namespace = utils_namespace)
     reg.add_output_port(

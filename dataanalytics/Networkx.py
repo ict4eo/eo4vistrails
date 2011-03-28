@@ -45,7 +45,9 @@ class Graph(NetworkxModule, Module, nx.Graph):
         nx.Graph.__init__(self)
 
     def compute(self):
-        self.add_edges_from(self.forceGetInputFromPort('neighbors'))
+        #TODO: check the shape
+        ndArray = self.forceGetInputFromPort('neighbors')
+        self.add_edges_from(ndArray.get_array())
         self.setResult("value", self)
 
 

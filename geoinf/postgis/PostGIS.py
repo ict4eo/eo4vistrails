@@ -34,18 +34,15 @@ connection and allows random queries to be executed against the chosen database.
 # library
 # third party
 import psycopg2
-from PyQt4 import QtCore, QtGui
-import qgis
-import urllib
-# vistrails
-from core.modules.vistrails_module import Module, new_module, NotCacheable, ModuleError
-from core.modules.source_configure import SourceConfigurationWidget
-# eo4vistrails
-from packages.eo4vistrails.geoinf.datamodels.Feature import FeatureModel,  MemFeatureModel
+
 from packages.eo4vistrails.geoinf.datamodels.QgsLayer import QgsVectorLayer
 from packages.eo4vistrails.utils.DataRequest import PostGISRequest
+
+from packages.NumSciPy.Array import NDArray
 from packages.eo4vistrails.utils.session import Session
-# local
+from core.modules.vistrails_module import Module, ModuleError
+from core.modules.source_configure import SourceConfigurationWidget
+import urllib
 
 
 class PostGisSession(Session):
@@ -102,7 +99,7 @@ class PostGisCursor():
 
         if self.conn_type == "psycopg2":
             try:
-                self.curs = PostGisSessionObj.pgconn.cursor()
+                self.curs = PostGisSessionObj.pgconn.cursor()#' VISTRAILS'+random.randint(0,10000))
                 return True
             except:
                 return False
@@ -127,6 +124,64 @@ class PostGisCursor():
         except:
             pass
 
+class PostGisNumpyReturningCursor(Module):
+    """Returns data in the form of a eo4vistrails FeatureModel if user binds to self output port"""
+    #multi inheritance of module subclasses is a problem
+    def __init__(self):
+        #PostGisCursor.__init__(self,   conn_type = "ogr")
+        Module.__init__(self)
+        
+
+    def compute(self):
+        """Will need to fetch a PostGisSession object on its input port
+        Overrides supers method"""
+        pgsession = self.getInputFromPort("PostGisSessionObject")
+        try:
+            import random
+            random.seed()
+            self.curs = pgsession.pgconn.cursor('VISTRAILS'+str(random.randint(0,10000)))
+
+            sql_input = urllib.unquote(str(self.forceGetInputFromPort('source', '')))
+            sql_input = sql_input.split(";")[0]#ogr does not want a trailing ';'
+            '''here we substitute input port values within the source'''
+            for k in self.inputPorts:
+                value = self.getInputFromPort(k)
+                sql_input = sql_input.replace(k, value.__str__())
+
+            self.curs.execute(sql_input)
+            
+            import numpy
+
+            rec = self.curs.fetchone()
+            if rec:
+                foundFloat = False
+                for item in rec:
+                    foundFloat = (type(item) == float)
+                    if foundFloat: break
+                theType = numpy.float32 if foundFloat else numpy.int32
+                print theType
+                dtype = []
+                i = 0
+                for item in rec:
+                    dtype.append((self.curs.description[i][0], theType))
+                    i += 1
+                self.curs.scroll(-1)
+                
+                #TODO: bad hack for now
+                npRecArray = numpy.fromiter(self.curs, dtype=dtype)
+                npArray = npRecArray.view(dtype=theType).reshape(-1,len(npRecArray[0]))
+                
+                out = NDArray()
+                out.set_array(npArray)
+            
+                self.setResult('nummpyArray', out)
+                self.curs.close()
+            else:
+                raise ModuleError,  (PostGisNumpyReturningCursor,  "no records returned")
+        except Exception as ex:
+            self.curs.close()
+            print ex
+            raise ModuleError,  (PostGisNumpyReturningCursor,  "Could not execute SQL Statement")
 
 class PostGisFeatureReturningCursor(Module):
     """Returns data in the form of a eo4vistrails FeatureModel
@@ -218,6 +273,7 @@ class PostGisBasicReturningCursor(Module, PostGisCursor):
                 self.sql_return_list = self.curs.fetchall()
                 import sys
                 print sys.getsizeof(self.sql_return_list)
+                
                 self.setResult('records',  self.sql_return_list)
                 self.curs.close()
             except Exception as ex:

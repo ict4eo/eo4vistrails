@@ -48,7 +48,7 @@ class PostGISRequest(DataRequest, QgsDataSourceURI):
         DataRequest.__init__(self)
         QgsDataSourceURI.__init__(self)
         self._driver = 'postgres'
-        self._layername = 'postgreslayer' + str(random.randint(0,10000))
+        self._layername = 'postgislayer' + str(random.randint(0,10000))
     
     def get_uri(self):
         return self.uri()

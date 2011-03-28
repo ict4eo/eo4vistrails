@@ -49,6 +49,7 @@ class WFS(OGC, Module):
     def __init__(self):
         Module.__init__(self)
         OGC.__init__(self)
+        self.webRequest._driver = 'WFS'
 
 class WFSCommonWidget(QtGui.QWidget):
     """

@@ -42,7 +42,7 @@ version = '0.0.1'
 author_list = 'tvanzyl,bcwele' 
 
 def package_dependencies():
-    return ['edu.utah.sci.vistrails.spreadsheet']
+    return ['edu.utah.sci.vistrails.spreadsheet','edu.utah.sci.vistrails.numpyscipy']
 #    import core.packagemanager
 #    manager = core.packagemanager.get_package_manager()
 #    if manager.has_package('edu.utah.sci.vistrails.spreadsheet'):

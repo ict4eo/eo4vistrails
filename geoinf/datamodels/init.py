@@ -48,7 +48,7 @@ def initialize(*args, **keywords):
     from Raster import RasterModel
     from GeoStrings import GMLString, GeoJSONString, GeoString
     import QgsLayer
-    import QgsLayerWriter
+    #import QgsLayerWriter
 
     """
     sets everything up called from the top level initialize
@@ -61,7 +61,7 @@ def initialize(*args, **keywords):
     reg.add_module(FeatureImport, configureWidgetType=FeatureImportConfigurationWidget, namespace = mynamespace)
 
     # QgsMapLayer
-    reg.add_module(QgsLayer.QgsMapLayer, namespace=mynamespace)
+    reg.add_module(QgsLayer.QgsMapLayer, namespace=mynamespace, abstract=True)
     reg.add_input_port(QgsLayer.QgsMapLayer, 'file', File)
     reg.add_input_port(QgsLayer.QgsMapLayer, 'dataRequest', DataRequest)
     reg.add_output_port(QgsLayer.QgsMapLayer, "value", QgsLayer.QgsMapLayer)
@@ -71,9 +71,9 @@ def initialize(*args, **keywords):
     reg.add_module(QgsLayer.QgsRasterLayer, namespace=mynamespace)
 
     # QgsLayerWriter
-    reg.add_module(QgsLayerWriter.QgsLayerWriter, namespace=mynamespace)
-    reg.add_input_port(QgsLayerWriter.QgsLayerWriter, "value", QgsLayer.QgsMapLayer)
-    reg.add_input_port(QgsLayerWriter.QgsLayerWriter, 'file', File)
+    #reg.add_module(QgsLayerWriter.QgsLayerWriter, namespace=mynamespace)
+    #reg.add_input_port(QgsLayerWriter.QgsLayerWriter, "value", QgsLayer.QgsMapLayer)
+    #reg.add_input_port(QgsLayerWriter.QgsLayerWriter, 'file', File)
 
     # misc.
     reg.add_module(GeoString, namespace=mynamespace)

@@ -34,9 +34,11 @@ executed against the chosen database.
 import core
 #from core.modules.python_source_configure import PythonSourceConfigurationWidget
 #from utils.session import Session
-from PostGIS import PostGisSession,  PostGisCursor,  PostGisFeatureReturningCursor,  PostGisBasicReturningCursor,  PostGisNonReturningCursor,  SQLSourceConfigurationWidget
+from PostGIS import *
 from packages.eo4vistrails.geoinf.datamodels.QgsLayer import QgsVectorLayer
 from packages.eo4vistrails.utils.DataRequest import PostGISRequest
+
+from packages.NumSciPy.Array import NDArray
 
 def initialize(*args, **keywords):
     """Sets up PostGIS modules"""
@@ -68,6 +70,13 @@ def initialize(*args, **keywords):
     reg.add_output_port(PostGisFeatureReturningCursor, 'PostGISRequest',  PostGISRequest)
     reg.add_output_port(PostGisFeatureReturningCursor, 'QgsVectorLayer',  QgsVectorLayer)
     reg.add_output_port(PostGisFeatureReturningCursor, 'self', PostGisFeatureReturningCursor)#supports ControlFlow ExecuteInOrder
+
+    reg.add_module(PostGisNumpyReturningCursor,  namespace = postgis_namespace,  configureWidgetType=SQLSourceConfigurationWidget)
+    reg.add_input_port(PostGisNumpyReturningCursor,  "PostGisSessionObject",  PostGisSession)
+    reg.add_input_port(PostGisNumpyReturningCursor,  "source",  core.modules.basic_modules.String)
+    reg.add_output_port(PostGisNumpyReturningCursor, 'nummpyArray', NDArray)
+    reg.add_output_port(PostGisNumpyReturningCursor, 'self', PostGisNumpyReturningCursor)#supports ControlFlow ExecuteInOrder
+
     
     reg.add_module(PostGisBasicReturningCursor,  namespace = postgis_namespace,  configureWidgetType=SQLSourceConfigurationWidget)
     reg.add_input_port(PostGisBasicReturningCursor,  "PostGisSessionObject",  PostGisSession)

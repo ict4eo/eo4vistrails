@@ -53,11 +53,23 @@ class QgsMapLayer(Module):
         import traceback
         traceback.print_exc()
         raise ModuleError(self, msg + ': %s' % str(error))
-
+    
+    def mapLayerFactory(self, uri=None, layername=None, driver=None):
+        if uri and layername and driver:
+            if driver in QgsVectorLayer.SUPPORTED_DRIVERS:
+                return QgsVectorLayer(uri, layername, driver)
+            elif driver in QgsRasterLayer.SUPPORTED_DRIVERS:
+                return QgsRasterLayer(uri, layername, driver)
+            else:
+                self.raiseError('Map Layer Driver %s not supported' % str(driver))
+        else:
+            self.raiseError('All Map Layer Properties must be set')
 
 class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
     """TO DO: Add doc string
     """
+    SUPPORTED_DRIVERS = ['WFS','ogr', 'postgres']    
+    
     def __init__(self, uri=None, layername=None, driver=None):
         QgsMapLayer.__init__(self)
         if uri and layername and driver:
@@ -71,7 +83,7 @@ class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
 
             isFILE = (thefile != None) and (thefile.name != '')
             #Note this is case sensitive -> "WFS"
-            isQGISSuported = isinstance(dataReq, DataRequest) and dataReq.get_driver() in ['WFS','postgres', 'ogr']
+            isQGISSuported = isinstance(dataReq, DataRequest) and dataReq.get_driver() in self.SUPPORTED_DRIVERS
 
             if isFILE:
                 thefilepath = thefile.name
@@ -95,9 +107,11 @@ class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
 class QgsRasterLayer(QgsMapLayer, qgis.core.QgsRasterLayer):
     """TO DO: Add doc string
     """
+    SUPPORTED_DRIVERS = ['WCS', 'gdl']
+    
     def __init__(self, uri=None, layername=None, driver=None):
         QgsMapLayer.__init__(self)
-        if uri and layername and driver is None:
+        if uri and layername:
             qgis.core.QgsRasterLayer.__init__(self, uri, layername)
 
     def compute(self):
@@ -107,7 +121,7 @@ class QgsRasterLayer(QgsMapLayer, qgis.core.QgsRasterLayer):
             dataReq = self.forceGetInputFromPort('dataRequest', None)
 
             isFILE = (thefile != None) and (thefile.name != '')
-            isQGISSuported = isinstance(dataReq, DataRequest) and dataReq.get_driver() in ['WCS', None]
+            isQGISSuported = isinstance(dataReq, DataRequest) and dataReq.get_driver() in self.SUPPORTED_DRIVERS
 
             if isFILE:
                 thefilepath = thefile.name
