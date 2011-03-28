@@ -25,35 +25,35 @@
 ############################################################################
 """This module provides an OGC (Open Geospatial Consortium) Web Processing Service
 (WPS) Client via pyWPS.
+
+Much of this code comes directly from the QGIS WPS Plugin (dated 09 November 2009)
+
 """
-
-# vistrails imports
-import core.modules.module_registry
-from core.modules.vistrails_module import Module, ModuleError
-
-# to use for config window
-from core.modules.module_configure import StandardModuleConfigurationWidget
-from core.modules.vistrails_module import Module, new_module, NotCacheable, ModuleError
-import init
-
-# Qt import statements
+# library
+import mimetypes
+import os
+import sys
+import string
+import tempfile
+import urllib2
+import urllib
+#from httplib import * ??? are we using this
+from urlparse import urlparse
+# third party
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
-
-# Qt imports for wpstools
 from PyQt4.QtNetwork import *
 from PyQt4 import QtXml
-
-# TO DO - PLEASE DONT USE "from xxx import *"  - rather "from xxx import A,B.C"
-
-from httplib import *
-from urlparse import urlparse
-import os, sys, string, tempfile, urllib2, urllib,  mimetypes
-
-# QGIS Imports
 from qgis.core import *
 from qgis.gui import *
-#from wpstools import *
+# vistrails
+import core.modules.module_registry
+from core.modules.module_configure import StandardModuleConfigurationWidget
+from core.modules.vistrails_module import Module, new_module, NotCacheable, ModuleError
+# eo4vistrails
+# local
+import init
+
 
 # All supported import raster formats
 RASTER_MIMETYPES =        [{"MIMETYPE":"IMAGE/TIFF", "GDALID":"GTiff"},
@@ -72,7 +72,7 @@ VECTOR_MIMETYPES =        [{"MIMETYPE":"TEXT/XML", "SCHEMA":"GML", "GDALID":"GML
                            {"MIMETYPE":"APPLICATION/DGN", "SCHEMA":"", "GDALID":"DGN"}, \
                            #{"MIMETYPE":"APPLICATION/X-ZIPPED-SHP", "SCHEMA":"", "GDALID":"ESRI_Shapefile"}, \
                            {"MIMETYPE":"APPLICATION/SHP", "SCHEMA":"", "GDALID":"ESRI_Shapefile"}]
-
+DEBUG = False
 
 class WPS(Module):
 
@@ -82,23 +82,22 @@ class WPS(Module):
     def compute(self):
         pass
 
-class WpsWidget(QWidget): #,  QtCore.QObject):
+class WpsWidget(QWidget):
     def __init__(self,  parent=None):
         QWidget.__init__(self,  parent)
         self.setObjectName("WpsWidget")
 
 
 class WPSConfigurationWidget(StandardModuleConfigurationWidget):
-    "for configuration widget on vistrails module"
-    def __init__(self, module,  controller,  parent=None):
+    """Configuration widget on vistrails module"""
+    def init__(self, module,  controller,  parent=None):
         StandardModuleConfigurationWidget.__init__(self, module, controller, parent)
         self.setObjectName("WpsConfigWidget")
         self.create_config_window()
         #self.doc = QtXml.QDomDocument()
 
-    #####################################################
-    ## Config widget
     def create_config_window(self):
+        """TODO: add doc string"""
         self.setWindowTitle("OGC WPS Configuration Widget")
         self.setWindowModality(Qt.WindowModal)
         self.setMinimumSize(593, 442)
@@ -224,45 +223,34 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
     def connectServer(self, connection):
         """this is where to use code for adding items to treeWidget
         see qgswps.py:: createCapabilities Gui"""
-
-        print "show me the URL"
-
         connection = self.URLConnect.text()
+        #print connection
         # pass version here
         version = self.launchversion.currentText()
-
-        print connection
-
         if not self.webConnectionExists(connection):
             return 0
-
-        print connection
-
         itemListAll = self.getCapabilities(connection)
-
         #    QMessageBox.information(None, '', itemListAll)
         self.initTreeWPSServices(itemListAll)
 
     def webConnectionExists(self, connection):
+        """TODO: add doc string"""
         try:
             xmlString = self.getServiceXML(connection,"GetCapabilities")
-            print 'connection exists'
+            #print 'connection exists'
             return True
         except:
             QMessageBox.critical(None,'','Web Connection Failed')
             return False
 
-    def  getServiceXML(self, name, request, identifier=None):
+    def getServiceXML(self, name, request, identifier=None):
         """ Gets Server and Connection Info from Stored Server Connections
         Param: String ConnectionName
         Return: Array Server Information (http,www....,/cgi-bin/...,Post||Get,Service Version)
         """
-        print 'getServiceXML - name\n', name
-        print 'getServiceXML - request\n', request
-
+        #print 'getServiceXML - name/request\n', name, request
         result = self.getServer(name)
-        print 'getServiceXML - result\n', result
-
+        #print 'getServiceXML - result\n', result
         path = result["path"]
         server = result["server"]
         method = result["method"]
@@ -273,21 +261,14 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
             myRequest = "?Request="+request+"&Service=WPS&Version="+version
 
         myPath = path+myRequest
-        print 'getServiceXML - myPath\n', myPath
-
+        #print 'getServiceXML - myPath\n', myPath
         self.verbindung = HTTPConnection(str(server))
-        print "self.verbindung\n", self.verbindung
-
-        print "about to call request\n",str(method),str(myPath)
+        #print "self.verbindung\n", self.verbindung
+        #print "about to call request\n",str(method),str(myPath)
         foo = self.verbindung.request(str(method),str(myPath))
-
-        print "foo\n",foo
-
+        #print "foo\n",foo
         results = self.verbindung.getresponse()
-        print "results\n", results
-
-        #print result
-        print 'endXML'
+        #print "results\n", results
         return results.read()
 
     def getServer(self, name):
@@ -295,10 +276,10 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
 
         settings = QSettings()
         # name = self.URLName.text() # this needs to be passed down from connection
-        print 'getserver -name\n',name
+        #print 'getserver -name\n',name
 
         myURL = urlparse(str(name))
-        print myURL
+        #print myURL
 
         mySettings = "/WPS/"+name
         #    settings.setValue("WPS/connections/selected", QVariant(name) )
@@ -306,9 +287,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         ##settings.setValue(mySettings+"/server",  QVariant(myURL.netloc))
         ##settings.setValue(mySettings+"/path", QVariant(myURL.path))
         settings.setValue(mySettings+"/method",QVariant("GET"))
-
-        ##mySettings =  name # "/WPS/" +name
-        print 'getserver - mysettings\n',mySettings
+        #print 'getserver - mysettings\n',mySettings
 
         result = {}
         result["scheme"] = myURL.scheme #str(settings.value(mySettings+"/scheme").toString()) # str(mySettings+"/scheme")
@@ -317,61 +296,58 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         result["method"] = str(settings.value(mySettings+"/method").toString()) #str(mySettings+"/method")
         result["version"] = str(self.launchversion.currentText()) # str(mySettings+"/version") #settings.value(mySettings+"/version").toString()
 
-        print 'getserver - result\n',result
-
+        #print 'getserver - result\n',result
         return result
 
-
-    def getCapabilities(self,  connection):
+    def getCapabilities(self, connection):
+        """TODO: add doc string"""
         xmlString = self.getServiceXML(connection, "GetCapabilities")
         #print xmlString
         self.doc = QtXml.QDomDocument()
-        test = self.doc.setContent(xmlString,  True)
+        test = self.doc.setContent(xmlString, True)
         #test parsing of xml doc
         if test == True:
-            print 'XML document parsed'
+            #print 'XML document parsed'
+            if self.getServiceVersion() != "1.0.0":
+                QMessageBox.information(None, 'Error', 'Only WPS Version 1.0.0 is supprted')
+                return 0
+
+            version    = self.doc.elementsByTagNameNS("http://www.opengis.net/wps/1.0.0","Process")
+            title      = self.doc.elementsByTagNameNS("http://www.opengis.net/ows/1.1","Title")
+            identifier = self.doc.elementsByTagNameNS("http://www.opengis.net/ows/1.1","Identifier")
+            abstract   = self.doc.elementsByTagNameNS("http://www.opengis.net/ows/1.1","Abstract")
+
+            itemListAll = []
+            for i in range(version.size()):
+                #print 'test loop'
+                v_element = version.at(i).toElement()
+                #print v_element.text()
+                i_element = identifier.at(i).toElement()
+                #print i_element.text()
+                t_element = title.at(i+1).toElement()
+                #print t_element.text()
+                a_element = abstract.at(i+1).toElement()
+                #print a_element.text()
+                itemList = []
+                itemList.append(i_element.text())
+                itemList.append(t_element.text())
+                itemList.append(a_element.text())
+                #print i_element.text()
+                itemListAll.append(itemList)
+
+            return itemListAll
         else:
-            print 'document not parsed'
-
-        if self.getServiceVersion() != "1.0.0":
-            QMessageBox.information(None, 'Error', 'Only WPS Version 1.0.0 is supprted')
-            return 0
-
-        version    = self.doc.elementsByTagNameNS("http://www.opengis.net/wps/1.0.0","Process")
-        title      = self.doc.elementsByTagNameNS("http://www.opengis.net/ows/1.1","Title")
-        identifier = self.doc.elementsByTagNameNS("http://www.opengis.net/ows/1.1","Identifier")
-        abstract   = self.doc.elementsByTagNameNS("http://www.opengis.net/ows/1.1","Abstract")
-
-        itemListAll = []
-
-        print itemListAll
-
-        for i in range(version.size()):
-            print 'test loop'
-            v_element = version.at(i).toElement()
-            print v_element.text()
-            i_element = identifier.at(i).toElement()
-            print i_element.text()
-            t_element = title.at(i+1).toElement()
-            print t_element.text()
-            a_element = abstract.at(i+1).toElement()
-            print a_element.text()
-            itemList = []
-            itemList.append(i_element.text())
-            itemList.append(t_element.text())
-            itemList.append(a_element.text())
-            # print i_element.text()
-            itemListAll.append(itemList)
-
-        return itemListAll
+            # raise error ???
+            return []
 
     def getServiceVersion(self):
+        """TODO: add doc string"""
         #self.doc = QtXml.QDomDocument()
         #root = self.doc.documentElement()
-        version = self.launchversion.currentText() #root.attribute("version")
-        return version
+        return self.launchversion.currentText() #root.attribute("version")
 
     def initTreeWPSServices(self, taglist):
+        """TODO: add doc string"""
         self.treeWidget.setColumnCount(self.treeWidget.columnCount())
         itemList = []
         for items in taglist:
@@ -385,15 +361,12 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
             itemList.append(item)
         self.treeWidget.addTopLevelItems(itemList)
 
-    #######################################################################
-    ## Open the Process GUI
     def okButton_clicked(self, bool):
-        """ Use code to create process gui - Create the GUI for a selected WPS process based on the DescribeProcess
-       response document. Mandatory inputs are marked as red, default is black"""
-        #pass
-        print 'OPEN PROCESS GUI'
-        #call processGUI function
-
+        """ Use code to create process gui -
+        Create the GUI for a selected WPS process based on the DescribeProcess
+       response document. Mandatory inputs are marked as red, default is black
+       """
+        #print 'OPEN PROCESS GUI'
         name= self.URLConnect.text()
         item= self.treeWidget.currentItem()
 
@@ -401,19 +374,13 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         #self.process.create_process_GUI(self, pName, item)
         ####Will need to move this to class WPSProcessing later when refactoring
         #self.create_process_GUI(self, name, item)
-
         #def create_process_GUI(self,name, item):
-
-        #pass
 
         try:
             self.processIdentifier = item.text(0)
-            print self.processIdentifier
+            #print self.processIdentifier
         except:
             QMessageBox.warning(None,'',QCoreApplication.translate("QgsWps",'Please select a Process'))
-        #return 0
-
-        print 'test inputs and outputs'
 
         # Lists which store the inputs and meta information (format, occurs, ...)
         # This list is initialized every time the GUI is created
@@ -427,19 +394,16 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         self.inputsMetaInfo = {} # dictionary for input metainfo, key is the input identifier
         self.outputsMetaInfo = {} # dictionary for output metainfo, key is the output identifier
         self.outputDataTypeList = {}
-
         self.processName = name
 
-
         flags = Qt.WindowTitleHint | Qt.WindowSystemMenuHint | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint  # QgisGui.ModalDialogFlags
-        # Recive the XML process description
+        # Receive the XML process description
         self.pDoc = QtXml.QDomDocument()
         self.pDoc.setContent(self.getServiceXML(self.processName,"DescribeProcess",self.processIdentifier), True)
         DataInputs = self.pDoc.elementsByTagName("Input")
-        print DataInputs.size()
+        #print DataInputs.size()
         DataOutputs = self.pDoc.elementsByTagName("Output")
-        print DataOutputs.length()
-
+        #print DataOutputs.length()
 
         # Create the layouts and the scroll area
         ##self.dlgProcess = QgsWpsDescribeProcessGui(self.dlg, flags) ## don't need this now, maybe later
@@ -465,8 +429,6 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
             self.startProcess()
         #return 0
 
-        print 'add intro test'
-
         # Generate the input GUI buttons and widgets
         self.generateProcessInputsGUI(DataInputs)
         # Generate the editable outpt widgets, you can set the output to none if it is not requested
@@ -478,10 +440,10 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         self.dlgProcessScrollArea.setWidgetResizable(True)
 
         self.dlgProcessTabFrameLayout.addWidget(self.dlgProcessScrollArea)
+        self.dlgProcessTabFrame.setLayout(self.dlgProcessTabFrameLayout)
 
         self.addOkCancelButtons()
 
-        self.dlgProcessTabFrame.setLayout(self.dlgProcessTabFrameLayout)
         self.dlgProcessTab.addTab(self.dlgProcessTabFrame, "Process")
 
         self.addDocumentationTab(abstract)
@@ -491,15 +453,13 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         self.dlgProcess.setGeometry(QRect(190,100,800,600))
         self.dlgProcess.show()
 
-
     def generateProcessInputsGUI(self, DataInputs):
-        """Generate the GUI for all Inputs defined in the process description XML file"""
+        """Generate the GUI for all inputs defined in
+        the process description XML file"""
         # Create the complex inputs at first
         for i in range(DataInputs.size()):
             f_element = DataInputs.at(i).toElement()
-
             inputIdentifier, title, abstract = self.getIdentifierTitleAbstractFromElement(f_element)
-
             complexData = f_element.elementsByTagName("ComplexData")
             minOccurs = int(f_element.attribute("minOccurs"))
             maxOccurs = int(f_element.attribute("maxOccurs"))
@@ -551,7 +511,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
                 allowedValuesElement = literalData.at(0).toElement()
                 aValues = allowedValuesElement.elementsByTagNameNS("http://www.opengis.net/ows/1.1","AllowedValues")
                 dValue = str(allowedValuesElement.elementsByTagName("DefaultValue").at(0).toElement().text())
-                print "Checking allowed values " + str(aValues.size())
+                #print "Checking allowed values " + str(aValues.size())
                 if aValues.size() > 0:
                     valList = self.allowedValues(aValues)
                     if len(valList) > 0:
@@ -562,7 +522,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
                 else:
                     self.literalInputLineEditList.append(self.addLiteralLineEdit(title, inputIdentifier, minOccurs, dValue))
 
-    # At last, create the bounding box inputs
+        # At last, create the bounding box inputs
         for i in range(DataInputs.size()):
             f_element = DataInputs.at(i).toElement()
 
@@ -587,12 +547,11 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
 
                     self.literalInputComboBoxList.append(self.addLiteralComboBox("Supported CRS", inputIdentifier,crsListe, minOccurs))
 
-
         self.addCheckBox(QCoreApplication.translate("QgsWps","Process selected objects only"), QCoreApplication.translate("QgsWps","Selected"))
 
     def generateProcessOutputsGUI(self, DataOutputs):
-        print 'get outputs'
-        """Generate the GUI for all complex ouputs defined in the process description XML file"""
+        """Generate the GUI for all complex ouputs
+        defined in the process description XML file"""
 
         if DataOutputs.size() < 1:
             return
@@ -629,7 +588,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         self.dlgProcessScrollAreaWidgetLayout.addWidget(groupbox)
 
     def addOkCancelButtons(self):
-        #print 'ok'
+        """TODO: add doc string"""
         groupbox = QFrame()
         layout = QHBoxLayout()
 
@@ -654,7 +613,6 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         QObject.connect(btnCancel,SIGNAL("clicked()"),self.dlgProcess.close)
 
     def startProcess(self):
-        print 'start'
         """Create the execute request"""
         self.doc.setContent(self.getServiceXML(self.processName,"DescribeProcess",self.processIdentifier))
         dataInputs = self.doc.elementsByTagName("Input")
@@ -683,19 +641,17 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         postString += "<ows:Identifier>"+self.processIdentifier+"</ows:Identifier>\n"
         postString += "<wps:DataInputs>"
 
-        # text/plain inputs ########################################################
+        # text/plain inputs
         for textBox in self.complexInputTextBoxList:
 
         # Do not add undefined inputs
             if textBox == None or str(textBox.document().toPlainText()) == "":
                 continue
-
             postString += self.xmlExecuteRequestInputStart(textBox.objectName())
             postString += "<wps:ComplexData>" + textBox.document().toPlainText() + "</wps:ComplexData>\n"
             postString += self.xmlExecuteRequestInputEnd()
 
-
-        # Single raster and vector inputs ##########################################
+        # Single raster and vector inputs
         for comboBox in self.complexInputComboBoxList:
         # Do not add undefined inputs
             if comboBox == None or unicode(comboBox.currentText(), 'latin1') == "<None>":
@@ -719,7 +675,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
             postString += "</wps:ComplexData>\n"
             postString += self.xmlExecuteRequestInputEnd()
 
-        # Multiple raster and vector inputs ########################################
+        # Multiple raster and vector inputs
         for listWidgets in self.complexInputListWidgetList:
         # Do not add undefined inputs
             if listWidgets == None:
@@ -748,24 +704,21 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
             postString += "</wps:ComplexData>\n"
             postString += self.xmlExecuteRequestInputEnd()
 
-        # Literal data as combo box choice #########################################
+        # Literal data as combo box choice
         for comboBox in self.literalInputComboBoxList:
             if comboBox == None or comboBox.currentText() == "":
                 continue
-
             postString += self.xmlExecuteRequestInputStart(comboBox.objectName())
             postString += "<wps:LiteralData>"+comboBox.currentText()+"</wps:LiteralData>\n"
             postString += self.xmlExecuteRequestInputEnd()
 
-        # Literal data as combo box choice #########################################
+        # Literal data as combo box choice
         for lineEdit in self.literalInputLineEditList:
             if lineEdit == None or lineEdit.text() == "":
                 continue
-
             postString += self.xmlExecuteRequestInputStart(lineEdit.objectName())
             postString += "<wps:LiteralData>"+lineEdit.text()+"</wps:LiteralData>\n"
             postString += self.xmlExecuteRequestInputEnd()
-
         postString += "</wps:DataInputs>\n"
 
         # Attach only defined outputs
@@ -774,7 +727,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
             # The server should store the result. No lineage should be returned or status
             postString += "<wps:ResponseDocument lineage=\"false\" storeExecuteResponse=\"true\" status=\"false\">\n"
 
-            # Attach ALL literal outputs #############################################
+            # Attach ALL literal outputs
             for i in range(dataOutputs.size()):
                 f_element = dataOutputs.at(i).toElement()
                 outputIdentifier = f_element.elementsByTagName("ows:Identifier").at(0).toElement().text().simplified()
@@ -786,7 +739,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
                     postString += "<ows:Identifier>"+outputIdentifier+"</ows:Identifier>\n"
                     postString += "</wps:Output>\n"
 
-            # Attach selected complex outputs ########################################
+            # Attach selected complex outputs
             for comboBox in self.complexOutputComboBoxList:
                 # Do not add undefined outputs
                 if comboBox == None or str(comboBox.currentText()) == "<None>":
@@ -814,16 +767,17 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
             outFile.write(postString)
             outFile.close()
 
-        f = urllib.urlopen( str(scheme)+"://"+str(server)+""+str(path), unicode(postString, "latin1").replace('<wps:ComplexData>\n','<wps:ComplexData>'))
+        f = urllib.urlopen( str(scheme)+"://"+str(server)+""+str(path),
+            unicode(postString, "latin1").replace('<wps:ComplexData>\n','<wps:ComplexData>'))
 
         # Read the results back.
         wpsRequestResult = f.read()
         QApplication.restoreOverrideCursor()
         QApplication .setOverrideCursor(Qt.ArrowCursor)
         self.resultHandler(wpsRequestResult)
-        print 'end processing'
 
     def addDocumentationTab(self, abstract):
+        """TODO: add doc string"""
         # Check for URL
         if str(abstract).find("http://") == 0:
             textBox = QtWebKit.QWebView(self.dlgProcessTab)
@@ -838,14 +792,12 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
     def addComplexInputComboBox(self, title, name, mimeType, namesList, minOccurs):
         """Adds a combobox to select a raster or vector map as input to the process tab"""
         groupbox = QGroupBox(self.dlgProcessScrollAreaWidget)
-        #groupbox.setTitle(name)
         groupbox.setMinimumHeight(25)
         layout = QHBoxLayout()
 
         # This input is optional
         if minOccurs == 0:
             namesList.append("<None>")
-
         comboBox = QComboBox(groupbox)
         comboBox.addItems(namesList)
         comboBox.setObjectName(name)
@@ -959,8 +911,8 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         return textBox
 
     def addComplexOutputComboBox(self, widget, name, title, mimeType):
-
-        """Adds a combobox to select a raster or vector map as input to the process tab"""
+        """Adds a combobox to select a raster or vector map
+        as input to the process tab"""
 
         groupbox = QGroupBox(widget)
         groupbox.setMinimumHeight(25)
@@ -998,7 +950,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         return groupbox, comboBox
 
     def addLiteralComboBox(self, title, name, namesList, minOccurs):
-
+        """TODO: add doc string"""
         groupbox = QGroupBox(self.dlgProcessScrollAreaWidget)
         #groupbox.setTitle(name)
         groupbox.setMinimumHeight(25)
@@ -1036,7 +988,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         return comboBox
 
     def addLiteralLineEdit(self, title, name, minOccurs, defaultValue=""):
-
+        """TODO: add doc string"""
         groupbox = QGroupBox(self.dlgProcessScrollAreaWidget)
         #groupbox.setTitle(name)
         groupbox.setMinimumHeight(25)
@@ -1073,8 +1025,8 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
 
         return myLineEdit
 
-    def addCheckBox(self,  title,  name):
-
+    def addCheckBox(self, title, name):
+        """TODO: add doc string"""
         groupbox = QGroupBox(self.dlgProcessScrollAreaWidget)
         #groupbox.setTitle(name)
         groupbox.setMinimumHeight(25)
@@ -1100,35 +1052,36 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         self.dlgProcessScrollAreaWidgetLayout.addWidget(groupbox)
 
     def getIdentifierTitleAbstractFromElement(self, element):
+        """TODO: add doc string"""
         inputIdentifier = element.elementsByTagNameNS("http://www.opengis.net/ows/1.1","Identifier").at(0).toElement().text().simplified()
         title      = element.elementsByTagNameNS("http://www.opengis.net/ows/1.1","Title").at(0).toElement().text().simplified()
         abstract   = element.elementsByTagNameNS("http://www.opengis.net/ows/1.1","Abstract").at(0).toElement().text().simplified()
-
         return inputIdentifier, title, abstract
 
-    def addIntroduction(self,  name, title):
+    def addIntroduction(self, name, title):
+        """TODO: add doc string"""
         groupbox = QGroupBox(self.dlgProcessScrollAreaWidget)
         groupbox.setTitle(name)
         layout = QVBoxLayout()
-
+        # label
         myLabel = QLabel(groupbox)
         myLabel.setObjectName("qLabel"+name)
         myLabel.setText(QString(title))
         myLabel.setMinimumWidth(600)
         myLabel.setMinimumHeight(25)
         myLabel.setWordWrap(True)
-
+        # layout
         layout.addWidget(myLabel)
-
         groupbox.setLayout(layout)
-
         self.dlgProcessScrollAreaWidgetLayout.addWidget(groupbox)
 
-    def getDefaultMimeType(self,  inElement):
+    def getDefaultMimeType(self, inElement):
+        """TODO: add doc string"""
         myElement = inElement.elementsByTagName("Default").at(0).toElement()
         return self._getMimeTypeSchemaEncoding(myElement)
 
-    def getSupportedMimeTypes(self,  inElement):
+    def getSupportedMimeTypes(self, inElement):
+        """TODO: add doc string"""
         mimeTypes = []
         myElements = inElement.elementsByTagName("Supported").at(0).toElement()
         myFormats = myElements.elementsByTagName('Format')
@@ -1137,7 +1090,8 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
             mimeTypes.append(self._getMimeTypeSchemaEncoding(myElement))
         return mimeTypes
 
-    def _getMimeTypeSchemaEncoding(self,  Element):
+    def getMimeTypeSchemaEncoding(self, Element):
+        """TODO: add doc string"""
         mimeType = ""
         schema = ""
         encoding = ""
@@ -1158,8 +1112,8 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         return None
 
     def getLayerNameList(self, dataType=0, all=False):
+        """TODO: add doc string"""
         myLayerList = []
-
         if all:
             mapLayers = QgsMapLayerRegistry.instance().mapLayers()
             for (k, layer) in mapLayers.iteritems():
@@ -1179,9 +1133,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
     def uniqueLayerName(self, name):
         """TO DO: Check the output ports and assign a new unique name to the output layer
         We need to discuss how to go about this"""
-
-        print 'output layer'
-
+        #print 'output layer'
         mapLayers = QgsMapLayerRegistry.instance().mapLayers()
         i=1
         layerNameList = []
@@ -1197,10 +1149,9 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         newName = name+unicode(str(i),'latin1')
         return newName
 
-
     def allowedValues(self, aValues):
+        """TODO: add doc string"""
         valList = []
-
         # Manage a value list defined by a range
         value_element = aValues.at(0).toElement()
         v_range_element = value_element.elementsByTagNameNS("http://www.opengis.net/ows/1.1","Range")
@@ -1221,7 +1172,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
                 mv_element = v_element.at(n).toElement()
                 valList.append(unicode(mv_element.text(),'latin1').strip())
 
-        print str(valList)
+        #print str(valList)
         return valList
 
     def isMimeTypeText(self, mimeType):
@@ -1246,6 +1197,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         mbox.exec_()
 
     def xmlExecuteRequestInputStart(self, identifier):
+        """TODO: add doc string"""
         string = ""
         string += "<wps:Input>\n"
         string += "<ows:Identifier>"+identifier+"</ows:Identifier>\n"
@@ -1254,12 +1206,14 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         return string
 
     def xmlExecuteRequestInputEnd(self):
+        """TODO: add doc string"""
         string = ""
         string += "</wps:Data>\n"
         string += "</wps:Input>\n"
         return string
 
-    def createTmpBase64(self,  layer):
+    def createTmpBase64(self, layer):
+        """TODO: add doc string"""
         try:
             filename = tempfile.mktemp(prefix="base64")
             rLayer = self.getVLayer(layer)
@@ -1275,19 +1229,15 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         return base64String
 
     def getVLayer(self,name):
+        """TODO: add doc string"""
         #   Die sichtbaren Layer der Legende zur weiteren Bearbeitung holen
-        # get the map canvas
-        mc=QgsMapCanvas()
-
-        # how many layers are there?
-        nLayers=mc.layerCount()
-
-        for l in range(nLayers):
-            layer = mc.layer(l)
+        for l in range(QgsMapCanvas().layerCount()):
+            layer = QgsMapCanvas().layer(l)
             if layer.name() == name:
                 return layer
 
     def createTmpGML(self, layer, processSelection="False"):
+        """TODO: add doc string"""
         myQTempFile = QTemporaryFile()
         myQTempFile.open()
         tmpFile = unicode(myQTempFile.fileName(),'latin1')
@@ -1302,14 +1252,11 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
 
         writer = self.createGMLFileWriter(tmpFile, fieldList, vLayer.dataProvider().geometryType(),encoding)
 
-        ##    print "TEMP-GML-File Name: "+tmpFile
-
+        #print "TEMP-GML-File Name: "+tmpFile
         provider = vLayer.dataProvider()
-
         feat = QgsFeature()
         allAttrs = provider.attributeIndexes()
         provider.select(allAttrs)
-
         featureList = vLayer.selectedFeatures()
 
         if processSelection and vLayer.selectedFeatureCount() > 0:
@@ -1336,7 +1283,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         return gmlString.simplified()
 
     def createGMLFileWriter(self, myTempFile, fields, geometryType, encoding):
-
+        """TODO: add doc string"""
         writer = QgsVectorFileWriter(myTempFile, encoding, fields, geometryType, None, "GML")
         if writer.hasError() != QgsVectorFileWriter.NoError:
             message = self.writerErrorMessage(writer.hasError())
@@ -1345,6 +1292,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         return writer
 
     def getDBEncoding(self, layerProvider):
+        """TODO: add doc string"""
         dbConnection = QgsDataSourceURI(layerProvider.dataSourceUri())
         db = QSqlDatabase.addDatabase("QPSQL","WPSClient")
         db.setHostName(dbConnection.host())
@@ -1365,9 +1313,9 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
 
         return encoding
 
-    # Get the List of Fields
-    # Return: QGsFieldMap
     def getFieldList(self, vlayer):
+        """Get the Llist of Fields
+        Return: QGsFieldMap"""
         fProvider = vlayer.dataProvider()
         feat = QgsFeature()
         allAttrs = fProvider.attributeIndexes()
@@ -1377,13 +1325,11 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         myFields = fProvider.fields()
         return myFields
 
-    #######################################################################
-
     def getDescription(self):
+        """TODO: add doc string"""
         pass
 
-###############################################
-####Other Helper classes
+
 class WPSMessageBox(QMessageBox):
     """A resizable message box to show debug info"""
     def __init__(self):
@@ -1409,14 +1355,13 @@ class WPSMessageBox(QMessageBox):
 
         return result
 
-    #########################################################################
-    ## Processing Class
 
 class WPSProcessing():
+    """TODO: add doc string"""
 
     def processGUI(self):
-        print 'process dummy'
-        #pass
+        #print 'process dummy'
+        pass
 
     def processTools(self):
         pass

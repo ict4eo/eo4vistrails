@@ -90,7 +90,7 @@ class OGC(NotCacheable):
             if self.post_data and self.url:
                 webRequest.url = self.url
                 webRequest.data = self.post_data
-            print "webRequest",webRequest
+            #print "webRequest",webRequest
             self.setResult(init.WEB_REQUEST_PORT, webRequest)
 
         # text port
@@ -104,9 +104,9 @@ class OGC(NotCacheable):
             # conditional execution: only setResult if downstream connection
             if init.VECTOR_PORT in self.outputPorts:
                 qgsVectorLayer = QgsVectorLayer(self.url, self.layername, 'WFS')
-                print "qgsVectorLayer", qgsVectorLayer
+                #print "qgsVectorLayer", qgsVectorLayer
                 self.setResult(init.VECTOR_PORT, qgsVectorLayer)
             if init.RASTER_PORT in self.outputPorts:
                 qgsRasterLayer = QgsRasterLayer(self.url, self.layername)
-                print "qgsRasterLayer", qgsRasterLayer
+                #print "qgsRasterLayer", qgsRasterLayer
                 self.setResult(init.RASTER_PORT, qgsRasterLayer)
