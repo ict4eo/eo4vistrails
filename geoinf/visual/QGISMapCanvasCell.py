@@ -58,24 +58,19 @@ class QGISMapCanvasCell(SpreadsheetCell):
     """TO DO: Add doc string
     """
     def compute(self):
-        """ compute() -> None
-        """
+        """ compute() -> None"""
         if self.hasInputFromPort("baselayer"):
-            base_layer = self.getInputFromPort("baselayer")
+            self.base_layer = self.getInputFromPort("baselayer")
             #print "base_layer id/type/srs :", base_layer.getLayerID(), type(base_layer), base_layer.srs()
-            crsDest = QgsCoordinateReferenceSystem(base_layer.srs())
+            self.crsDest = QgsCoordinateReferenceSystem(self.base_layer.srs())
             if self.hasInputFromPort("layer"):
-                layers = self.getInputListFromPort("layer")
-                # transform other layers to same co-ordinate system as base layer
-                for lyr in layers:
-                    #print "layer id/type/srs :", lyr.getLayerID(), type(lyr), unicode(lyr.srs())
-                    crsSrc = QgsCoordinateReferenceSystem(lyr.srs())
-                    xform = QgsCoordinateTransform(crsSrc, crsDest)
-                    #xform.transform(lyr)  # cannot transform/reproject a whole layer ???
-                layers.append(base_layer)
+                self.layers = self.getInputListFromPort("layer")
+                # add base layer LAST (last in, first out)
+                self.layers.append(self.base_layer)
             else:
-                layers = self.getInputFromPort("baselayer")
-            self.cellWidget = self.displayAndWait(QGISMapCanvasCellWidget, (layers,crsDest))
+                self.layers = self.getInputFromPort("baselayer")
+            self.cellWidget = self.displayAndWait(QGISMapCanvasCellWidget,
+                                                  (self.layers,self.crsDest))
         else:
             raise ModuleError(
                 self,
@@ -96,35 +91,40 @@ class QGISMapCanvasCellWidget(QCellWidget, QMainWindow):
         self.canvas.show()
         self.tools = QMainWindow()
 
-        actionAddLayer = QAction(QIcon(path_png_icon + "/mActionAddLayer.png"), "Add Layer", self.tools)
-        actionZoomIn = QAction(QIcon(path_png_icon + "/mActionZoomIn.png"), "Zoom In", self.tools)
-        actionZoomOut = QAction(QIcon(path_png_icon + "/mActionZoomOut.png"), "Zoom Out", self.tools)
-        actionPan = QAction(QIcon(path_png_icon + "/mActionPan.png"), "Pan", self.tools)
+        actionAddLayer = QAction(QIcon(path_png_icon + \
+                        "/mActionAddLayer.png"), "Add Layer", self.tools)
+        actionZoomIn = QAction(QIcon(path_png_icon + \
+                        "/mActionZoomIn.png"), "Zoom In", self.tools)
+        actionZoomOut = QAction(QIcon(path_png_icon + \
+                        "/mActionZoomOut.png"), "Zoom Out", self.tools)
+        actionPan = QAction(QIcon(path_png_icon + \
+                        "/mActionPan.png"), "Pan", self.tools)
 
+        # toolbar
         self.toolbar = self.tools.addToolBar("Canvas actions")
         self.toolbar.addAction(actionAddLayer)
         self.toolbar.addAction(actionZoomIn)
         self.toolbar.addAction(actionZoomOut)
         self.toolbar.addAction(actionPan)
 
+        # create the map tools
+        self.toolPan = QgsMapToolPan(self.canvas,)
+        self.toolPan.setAction(actionPan)
+        self.toolZoomIn = QgsMapToolZoom(self.canvas, False) # false == in
+        self.toolZoomIn.setAction(actionZoomIn)
+        self.toolZoomOut = QgsMapToolZoom(self.canvas, True) # true == out
+        self.toolZoomOut.setAction(actionZoomOut)
+
+        # overall layout
         self.setLayout(QtGui.QVBoxLayout(self))
         self.layout().addWidget(self.toolbar)
         self.layout().addWidget(self.canvas)
 
+        # set signals
         self.connect(actionAddLayer, SIGNAL("activated()"), self.addLayer)
         self.connect(actionZoomIn, SIGNAL("activated()"), self.zoomIn)
         self.connect(actionZoomOut, SIGNAL("activated()"), self.zoomOut)
         self.connect(actionPan, SIGNAL("activated()"), self.pan)
-
-        # create the map tools
-        self.toolPan = QgsMapToolPan(self.canvas,)
-        self.toolPan.setAction(actionPan)
-
-        self.toolZoomIn = QgsMapToolZoom(self.canvas, False) # false == in
-        self.toolZoomIn.setAction(actionZoomIn)
-
-        self.toolZoomOut = QgsMapToolZoom(self.canvas, True) # true == out
-        self.toolZoomOut.setAction(actionZoomOut)
 
     def addLayer(self):
         """TO DO: Add doc string"""
@@ -156,31 +156,16 @@ class QGISMapCanvasCellWidget(QCellWidget, QMainWindow):
             pass
             #TODO handle the list case.
 
-        # attempt to use "auto (on the fly) reprojection" (not working ???)
+        # allow "auto" (on the fly) reprojection
+        #   transform other layers to same co-ordinate system as base layer
+        #   NB raster layers cannot be projected in QGIS 1.6 and earlier
         myrender = self.canvas.mapRenderer()
-        myrender.setProjectionsEnabled(True)
+        myrender.setProjectionsEnabled(True) #print self.canvas.hasCrsTransformEnabled()
         myrender.setDestinationSrs(crsDest)
-        #print self.canvas.hasCrsTransformEnabled()
 
         mapCanvasLayers = []
         for layer in inputLayers:
-            #print "Layer name/ID:",layer.name(), layer.getLayerID()
             if layer.isValid():
-                '''
-                # check type of layer, as opposed to using file extension
-                #if layer and layer.type() == QgsMapLayer.RasterLayer:
-                    #extent = layer.extent()
-                file_extension = str(layer.name())
-                if file_extension.endswith(".shp"):
-                    #get the label instance associated with the layer a
-                    label = layer.label()
-                    labelAttributes = label.layerAttributes()
-                    #using first field (specified by index 0) as the label field
-                    label.setLabelField(QgsLabel.Text,  0)
-                    # set the colour of the label text
-                    labelAttributes.setColor(QtCore.Qt.black)
-                    layer.enableLabels(True)
-                '''
                 # Add layer to the registry (one registry for ALL maps ???)
                 QgsMapLayerRegistry.instance().addMapLayer(layer, True)
                 # Set up the map canvas layer
