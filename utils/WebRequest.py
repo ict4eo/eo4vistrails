@@ -24,7 +24,7 @@
 ### WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ###
 #############################################################################
-"""This module forms part of the eo4vistrails capabilities  - it is used to
+"""This module forms part of the eo4vistrails capabilities - it is used to
 handle web request (e.g. for WFS, WCS or SOS) processing inside vistrails.
 """
 
@@ -34,9 +34,8 @@ from core.modules.vistrails_module import ModuleError
 class WebRequest(DataRequest):
     """This module will process a web-based request.
 
-    With only the 'url' port set, the module will execute a GET request.
-
-    With the 'data' port set as well, the module will execute a POST request.
+    * With only the 'urls' port set, the module will execute a GET request.
+    * With the 'data' port set as well, the module will execute a POST request.
     """
 
     def __init__(self, url=None, data=None, runTheRequest=False):
@@ -45,16 +44,18 @@ class WebRequest(DataRequest):
         self.data = data
         self.runTheRequest = runTheRequest
 
-    def get_uri(self): 
+    def get_uri(self):
+        """Overwrite method in DataRequest"""
         return self.url
 
     def get_layername(self):
+        """Overwrite method in DataRequest"""
         if not self._layername:
             import random
             random.seed()
             self._layername = 'web_layer' + str(random.randint(0,10000))
         return self._layername
-    
+
     def compute(self):
         """Execute the module to create the output"""
         # separate URL
@@ -72,7 +73,7 @@ class WebRequest(DataRequest):
             request = self.getInputFromPort('request')
             self.url = request.url
             self.data = request.data
-            #print "\nWebRequest:86\n url:%s\n data: %s" % (self.url, self.data)
+            #print "\nWebRequest:74\n url:%s\n data: %s" % (self.url, self.data)
         except:
             pass
         # execute request IF required
@@ -126,6 +127,7 @@ class WebRequest(DataRequest):
         return result
 
     def requestType(self):
+        """Determine the request type - return GET or POST"""
         request_type = 'GET'
         if self.data:
             request_type = 'POST'
