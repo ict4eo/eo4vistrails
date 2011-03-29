@@ -75,6 +75,7 @@ VECTOR_MIMETYPES =        [{"MIMETYPE":"TEXT/XML", "SCHEMA":"GML", "GDALID":"GML
 DEBUG = False
 DEFAULT_URL = 'http://ict4eo.meraka.csir.co.za/cgi-bin/wps.py'
 
+
 class WPS(Module):
 
     def __init__(self):
@@ -82,6 +83,7 @@ class WPS(Module):
 
     def compute(self):
         pass
+
 
 class WpsWidget(QWidget):
     def __init__(self,  parent=None):
@@ -91,7 +93,7 @@ class WpsWidget(QWidget):
 
 class WPSConfigurationWidget(StandardModuleConfigurationWidget):
     """Configuration widget on vistrails module"""
-    def init__(self, module,  controller,  parent=None):
+    def __init__(self, module, controller, parent=None):
         StandardModuleConfigurationWidget.__init__(self, module, controller, parent)
         self.setObjectName("WpsConfigWidget")
         self.create_config_window()
@@ -193,52 +195,45 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         self.treeWidget.headerItem().setText(1, "Title")
         self.treeWidget.headerItem().setText(2, "Abstract")
 
-
         # Signals
-        ##Connect button
+        #   Connect button
         self.connect(
             self.btnConnect,
             SIGNAL('clicked(bool)'),
             self.connectServer
             )
 
-        ## OK button
+        #    OK button
         self.connect(
             self.btnOk,
             SIGNAL('clicked(bool)'),
             self.okButton_clicked
             )
-        ## Cancel Button
+        #    Cancel Button
         self.connect(
             self.btnCancel,
             SIGNAL('clicked(bool)'),
             self.close
             )
 
-    #######################################
-    #### Connecting to the WPS Server and accessing capabilities
-
-    #def btnConnect_clicked(self):
-        #self.connectServer()
-
     def connectServer(self, connection):
-        """this is where to use code for adding items to treeWidget
+        """Add items to treeWidget
         see qgswps.py:: createCapabilities Gui"""
         connection = self.URLConnect.text()
-        #print connection
+        #print 'WPS:connection', connection
         # pass version here
         version = self.launchversion.currentText()
         if not self.webConnectionExists(connection):
             return 0
         itemListAll = self.getCapabilities(connection)
-        #    QMessageBox.information(None, '', itemListAll)
+        #QMessageBox.information(None, '', itemListAll)
         self.initTreeWPSServices(itemListAll)
 
     def webConnectionExists(self, connection):
         """TODO: add doc string"""
         try:
             xmlString = self.getServiceXML(connection,"GetCapabilities")
-            #print 'connection exists'
+            #print 'WPS: connection exists'
             return True
         except:
             QMessageBox.critical(None,'','Web Connection Failed')
@@ -249,9 +244,9 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         Param: String ConnectionName
         Return: Array Server Information (http,www....,/cgi-bin/...,Post||Get,Service Version)
         """
-        #print 'getServiceXML - name/request\n', name, request
+        #print 'WPS: getServiceXML - name/request\n', name, request
         result = self.getServer(name)
-        #print 'getServiceXML - result\n', result
+        #print 'WPS: getServiceXML - result\n', result
         path = result["path"]
         server = result["server"]
         method = result["method"]
@@ -262,14 +257,14 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
             myRequest = "?Request="+request+"&Service=WPS&Version="+version
 
         myPath = path+myRequest
-        #print 'getServiceXML - myPath\n', myPath
+        #print 'WPS: getServiceXML - myPath\n', myPath
         self.verbindung = HTTPConnection(str(server))
-        #print "self.verbindung\n", self.verbindung
-        #print "about to call request\n",str(method),str(myPath)
+        #print "WPS: self.verbindung\n", self.verbindung
+        #print "WPS: about to call request\n",str(method),str(myPath)
         foo = self.verbindung.request(str(method),str(myPath))
-        #print "foo\n",foo
+        #print "WPS: foo\n",foo
         results = self.verbindung.getresponse()
-        #print "results\n", results
+        #print "WPS: results\n", results
         return results.read()
 
     def getServer(self, name):
@@ -277,7 +272,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
 
         settings = QSettings()
         # name = self.URLName.text() # this needs to be passed down from connection
-        #print 'getserver -name\n',name
+        #print 'WPS: getserver -name\n',name
 
         myURL = urlparse(str(name))
         #print myURL
@@ -288,7 +283,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         ##settings.setValue(mySettings+"/server",  QVariant(myURL.netloc))
         ##settings.setValue(mySettings+"/path", QVariant(myURL.path))
         settings.setValue(mySettings+"/method",QVariant("GET"))
-        #print 'getserver - mysettings\n',mySettings
+        #print 'WPS: getserver - mysettings\n',mySettings
 
         result = {}
         result["scheme"] = myURL.scheme #str(settings.value(mySettings+"/scheme").toString()) # str(mySettings+"/scheme")
@@ -297,7 +292,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         result["method"] = str(settings.value(mySettings+"/method").toString()) #str(mySettings+"/method")
         result["version"] = str(self.launchversion.currentText()) # str(mySettings+"/version") #settings.value(mySettings+"/version").toString()
 
-        #print 'getserver - result\n',result
+        #print 'WPS: getserver - result\n',result
         return result
 
     def getCapabilities(self, connection):
@@ -308,7 +303,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         test = self.doc.setContent(xmlString, True)
         #test parsing of xml doc
         if test == True:
-            print 'XML document parsed'
+            print 'WPS: XML document parsed'
 
         if self.getServiceVersion() != "1.0.0":
             QMessageBox.information(None, 'Error', 'Only WPS Version 1.0.0 is supported')
@@ -321,7 +316,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
 
         itemListAll = []
         for i in range(version.size()):
-            #print 'test loop'
+            #print 'WPS: test loop'
             v_element = version.at(i).toElement()
             #print v_element.text()
             i_element = identifier.at(i).toElement()
@@ -370,7 +365,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         Create the GUI for a selected WPS process based on the DescribeProcess
        response document. Mandatory inputs are marked as red, default is black
        """
-        #print 'OPEN PROCESS GUI'
+        #print 'WPS: OPEN PROCESS GUI'
         name= self.URLConnect.text()
         item= self.treeWidget.currentItem()
 
@@ -515,7 +510,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
                 allowedValuesElement = literalData.at(0).toElement()
                 aValues = allowedValuesElement.elementsByTagNameNS("http://www.opengis.net/ows/1.1","AllowedValues")
                 dValue = str(allowedValuesElement.elementsByTagName("DefaultValue").at(0).toElement().text())
-                #print "Checking allowed values " + str(aValues.size())
+                #print "WPS: Checking allowed values " + str(aValues.size())
                 if aValues.size() > 0:
                     valList = self.allowedValues(aValues)
                     if len(valList) > 0:
@@ -1137,7 +1132,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
     def uniqueLayerName(self, name):
         """TO DO: Check the output ports and assign a new unique name to the output layer
         We need to discuss how to go about this"""
-        #print 'output layer'
+        #print 'WPS: output layer'
         mapLayers = QgsMapLayerRegistry.instance().mapLayers()
         i=1
         layerNameList = []
@@ -1256,7 +1251,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
 
         writer = self.createGMLFileWriter(tmpFile, fieldList, vLayer.dataProvider().geometryType(),encoding)
 
-        #print "TEMP-GML-File Name: "+tmpFile
+        #print "WPS: TEMP-GML-File Name: "+tmpFile
         provider = vLayer.dataProvider()
         feat = QgsFeature()
         allAttrs = provider.attributeIndexes()
@@ -1364,7 +1359,7 @@ class WPSProcessing():
     """TODO: add doc string"""
 
     def processGUI(self):
-        #print 'process dummy'
+        #print 'WPS: process dummy'
         pass
 
     def processTools(self):

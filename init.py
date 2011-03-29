@@ -21,12 +21,6 @@ try:
     from geoinf.ogc import init as ogc_init
 except:
     import geoinf.ogc.init as ogc_init
-#brings in ogc processing modules
-try:
-    from geoinf.ogc.processing import init as ogc_proc_init
-except:
-    import geoinf.ogc.processing.init as ogc_proc_init
-
 
 #brings in datamodels modules
 try:
@@ -39,12 +33,12 @@ try:
     from dataanalytics import init as dataanalytics_init
 except:
     import dataanalytics.init as dataanalytics_init
-   
+
 # brings visual widgets
 try:
     from geoinf.visual import init as visual_init
 except:
-    import geoinf.visual.init as visual_init  
+    import geoinf.visual.init as visual_init
 
 
 def initialize(*args, **keywords):
@@ -56,14 +50,13 @@ def initialize(*args, **keywords):
     # function addModule:
 
     #Isolate the registration of the modules
-    #Note order does count
+
+    #NOTE! order does count
 
     utils_init.initialize(*args, **keywords)
     datamodels_init.initialize(*args, **keywords)
-    ogc_init.initialize(*args, **keywords)  # looks like no-one is willing to mess up this file, so have created ogc specific init.py as well.
-    ogc_proc_init.initialize(*args, **keywords)
+    ogc_init.initialize(*args, **keywords)
     postgis_init.initialize(*args,  **keywords)
     visual_init.initialize(*args,  **keywords)
     rpyc_init.initialize(*args, **keywords)
     dataanalytics_init.initialize(*args, **keywords)
-    

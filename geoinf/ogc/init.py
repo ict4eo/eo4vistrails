@@ -7,6 +7,7 @@ DATA_PORT = "OGC_data"
 WEB_REQUEST_PORT = "web_request"
 VECTOR_PORT = "QgsVectorLayer"
 RASTER_PORT = "QgsRasterLayer"
+MAP_LAYER_PORT = "QgsLayer"
 
 def initialize(*args, **keywords):
     """TO DO: Add doc string"""
@@ -14,18 +15,27 @@ def initialize(*args, **keywords):
 
     import core
 
-    from packages.eo4vistrails.geoinf.datamodels.QgsLayer import QgsVectorLayer, QgsRasterLayer
+    from packages.eo4vistrails.geoinf.datamodels.QgsLayer import \
+        QgsMapLayer, QgsVectorLayer, QgsRasterLayer
+    from packages.eo4vistrails.geoinf.ogc.WPS import WPS, WPSConfigurationWidget
     from packages.eo4vistrails.geoinf.ogc.WFS import WFS, WFSConfigurationWidget
     from packages.eo4vistrails.geoinf.ogc.WCS import WCS, WCSConfigurationWidget
     from packages.eo4vistrails.geoinf.ogc.SOS import SOS, SOSConfigurationWidget
     from packages.eo4vistrails.utils.WebRequest import WebRequest
 
     reg = get_module_registry()
-    utils_namespace = "ogc"
+    ogc_namespace = "ogc"
 
-    reg.add_module(WFS, configureWidgetType=WFSConfigurationWidget, namespace = utils_namespace)
-    reg.add_module(SOS, configureWidgetType=SOSConfigurationWidget, namespace = utils_namespace)
-    reg.add_module(WCS, configureWidgetType=WCSConfigurationWidget, namespace = utils_namespace)
+    reg.add_module(WPS, configureWidgetType=WPSConfigurationWidget, namespace=ogc_namespace)
+    reg.add_module(WFS, configureWidgetType=WFSConfigurationWidget, namespace=ogc_namespace)
+    reg.add_module(SOS, configureWidgetType=SOSConfigurationWidget, namespace=ogc_namespace)
+    reg.add_module(WCS, configureWidgetType=WCSConfigurationWidget, namespace=ogc_namespace)
+
+    # WPS MODULE
+    reg.add_input_port(
+        WPS,
+        MAP_LAYER_PORT,
+        (QgsMapLayer, 'QGIS Map Layer'))
 
     # WFS MODULE
     reg.add_input_port(
