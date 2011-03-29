@@ -8,6 +8,7 @@ WEB_REQUEST_PORT = "web_request"
 VECTOR_PORT = "QgsVectorLayer"
 RASTER_PORT = "QgsRasterLayer"
 MAP_LAYER_PORT = "QgsMapLayer"
+DATA_RESULT_PORT = "WPS_data"
 
 def initialize(*args, **keywords):
     """TO DO: Add doc string"""
@@ -37,6 +38,28 @@ def initialize(*args, **keywords):
         MAP_LAYER_PORT,
         (QgsMapLayer, 'QGIS Map Layer'))
 
+    reg.add_input_port(
+        WPS,
+        OGC_POST_DATA_PORT,
+        (core.modules.basic_modules.String, 'POST Data'))#, True)
+    reg.add_input_port(
+        WPS,
+        OGC_URL_PORT,
+        (core.modules.basic_modules.String, 'URL String'))#, True)
+    reg.add_input_port(
+        WPS,
+        WEB_REQUEST_PORT,
+        WebRequest)#,True)
+
+    reg.add_output_port(
+        WPS,
+        MAP_LAYER_PORT,
+        (QgsMapLayer, 'QGIS Map Layer'))
+    reg.add_output_port(
+        WPS,
+        DATA_RESULT_PORT,
+        (QgsMapLayer, 'QGIS Map Layer'))
+
     # WFS MODULE
     reg.add_input_port(
         WFS,
@@ -62,6 +85,10 @@ def initialize(*args, **keywords):
         WFS,
         WEB_REQUEST_PORT,
         WebRequest)#,True)
+    reg.add_output_port(
+        WFS,
+        DATA_PORT,
+        (core.modules.basic_modules.String, 'Data Result'))#,True)
 
     # WCS MODULE
     reg.add_input_port(
