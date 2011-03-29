@@ -159,10 +159,10 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         #self.hboxlayout.setMargin(0)
         #self.hboxlayout.setObjectName("hboxlayout")
         #self.mainLayout.addLayout(self.hboxlayout, 3, 0, 1, 1)
-        self.btnAbout = QPushButton()
-        self.btnAbout.setObjectName("btnAbout")
-        self.btnAbout.setText("About")
-        self.mainLayout.addWidget(self.btnAbout, 5, 0, 1, 1)
+        #self.btnAbout = QPushButton()
+        #self.btnAbout.setObjectName("btnAbout")
+        #self.btnAbout.setText("About")
+        #self.mainLayout.addWidget(self.btnAbout, 5, 0, 1, 1)
         spacerItem1 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
         self.mainLayout.addItem(spacerItem1, 5, 2, 1, 1)
         """self.buttonBox = QDialogButtonBox()
@@ -175,13 +175,13 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         #self.btnCancel.setText("Cancel")
         self.btnCancel.setAutoDefault(False)
         self.btnCancel.setShortcut('Esc')
-        self.btnCancel.setMinimumWidth(100)
+        self.btnCancel.setMinimumWidth(40)
         self.btnCancel.setMaximumWidth(100)
         self.mainLayout.addWidget(self.btnCancel, 5, 4, 1, 1)
 
         self.btnOk = QPushButton('&OK', self)
         #self.btnOk.setText("OK")
-        self.btnOk.setMinimumWidth(100)
+        self.btnOk.setMinimumWidth(40)
         self.btnOk.setMaximumWidth(100)
         self.btnOk.setAutoDefault(False)
         self.mainLayout.addWidget(self.btnOk, 5, 5, 1, 1)
@@ -1089,7 +1089,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
             mimeTypes.append(self._getMimeTypeSchemaEncoding(myElement))
         return mimeTypes
 
-    def getMimeTypeSchemaEncoding(self, Element):
+    def _getMimeTypeSchemaEncoding(self, Element):
         """TODO: add doc string"""
         mimeType = ""
         schema = ""
@@ -1224,7 +1224,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
             base64String = outfile.read()
             os.remove(filename)
         except:
-            QMessageBox.error(None, '', "Unable to create temporal file: " + filename + " for base64 encoding")
+            QMessageBox.warning(None, '', "Unable to create temporal file: " + filename + " for base64 encoding")
         return base64String
 
     def getVLayer(self,name):

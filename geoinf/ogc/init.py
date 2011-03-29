@@ -7,7 +7,7 @@ DATA_PORT = "OGC_data"
 WEB_REQUEST_PORT = "web_request"
 VECTOR_PORT = "QgsVectorLayer"
 RASTER_PORT = "QgsRasterLayer"
-MAP_LAYER_PORT = "QgsLayer"
+MAP_LAYER_PORT = "QgsMapLayer"
 
 def initialize(*args, **keywords):
     """TO DO: Add doc string"""
