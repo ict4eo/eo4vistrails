@@ -35,10 +35,9 @@ from PyQt4.QtCore import QFileInfo
 # vistrails
 from core.modules.vistrails_module import Module, ModuleError
 # eo4vistrails
+from packages.eo4vistrails.utils.DataRequest import DataRequest
 # local
 
-
-from packages.eo4vistrails.utils.DataRequest import DataRequest
 
 #export set PYTHONPATH=/usr/lib/python2.6
 qgis.core.QgsApplication.setPrefixPath("/usr", True)
@@ -53,8 +52,9 @@ class QgsMapLayer(Module):
         import traceback
         traceback.print_exc()
         raise ModuleError(self, msg + ': %s' % str(error))
-    
+
     def mapLayerFactory(self, uri=None, layername=None, driver=None):
+        """Create a QGIS map layer based on driver."""
         if uri and layername and driver:
             if driver in QgsVectorLayer.SUPPORTED_DRIVERS:
                 return QgsVectorLayer(uri, layername, driver)
@@ -65,11 +65,12 @@ class QgsMapLayer(Module):
         else:
             self.raiseError('All Map Layer Properties must be set')
 
+
 class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
-    """TO DO: Add doc string
+    """Create a QGIS vector layer.
     """
-    SUPPORTED_DRIVERS = ['WFS','ogr', 'postgres']    
-    
+    SUPPORTED_DRIVERS = ['WFS','ogr', 'postgres']
+
     def __init__(self, uri=None, layername=None, driver=None):
         QgsMapLayer.__init__(self)
         if uri and layername and driver:
@@ -83,13 +84,17 @@ class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
 
             isFILE = (thefile != None) and (thefile.name != '')
             #Note this is case sensitive -> "WFS"
-            isQGISSuported = isinstance(dataReq, DataRequest) and dataReq.get_driver() in self.SUPPORTED_DRIVERS
+            isQGISSuported = isinstance(dataReq, DataRequest) and \
+                            dataReq.get_driver() in self.SUPPORTED_DRIVERS
 
             if isFILE:
                 thefilepath = thefile.name
                 thefilename = QFileInfo(thefilepath).fileName()
                 qgis.core.QgsVectorLayer.__init__(
-                    self, thefilepath, thefilename, "ogr")
+                    self,
+                    thefilepath,
+                    thefilename,
+                    "ogr")
             elif isQGISSuported:
                 qgis.core.QgsVectorLayer.__init__(
                     self,
@@ -97,7 +102,8 @@ class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
                     dataReq.get_layername(),
                     dataReq.get_driver())
             else:
-                self.raiseError('vector Layer Driver %s not supported' % str(dataReq.get_driver()))
+                self.raiseError('Vector Layer Driver %s not supported' %
+                                str(dataReq.get_driver()))
 
             self.setResult('value', self)
         except Exception, e:
@@ -105,10 +111,10 @@ class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
 
 
 class QgsRasterLayer(QgsMapLayer, qgis.core.QgsRasterLayer):
-    """TO DO: Add doc string
+    """Create a QGIS raster layer.
     """
     SUPPORTED_DRIVERS = ['WCS', 'gdl']
-    
+
     def __init__(self, uri=None, layername=None, driver=None):
         QgsMapLayer.__init__(self)
         if uri and layername:
@@ -121,20 +127,24 @@ class QgsRasterLayer(QgsMapLayer, qgis.core.QgsRasterLayer):
             dataReq = self.forceGetInputFromPort('dataRequest', None)
 
             isFILE = (thefile != None) and (thefile.name != '')
-            isQGISSuported = isinstance(dataReq, DataRequest) and dataReq.get_driver() in self.SUPPORTED_DRIVERS
+            isQGISSuported = isinstance(dataReq, DataRequest) and \
+                            dataReq.get_driver() in self.SUPPORTED_DRIVERS
 
             if isFILE:
                 thefilepath = thefile.name
                 thefilename = QFileInfo(thefilepath).fileName()
                 qgis.core.QgsRasterLayer.__init__(
-                    self, thefilepath, thefilename)
+                    self,
+                    thefilepath,
+                    thefilename)
             elif isQGISSuported:
                 qgis.core.QgsRasterLayer.__init__(
                     self,
                     dataReq.get_uri(),
                     dataReq.get_layername())
             else:
-                self.raiseError('Raster Layer Driver %s not supported' % str(dataReq.get_driver()))
+                self.raiseError('Raster Layer Driver %s not supported' %
+                                str(dataReq.get_driver()))
 
             self.setResult('value', self)
         except Exception, e:
