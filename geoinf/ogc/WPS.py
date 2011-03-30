@@ -139,11 +139,11 @@ class WPS(Module):
                 # start wrapper
                 postString = xmlExecuteRequestInputStart(layer.name(),True)
                 # meta data
-                if type(layer) == type(QgsLayer.QgsVectorLayer):
+                if isinstance(layer, QgsLayer.QgsVectorLayer):  #type(layer) == type(QgsLayer.QgsVectorLayer):
                     mimeType = "text/xml" # get from layer?  DO URGENTLY !!!
                     schema = "FOO"
                     encoding = "FOO"
-                elif type(layer) == type(QgsLayer.QgsRasterLayer):
+                elif isinstance(layer, QgsLayer.QgsRasterLayer):
                     mimeType = "tiff" # get from layer?  DO URGENTLY !!!
                 else:
                     self.raiseError('Unknown layer type:'+str(type(layer)))
