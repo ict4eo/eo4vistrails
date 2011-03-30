@@ -51,6 +51,7 @@ import core.modules.module_registry
 from core.modules.module_configure import StandardModuleConfigurationWidget
 from core.modules.vistrails_module import Module, new_module, NotCacheable, ModuleError
 # eo4vistrails
+from packages.eo4vistrails.geoinf.datamodels import QgsLayer
 # local
 import init
 
@@ -76,16 +77,19 @@ DEBUG = False
 DEFAULT_URL = 'http://ict4eo.meraka.csir.co.za/cgi-bin/wps.py'
 
 
-def xmlExecuteRequestInputStart(self, identifier):
+def xmlExecuteRequestInputStart(identifier, namespace=False):
     """TODO: add doc string"""
     string = ""
-    string += "<wps:Input>\n"
+    if namespace:
+        string += '<wps:Input xmlns:wps="http://www.opengis.net/wps/1.0.0" xmlns:ows="http://www.opengis.net/ows/1.1">\n'
+    else:
+        string += "<wps:Input>\n"
     string += "<ows:Identifier>"+identifier+"</ows:Identifier>\n"
     string += "<ows:Title>"+identifier+"</ows:Title>\n"
     string += "<wps:Data>\n"
     return string
 
-def xmlExecuteRequestInputEnd(self):
+def xmlExecuteRequestInputEnd():
     """TODO: add doc string"""
     string = ""
     string += "</wps:Data>\n"
@@ -106,49 +110,60 @@ class WPS(Module):
         raise ModuleError(self, msg + ': %s' % str(error))
 
     def compute(self):
+        # get base URL
+        self.url = self.getInputFromPort(init.OGC_URL_PORT)
         # get base POST request
         self.postString = self.getInputFromPort(init.OGC_POST_DATA_PORT)
         # get layers
         self.layers = self.getInputListFromPort(init.MAP_LAYER_PORT)
-        # add in layer details to POST request
-        self.postString = self.addLayersToPost(self.postString, self.layers)
-        # connect to server
-        f = urllib.urlopen( str(scheme)+"://"+str(server)+""+str(path),
-            unicode(postString, "latin1").replace('<wps:ComplexData>\n','<wps:ComplexData>'))
-        # get the results back
-        wpsRequestResult = f.read()
-        # set the output ports
-        self.resultHandler(wpsRequestResult)
+        if self.postString and self.url:
+            # add in layer details to POST request
+            self.postString = self.addLayersToPost(self.postString, self.layers)
+            # connect to server
+            f = urllib.urlopen(self.url, unicode(self.postString, "latin1"))
+            # get the results back
+            wpsRequestResult = f.read()
+            # set the output ports
+            self.resultHandler(wpsRequestResult)
+        else:
+            self.raiseError('Unable to set URL and POST string')
 
     def addLayersToPost(self, postStringIn, layers):
-        """Add in the input port layer as part of the POST request.
+        """Insert the input port layer(s) as part of the POST request.
 
-        First draft only handles one layer as input."""
+        First draft: only handles one layer as input."""
 
         if postStringIn:
-            # create XML to be inserted
-            postString += xmlExecuteRequestInputStart(listWidgets.objectName())
-            postString += "<wps:ComplexData>\n"
-
             for layer in layers:
-
-                mimeType = "text/xml"
-                schema = "FOO"
-                encoding = "FOO"
-
+                #print "WPS:138 layer type",type(layer)
+                # start wrapper
+                postString = xmlExecuteRequestInputStart(layer.name(),True)
+                # meta data
+                if type(layer) == type(QgsLayer.QgsVectorLayer):
+                    mimeType = "text/xml" # get from layer?  DO URGENTLY !!!
+                    schema = "FOO"
+                    encoding = "FOO"
+                elif type(layer) == type(QgsLayer.QgsRasterLayer):
+                    mimeType = "tiff" # get from layer?  DO URGENTLY !!!
+                else:
+                    self.raiseError('Unknown layer type:'+str(type(layer)))
+                # layer types
                 if  mimeType == "text/xml":
                     postString += '<wps:ComplexData mimeType="' + mimeType + '" schema="' + schema + '" encoding="' + encoding + '">'
                     postString += self.createTmpGML(layer)
                 else:
-                    postString += '<wps:ComplexData mimeType="' + mimeType + '" encoding="base64">\n'
+                    postString += '<wps:ComplexData mimeType="' + mimeType + '" encoding="base64">'
                     postString += self.createTmpBase64(layer)
+                # end wrapper
+                postString += "</wps:ComplexData>"
+                postString += xmlExecuteRequestInputEnd()
+                #print "WPS:160 postString",postString
+                # insert new XML into the existing POST string in the DataInputs
+                # NB: NO prefix on search node
+                postStringIn = self.insertElement(postStringIn,postString,
+                    'DataInputs','http://www.opengis.net/wps/1.0.0')
 
-            postString += "</wps:ComplexData>\n"
-            postString += xmlExecuteRequestInputEnd()
-
-            # insert new XML into the existing POST string
-            #
-
+        #print "WPS:165",postStringIn
         return postStringIn
 
         """
@@ -221,7 +236,7 @@ class WPS(Module):
         """Handle the result of the WPS Execute request and add the outputs to
         the appropriate ports.
         """
-
+        self.doc = QtXml.QDomDocument()
         self.doc.setContent(resultXML, True)
         resultNodeList = self.doc.elementsByTagNameNS("http://www.opengis.net/wps/1.0.0","Output")
 
@@ -289,7 +304,7 @@ class WPS(Module):
     def createTmpGML(self, vLayer, processSelection="False"):
         """TODO: add doc string
 
-        * vLayer is an actual QGIS map layer
+        * vLayer is an actual QGIS vector map layer
         """
         myQTempFile = QTemporaryFile()
         myQTempFile.open()
@@ -300,6 +315,7 @@ class WPS(Module):
         else:
             encoding = vLayer.dataProvider().encoding()
 
+        fieldList = self.getFieldList(vLayer)
         writer = self.createGMLFileWriter(tmpFile, fieldList, vLayer.dataProvider().geometryType(),encoding)
 
         #print "WPS: TEMP-GML-File Name: "+tmpFile
@@ -379,7 +395,48 @@ class WPS(Module):
             exceptionText += resultElement.attribute("exceptionCode")
 
         if len(exceptionText) > 0:
-            self.raiseError("WPS Error", resultXML)
+            self.raiseError(resultXML)
+
+    def createGMLFileWriter(self, myTempFile, fields, geometryType, encoding):
+        """TODO: add doc string"""
+        writer = QgsVectorFileWriter(myTempFile, encoding, fields, geometryType, None, "GML")
+        if writer.hasError() != QgsVectorFileWriter.NoError:
+            message = self.writerErrorMessage(writer.hasError())
+            QMessageBox.warning(None, '', message)
+            return 0
+        return writer
+
+    def getFieldList(self, vlayer):
+        """Get the Llist of Fields
+        Return: QGsFieldMap"""
+        fProvider = vlayer.dataProvider()
+        feat = QgsFeature()
+        allAttrs = fProvider.attributeIndexes()
+        # start data retrieval: all attributes for each feature
+        fProvider.select(allAttrs, QgsRectangle(), False)
+        # retrieve every feature with its attributes
+        myFields = fProvider.fields()
+        return myFields
+
+    def insertElement(self, source, element, node, namespace=None):
+        """insert element into source at a specified 'node'.
+
+        All items arrive as strings; result is a string"""
+        #print source,"\n",element,"\n", node,"\n"
+        #print "WPS:419 ELEMENT\n",element,"\n",
+        if node and not ':' in node:
+            import xml.etree.ElementTree as xml
+            if namespace:
+                node = "{%s}%s" % (namespace,node)
+            doc = xml.fromstring(source)
+            if len(doc.findall('*//'+node)) > 0:
+                target = doc.findall('*//'+node)[0]
+                new_element = xml.fromstring(element)
+                target.append(new_element)
+            return xml.tostring(doc)
+        else:
+            self.raiseError("WPS insertElement Error",
+                "Cannot use a ':' in an element name.")
 
 
 class WpsWidget(QWidget):
@@ -394,7 +451,6 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         StandardModuleConfigurationWidget.__init__(self, module, controller, parent)
         self.setObjectName("WpsConfigWidget")
         self.create_config_window()
-        #self.doc = QtXml.QDomDocument()
 
     def create_config_window(self):
         """TODO: add doc string"""
@@ -460,7 +516,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         #self.btnAbout.setObjectName("btnAbout")
         #self.btnAbout.setText("About")
         #self.mainLayout.addWidget(self.btnAbout, 5, 0, 1, 1)
-        spacerItem1 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        spacerItem1 = QSpacerItem(10, 10, QSizePolicy.Expanding, QSizePolicy.Minimum)
         self.mainLayout.addItem(spacerItem1, 5, 2, 1, 1)
         """self.buttonBox = QDialogButtonBox()
         self.buttonBox.setEnabled(True)
@@ -468,20 +524,21 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         self.buttonBox.setObjectName("buttonBox")
         self.mainLayout.addWidget(self.buttonBox, 4, 4, 1, 1)
         """
+
+        # TODO: change to an auto-layout (see addOkCancelButtons for example)
+
         self.btnCancel = QPushButton('&Cancel', self)
-        #self.btnCancel.setText("Cancel")
         self.btnCancel.setAutoDefault(False)
         self.btnCancel.setShortcut('Esc')
-        self.btnCancel.setMinimumWidth(40)
-        self.btnCancel.setMaximumWidth(100)
         self.mainLayout.addWidget(self.btnCancel, 5, 4, 1, 1)
 
+        self.btnConfig = QPushButton('Configure &Process', self)
+        self.btnConfig.setAutoDefault(False)
+        self.mainLayout.addWidget(self.btnConfig, 5, 5, 1, 1)
+
         self.btnOk = QPushButton('&OK', self)
-        #self.btnOk.setText("OK")
-        self.btnOk.setMinimumWidth(40)
-        self.btnOk.setMaximumWidth(100)
         self.btnOk.setAutoDefault(False)
-        self.mainLayout.addWidget(self.btnOk, 5, 5, 1, 1)
+        self.mainLayout.addWidget(self.btnOk, 5, 6, 1, 1)
 
         self.treeWidget = QTreeWidget()
         self.treeWidget.setColumnCount(3)
@@ -500,11 +557,17 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
             self.connectServer
             )
 
+        #    Config button
+        self.connect(
+            self.btnConfig,
+            SIGNAL('clicked(bool)'),
+            self.configButton_clicked
+            )
         #    OK button
         self.connect(
             self.btnOk,
             SIGNAL('clicked(bool)'),
-            self.okButton_clicked
+            self.close
             )
         #    Cancel Button
         self.connect(
@@ -583,6 +646,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         #print 'WPS: getserver - mysettings\n',mySettings
 
         result = {}
+        result["url"] = str(name)
         result["scheme"] = myURL.scheme #str(settings.value(mySettings+"/scheme").toString()) # str(mySettings+"/scheme")
         result["server"] = myURL.netloc # str(mySettings+"/server") # str(settings.value(mySettings+"/server").toString()) #
         result["path"] = myURL.path #str(settings.value(mySettings+"/path").toString()) # str(mySettings+"/path") #
@@ -645,6 +709,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
     def initTreeWPSServices(self, taglist):
         """TODO: add doc string"""
         self.treeWidget.setColumnCount(self.treeWidget.columnCount())
+        self.treeWidget.clear()
         itemList = []
         for items in taglist:
             item = QTreeWidgetItem()
@@ -657,7 +722,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
             itemList.append(item)
         self.treeWidget.addTopLevelItems(itemList)
 
-    def okButton_clicked(self, bool):
+    def configButton_clicked(self, bool):
         """ Use code to create process gui -
         Create the GUI for a selected WPS process based on the DescribeProcess
        response document. Mandatory inputs are marked as red, default is black
@@ -748,6 +813,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         self.dlgProcess.setLayout(self.dlgProcessLayout)
         self.dlgProcess.setGeometry(QRect(190,100,800,600))
         self.dlgProcess.show()
+        print 'WPS: 808'
 
     def generateProcessInputsGUI(self, DataInputs):
         """Generate the GUI for all inputs defined in the process description
@@ -897,17 +963,14 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         layout = QHBoxLayout()
 
         btnOk = QPushButton(groupbox)
-        btnOk.setText(QString("Run"))
-        btnOk.setMinimumWidth(50)
-        btnOk.setMaximumWidth(100)
+        btnOk.setText(QString("&OK"))
 
         btnCancel = QPushButton(groupbox)
-        btnCancel.setText("Back")
-        btnCancel.setMinimumWidth(50)
-        btnCancel.setMaximumWidth(100)
+        btnCancel.setText("&Cancel")
+        btnCancel.setShortcut('Esc')
 
+        layout.addStretch(1)  # force buttons to the right
         layout.addWidget(btnOk)
-        layout.addStretch(1)
         layout.addWidget(btnCancel)
 
         groupbox.setLayout(layout)
@@ -918,32 +981,34 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
 
     def startProcess(self):
         """Create the execute request"""
+        #print "WPS:976 top startProcess"
         self.doc.setContent(self.getServiceXML(self.processName,"DescribeProcess",self.processIdentifier))
         dataInputs = self.doc.elementsByTagName("Input")
         dataOutputs = self.doc.elementsByTagName("Output")
 
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        #QApplication.setOverrideCursor(Qt.WaitCursor)
         result = self.getServer(self.processName)
         scheme = result["scheme"]
         path = result["path"]
         server = result["server"]
+        #print "WPS:988 result", result
 
         checkBoxes = self.dlgProcess.findChildren(QCheckBox)
 
         if len(checkBoxes) > 0:
             useSelected = checkBoxes[0].isChecked()
 
-        postString = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"
-        postString += "<wps:Execute service=\"WPS\" version=\""+ self.getServiceVersion() + "\"" + \
-                   " xmlns:wps=\"http://www.opengis.net/wps/1.0.0\"" + \
-                   " xmlns:ows=\"http://www.opengis.net/ows/1.1\"" +\
-                   " xmlns:xlink=\"http://www.w3.org/1999/xlink\"" +\
-                   " xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\""\
-                   " xsi:schemaLocation=\"http://www.opengis.net/wps/1.0.0" +\
-                   " http://schemas.opengis.net/wps/1.0.0/wpsExecute_request.xsd\">"
+        postString = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
+        postString += '<wps:Execute service="WPS" version="'+ self.getServiceVersion() + '"' + \
+                   ' xmlns:wps="http://www.opengis.net/wps/1.0.0"' + \
+                   ' xmlns:ows="http://www.opengis.net/ows/1.1"' +\
+                   ' xmlns:xlink="http://www.w3.org/1999/xlink"' +\
+                   ' xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"'\
+                   ' xsi:schemaLocation="http://www.opengis.net/wps/1.0.0' +\
+                   ' http://schemas.opengis.net/wps/1.0.0/wpsExecute_request.xsd">'
 
-        postString += "<ows:Identifier>"+self.processIdentifier+"</ows:Identifier>\n"
-        postString += "<wps:DataInputs>"
+        postString += '<ows:Identifier>'+self.processIdentifier+'</ows:Identifier>\n'
+        postString += '<wps:DataInputs>'
 
         # text/plain inputs
         for textBox in self.complexInputTextBoxList:
@@ -1012,8 +1077,17 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
 
         postString += "</wps:Execute>\n"
 
-        # Attach postString to port
-        self.setResult(init.OGC_POST_DATA_PORT, postString)
+        # Attach postString to input port
+        functions = []
+        functions.append(
+            (init.OGC_POST_DATA_PORT, [postString]),
+            )
+        functions.append(
+            (init.OGC_URL_PORT, [result["url"]]),
+            )
+        self.controller.update_ports_and_functions(
+            self.module.id, [], [], functions
+            )
 
         # This is for debug purpose only
         if DEBUG == True:
@@ -1023,7 +1097,8 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
             outFile.write(postString)
             outFile.close()
 
-
+        self.dlgProcess.close()
+        #print "WPS:1092 bottom startProcess"
 
     def addDocumentationTab(self, abstract):
         """TODO: add doc string"""
@@ -1445,15 +1520,6 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         mbox.setDetailedText(detailedText)
         mbox.exec_()
 
-    def createGMLFileWriter(self, myTempFile, fields, geometryType, encoding):
-        """TODO: add doc string"""
-        writer = QgsVectorFileWriter(myTempFile, encoding, fields, geometryType, None, "GML")
-        if writer.hasError() != QgsVectorFileWriter.NoError:
-            message = self.writerErrorMessage(writer.hasError())
-            QMessageBox.warning(None, '', message)
-            return 0
-        return writer
-
     def getDBEncoding(self, layerProvider):
         """TODO: add doc string"""
         dbConnection = QgsDataSourceURI(layerProvider.dataSourceUri())
@@ -1475,18 +1541,6 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         db.close()
 
         return encoding
-
-    def getFieldList(self, vlayer):
-        """Get the Llist of Fields
-        Return: QGsFieldMap"""
-        fProvider = vlayer.dataProvider()
-        feat = QgsFeature()
-        allAttrs = fProvider.attributeIndexes()
-        # start data retrieval: all attributes for each feature
-        fProvider.select(allAttrs, QgsRectangle(), False)
-        # retrieve every feature with its attributes
-        myFields = fProvider.fields()
-        return myFields
 
     def getDescription(self):
         """TODO: add doc string"""

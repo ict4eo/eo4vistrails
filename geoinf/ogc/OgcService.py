@@ -45,14 +45,16 @@ class OGC(NotCacheable):
     """
     Provide basic connection service to an OGC (Open Geospatial Consortium)
     web service.
+
     Configuration allows the base URL for the service to be set and called.
     Choosing the appropriate combination of specific service type and other
     parameters, will cause the input port to be set with a specific POST call,
     once the configuration interface is closed.
-    Running the module will set the (string) values of the URL and data (if any)
-    for access via the output ports.
 
+    Running the module will set the (string) values of the URL, data (if any),
+    and the resulting QGIS layer, for access via the output ports.
     """
+
     def __init__(self):
         self.post_data = None
         self.get_request = None
@@ -81,10 +83,9 @@ class OGC(NotCacheable):
             self.url = self.getInputFromPort(init.OGC_URL_PORT)
         except:
             self.url = None
-        #print "OgcService:77\n url: %s, get: %s\n data: %s" % (self.url, self.get_request, self.post_data)
+        #print "OgcService:87\n url: %s, get: %s\n data: %s" % (self.url, self.get_request, self.post_data)
 
         # web request port
-
         if init.WEB_REQUEST_PORT in self.outputPorts:
             if self.get_request:
                 self.webRequest.url = self.get_request
@@ -103,7 +104,6 @@ class OGC(NotCacheable):
         # layer port
         if self.url:
             random.seed()
-            #self.layername = self.getInputFromPort(init.OGC_LAYERNAME_PORT) or 'ogc_layer'  #TODO: add random no.            
             self.layername = self.getInputFromPort(init.OGC_LAYERNAME_PORT) or \
                 self.webRequest.get_layername() or \
                 'ogc_layer' + str(random.randint(0,10000))

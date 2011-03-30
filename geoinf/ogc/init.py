@@ -37,7 +37,6 @@ def initialize(*args, **keywords):
         WPS,
         MAP_LAYER_PORT,
         (QgsMapLayer, 'QGIS Map Layer'))
-
     reg.add_input_port(
         WPS,
         OGC_POST_DATA_PORT,
@@ -49,7 +48,7 @@ def initialize(*args, **keywords):
     reg.add_input_port(
         WPS,
         WEB_REQUEST_PORT,
-        WebRequest)#,True)
+        (WebRequest, 'Web Request'))#,True)
 
     reg.add_output_port(
         WPS,
