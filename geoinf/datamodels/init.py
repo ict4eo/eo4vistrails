@@ -43,6 +43,8 @@ def initialize(*args, **keywords):
     from packages.eo4vistrails.utils.WebRequest import WebRequest, DataRequest
     from packages.eo4vistrails.geoinf.datamodels.FeatureImport import \
         FeatureImport, FeatureImportConfigurationWidget
+    from packages.eo4vistrails.geoinf.datamodels.RasterImport import \
+        RasterImport, RasterImportConfigurationWidget
     # local
     from Feature import FeatureModel, FileFeatureModel, MemFeatureModel
     from Raster import RasterModel
@@ -98,3 +100,4 @@ def initialize(*args, **keywords):
 
     # RasterModel
     reg.add_module(RasterModel, namespace=mynamespace) #abstract
+    reg.add_module(RasterImport, configureWidgetType=RasterImportConfigurationWidget, namespace = mynamespace)
