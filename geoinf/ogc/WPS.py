@@ -111,16 +111,71 @@ class WPS(Module):
 
     def compute(self):
         # get base URL
-        self.url = self.getInputFromPort(init.OGC_URL_PORT)
+        self.url = self.getInputFromPort(init.OGC_REQUEST_PORT)
         # get base POST request
         self.postString = self.getInputFromPort(init.OGC_POST_DATA_PORT)
         # get layers
         self.layers = self.getInputListFromPort(init.MAP_LAYER_PORT)
         if self.postString and self.url:
             # add in layer details to POST request
-            self.postString = self.addLayersToPost(self.postString, self.layers)
+            self.postString = \
+                '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' \
+                + self.addLayersToPost(self.postString, self.layers)
+            #print "\nWPS:124 self.postString\n", self.postString
+            #print "\nWPS:125 self.url\n", self.url
             # connect to server
-            f = urllib.urlopen(self.url, unicode(self.postString, "latin1"))
+
+
+            """#TEST POST
+            self.postString = '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<wps:Execute service="WPS" version="1.0.0"
+    xmlns:wps="http://www.opengis.net/wps/1.0.0" xmlns:ows="http://www.opengis.net/ows/1.1"
+    xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.opengis.net/wps/1.0.0
+http://schemas.opengis.net/wps/1.0.0/wpsExecute_request.xsd">
+    <ows:Identifier>BufferProcess</ows:Identifier>
+    <wps:DataInputs>
+        <wps:Input>
+            <ows:Identifier>GMLInput</ows:Identifier>
+            <wps:Data>
+                <wps:ComplexData>
+                    <Curve gml:id="C1" xmlns="http://www.opengis.net/gml"
+                        xmlns:gml="http://www.opengis.net/gml" srsName="EPSG:4326"
+                        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                        xsi:schemaLocation="http://www.opengis.net/gml http://schemas.opengis.net/gml/3.1.1/base/geometryPrimitives.xsd">
+                        <segments>
+                            <Arc interpolation="circularArc3Points">
+                                <posList srsName="EPSG:4326">2 0 0 2 -2 0</posList>
+                            </Arc>
+                            <LineStringSegment interpolation="linear">
+                                <posList srsName="EPSG:4326">-2 0 0 -2 2 0</posList>
+                            </LineStringSegment>
+                        </segments>
+                    </Curve>
+                </wps:ComplexData>
+            </wps:Data>
+        </wps:Input>
+        <wps:Input>
+            <ows:Identifier>BufferDistance</ows:Identifier>
+            <wps:Data>
+                <wps:LiteralData uom="unity" dataType="double">0.1</wps:LiteralData>
+            </wps:Data>
+        </wps:Input>
+    </wps:DataInputs>
+    <wps:ResponseForm>
+        <wps:ResponseDocument>
+            <wps:Output asReference="true">
+                <ows:Identifier>GMLOutput</ows:Identifier>
+            </wps:Output>
+        </wps:ResponseDocument>
+    </wps:ResponseForm>
+</wps:Execute>'''
+            self.url = 'http://flexigeoweb.lat-lon.de/deegree-wps-demo/services?SERVICE=WPS&VERSION=1.0.0&REQUEST=execute&IDENTIFIER=BufferDistance'
+            """
+            
+            #TODO - add in "urlencode on self.url !!!
+
+            f = urllib.urlopen(self.url, unicode(self.postString, "UTF-8"))
             # get the results back
             wpsRequestResult = f.read()
             # set the output ports
@@ -150,19 +205,31 @@ class WPS(Module):
                 # layer types
                 if  mimeType == "text/xml":
                     postString += '<wps:ComplexData mimeType="' + mimeType + '" schema="' + schema + '" encoding="' + encoding + '">'
-                    postString += self.createTmpGML(layer)
+                    GML = self.createTmpGML(layer)
+                    if GML:
+                        postString += GML
+                    else:
+                        self.raiseError('WPS Error','Unable to encode vector to GML')
                 else:
                     postString += '<wps:ComplexData mimeType="' + mimeType + '" encoding="base64">'
-                    postString += self.createTmpBase64(layer)
+                    data64 = self.createTmpBase64(layer)
+                    if data64:
+                        postString += data64
+                    else:
+                        self.raiseError('WPS Error','Unable to encode raster to base64')
                 # end wrapper
                 postString += "</wps:ComplexData>"
                 postString += xmlExecuteRequestInputEnd()
                 #print "WPS:160 postString",postString
                 # insert new XML into the existing POST string in the DataInputs
                 # NB: NO prefix on search node
-                postStringIn = self.insertElement(postStringIn,postString,
-                    'DataInputs','http://www.opengis.net/wps/1.0.0')
-
+                #print "WPS:174 postStringIn PRE",postStringIn
+                postStringIn = self.insertElement(postStringIn, postString,
+                    'DataInputs', 'http://www.opengis.net/wps/1.0.0')
+                #print "WPS:177 postStringIn POST",postStringIn
+                f = open("/home/dhohls/Desktop/post_request.xml", "w")
+                f.write(postStringIn)
+                f.close()
         #print "WPS:165",postStringIn
         return postStringIn
 
@@ -304,7 +371,7 @@ class WPS(Module):
     def createTmpGML(self, vLayer, processSelection="False"):
         """TODO: add doc string
 
-        * vLayer is an actual QGIS vector map layer
+        * vLayer is an actual QGIS vector layer (not a string)
         """
         myQTempFile = QTemporaryFile()
         myQTempFile.open()
@@ -318,6 +385,7 @@ class WPS(Module):
         fieldList = self.getFieldList(vLayer)
         writer = self.createGMLFileWriter(tmpFile, fieldList, vLayer.dataProvider().geometryType(),encoding)
 
+        # error = QgsVectorFileWriter.writeAsShapefile(layer, "my_shapes.shp", "CP1250")
         #print "WPS: TEMP-GML-File Name: "+tmpFile
         provider = vLayer.dataProvider()
         feat = QgsFeature()
@@ -349,22 +417,34 @@ class WPS(Module):
         return gmlString.simplified()
 
     def createTmpBase64(self, rLayer):
-        """TODO: add doc string
+        """Encode raster data to base64 format, for use in XML POST string.
 
-        * rLayer is an actual QGIS layer
+        * rLayer is an actual QGIS raster layer (not a string)
         """
-        try:
-            filename = tempfile.mktemp(prefix="base64")
-            infile = open(rLayer.source())  # does source assume this a file on disk???
-            outfile = open(filename, 'w')
-            base64.encode(infile,outfile)
-            outfile.close()
-            outfile =  open(filename, 'r')
-            base64String = outfile.read()
-            os.remove(filename)
-        except:
-            QMessageBox.warning(None, '', "Unable to create temporal file: " + filename + " for base64 encoding")
+        import base64
+        # disk-based approach with file manipulation
+        base64String = None
+        layer_source = str(rLayer.source())
+        #print "rLayer.source", rLayer.source(), layer_source
+        #try:
+        filename = tempfile.mktemp(prefix="base64")
+        if "http://" in rLayer.source(): #TODO: better test than this !!!
+            infile = urllib.urlopen(layer_source) # read from web
+        else:
+            infile = open(layer_source, 'r') # read from disk
+        outfile = open(filename, 'w')
+        base64.encode(infile, outfile)
+        outfile.close()
+        outfile =  open(filename, 'r')
+        base64String = outfile.read()
+        os.remove(filename)
+        #except:
+        #    QMessageBox.warning(None, '', "Unable to create temporary file: " + filename + " for base64 encoding")
+        """
+        base64String = base64.encodestring(rLayer) # error: no len() for rLayer
+        """
         return base64String
+
     def errorHandler(self, resultXML):
         """Format the error message from the WPS."""
         errorDoc = QtXml.QDomDocument()
@@ -419,21 +499,33 @@ class WPS(Module):
         return myFields
 
     def insertElement(self, source, element, node, namespace=None):
-        """insert element into source at a specified 'node'.
+        """Return updated source with element inserted at a specified 'node'.
 
-        All items arrive as strings; result is a string"""
+        All items must arrive as strings; result is also a string"""
         #print source,"\n",element,"\n", node,"\n"
-        #print "WPS:419 ELEMENT\n",element,"\n",
+        #print "\nWPS:452 ELEMENT IN\n",element,"\n"
         if node and not ':' in node:
             import xml.etree.ElementTree as xml
+            from xml.parsers.expat import ExpatError
             if namespace:
                 node = "{%s}%s" % (namespace,node)
-            doc = xml.fromstring(source)
-            if len(doc.findall('*//'+node)) > 0:
-                target = doc.findall('*//'+node)[0]
-                new_element = xml.fromstring(element)
-                target.append(new_element)
-            return xml.tostring(doc)
+            element = str(element).encode("UTF-8")
+            try:
+                doc = xml.fromstring(source)
+                result = doc.findall('.//'+node)
+                if result:
+                    if len(result) > 0:
+                        target = result[0]
+                    else:
+                        target = result
+                    new_element = xml.fromstring(element)
+                    target.append(new_element)
+                    return xml.tostring(doc)
+                else:
+                    return source
+            except ExpatError:
+                self.raiseError("Expat Error",
+                "Unable to create XML elements from input data.")
         else:
             self.raiseError("WPS insertElement Error",
                 "Cannot use a ':' in an element name.")
@@ -663,7 +755,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         self.doc = QtXml.QDomDocument()
         test = self.doc.setContent(xmlString, True)
         #test parsing of xml doc
-        if test == True:
+        if DEBUG and test == True:
             print 'WPS: XML document parsed'
 
         if self.getServiceVersion() != "1.0.0":
@@ -813,7 +905,6 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         self.dlgProcess.setLayout(self.dlgProcessLayout)
         self.dlgProcess.setGeometry(QRect(190,100,800,600))
         self.dlgProcess.show()
-        print 'WPS: 808'
 
     def generateProcessInputsGUI(self, DataInputs):
         """Generate the GUI for all inputs defined in the process description
@@ -998,14 +1089,12 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         if len(checkBoxes) > 0:
             useSelected = checkBoxes[0].isChecked()
 
-        postString = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
-        postString += '<wps:Execute service="WPS" version="'+ self.getServiceVersion() + '"' + \
+        postString = '<wps:Execute service="WPS" version="'+ self.getServiceVersion() + '"' + \
                    ' xmlns:wps="http://www.opengis.net/wps/1.0.0"' + \
                    ' xmlns:ows="http://www.opengis.net/ows/1.1"' +\
                    ' xmlns:xlink="http://www.w3.org/1999/xlink"' +\
                    ' xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"'\
-                   ' xsi:schemaLocation="http://www.opengis.net/wps/1.0.0' +\
-                   ' http://schemas.opengis.net/wps/1.0.0/wpsExecute_request.xsd">'
+                   ' xsi:schemaLocation="http://www.opengis.net/wpsExecute_request.xsd">'
 
         postString += '<ows:Identifier>'+self.processIdentifier+'</ows:Identifier>\n'
         postString += '<wps:DataInputs>'
@@ -1077,10 +1166,17 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
 
         postString += "</wps:Execute>\n"
 
-        # Attach postString to input port
+        # Determine full execute request URL
+        self.requestURL = result["url"] + '?SERVICE=WPS&VERSION='+ \
+            self.getServiceVersion() + '&REQUEST=execute&IDENTIFIER=' + \
+            self.processIdentifier
+        # Attach configured data to input ports
         functions = []
         functions.append(
             (init.OGC_POST_DATA_PORT, [postString]),
+            )
+        functions.append(
+            (init.OGC_REQUEST_PORT, [self.requestURL]),
             )
         functions.append(
             (init.OGC_URL_PORT, [result["url"]]),

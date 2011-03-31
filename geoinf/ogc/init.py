@@ -1,6 +1,7 @@
 OGC_LAYERNAME_PORT = "LayerName"
 OGC_POST_DATA_PORT = "PostData"
 OGC_GET_REQUEST_PORT = "GetRequest"
+OGC_REQUEST_PORT = "RequestURL"
 OGC_URL_PORT = "OGC_URL"
 URL_PORT = "URL"
 DATA_PORT = "OGC_data"
@@ -45,6 +46,10 @@ def initialize(*args, **keywords):
         WPS,
         OGC_URL_PORT,
         (core.modules.basic_modules.String, 'URL String'))#, True)
+    reg.add_input_port(
+        WPS,
+        OGC_REQUEST_PORT,
+        (core.modules.basic_modules.String, 'Configured Request'))#, True)
     reg.add_input_port(
         WPS,
         WEB_REQUEST_PORT,
