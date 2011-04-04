@@ -44,33 +44,29 @@ def initialize(*args, **keywords):
     from core.modules.python_source_configure import PythonSourceConfigurationWidget
     from core.modules import basic_modules
    
-    import RPyC, RPyCHelper
+    import RPyC, RPyCHelper, RPyCTest
     
     """
     sets everything up called from the top level initialize
     """
     reg = get_module_registry()
     mynamespace = "rpyc"
-    
-    #Add RPyCNode
-    reg.add_module(RPyC.RPyCNode,
-                   namespace=mynamespace)
-    reg.add_input_port(RPyC.RPyCNode, 'ip',
-                       basic_modules.String)
-    reg.add_input_port(RPyC.RPyCNode, 'port',
-                       basic_modules.Integer)
-    reg.add_output_port(RPyC.RPyCNode, "value", 
-                        RPyC.RPyCNode)
 
+    #Add RPyCNode
+    reg.add_module(RPyCHelper.RPyCNode,
+                   name="RpyC Node",
+                   namespace=mynamespace)
     
     #Dummy Module Mixed into all RPYCSafeModules
-    reg.add_module(RPyC.RPyCModule, 
-                   namespace=mynamespace)
-    reg.add_input_port(RPyC.RPyCModule, 'rpycsession',
-                      (RPyC.RPyCNode, 'A valid RPYC Session, if not given will execute locally'))
+    reg.add_module(RPyC.RPyCModule,
+                   namespace=mynamespace,
+                   abstract=True)
+    reg.add_input_port(RPyC.RPyCModule, 'rpycnode',
+                      (RPyCHelper.RPyCNode, 'A valid RPYC Node, if not given will execute locally'))
     
     #Add RPyCCode
     reg.add_module(RPyCHelper.RPyCCode,
+                   name = "RPyC Code",
                    configureWidgetType=PythonSourceConfigurationWidget,
                    namespace=mynamespace)
     reg.add_input_port(RPyCHelper.RPyCCode, 'source',
@@ -78,16 +74,9 @@ def initialize(*args, **keywords):
     reg.add_output_port(RPyCHelper.RPyCCode, 'self',
                         basic_modules.Module)
 
-    #Add RPyCDiscover
-    reg.add_module(RPyCHelper.RPyCDiscover,
-                   namespace=mynamespace)
-    reg.add_output_port(RPyCHelper.RPyCDiscover, 'rpycslaves',
-                       (RPyC.RPyCNode, 'IP Address and Port of RPyC Node'))
-    reg.add_output_port(RPyCHelper.RPyCDiscover, 'self',
-                        basic_modules.Module)
-
     #Add RPyCTestModule
-    reg.add_module(RPyCHelper.RPyCTestModule,
-                   namespace=mynamespace)
-    reg.add_input_port(RPyCHelper.RPyCTestModule, 'input',
+    reg.add_module(RPyCTest.RPyCTestModule,
+                   name="RpyC Test Module",
+                   namespace="utils|tests")
+    reg.add_input_port(RPyCTest.RPyCTestModule, 'input',
                        basic_modules.String)

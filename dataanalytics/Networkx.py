@@ -33,10 +33,8 @@ This module holds a rpycnode type that can be passed around between modules.
 import networkx as nx
 from core.modules.vistrails_module import Module
 
-
 class NetworkxModule(object):
     pass
-
 
 class Graph(NetworkxModule, Module, nx.Graph):
     """ Container class for the pysal.W class """
@@ -49,7 +47,6 @@ class Graph(NetworkxModule, Module, nx.Graph):
         ndArray = self.forceGetInputFromPort('neighbors')
         self.add_edges_from(ndArray.get_array())
         self.setResult("value", self)
-
 
 class connected_components(NetworkxModule, Module):
     """ Container class for the pysal.W class """

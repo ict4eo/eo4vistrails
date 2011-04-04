@@ -26,7 +26,7 @@ def initialize(*args, **keywords):
     from packages.eo4vistrails.utils.WebRequest import WebRequest
 
     reg = get_module_registry()
-    ogc_namespace = "ogc"
+    ogc_namespace = "data|ogc"
 
     reg.add_module(WPS, configureWidgetType=WPSConfigurationWidget, namespace=ogc_namespace)
     reg.add_module(WFS, configureWidgetType=WFSConfigurationWidget, namespace=ogc_namespace)

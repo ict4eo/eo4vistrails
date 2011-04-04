@@ -46,10 +46,10 @@ def initialize(*args, **keywords):
     # We'll first create a local alias for the module_registry so that
     # we can refer to it in a shorter way.
     reg = core.modules.module_registry.get_module_registry()
-    postgis_namespace = "PostGIS"
+    postgis_namespace = "postGIS"
     
 
-    reg.add_module(PostGisSession,  namespace = postgis_namespace)
+    reg.add_module(PostGisSession, namespace = postgis_namespace)
     reg.add_input_port(PostGisSession, 'postgisHost', (core.modules.basic_modules.String, 
         'The hostname or IP address of the machine hosting your database'))    
     reg.add_input_port(PostGisSession, 'postgisPort', (core.modules.basic_modules.String, 
@@ -64,27 +64,27 @@ def initialize(*args, **keywords):
     reg.add_output_port(PostGisSession, 'PostGisSession', PostGisSession)#supports passing of session object around
     #reg.add_module(PostGisCursor)
     
-    reg.add_module(PostGisFeatureReturningCursor,  namespace = postgis_namespace,  configureWidgetType=SQLSourceConfigurationWidget)
+    reg.add_module(PostGisFeatureReturningCursor, name="Feature Returning Query",  namespace = postgis_namespace,  configureWidgetType=SQLSourceConfigurationWidget)
     reg.add_input_port(PostGisFeatureReturningCursor,  'PostGisSessionObject',  PostGisSession)
     reg.add_input_port(PostGisFeatureReturningCursor,  'source',  core.modules.basic_modules.String)
     reg.add_output_port(PostGisFeatureReturningCursor, 'PostGISRequest',  PostGISRequest)
     reg.add_output_port(PostGisFeatureReturningCursor, 'QgsVectorLayer',  QgsVectorLayer)
     reg.add_output_port(PostGisFeatureReturningCursor, 'self', PostGisFeatureReturningCursor)#supports ControlFlow ExecuteInOrder
 
-    reg.add_module(PostGisNumpyReturningCursor,  namespace = postgis_namespace,  configureWidgetType=SQLSourceConfigurationWidget)
+    reg.add_module(PostGisNumpyReturningCursor, name="Numpy Returning Query",  namespace = postgis_namespace,  configureWidgetType=SQLSourceConfigurationWidget)
     reg.add_input_port(PostGisNumpyReturningCursor,  "PostGisSessionObject",  PostGisSession)
     reg.add_input_port(PostGisNumpyReturningCursor,  "source",  core.modules.basic_modules.String)
     reg.add_output_port(PostGisNumpyReturningCursor, 'nummpyArray', NDArray)
     reg.add_output_port(PostGisNumpyReturningCursor, 'self', PostGisNumpyReturningCursor)#supports ControlFlow ExecuteInOrder
 
     
-    reg.add_module(PostGisBasicReturningCursor,  namespace = postgis_namespace,  configureWidgetType=SQLSourceConfigurationWidget)
+    reg.add_module(PostGisBasicReturningCursor, name="Basic Returning Query",  namespace = postgis_namespace,  configureWidgetType=SQLSourceConfigurationWidget)
     reg.add_input_port(PostGisBasicReturningCursor,  "PostGisSessionObject",  PostGisSession)
     reg.add_input_port(PostGisBasicReturningCursor,  "source",  core.modules.basic_modules.String)
     reg.add_output_port(PostGisBasicReturningCursor, 'records', core.modules.basic_modules.List)
     reg.add_output_port(PostGisBasicReturningCursor, 'self', PostGisBasicReturningCursor)#supports ControlFlow ExecuteInOrder
     
-    reg.add_module(PostGisNonReturningCursor,  namespace = postgis_namespace,  configureWidgetType=SQLSourceConfigurationWidget)
+    reg.add_module(PostGisNonReturningCursor, name="Non Returning Query",  namespace = postgis_namespace,  configureWidgetType=SQLSourceConfigurationWidget)
     reg.add_input_port(PostGisNonReturningCursor,  "PostGisSessionObject",  PostGisSession)
     reg.add_input_port(PostGisNonReturningCursor,  "source",  core.modules.basic_modules.String)
     reg.add_output_port(PostGisNonReturningCursor, 'status', core.modules.basic_modules.List)

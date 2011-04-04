@@ -47,7 +47,7 @@ global globalThreadLock
 globalThreadLock = RLock()
     
 class ThreadSafeMixin(object):
-
+    
     def __init__(self):
         self.computeLock = RLock()
     

@@ -56,11 +56,13 @@ def initialize(*args, **keywords):
     sets everything up called from the top level initialize
     """
     reg = get_module_registry()
-    mynamespace = "datamodels"
+    mynamespace = "data"
 
     # Features
-    reg.add_module(FeatureModel, namespace=mynamespace) #abstract
-    reg.add_module(FeatureImport, configureWidgetType=FeatureImportConfigurationWidget, namespace = mynamespace)
+    reg.add_module(FeatureModel, namespace=mynamespace, abstract=True) #abstract
+    reg.add_module(FeatureImport, 
+                   configureWidgetType=FeatureImportConfigurationWidget, 
+                   namespace = "broken")
 
     # QgsMapLayer
     reg.add_module(QgsLayer.QgsMapLayer, namespace=mynamespace, abstract=True)
@@ -69,8 +71,8 @@ def initialize(*args, **keywords):
     reg.add_output_port(QgsLayer.QgsMapLayer, "value", QgsLayer.QgsMapLayer)
 
     # QgsLayers
-    reg.add_module(QgsLayer.QgsVectorLayer, namespace=mynamespace)
-    reg.add_module(QgsLayer.QgsRasterLayer, namespace=mynamespace)
+    reg.add_module(QgsLayer.QgsVectorLayer, name="Vector Layer", namespace=mynamespace)
+    reg.add_module(QgsLayer.QgsRasterLayer, name="Raster Layer", namespace=mynamespace)
 
     # QgsLayerWriter
     #reg.add_module(QgsLayerWriter.QgsLayerWriter, namespace=mynamespace)
@@ -78,12 +80,12 @@ def initialize(*args, **keywords):
     #reg.add_input_port(QgsLayerWriter.QgsLayerWriter, 'file', File)
 
     # misc.
-    reg.add_module(GeoString, namespace=mynamespace)
-    reg.add_module(GMLString, namespace=mynamespace)
-    reg.add_module(GeoJSONString, namespace=mynamespace)
+    reg.add_module(GeoString, namespace=mynamespace, abstract=True)
+    reg.add_module(GMLString, namespace=mynamespace, abstract=True)
+    reg.add_module(GeoJSONString, namespace=mynamespace, abstract=True)
 
     # MemFeatureModel
-    reg.add_module(MemFeatureModel, namespace=mynamespace)
+    reg.add_module(MemFeatureModel, namespace=mynamespace, abstract=True)
     reg.add_input_port(MemFeatureModel, "source_file", String )
     reg.add_input_port(MemFeatureModel, "dbconn", String )
     reg.add_input_port(MemFeatureModel, "sql", String )
@@ -92,12 +94,11 @@ def initialize(*args, **keywords):
     reg.add_output_port(MemFeatureModel, "feature_dataset", MemFeatureModel)
 
     # FileFeatureModel
-    reg.add_module(FileFeatureModel, namespace=mynamespace)
+    reg.add_module(FileFeatureModel, name="OGR Transform", namespace=mynamespace)
     reg.add_input_port(FileFeatureModel, "source_file", String )
     reg.add_input_port(FileFeatureModel, "source_feature_dataset", MemFeatureModel )
     reg.add_input_port(FileFeatureModel, "webrequest", WebRequest)
     reg.add_input_port(FileFeatureModel, "output_type", String )
 
     # RasterModel
-    reg.add_module(RasterModel, namespace=mynamespace) #abstract
-    reg.add_module(RasterImport, configureWidgetType=RasterImportConfigurationWidget, namespace = mynamespace)
+    reg.add_module(RasterModel, namespace=mynamespace, abstract=True) #abstract

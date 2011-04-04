@@ -43,12 +43,11 @@ import Shared
 
 #Node must have rpyc installed so not a problem        
 import rpyc
-from rpyc import Connection, Channel, SocketStream, SlaveService
 
 #node has dummy versions of these so not a problem
 from core.modules.vistrails_module import Module, NotCacheable
 
-class RPyCModule(NotCacheable, Module):
+class RPyCModule(Module):
     '''
     This module is important as it forms the basis for ensuring that
     rpyc based modules have the correct input ports
@@ -82,9 +81,11 @@ class RPyCSafeModule(object):
         
         if RPyCSafeMixin not in clazz.__bases__:
             new__bases__ = (RPyCSafeMixin,) + clazz.__bases__
-            clazz.compute = RPyCSafeMixin.compute
-        
-        return type(clazz.__name__, new__bases__, clazz.__dict__.copy())
+            new__dict__ = clazz.__dict__.copy()
+            new__dict__['_original_compute']  = new__dict__['compute']
+            del(new__dict__['compute']) # = RPyCSafeMixin.compute
+
+        return type(clazz.__name__, new__bases__, new__dict__)
 
 
 class RPyCSafeMixin(object):
@@ -96,104 +97,95 @@ class RPyCSafeMixin(object):
     the dummy verion is used to instantiate a shadow of the origional 
     module. The shadows methods are linked back to the origional module.
     """
+
+    def getConnection(self):
+        if self.hasInputFromPort('rpycnode'):
+            v = self.getInputFromPort('rpycnode')
+            print v
+             
+            if str(v[0]) == 'None' or str(v[0]) == '':
+                connection = None
+                
+            elif str(v[0]) == 'main':
+                connection = None
+                
+            elif str(v[0]) == 'own':
+                connection = rpyc.classic.connect_subproc()
+                #self.isSubProc = True
+                #connection = rpyc.classic.connect_subproc()
+                #make sure all packages are in the path
+                print "Got a subProc"
+                import core.system
+                import sys       
+                connection.modules.sys.path.append(sys.path)
+                connection.modules.sys.path.append(core.system.vistrails_root_directory())
+                
+            else:
+                connection = rpyc.classic.connect(v[0], v[1])
+
+                print "Got a Remote Node"
+                #Make sure all the right stuff is in place espcially dummy core and packages
+                #on the remote node, no need for this if local as the machine is already set up            
+                import packages.eo4vistrails.rpyc.dummycore
+                rpyc.classic.upload_package(connection, packages.eo4vistrails.rpyc.dummycore, "./tmp/core")
+        
+                import packages.eo4vistrails.rpyc.dummypackages
+                rpyc.classic.upload_package(connection, packages.eo4vistrails.rpyc.dummypackages, "./tmp/packages")
+        
+                #Upload any vsitrails packages that may be required
+                for packageName in self._requiredVisPackages:
+                    package = __import__(packageName, fromlist=['packages'])
+                    rpyc.classic.upload_package(connection, package, "./tmp/"+packageName.replace(".","/"))
+        
+                #make sure all packages are in the path
+                if not "./tmp" in connection.modules.sys.path:
+                    connection.modules.sys.path.append('./tmp')
+    
+                #Reload the current module
+                #import inspect
+                #rpyc.classic.update_module(connection, inspect.getmodule(self))
+                rmodule = connection.modules[self.__module__]
+                connection.modules.__builtin__.reload(rmodule)
+                
+        else:
+            connection = None
+
+        return connection
+
     
     def compute(self):
         #Get RPyC Node in good standing
         #input from rpycmodule
-        self.conn = None
-        rpycsession = self.forceGetInputFromPort('rpycsession', None)
-        if rpycsession:
-            self.conn = rpycsession._connection
         
-        #if we don't get a good node then we need to create a subprocess
-        self.isSubProc = False
-        if self.conn == None:
-            
-            self.isSubProc = True
-            self.conn = rpyc.classic.connect_subproc()
-            #make sure all packages are in the path
-            import core.system
-            self.conn.modules.sys.path.append(core.system.vistrails_root_directory())
-            
+        conn = self.getConnection()
+        
+        if not conn:
+            #run as per normal
+            self._original_compute()
         else:
-            #Make sure all the right stuff is in place espcially dummy core and packages
-            #on the remote node, no need for this if local as the machine is already set up            
-            import packages.eo4vistrails.rpyc.dummycore
-            rpyc.classic.upload_package(self.conn, packages.eo4vistrails.rpyc.dummycore, "./tmp/core")
-    
-            import packages.eo4vistrails.rpyc.dummypackages
-            rpyc.classic.upload_package(self.conn, packages.eo4vistrails.rpyc.dummypackages, "./tmp/packages")
-    
-            #Upload any vsitrails packages that may be required
-            for packageName in self._requiredVisPackages:
-                package = __import__(packageName, fromlist=['packages'])
-                rpyc.classic.upload_package(self.conn, package, "./tmp/"+packageName.replace(".","/"))
-    
-            #make sure all packages are in the path
-            if not "./tmp" in self.conn.modules.sys.path:
-                self.conn.modules.sys.path.append('./tmp')
-
-            #Reload the current module
-            #import inspect
-            #rpyc.classic.update_module(conn, inspect.getmodule(self))
-            rmodule = self.conn.modules[self.__module__]
-            self.conn.modules.__builtin__.reload(rmodule)
+            #redirect StdIO back here so we can see what is going on    
+            import sys
+            conn.modules.sys.stdout = sys.stdout
+        
+            #Make sure it knows its a remote node
+            conn.execute('import packages.eo4vistrails.rpyc.Shared as Shared')
+            conn.execute('Shared.isRemoteRPyCNode=True')
             
-        #redirect StdIO back here so we can see what is going on        
-        rpyc.classic.redirected_stdio(self.conn)
-    
-        #Make sure it knows its a remote node
-        self.conn.execute('import packages.eo4vistrails.rpyc.Shared as Shared')
-        self.conn.execute('Shared.isRemoteRPyCNode=True')
-        
-        #Instantiate Shadow Object
-        print self.__module__, self.__class__.__name__
-        self.conn.execute('from '+self.__module__+' import '+self.__class__.__name__)
-        shadow = self.conn.eval(self.__class__.__name__+'()')
-        
-        #Hook Up Shadow Objects Methods and Attributes
-        #attributes
-        for attribute in Module.__dict__:
-            if not str(attribute) in ('compute', '__dict__', '__module__', '__doc__', '__str__', '__weakref__', '__init__'):
-                shadow.__setattr__(str(attribute), self.__getattribute__(str(attribute)))
-        
-        #Call the Shadow Objects Compute
-        shadow.compute()
-        
-        if self.isSubProc:
-            self.conn.proc.terminate()
-            self.conn.proc.wait()
-            self.conn.close()
-        
-class RPyCNode(Connection, NotCacheable, Module):
-    '''
-    The rpyc node is a data structure used to pass around the deatils of
-    a rpyc node
-    '''
-    def __init__(self):
-        Module.__init__(self)
-
-    def __del__(self):
-        print 'cleaning up connections'
-        self._connection.proc.terminate()
-        self._connection.proc.wait()
-        self._connection.close()
-
-    def compute(self):
-        self._ip = self.forceGetInputFromPort('ip', '127.0.0.1')
-        self._port = self.forceGetInputFromPort('port', 18812)
-        #Connection.__init__(self, SlaveService, Channel(SocketStream.connect(rpycnode.get_ip(), rpycnode.get_port())), {})
-        self._connection = rpyc.classic.connect(self._ip, self._port)
-        self.setResult("value", self)
+            #Instantiate Shadow Object
+            print self.__module__, self.__class__.__name__
+            conn.execute('from '+self.__module__+' import '+self.__class__.__name__)
+            shadow = conn.eval(self.__class__.__name__+'()')
             
-    def get_ip(self):
-        return self._ip
-    
-    def set_ip(self, ip):
-        self._ip = ip
-    
-    def get_port(self):
-        return self._port
-    
-    def set_port(self, port):
-        self._port = port
+            #Hook Up Shadow Objects Methods and Attributes
+            #attributes
+            for attribute in Module.__dict__:
+                if not str(attribute) in ('compute', '__dict__', '__module__', '__doc__', '__str__', '__weakref__', '__init__'):
+                    shadow.__setattr__(str(attribute), self.__getattribute__(str(attribute)))
+            
+            #Call the Shadow Objects Compute
+            shadow.compute()
+            
+            #conn.proc.terminate()
+            #conn.proc.wait()
+            #conn.close()
+

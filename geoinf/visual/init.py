@@ -9,8 +9,10 @@ def initialize(*args, **keywords):
     from packages.spreadsheet import basic_widgets
 
     reg = get_module_registry()
+    mynamespace = "visualisation"    
+    
     #global basicWidgets
-    reg.add_module(QGISMapCanvasCell)
+    reg.add_module(QGISMapCanvasCell, namespace = mynamespace)
     reg.add_input_port(QGISMapCanvasCell, "baselayer", QgsMapLayer)
     reg.add_input_port(QGISMapCanvasCell, "layer", QgsMapLayer)
     reg.add_input_port(QGISMapCanvasCell, "Location", basic_widgets.CellLocation)

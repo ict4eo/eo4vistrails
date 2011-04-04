@@ -10,15 +10,17 @@ def initialize(*args, **keywords):
 
     reg = get_module_registry()
     utils_namespace = "utils"
+    utils_test_namespace = "utils|tests"
 
     #Add ComboBox
     LinuxDemoComboBox = basic_modules.new_constant('LinuxDemoComboBox',
-                                                   staticmethod(str),
-                                                   None,
-                                                   staticmethod(lambda x: type(x) == str),
+                                                   staticmethod(eval),
+                                                   (1,1),
+                                                   staticmethod(lambda x: type(x) == tuple),
                                                    DropDownListWidget.LinuxDemoComboBoxWidget)
+    
     reg.add_module(LinuxDemoComboBox,
-                   namespace = utils_namespace)
+                   namespace = utils_test_namespace)
 
     #Add Fork
     reg.add_module(Fork, namespace = utils_namespace)
@@ -27,14 +29,13 @@ def initialize(*args, **keywords):
                        basic_modules.Module)
 
     #Add ThreadSafeTest
-    reg.add_module(ThreadTestModule, namespace = utils_namespace)
-    reg.add_input_port(
-        ThreadTestModule,
-        'someModuleAboveMe',
-        basic_modules.Module)
+    reg.add_module(ThreadTestModule, namespace = utils_test_namespace)
+    reg.add_input_port(ThreadTestModule,
+                       'someModuleAboveMe',
+                       basic_modules.Module)
    
     #Add Session
-    reg.add_module(Session, namespace = utils_namespace)
+    reg.add_module(Session, namespace = utils_namespace, abstract=True)
 
     reg.add_module(DataRequest, namespace = utils_namespace, abstract=True)
 

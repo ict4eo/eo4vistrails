@@ -39,37 +39,12 @@ It also has the rpyc remote code that is used
 #History
 #Terence van Zyl, 15 Dec 2010, Version 1.0
 
-from core.modules.vistrails_module import Module, NotCacheable, ModuleError
+from core.modules.vistrails_module import ModuleError, NotCacheable
 from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
-from RPyC import RPyCModule, RPyCNode, RPyCSafeModule
-
-class RPyCDiscover(ThreadSafeMixin, NotCacheable, Module):
-    """
-    RPyCDiscover is a Module that allow one to discover RPyC
-    servers
-    """
-    # This constructor is strictly unnecessary. However, some modules
-    # might want to initialize per-object data. When implementing your
-    # own constructor, remember that it must not take any extra
-    # parameters.
-    def __init__(self):
-        ThreadSafeMixin.__init__(self)
-        Module.__init__(self)
-        
-    def getSlaves(self):
-        import rpyc
-        discoveredSlavesTuple = list(rpyc.discover("slave"))
-        discoveredSlaves = []
-        for slave in discoveredSlavesTuple:
-            rpycnode = RPyCNode()
-            rpycnode.set_ip( slave[0] )
-            rpycnode.set_port( slave[1] )
-            discoveredSlaves.append(rpycnode)
-        return discoveredSlaves
-
-    def compute(self):
-        """Vistrails Module Compute, Entry Point Refer, to Vistrails Docs"""
-        self.setResult("rpycslaves", self.getSlaves())
+from RPyC import RPyCModule
+from packages.eo4vistrails.utils.DropDownListWidget import ComboBoxWidget
+from core.modules import basic_modules
+import rpyc
 
 class RPyCCode(ThreadSafeMixin, RPyCModule):
     """
@@ -78,7 +53,6 @@ class RPyCCode(ThreadSafeMixin, RPyCModule):
     #TODO: If you want a PythonSource execution to fail, call fail(error_message).
     #TODO: If you want a PythonSource execution to be cached, call cache_this().
     
-      
     '''
     This constructor is strictly unnecessary. However, some modules
     might want to initialize per-object data. When implementing your
@@ -88,97 +62,130 @@ class RPyCCode(ThreadSafeMixin, RPyCModule):
     def __init__(self):
         ThreadSafeMixin.__init__(self)
         RPyCModule.__init__(self)
+        try:
+            self.i = self.i + 1
+        except:
+            self.i = 0
+        print 'init', self.i
 
-    def run_code(self, code_str, use_input=False, use_output=False):
+    def __del__(self):
+        print 'del'
+        RPyCModule.__del__(self)
+        ThreadSafeMixin._del__(self)
+        
+    def clear(self):
+        print 'clear'
+        RPyCModule.clear(self)
+        
+    def getSubConnection(self):
+        connection = rpyc.classic.connect_subproc()
+        #self.isSubProc = True
+        #self.conn = rpyc.classic.connect_subproc()
+        #make sure all packages are in the path
+        print "Got a subProc"
+        import core.system
+        import sys       
+        connection.modules.sys.path.append(sys.path)
+        connection.modules.sys.path.append(core.system.vistrails_root_directory())
+        
+        return connection
+        
+    def getConnection(self):
+        if self.hasInputFromPort('rpycnode'):
+            v = self.getInputFromPort('rpycnode')
+            print v
+             
+            if str(v[0]) == 'None' or str(v[0]) == '':
+                connection = self.getSubConnection()
+            elif str(v[0]) == 'main':
+                connection = self.getSubConnection()
+            elif str(v[0]) == 'own':
+                connection = self.getSubConnection()
+            else:
+                connection = rpyc.classic.connect(v[0], v[1])
+        else:
+            connection = self.getSubConnection()
+        
+        return connection
+
+    def run_code(self, code_str, conn, use_input=False, use_output=False):
         """
         run_code runs a piece of code as a VisTrails module.
         use_input and use_output control whether to use the inputport
         and output port dictionary as local variables inside the
         execution.
         """
-        import rpyc
-
+        if code_str == '':
+            return
+        
         def fail(msg):
             raise ModuleError(self, msg)
 
         def cache_this():
-            self.is_cacheable = lambda *args, **kwargs: True
-        
-        #input from rpycmodule
-        self.conn = None
-        rpycsession = self.forceGetInputFromPort('rpycsession', None)        
-        if rpycsession:
-            self.conn = rpycsession._connection
-
-        #self.conn = self.forceGetInputFromPort('rpycsession', None)
-                
-        #if we don't get a good node then we need to create a subprocess
-        self.isSubProc = False
-        if self.conn == None:
-            print 'executing in single mode'
-            self.isSubProc = True
-            self.conn = rpyc.classic.connect_subproc()
+            self.is_cacheable = lambda *args, **kwargs: True    
 
         #TODO: changed to demo that this is in the cloud!!!!
-        rpyc.classic.redirected_stdio(self.conn)
+        import sys
+        conn.modules.sys.stdout = sys.stdout        
         
         if use_input:
             inputDict = dict([(k, self.getInputFromPort(k)) for k in self.inputPorts])
-            self.conn.namespace.update(inputDict)
+            conn.namespace.update(inputDict)
         
         if use_output:
             outputDict = dict([(k, self.get_output(k)) for k in self.outputPorts])
-            self.conn.namespace.update(outputDict)
+            conn.namespace.update(outputDict)
         
         from core import packagemanager
         _m = packagemanager.get_package_manager()
         from core.modules.module_registry import get_module_registry
         reg = get_module_registry()
-        self.conn.namespace.update({'fail': fail,
-                        'package_manager': _m,
-                        'cache_this': cache_this,
-                        'registry': reg,
-                        'self': self})
+        conn.namespace.update({'fail': fail,
+                               'package_manager': _m,
+                               'cache_this': cache_this,
+                               'registry': reg,
+                               'self': self})
                
-        del self.conn.namespace['source']
+        del conn.namespace['source']
         
-        self.conn.execute(code_str)
+        conn.execute(code_str)
         
         if use_output:
             for k in outputDict.iterkeys():
-                if self.conn.namespace[k] != None:
-                    self.setResult(k, self.conn.namespace[k])
-
-        if self.isSubProc:
-            self.conn.proc.terminate()
-            self.conn.proc.wait()
-            self.conn.close()
-
+                if conn.namespace[k] != None:
+                    self.setResult(k, conn.namespace[k])
+    
     def compute(self):
         """
         Vistrails Module Compute, Entry Point Refer, to Vistrails Docs
         """
+        self.conn = self.getConnection()
+        
         from core.modules import basic_modules
         s = basic_modules.urllib.unquote(
             str(self.forceGetInputFromPort('source', ''))
             )
-        self.run_code(s, use_input=True, use_output=True)
-        
-@RPyCSafeModule()
-class RPyCTestModule(ThreadSafeMixin, RPyCModule):
-    """This Test Module is to check that ThreadSafe is working and also provides
-    a template for others to use ThreadSafe"""
-    def __init__(self):
-        ThreadSafeMixin.__init__(self)
-        RPyCModule.__init__(self)
+        self.run_code(s, self.conn, use_input=True, use_output=True)
+
+class RPyCNodeWidget(ComboBoxWidget):
+    discoveredSlaves = None
+    default = ('main',0)
     
-    def compute(self):
-        from time import ctime, sleep
-        import os
-        print self.__class__.__bases__
-        print "Hello ", self.getInputFromPort("input")
-        print self.getInputConnector("input")
-        print ctime()," ", os.getpid(), " Started RPyCSafe Module, Waiting 2 Seconds"
-        sleep(2)
-        print ctime()," ", os.getpid(), " Stoped RPyCSafe Module"
+    def getKeyValues(self):
+        if not self.discoveredSlaves:
+            self.discoveredSlaves = {'Own Process':('own',0), 'Main Process':('main',0)}
+            try:
+                discoveredSlavesTuple = list(rpyc.discover("slave"))
+                for slaveTuple in discoveredSlavesTuple:
+                    self.discoveredSlaves[slaveTuple[0]] = slaveTuple
+            except rpyc.utils.factory.DiscoveryError:
+                pass
+        return self.discoveredSlaves
+           
+#Add ComboBox
+RPyCNode = basic_modules.new_constant('RpyCNode',
+                                       staticmethod(eval),
+                                       ('main',0),
+                                       staticmethod(lambda x: type(x) == tuple),
+                                       RPyCNodeWidget)
 
