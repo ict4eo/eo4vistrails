@@ -97,6 +97,14 @@ class RPyCSafeMixin(object):
     the dummy verion is used to instantiate a shadow of the origional 
     module. The shadows methods are linked back to the origional module.
     """
+    
+    def clear(self):
+        Module.clear(self)
+        if self.conn:
+            if self.conn.proc:
+                self.conn.proc.terminate()
+                self.conn.proc.wait()
+            self.conn.close()
 
     def getConnection(self):
         if self.hasInputFromPort('rpycnode'):
@@ -126,24 +134,66 @@ class RPyCSafeMixin(object):
                 print "Got a Remote Node"
                 #Make sure all the right stuff is in place espcially dummy core and packages
                 #on the remote node, no need for this if local as the machine is already set up            
-                import packages.eo4vistrails.rpyc.dummycore
-                rpyc.classic.upload_package(connection, packages.eo4vistrails.rpyc.dummycore, "./tmp/core")
-        
-                import packages.eo4vistrails.rpyc.dummypackages
-                rpyc.classic.upload_package(connection, packages.eo4vistrails.rpyc.dummypackages, "./tmp/packages")
-        
-                #Upload any vsitrails packages that may be required
-                for packageName in self._requiredVisPackages:
-                    package = __import__(packageName, fromlist=['packages'])
-                    rpyc.classic.upload_package(connection, package, "./tmp/"+packageName.replace(".","/"))
-        
+                #import packages.eo4vistrails.rpyc.dummycore
+                #rpyc.classic.upload_package(connection, packages.eo4vistrails.rpyc.dummycore, "./tmp/core")
+                print "Checking requirements on node..."
+                
                 #make sure all packages are in the path
                 if not "./tmp" in connection.modules.sys.path:
                     connection.modules.sys.path.append('./tmp')
+
+                #Check version info
+                try:
+                    connection.execute('import core.system')
+                    core_system = connection.modules["core.system"]
+                    print core_system.vistrails_version()
+                except:
+                    print "Core System Not Loaded"
+                    
+                print "Uploading requirements to node...."
+                import packages.eo4vistrails.rpyc.tmp
+                rpyc.classic.upload_package(connection, packages.eo4vistrails.rpyc.tmp, "./tmp")
+
+                try:
+                    connection.modules["core"]
+                    print "Skipping core..."
+                except:
+                    print "Uploading core..."
+                    import core
+                    rpyc.classic.upload_package(connection, core, "./tmp/core")
+
+                try:
+                    connection.modules["gui"]
+                    print "Skipping gui..."
+                except:
+                    print "Uploading gui..."
+                    import gui
+                    rpyc.classic.upload_package(connection, gui, "./tmp/gui")
+
+                try:
+                    connection.modules["db"]
+                    print "Skipping db..."
+                except:
+                    print "Uploading db..."
+                    import db
+                    rpyc.classic.upload_package(connection, db, "./tmp/db")
+                
+                
+                #Upload any vistrails packages that may be required
+                for packageName in self._requiredVisPackages:
+                    print "Uploading %s..."% packageName
+                    package = __import__(packageName, fromlist=['packages'])
+                    rpyc.classic.upload_package(connection, package, "./tmp/"+packageName.replace(".","/"))
     
+                print "Finished uploading requirements to node...."
+
                 #Reload the current module
-                #import inspect
                 #rpyc.classic.update_module(connection, inspect.getmodule(self))
+                if not "./tmp" in connection.modules.sys.path:
+                    connection.modules.sys.path.append('./tmp')
+                    
+                connection.execute('import ' + self.__module__)
+                print self.__module__
                 rmodule = connection.modules[self.__module__]
                 connection.modules.__builtin__.reload(rmodule)
                 
@@ -157,24 +207,24 @@ class RPyCSafeMixin(object):
         #Get RPyC Node in good standing
         #input from rpycmodule
         
-        conn = self.getConnection()
+        self.conn = self.getConnection()
         
-        if not conn:
+        if not self.conn:
             #run as per normal
             self._original_compute()
         else:
             #redirect StdIO back here so we can see what is going on    
             import sys
-            conn.modules.sys.stdout = sys.stdout
+            self.conn.modules.sys.stdout = sys.stdout
         
             #Make sure it knows its a remote node
-            conn.execute('import packages.eo4vistrails.rpyc.Shared as Shared')
-            conn.execute('Shared.isRemoteRPyCNode=True')
+            self.conn.execute('import packages.eo4vistrails.rpyc.Shared as Shared')
+            self.conn.execute('Shared.isRemoteRPyCNode=True')
             
             #Instantiate Shadow Object
             print self.__module__, self.__class__.__name__
-            conn.execute('from '+self.__module__+' import '+self.__class__.__name__)
-            shadow = conn.eval(self.__class__.__name__+'()')
+            self.conn.execute('from '+self.__module__+' import '+self.__class__.__name__)
+            shadow = self.conn.eval(self.__class__.__name__+'()')
             
             #Hook Up Shadow Objects Methods and Attributes
             #attributes
@@ -184,8 +234,4 @@ class RPyCSafeMixin(object):
             
             #Call the Shadow Objects Compute
             shadow.compute()
-            
-            #conn.proc.terminate()
-            #conn.proc.wait()
-            #conn.close()
 

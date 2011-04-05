@@ -7,10 +7,14 @@ def initialize(*args, **keywords):
     import DropDownListWidget
     from WebRequest import WebRequest
     from DataRequest import DataRequest, PostGISRequest
+    from Array import NDArray
 
     reg = get_module_registry()
     utils_namespace = "utils"
     utils_test_namespace = "utils|tests"
+
+    reg.add_module(NDArray, name="Numpy Array", namespace=utils_namespace, abstract=True)
+    reg.add_output_port(NDArray, "self", (NDArray, 'self'))
 
     #Add ComboBox
     LinuxDemoComboBox = basic_modules.new_constant('LinuxDemoComboBox',

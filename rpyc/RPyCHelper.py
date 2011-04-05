@@ -62,21 +62,14 @@ class RPyCCode(ThreadSafeMixin, RPyCModule):
     def __init__(self):
         ThreadSafeMixin.__init__(self)
         RPyCModule.__init__(self)
-        try:
-            self.i = self.i + 1
-        except:
-            self.i = 0
-        print 'init', self.i
-
-    def __del__(self):
-        print 'del'
-        RPyCModule.__del__(self)
-        ThreadSafeMixin._del__(self)
-        
+    
     def clear(self):
-        print 'clear'
         RPyCModule.clear(self)
-        
+        if self.conn.proc:
+            self.conn.proc.terminate()
+            self.conn.proc.wait()
+        self.conn.close()
+       
     def getSubConnection(self):
         connection = rpyc.classic.connect_subproc()
         #self.isSubProc = True
@@ -152,7 +145,10 @@ class RPyCCode(ThreadSafeMixin, RPyCModule):
         
         if use_output:
             for k in outputDict.iterkeys():
-                if conn.namespace[k] != None:
+                try:
+                    if conn.namespace[k] != None:
+                        self.setResult(k, conn.namespace[k])
+                except AttributeError:
                     self.setResult(k, conn.namespace[k])
     
     def compute(self):

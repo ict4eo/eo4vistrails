@@ -54,9 +54,9 @@ def initialize(*args, **keywords):
     #NOTE! order does count
 
     utils_init.initialize(*args, **keywords)
+    rpyc_init.initialize(*args, **keywords)
     datamodels_init.initialize(*args, **keywords)
     ogc_init.initialize(*args, **keywords)
     postgis_init.initialize(*args,  **keywords)
     visual_init.initialize(*args,  **keywords)
-    rpyc_init.initialize(*args, **keywords)
     dataanalytics_init.initialize(*args, **keywords)

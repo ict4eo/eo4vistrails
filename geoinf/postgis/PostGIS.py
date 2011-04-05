@@ -37,11 +37,14 @@ import psycopg2
 
 from packages.eo4vistrails.geoinf.datamodels.QgsLayer import QgsVectorLayer
 from packages.eo4vistrails.utils.DataRequest import PostGISRequest
-
-from packages.NumSciPy.Array import NDArray
+from packages.eo4vistrails.rpyc.RPyC import RPyCModule, RPyCSafeModule
+from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
+from packages.eo4vistrails.utils.Array import NDArray
 from packages.eo4vistrails.utils.session import Session
+
 from core.modules.vistrails_module import Module, ModuleError
 from core.modules.source_configure import SourceConfigurationWidget
+
 import urllib
 
 
@@ -64,24 +67,25 @@ class PostGisSession(Session):
 
         self.connectstr = "host=" + self.host+ " dbname=" + self.database + \
                           " user=" + self.user + " password=" + self.pwd
+                          
         #PG:"dbname='databasename' host='addr' port='5432' user='x' password='y'"
         #PG:'host=myserver.velocet.ca user=postgres dbname=warmerda'
-        self.ogr_connectstr = "PG:host='%s' port='%s' dbname='%s' user='%s' password='%s'" % \
-                              (self.host,  self.port,  self.database,  self.user,  self.pwd)
+#        self.ogr_connectstr = "PG:host='%s' port='%s' dbname='%s' user='%s' password='%s'" % \
+#                              (self.host,  self.port,  self.database,  self.user,  self.pwd)
 
-        try:
-            self.pgconn = psycopg2.connect(self.connectstr)
-        except:
-            raise ModuleError,  (self, "cannot access a PostGIS connection")
+        #try:
+        #    self.pgconn = psycopg2.connect(self.connectstr)
+        #except:
+        #    raise ModuleError,  (self, "cannot access a PostGIS connection")
 
         self.setResult("PostGisSession",  self)
 
-    def __del__(self):
-        try:
-            if self.pgconn:
-                self.pgconn.close()
-        except:
-            pass
+#    def __del__(self):
+#        try:
+#            if self.pgconn:
+#                self.pgconn.close()
+#        except:
+#            pass
 
 
 class PostGisCursor():
@@ -99,7 +103,7 @@ class PostGisCursor():
 
         if self.conn_type == "psycopg2":
             try:
-                self.curs = PostGisSessionObj.pgconn.cursor()#' VISTRAILS'+random.randint(0,10000))
+                self.curs = PostGisSessionObj.pgconn.cursor() #' VISTRAILS'+random.randint(0,10000))
                 return True
             except:
                 return False
@@ -124,66 +128,90 @@ class PostGisCursor():
         except:
             pass
 
-class PostGisNumpyReturningCursor(Module):
+
+@RPyCSafeModule()
+class PostGisNumpyReturningCursor(ThreadSafeMixin, RPyCModule):
     """Returns data in the form of a eo4vistrails FeatureModel if user binds to self output port"""
     #multi inheritance of module subclasses is a problem
     def __init__(self):
-        #PostGisCursor.__init__(self,   conn_type = "ogr")
-        Module.__init__(self)
+        RPyCModule.__init__(self)
+        ThreadSafeMixin.__init__(self)
         
 
     def compute(self):
         """Will need to fetch a PostGisSession object on its input port
         Overrides supers method"""
         pgsession = self.getInputFromPort("PostGisSessionObject")
+        
         try:
             import random
             random.seed()
-            self.curs = pgsession.pgconn.cursor('VISTRAILS'+str(random.randint(0,10000)))
+            
+            pgconn = psycopg2.connect(pgsession.connectstr)
+            print pgconn
+            
+            curs = pgconn.cursor('VISTRAILS'+str(random.randint(0,10000)))
+            print "2", curs
 
             sql_input = urllib.unquote(str(self.forceGetInputFromPort('source', '')))
-            sql_input = sql_input.split(";")[0]#ogr does not want a trailing ';'
+            sql_input = sql_input.split(";")[0] #ogr does not want a trailing ';'
             '''here we substitute input port values within the source'''
+            
             for k in self.inputPorts:
                 value = self.getInputFromPort(k)
                 sql_input = sql_input.replace(k, value.__str__())
 
-            self.curs.execute(sql_input)
+            print "3.1", curs
+            curs.execute(sql_input)
+            print "3.2", curs
             
             import numpy
 
-            rec = self.curs.fetchone()
+            rec = curs.fetchone()
+            print "4", curs
+            
             if rec:
-                foundFloat = False
-                for item in rec:
-                    foundFloat = (type(item) == float)
-                    if foundFloat: break
-                theType = numpy.float32 if foundFloat else numpy.int32
-                print theType
-                dtype = []
+                dtype = []                
                 i = 0
+                sameType = True
+                firstType = type(rec[0])
                 for item in rec:
-                    dtype.append((self.curs.description[i][0], theType))
+                    #If they not all the same type just remeber as False
+                    sameType = sameType and (type(item) == firstType)
+                    #TODO: What about dates? How should they be handled.
+                    dtype.append((curs.description[i][0], type(item)))
                     i += 1
-                self.curs.scroll(-1)
-                
-                #TODO: bad hack for now
-                npRecArray = numpy.fromiter(self.curs, dtype=dtype)
-                npArray = npRecArray.view(dtype=theType).reshape(-1,len(npRecArray[0]))
+                    
+                curs.scroll(-1)
+                print "5", curs
                 
                 out = NDArray()
-                out.set_array(npArray)
+
+                npRecArray = numpy.fromiter(curs, dtype=dtype)
+                print "6", curs
+                
+                #QUESTION: Is this meaningfull in all cases, shoudl we be doing this
+                if sameType:
+                    npArray = npRecArray.view(dtype=firstType).reshape(-1,len(npRecArray[0]))               
+                    out.set_array(npArray)
+                else:
+                    out.set_array(npRecArray)
             
                 self.setResult('nummpyArray', out)
-                self.curs.close()
+                
+                curs.close()
+                pgconn.close()
             else:
                 raise ModuleError,  (PostGisNumpyReturningCursor,  "no records returned")
         except Exception as ex:
-            self.curs.close()
+            curs.close()
+            pgconn.close()
             print ex
             raise ModuleError,  (PostGisNumpyReturningCursor,  "Could not execute SQL Statement")
 
-class PostGisFeatureReturningCursor(Module):
+
+@RPyCSafeModule()
+class PostGisFeatureReturningCursor(ThreadSafeMixin, RPyCModule):
     """Returns data in the form of a eo4vistrails FeatureModel
     if user binds to self output port
     """
