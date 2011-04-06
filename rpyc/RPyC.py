@@ -231,9 +231,12 @@ class RPyCSafeMixin(object):
             #Hook Up Shadow Objects Methods and Attributes
             #attributes
             for attribute in Module.__dict__:
-                if not str(attribute) in ('compute', '__dict__', '__module__', '__doc__', '__str__', '__weakref__', '__init__'):
+                try:
+                    if not str(attribute) in ('compute', '__dict__', '__module__', '__doc__', '__str__', '__weakref__', '__init__'):
+                        shadow.__setattr__(str(attribute), self.__getattribute__(str(attribute)))
+                except AttributeError:
                     shadow.__setattr__(str(attribute), self.__getattribute__(str(attribute)))
-            
+                    
             #Call the Shadow Objects Compute
             shadow.compute()
 

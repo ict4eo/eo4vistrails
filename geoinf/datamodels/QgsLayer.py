@@ -36,7 +36,7 @@ from PyQt4.QtCore import QFileInfo
 from core.modules.vistrails_module import Module, ModuleError
 # eo4vistrails
 from packages.eo4vistrails.utils.DataRequest import DataRequest
-from RPyC import RPyCModule, RPyCSafeModule
+from packages.eo4vistrails.rpyc.RPyC import RPyCModule, RPyCSafeModule
 from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
 # local
 
