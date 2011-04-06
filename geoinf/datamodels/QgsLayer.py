@@ -36,17 +36,22 @@ from PyQt4.QtCore import QFileInfo
 from core.modules.vistrails_module import Module, ModuleError
 # eo4vistrails
 from packages.eo4vistrails.utils.DataRequest import DataRequest
+from RPyC import RPyCModule, RPyCSafeModule
+from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
 # local
-
 
 #export set PYTHONPATH=/usr/lib/python2.6
 qgis.core.QgsApplication.setPrefixPath("/usr", True)
 qgis.core.QgsApplication.initQgis()
 
 
-class QgsMapLayer(Module):
+class QgsMapLayer(ThreadSafeMixin, RPyCModule):
     """This module will create a QGIS layer from a file
     """
+    def __init__(self):
+        ThreadSafeMixin.__init__(self)
+        RPyCModule.__init__(self)
+        
     def raiseError(self, msg, error=''):
         """Raise a VisTrails error."""
         import traceback
@@ -65,7 +70,7 @@ class QgsMapLayer(Module):
         else:
             self.raiseError('All Map Layer Properties must be set')
 
-
+@RPyCSafeModule()
 class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
     """Create a QGIS vector layer.
     """
@@ -109,7 +114,7 @@ class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
         except Exception, e:
             self.raiseError('Cannot set output port: %s' % str(e))
 
-
+@RPyCSafeModule()
 class QgsRasterLayer(QgsMapLayer, qgis.core.QgsRasterLayer):
     """Create a QGIS raster layer.
     """

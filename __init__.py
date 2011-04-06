@@ -59,6 +59,8 @@ def package_requirements():
         raise core.requirements.MissingRequirement('numpy')
     if not core.requirements.python_module_exists('rpyc'):
         raise core.requirements.MissingRequirement('rpyc')
+    if not core.requirements.python_module_exists('osgeo'):
+        raise core.requirements.MissingRequirement('osgeo')
 
 def package_dependencies():
     return ['edu.utah.sci.vistrails.spreadsheet','edu.utah.sci.vistrails.numpyscipy']
