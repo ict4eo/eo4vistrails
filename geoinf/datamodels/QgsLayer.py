@@ -45,12 +45,12 @@ qgis.core.QgsApplication.setPrefixPath("/usr", True)
 qgis.core.QgsApplication.initQgis()
 
 
-class QgsMapLayer(ThreadSafeMixin, RPyCModule):
+class QgsMapLayer(Module):
     """This module will create a QGIS layer from a file
     """
     def __init__(self):
-        ThreadSafeMixin.__init__(self)
-        RPyCModule.__init__(self)
+        #ThreadSafeMixin.__init__(self)
+        Module.__init__(self)
         
     def raiseError(self, msg, error=''):
         """Raise a VisTrails error."""
@@ -70,7 +70,7 @@ class QgsMapLayer(ThreadSafeMixin, RPyCModule):
         else:
             self.raiseError('All Map Layer Properties must be set')
 
-@RPyCSafeModule()
+#@RPyCSafeModule()
 class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
     """Create a QGIS vector layer.
     """
@@ -114,7 +114,7 @@ class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
         except Exception, e:
             self.raiseError('Cannot set output port: %s' % str(e))
 
-@RPyCSafeModule()
+#@RPyCSafeModule()
 class QgsRasterLayer(QgsMapLayer, qgis.core.QgsRasterLayer):
     """Create a QGIS raster layer.
     """

@@ -232,11 +232,14 @@ class RPyCSafeMixin(object):
             #attributes
             for attribute in Module.__dict__:
                 try:
+                    print "1", attribute
                     if not str(attribute) in ('compute', '__dict__', '__module__', '__doc__', '__str__', '__weakref__', '__init__'):
                         shadow.__setattr__(str(attribute), self.__getattribute__(str(attribute)))
                 except AttributeError:
+                    print "2", attribute
                     shadow.__setattr__(str(attribute), self.__getattribute__(str(attribute)))
                     
+            print "Executing in the shadow class"
             #Call the Shadow Objects Compute
             shadow.compute()
 
