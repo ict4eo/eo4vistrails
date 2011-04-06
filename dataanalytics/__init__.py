@@ -26,7 +26,3 @@
 """This package provides statistical capabilities for eo4vistrails.
 R, SciPy are proposed to be used
 """
-
-identifier = 'za.co.csir.eo4vistrails.dataanalytics'
-name = 'eo4vistrails.dataanalytics'
-version = '0.0.1'

@@ -43,6 +43,23 @@ name = 'eo4vistrails'
 version = '0.0.1'
 author_list = 'tvanzyl,bcwele'
 
+def package_requirements():
+    import core.requirements
+    if not core.requirements.python_module_exists('owslib'):
+        raise core.requirements.MissingRequirement('owslib')
+    if not core.requirements.python_module_exists('qgis'):
+        raise core.requirements.MissingRequirement('qgis')
+    if not core.requirements.python_module_exists('psycopg2'):
+        raise core.requirements.MissingRequirement('psycopg2')
+    if not core.requirements.python_module_exists('pysal'):
+        raise core.requirements.MissingRequirement('pysal')
+    if not core.requirements.python_module_exists('networkx'):
+        raise core.requirements.MissingRequirement('networkx')
+    if not core.requirements.python_module_exists('numpy'):
+        raise core.requirements.MissingRequirement('numpy')
+    if not core.requirements.python_module_exists('rpyc'):
+        raise core.requirements.MissingRequirement('rpyc')
+
 def package_dependencies():
     return ['edu.utah.sci.vistrails.spreadsheet','edu.utah.sci.vistrails.numpyscipy']
 #    import core.packagemanager

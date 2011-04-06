@@ -31,12 +31,4 @@ You will need to write raw sql by hand. Provsions a session
 a.k.a. a postgis connection and allows random queries to be
 executed against the chosen database. 
 """
-
-identifier = 'za.co.csir.eo4vistrails.geoinf.postgis'
-name = 'eo4vistrails.geoinf.postgis'
-version = '0.0.1'
-
-def package_requirements():
-    import core.requirements
-    if not core.requirements.python_module_exists('psycopg2'):
-        raise core.requirements.MissingRequirement('psycopg2')
+pass

@@ -67,66 +67,8 @@ class PostGisSession(Session):
 
         self.connectstr = "host=" + self.host+ " dbname=" + self.database + \
                           " user=" + self.user + " password=" + self.pwd
-                          
-        #PG:"dbname='databasename' host='addr' port='5432' user='x' password='y'"
-        #PG:'host=myserver.velocet.ca user=postgres dbname=warmerda'
-#        self.ogr_connectstr = "PG:host='%s' port='%s' dbname='%s' user='%s' password='%s'" % \
-#                              (self.host,  self.port,  self.database,  self.user,  self.pwd)
-
-        #try:
-        #    self.pgconn = psycopg2.connect(self.connectstr)
-        #except:
-        #    raise ModuleError,  (self, "cannot access a PostGIS connection")
 
         self.setResult("PostGisSession",  self)
-
-#    def __del__(self):
-#        try:
-#            if self.pgconn:
-#                self.pgconn.close()
-#        except:
-#            pass
-
-
-class PostGisCursor():
-    """MixIn class responsible for opening a cursor
-    on the PostGisSession/ connection"""
-
-    def __init__(self,  conn_type = "psycopg2"):
-
-        if conn_type == "ogr":
-            self.conn_type = "ogr"
-        else:
-            self.conn_type = "psycopg2"
-
-    def cursor(self,  PostGisSessionObj):
-
-        if self.conn_type == "psycopg2":
-            try:
-                self.curs = PostGisSessionObj.pgconn.cursor() #' VISTRAILS'+random.randint(0,10000))
-                return True
-            except:
-                return False
-        else:
-            return True
-            #below is not necessary, I suspect
-            try:
-                self.curs = ogr.Open(PostGisSessionObj.ogr_connectstr)
-                return True
-            except:
-                return False
-
-
-    def __del__(self):
-        try:
-            if self.curs:
-                if self.conn_type == "psycopg2":
-                    self.curs.close()
-                else:
-                    self.curs.ReleaseResultLayer(0)
-                    self.curs.Destroy()
-        except:
-            pass
 
 
 @RPyCSafeModule()
@@ -148,10 +90,8 @@ class PostGisNumpyReturningCursor(ThreadSafeMixin, RPyCModule):
             random.seed()
             
             pgconn = psycopg2.connect(pgsession.connectstr)
-            print pgconn
             
             curs = pgconn.cursor('VISTRAILS'+str(random.randint(0,10000)))
-            print "2", curs
 
             sql_input = urllib.unquote(str(self.forceGetInputFromPort('source', '')))
             sql_input = sql_input.split(";")[0] #ogr does not want a trailing ';'
@@ -161,14 +101,11 @@ class PostGisNumpyReturningCursor(ThreadSafeMixin, RPyCModule):
                 value = self.getInputFromPort(k)
                 sql_input = sql_input.replace(k, value.__str__())
 
-            print "3.1", curs
             curs.execute(sql_input)
-            print "3.2", curs
             
             import numpy
 
             rec = curs.fetchone()
-            print "4", curs
             
             if rec:
                 dtype = []                
@@ -183,12 +120,10 @@ class PostGisNumpyReturningCursor(ThreadSafeMixin, RPyCModule):
                     i += 1
                     
                 curs.scroll(-1)
-                print "5", curs
                 
                 out = NDArray()
 
                 npRecArray = numpy.fromiter(curs, dtype=dtype)
-                print "6", curs
                 
                 #QUESTION: Is this meaningfull in all cases, shoudl we be doing this
                 if sameType:
@@ -215,28 +150,24 @@ class PostGisFeatureReturningCursor(ThreadSafeMixin, RPyCModule):
     """Returns data in the form of a eo4vistrails FeatureModel
     if user binds to self output port
     """
-
     #multi inheritance of module subclasses is a problem
     def __init__(self):
-        #PostGisCursor.__init__(self,   conn_type = "ogr")
         Module.__init__(self)
-
 
     def compute(self):
         """Will need to fetch a PostGisSession object on its input port
         Overrides supers method"""
         pgsession = self.getInputFromPort("PostGisSessionObject")
+        
         try:
+
             sql_input = urllib.unquote(str(self.forceGetInputFromPort('source', '')))
             sql_input = sql_input.split(";")[0]#ogr does not want a trailing ';'
             '''here we substitute input port values within the source'''
+            
             for k in self.inputPorts:
                 value = self.getInputFromPort(k)
                 sql_input = sql_input.replace(k, value.__str__())
-            #print "got sql input"
-            #ogr_conn = self.getInputFromPort("PostGisSessionObject").ogr_connectstr
-            #print "checking connection: connectstr: %s, sql: %s" % (ogr_conn,  sql_input)
-            #self.loadContentFromDB(ogr_conn, sql_input)
 
             postGISRequest = PostGISRequest()
             postGISRequest.setConnection(pgsession.host,
@@ -265,17 +196,8 @@ class PostGisFeatureReturningCursor(ThreadSafeMixin, RPyCModule):
             raise ModuleError,  (PostGisFeatureReturningCursor, \
                                  "Could not execute SQL Statement")
 
-        #do stuff with this return list -> make it into an OGR dataset
-        #see (http://trac.osgeo.org/postgis/wiki/UsersWikiOGR,
-        #   http://www.gdal.org/ogr/drv_memory.htm,
-        #   ogr memory driver python in google)
-        #for now, to test, print to stdout
-        #could be implemented directy via OGR's SQL capability
-        #print "data are: "
-        #print self.sql_return_list
-
-
-class PostGisBasicReturningCursor(Module, PostGisCursor):
+@RPyCSafeModule()
+class PostGisBasicReturningCursor(ThreadSafeMixin, RPyCModule):
     """
     Returns data in the form of a python list (as per psycopg2).
     Only one dataset per module is allowed, defined by the SQL
@@ -284,34 +206,44 @@ class PostGisBasicReturningCursor(Module, PostGisCursor):
 
     def __init__(self):
         Module.__init__(self)
-        PostGisCursor.__init__(self)
+        
 
     def compute(self):
         """Fetches and executes a PostGisSession object on the input port
 
         Overrides supers method"""
-        if self.cursor(self.getInputFromPort("PostGisSessionObject")) == True:
-            try:
-                port_input = urllib.unquote(str(self.forceGetInputFromPort('source', '')))
-                '''here we substitute input port values within the source'''
-                for k in self.inputPorts:
-                    value = self.getInputFromPort(k)
-                    port_input = port_input.replace(k, value.__str__())
-                self.curs.execute(port_input)
-                self.sql_return_list = self.curs.fetchall()
-                import sys
-                print sys.getsizeof(self.sql_return_list)
-                
-                self.setResult('records',  self.sql_return_list)
-                self.curs.close()
-            except Exception as ex:
-                print ex
-                raise ModuleError,  (PostGisFeatureReturningCursor,\
-                                     "Could not execute SQL Statement")
-                #set output port to receive this list
+        pgsession = self.getInputFromPort("PostGisSessionObject")
 
+        try:
+            pgconn = psycopg2.connect(pgsession.connectstr)
+        
+            curs = pgconn.cursor()
+            
+            sql_input = urllib.unquote(str(self.forceGetInputFromPort('source', '')))
+            sql_input = sql_input.split(";")[0]#ogr does not want a trailing ';'
+            
+            '''here we substitute input port values within the source'''
+            for k in self.inputPorts:
+                value = self.getInputFromPort(k)
+                sql_input = sql_input.replace(k, value.__str__())
+            
+            curs.execute(sql_input)
+            sql_return_list = curs.fetchall()
+            
+            self.setResult('records',  sql_return_list)
+            curs.close()
+            pgconn.close()
+            
+        except Exception as ex:
+            curs.close()
+            pgconn.close()
+            print ex
+            raise ModuleError,  (PostGisFeatureReturningCursor,\
+                                 "Could not execute SQL Statement")
+            #set output port to receive this list
 
-class PostGisNonReturningCursor(Module, PostGisCursor):
+@RPyCSafeModule()
+class PostGisNonReturningCursor(ThreadSafeMixin, RPyCModule):
     """Returns a list of result strings to indicate success or failure.
 
     Usually to be used as a way to do an insert, update, delete operation
@@ -323,34 +255,45 @@ class PostGisNonReturningCursor(Module, PostGisCursor):
 
     def __init__(self):
         Module.__init__(self)
-        PostGisCursor.__init__(self)
 
     def compute(self):
         """Will need to fetch a PostGisSession object on its input port
         Overrides supers method"""
-        if self.cursor(self.getInputFromPort("PostGisSessionObject")) == True:
-            try:
-                # we could be dealing with multiple requests here,
-                #   so parse string and execute requests one by one
-                resultstatus =[]
-                port_input = urllib.unquote(str(self.forceGetInputFromPort('source', '')))
-                port_input = port_input.rstrip()
-                port_input = port_input.lstrip()
-                for k in self.inputPorts:
-                    value = self.getInputFromPort(k)
-                    port_input = port_input.replace(k, value.__str__())
-                for query in port_input.split(";"):
-                    if len(query) != 0:
-                        if query[len(query)-1] != ";": query = query + ";"
-                        #print "about to execute: " + query
-                        self.curs.execute(query)
-                        resultstatus.append(self.curs.statusmessage)
+        pgsession = self.getInputFromPort("PostGisSessionObject")
 
-                self.setResult('status', resultstatus)
-                self.curs.close()
-            except:
-                raise ModuleError,  (PostGisFeatureReturningCursor,\
-                                     "Could not execute SQL Statement")
+        try:
+            # we could be dealing with multiple requests here,
+            #   so parse string and execute requests one by one
+            pgconn = psycopg2.connect(pgsession.connectstr)
+            
+            curs = pgconn.cursor()
+            
+            resultstatus =[]
+            sql_input = urllib.unquote(str(self.forceGetInputFromPort('source', '')))
+            sql_input = sql_input.rstrip()
+            sql_input = sql_input.lstrip()
+            
+            for k in self.inputPorts:
+                value = self.getInputFromPort(k)
+                sql_input = sql_input.replace(k, value.__str__())
+            
+            for query in sql_input.split(";"):
+                if len(query) != 0:
+                    if query[len(query)-1] != ";": query = query + ";"
+                    #print "about to execute: " + query
+                    curs.execute(query)
+                    resultstatus.append(curs.statusmessage)
+            
+            self.setResult('status', resultstatus)
+            curs.close()
+            pgconn.close()
+            
+        except Exception as ex:
+            curs.close()
+            pgconn.close()
+            print ex
+            raise ModuleError,  (PostGisFeatureReturningCursor,\
+                                 "Could not execute SQL Statement")
 
 
 class SQLSourceConfigurationWidget(SourceConfigurationWidget):

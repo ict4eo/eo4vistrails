@@ -65,10 +65,13 @@ class RPyCCode(ThreadSafeMixin, RPyCModule):
     
     def clear(self):
         RPyCModule.clear(self)
-        if self.conn.proc:
-            self.conn.proc.terminate()
-            self.conn.proc.wait()
-        self.conn.close()
+        if self.conn:
+            try:
+                self.conn.proc.terminate()
+                self.conn.proc.wait()
+            except:
+                pass
+            self.conn.close()
        
     def getSubConnection(self):
         connection = rpyc.classic.connect_subproc()

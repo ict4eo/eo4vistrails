@@ -26,7 +26,4 @@
 """This package provides consistent internal data models for 
 feature, raster and time-series data. Proposes use of gdal, ogr (or GeoJson perhaps?) and hdf
 """
-
-identifier = 'za.co.csir.eo4vistrails.geoinf.datamodels'
-name = 'eo4vistrails.geoinf.datamodels'
-version = '0.0.1'
+pass

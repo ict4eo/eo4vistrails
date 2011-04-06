@@ -26,7 +26,4 @@
 """This package provides GRASS (http://grass.osgeo.org/) capabilities for eo4vistrails.
 GRASS commands are executed via the subprocess module
 """
-
-identifier = 'za.co.csir.eo4vistrails.geoinf.grass'
-name = 'eo4vistrails.geoinf.grass'
-version = '0.0.1'
+pass

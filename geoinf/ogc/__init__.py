@@ -29,15 +29,4 @@ the owslib (http://gispython.org/owslib) library, and hence
 has a dependency thereupon. owslib is dependent on libxml 
 or elementree
 """
-
-identifier = 'za.co.csir.eo4vistrails.geoinf.ogc'
-name = 'eo4vistrails.geoinf.ogc'
-version = '0.0.1'
-
-def package_requirements():
-    import core.requirements
-    if not core.requirements.python_module_exists('owslib'):
-        raise core.requirements.MissingRequirement('owslib')
-#    else:
-#        from owslib import wfs,  wcs,  sos
-
+pass

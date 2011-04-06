@@ -26,12 +26,4 @@
 """This package provides GIS capabilities for eo4vistrails.
 works with QGIS Canvas, displays map files using qgiscanvas. 
 """
-
-identifier = 'za.co.csir.eo4vistrails.geoinf.visual'
-name = 'eo4vistrails.geoinf.visual'
-version = '0.0.1'
-
-def package_requirements():
-    import core.requirements
-    if not core.requirements.python_module_exists('qgis'):
-        raise core.requirements.MissingRequirement('qgis')
+pass

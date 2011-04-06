@@ -101,9 +101,11 @@ class RPyCSafeMixin(object):
     def clear(self):
         Module.clear(self)
         if self.conn:
-            if self.conn.proc:
+            try:
                 self.conn.proc.terminate()
                 self.conn.proc.wait()
+            except:
+                pass
             self.conn.close()
 
     def getConnection(self):
@@ -143,65 +145,65 @@ class RPyCSafeMixin(object):
                     connection.modules.sys.path.append('./tmp')
 
                 #Check version info
-                try:
-                    connection.execute('import core.system')
+                force=False
+                try:                    
                     core_system = connection.modules["core.system"]
-                    print core_system.vistrails_version()
-                except:
+                    import core.system
+                    if core_system.vistrails_version() != core.system.vistrails_version():
+                        force=True
+                        print "Different Versions....", core_system.vistrails_version()
+                except ImportError:
                     print "Core System Not Loaded"
+                    connection.modules.sys.path_importer_cache['./tmp'] = None
                     
                 print "Uploading requirements to node...."
                 import packages.eo4vistrails.rpyc.tmp
                 rpyc.classic.upload_package(connection, packages.eo4vistrails.rpyc.tmp, "./tmp")
 
-                try:
-                    connection.modules["core"]
-                    print "Skipping core..."
-                except:
-                    print "Uploading core..."
-                    import core
-                    rpyc.classic.upload_package(connection, core, "./tmp/core")
+                self.refreshPackage(connection, "core", force=force)
 
-                try:
-                    connection.modules["gui"]
-                    print "Skipping gui..."
-                except:
-                    print "Uploading gui..."
-                    import gui
-                    rpyc.classic.upload_package(connection, gui, "./tmp/gui")
-
-                try:
-                    connection.modules["db"]
-                    print "Skipping db..."
-                except:
-                    print "Uploading db..."
-                    import db
-                    rpyc.classic.upload_package(connection, db, "./tmp/db")
+                self.refreshPackage(connection, "gui", force=force)
                 
+                self.refreshPackage(connection, "db", force=force)
                 
+                #TODO: remove once finishing dev should just work of version numbers
+                force=True
                 #Upload any vistrails packages that may be required
                 for packageName in self._requiredVisPackages:
-                    print "Uploading %s..."% packageName
-                    package = __import__(packageName, fromlist=['packages'])
-                    rpyc.classic.upload_package(connection, package, "./tmp/"+packageName.replace(".","/"))
-    
+                    self.refreshPackage(connection, packageName, checkVersion=True, force=force)
+                
                 print "Finished uploading requirements to node...."
-
+                
                 #Reload the current module
-                #rpyc.classic.update_module(connection, inspect.getmodule(self))
-                if not "./tmp" in connection.modules.sys.path:
-                    connection.modules.sys.path.append('./tmp')
-                    
-                connection.execute('import ' + self.__module__)
                 print self.__module__
                 rmodule = connection.modules[self.__module__]
                 connection.modules.__builtin__.reload(rmodule)
+                print "Reloaded current module %s...."%str(self.__module__)
                 
         else:
             connection = None
 
         return connection
 
+    def refreshPackage(self, connection, packageName, checkVersion=False, force=False):
+        reFresh = force
+        package = __import__(packageName, fromlist=['packages'])
+
+        try:
+            rpackage = connection.modules[packageName]
+        except ImportError:
+            reFresh = True
+            
+        if (not reFresh) and checkVersion and (rpackage.version != package.version):
+            reFresh = True
+
+        if reFresh:
+            print "Uploading %s..."%packageName
+            rpyc.classic.upload_package(connection, package, "./tmp/"+packageName.replace(".","/"))
+            rpackage = connection.modules[packageName]
+            connection.modules.__builtin__.reload(rpackage)
+        else:
+            print "Skipping %s..."%packageName
     
     def compute(self):
         #Get RPyC Node in good standing
