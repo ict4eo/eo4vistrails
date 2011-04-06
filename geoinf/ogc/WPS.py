@@ -126,7 +126,7 @@ class WPS(Module):
             # connect to server
 
 
-            """#TEST POST
+            """#TEST POST START           """
             self.postString = '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <wps:Execute service="WPS" version="1.0.0"
     xmlns:wps="http://www.opengis.net/wps/1.0.0" xmlns:ows="http://www.opengis.net/ows/1.1"
@@ -170,12 +170,21 @@ http://schemas.opengis.net/wps/1.0.0/wpsExecute_request.xsd">
         </wps:ResponseDocument>
     </wps:ResponseForm>
 </wps:Execute>'''
-            self.url = 'http://flexigeoweb.lat-lon.de/deegree-wps-demo/services?SERVICE=WPS&VERSION=1.0.0&REQUEST=execute&IDENTIFIER=BufferDistance'
             """
-            
-            #TODO - add in "urlencode on self.url !!!
+            if using urllib2.quote('...
+            get:
+            ValueError: unknown url type: http%3A//flexigeoweb.lat-lon.de/deegree-wps-demo/services%3FSERVICE%3DWPS%26VERSION%3D1.0.0%26REQUEST%3Dexecute%26IDENTIFIER%3DBufferProcess
+            """
+            self.url = 'http://flexigeoweb.lat-lon.de/deegree-wps-demo/services?SERVICE=WPS&VERSION=1.0.0&REQUEST=execute&IDENTIFIER=BufferProcess'
+            #TEST POST END
 
-            f = urllib.urlopen(self.url, unicode(self.postString, "UTF-8"))
+            print "\nWPS:174 self.postString\n", self.postString
+            print "\nWPS:175 self.url\n", self.url
+
+            r = urllib2.Request(self.url, self.postString)
+            f = urllib2.urlopen(r)
+            #f = urllib2.urlopen(self.url, unicode(self.postString, "UTF-8"))
+            #f = urllib2.urlopen(self.url, self.postString)
             # get the results back
             wpsRequestResult = f.read()
             # set the output ports

@@ -52,7 +52,7 @@ class OgcCommonWidget(QtGui.QWidget):
     def __init__(self, module, parent=None):
         '''parses modules attributes to fetch parameters'''
         QtGui.QWidget.__init__(self, parent)
-        self.launchtype = str(module).split("|")[1].split("'")[0][0:3].lower()  # class-dependant code!
+        self.launchtype = module.name  #str(module).split("|")[1].split("'")[0][0:3].lower()  # class-dependant code!
         #self.module = module
         self.setObjectName("OgcCommonWidget")
         self.parent_widget = module
@@ -70,13 +70,13 @@ class OgcCommonWidget(QtGui.QWidget):
         self.line_edit_OGC_url = QtGui.QLineEdit(DEFAULT_URL)
         self.urlGroupBox = QtGui.QGroupBox("OGC %s Service:" % self.launchtype)
 
-        if self.launchtype == "sos":
+        if self.launchtype.upper() == "SOS":
             self.urlGroupBox = QtGui.QGroupBox("OGC Sensor Observation Service:")
             self.line_edit_OGC_url = QtGui.QLineEdit(DEFAULT_URL_SOS)
-        elif self.launchtype == "wfs":
+        elif self.launchtype.upper() == "WFS":
             self.urlGroupBox = QtGui.QGroupBox("OGC Web Feature Service:")
             self.line_edit_OGC_url = QtGui.QLineEdit(DEFAULT_URL_WFS)
-        elif self.launchtype == "wcs":
+        elif self.launchtype.upper() == "WCS":
             self.urlGroupBox = QtGui.QGroupBox("OGC Web Coverage Service:")
             self.line_edit_OGC_url = QtGui.QLineEdit(DEFAULT_URL_WCS)
 
