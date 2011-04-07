@@ -99,6 +99,7 @@ class QGISMapCanvasCellWidget(QCellWidget, QMainWindow):
                         "/mActionZoomOut.png"), "Zoom Out", self.tools)
         actionPan = QAction(QIcon(path_png_icon + \
                         "/mActionPan.png"), "Pan", self.tools)
+        
 
         # toolbar
         self.toolbar = self.tools.addToolBar("Canvas actions")
@@ -106,7 +107,15 @@ class QGISMapCanvasCellWidget(QCellWidget, QMainWindow):
         self.toolbar.addAction(actionZoomIn)
         self.toolbar.addAction(actionZoomOut)
         self.toolbar.addAction(actionPan)
-
+       
+        
+        # layer explorer pane                       
+        self.explorer = QDockWidget("Layers")        
+        self.explorer.resize(60, 100)        
+        self.listWidget = QtGui.QListWidget()         
+        self.listWidget.setObjectName("listWidget")
+        self.explorer.setWidget(self.listWidget)
+                
         # create the map tools
         self.toolPan = QgsMapToolPan(self.canvas,)
         self.toolPan.setAction(actionPan)
@@ -114,23 +123,52 @@ class QGISMapCanvasCellWidget(QCellWidget, QMainWindow):
         self.toolZoomIn.setAction(actionZoomIn)
         self.toolZoomOut = QgsMapToolZoom(self.canvas, True) # true == out
         self.toolZoomOut.setAction(actionZoomOut)
-
-        # overall layout
-        self.setLayout(QtGui.QVBoxLayout(self))
-        self.layout().addWidget(self.toolbar)
-        self.layout().addWidget(self.canvas)
-
+        
+              
+        # set widgets layouts      
+        self.mainLayout = QtGui.QHBoxLayout()
+        self.setLayout(self.mainLayout)
+        
+        self.label = QtGui.QLabel("")
+        
+        # layerList explorer               
+        self.GroupBoxLyrExplorer = QtGui.QGroupBox("")
+        
+        self.vboxLyrExplorer = QtGui.QVBoxLayout()
+        
+        self.GroupBoxLyrExplorer.setLayout(self.vboxLyrExplorer)
+        
+        self.mainLayout.addWidget(self.GroupBoxLyrExplorer)
+        
+        self.vboxLyrExplorer.addWidget(self.label)
+        
+        self.vboxLyrExplorer.addWidget(self.explorer)        
+        
+        # toolbar and canvas
+        self.GroupBoxToolBarMapCanvas = QtGui.QGroupBox("")
+        
+        self.vboxToolBarMapCanvas = QtGui.QVBoxLayout()
+        
+        self.GroupBoxToolBarMapCanvas.setLayout(self.vboxToolBarMapCanvas)
+                
+        self.mainLayout.addWidget(self.GroupBoxToolBarMapCanvas)        
+        
+        self.vboxToolBarMapCanvas.addWidget(self.toolbar)
+        
+        self.vboxToolBarMapCanvas.addWidget(self.canvas)
+       
         # set signals
         self.connect(actionAddLayer, SIGNAL("activated()"), self.addLayer)
         self.connect(actionZoomIn, SIGNAL("activated()"), self.zoomIn)
         self.connect(actionZoomOut, SIGNAL("activated()"), self.zoomOut)
         self.connect(actionPan, SIGNAL("activated()"), self.pan)
-
+        
+        
     def addLayer(self):
         """TO DO: Add doc string"""
         QtGui.QMessageBox.information(
             self,
-            "INFORMATION:","Functionality not yet implemented",
+            "INFORMATION:","Functionality not implemented",
             QtGui.QMessageBox.Ok)
 
     def zoomIn(self):
@@ -178,3 +216,136 @@ class QGISMapCanvasCellWidget(QCellWidget, QMainWindow):
                 self.canvas.setLayerSet(mapCanvasLayers)
                 self.canvas.refresh()
                 self.update()
+                               
+        for lyr in self.getLayerNames("all"):
+                        
+            item = QtGui.QListWidgetItem()
+
+            item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
+
+            item.setCheckState(QtCore.Qt.Checked)
+    
+            self.listWidget.addItem(item)
+                                   
+            self.widget = QtGui.QLabel(str(lyr)) 
+            
+            self.listWidget.setItemWidget(item, self.widget)
+            
+        self.listWidget.itemClicked.connect(self.on_listWidget_itemClicked)
+            
+                                    
+    def on_listWidget_itemClicked(self, item):
+
+        if item.listWidget().itemWidget(item) != None: 
+
+            if item.checkState() == QtCore.Qt.Checked:
+
+                item.setCheckState(QtCore.Qt.Unchecked)
+                
+                self.searchLayerIndex(item)
+                                         
+            else:
+                
+                item.setCheckState(QtCore.Qt.Checked)  
+                
+                self.searchLayerIndex(item)
+                
+                
+    def searchLayerIndex(self, item):
+                
+        selected_layer = item.listWidget().itemWidget(item).text()
+                
+        print selected_layer
+                                
+        lyrNo = -1
+                
+        try:
+            
+            while 1:
+                
+                lyrNo = self.getLayerNames("all").index(selected_layer, lyrNo + 1)
+                
+                print "match at", lyrNo
+                
+                indexValue = lyrNo
+                
+                self.toggleLayer(indexValue)
+                                        
+        except ValueError:
+            pass
+        
+    
+       
+    def me2(self):
+        
+        self.changeValue(2)
+               
+    # toggle layers
+    def toggleLayer(self, lyrNr):
+        
+        lyr = self.canvas.layer(lyrNr)
+        
+        if lyr:
+            
+            cTran = lyr.getTransparency()
+            
+            lyr.setTransparency(0 if cTran > 100 else 255)
+            
+            self.canvas.refresh()
+
+              
+    def changeValue(self, value):
+        
+        layer = self.canvas.layer(2)
+        
+        if(layer):
+            nF = layer.selectedFeatureCount()
+            if (nF > 0):
+                layer.startEditing()
+                ob = layer.selectedFeaturesIds()
+                b = QVariant(value)
+                if (nF > 1):
+                    for i in ob:
+                        layer.changeAttributeValue(int(i),1,b) # 1 being the second column
+                else:
+                    layer.changeAttributeValue(int(ob[0]),1,b) # 1 being the second column
+                layer.commitChanges()
+                
+            else:
+                QMessageBox.critical(self,"Error", "Please select at least one feature from current layer")
+        else:
+            QMessageBox.critical(self,"Error","Please select a layer")
+    
+    
+    # Return list of names of all layers in QgsMapLayerRegistry
+    def getLayerNames( self, inputLayers ):
+        
+        layermap = QgsMapLayerRegistry.instance().mapLayers()
+        
+        layerlist = []
+        
+        if inputLayers == "all":
+            
+            for name, layer in layermap.iteritems():
+                
+                layerlist.append(layer.name()) 
+                
+        else:
+            
+            for name, layer in layermap.iteritems():
+                
+                if layer.type() == QgsMapLayer.VectorLayer:
+                    
+                    if layer.geometryType() in inputLayers:
+                        
+                        layerlist.append(layer.name()) 
+                        
+                elif layer.type() == QgsMapLayer.RasterLayer:
+                    
+                    if "Raster" in inputLayers:
+                        
+                        layerlist.append(layer.name()) 
+                                     
+        return layerlist
+        
+    

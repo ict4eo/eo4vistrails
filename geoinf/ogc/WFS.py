@@ -187,6 +187,7 @@ class WFSCommonWidget(QtGui.QWidget):
         self.dcRequestType.addItem('GetFeature')
         self.dcRequestType.addItem('DescribeFeatureType')
 
+        
         # local signals
         self.connect(
             self.requestLbx,
