@@ -70,6 +70,7 @@ RASTER_MIMETYPES = [{"MIMETYPE":"IMAGE/TIFF", "GDALID":"GTiff"},
                     {"MIMETYPE":"APPLICATION/X-GEOTIFF", "GDALID":"GTiff"}]
 # All supported input vector formats [mime type, schema]
 VECTOR_MIMETYPES = [{"MIMETYPE":"TEXT/XML", "SCHEMA":"GML", "GDALID":"GML"}, \
+                    {"MIMETYPE":"APPLICATION/XML", "SCHEMA":"GML", "GDALID":"GML"}, \
                     {"MIMETYPE":"TEXT/XML", "SCHEMA":"KML", "GDALID":"KML"}, \
                     {"MIMETYPE":"APPLICATION/DGN", "SCHEMA":"", "GDALID":"DGN"}, \
                     #{"MIMETYPE":"APPLICATION/X-ZIPPED-SHP", "SCHEMA":"", "GDALID":"ESRI_Shapefile"}, \
@@ -109,7 +110,8 @@ class WPS(Module):
     def raiseError(self, msg, error=''):
         """Raise a VisTrails error."""
         import traceback
-        traceback.print_exc()
+        if traceback:
+            traceback.print_exc()
         raise ModuleError(self, msg + ': %s' % str(error))
 
     def compute(self):
@@ -119,6 +121,9 @@ class WPS(Module):
         self.postString = self.getInputFromPort(init.OGC_POST_DATA_PORT)
         # get layers
         self.layers = self.getInputListFromPort(init.MAP_LAYER_PORT)
+        # get process name
+        self.processID = self.getInputListFromPort(init.WPS_PROCESS_PORT)
+
         if self.postString and self.url:
             # add in layer details to POST request
             self.postString = \
@@ -128,61 +133,42 @@ class WPS(Module):
             #print "\nWPS:125 self.url\n", self.url
             # connect to server
 
-
             """#TEST POST START           """
             self.postString = '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<wps:Execute service="WPS" version="1.0.0"
-    xmlns:wps="http://www.opengis.net/wps/1.0.0" xmlns:ows="http://www.opengis.net/ows/1.1"
-    xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://www.opengis.net/wps/1.0.0
-http://schemas.opengis.net/wps/1.0.0/wpsExecute_request.xsd">
-    <ows:Identifier>BufferProcess</ows:Identifier>
-    <wps:DataInputs>
-        <wps:Input>
-            <ows:Identifier>GMLInput</ows:Identifier>
-            <wps:Data>
-                <wps:ComplexData>
-                    <Curve gml:id="C1" xmlns="http://www.opengis.net/gml"
-                        xmlns:gml="http://www.opengis.net/gml" srsName="EPSG:4326"
-                        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                        xsi:schemaLocation="http://www.opengis.net/gml http://schemas.opengis.net/gml/3.1.1/base/geometryPrimitives.xsd">
-                        <segments>
-                            <Arc interpolation="circularArc3Points">
-                                <posList srsName="EPSG:4326">2 0 0 2 -2 0</posList>
-                            </Arc>
-                            <LineStringSegment interpolation="linear">
-                                <posList srsName="EPSG:4326">-2 0 0 -2 2 0</posList>
-                            </LineStringSegment>
-                        </segments>
-                    </Curve>
-                </wps:ComplexData>
-            </wps:Data>
-        </wps:Input>
-        <wps:Input>
-            <ows:Identifier>BufferDistance</ows:Identifier>
-            <wps:Data>
-                <wps:LiteralData uom="unity" dataType="double">0.1</wps:LiteralData>
-            </wps:Data>
-        </wps:Input>
-    </wps:DataInputs>
-    <wps:ResponseForm>
-        <wps:ResponseDocument>
-            <wps:Output asReference="true">
-                <ows:Identifier>GMLOutput</ows:Identifier>
-            </wps:Output>
-        </wps:ResponseDocument>
-    </wps:ResponseForm>
+<wps:Execute service="WPS" version="1.0.0" xmlns:wps="http://www.opengis.net/wps/1.0.0" xmlns:ows="http://www.opengis.net/ows/1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/wps/1.0.0 http://schemas.opengis.net/wps/1.0.0/wpsExecute_request.xsd">
+<ows:Identifier>foo2</ows:Identifier>
+<wps:DataInputs>
+    <wps:Input>
+        <ows:Identifier>data</ows:Identifier>
+        <ows:Title>data</ows:Title>
+        <wps:Data>
+            <wps:ComplexData mimeType="text/xml" schema="" enconding=""><ogr:FeatureCollection xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schemas.opengis.net/gml/3.1.1/base/ gml.xsd" xmlns:ogr="http://ogr.maptools.org/" xmlns:gml="http://www.opengis.net/gml"><gml:boundedBy><gml:Box><gml:coord><gml:X>303314.4493983217</gml:X><gml:Y>6244549.021404636</gml:Y></gml:coord><gml:coord><gml:X>303718.64560866</gml:X><gml:Y>6244692.545970687</gml:Y></gml:coord></gml:Box></gml:boundedBy><gml:featureMember><ogr:qt_temp fid="F0"><ogr:geometryProperty><gml:Point><gml:coordinates>303314.449398321739864,6244692.545970686711371</gml:coordinates></gml:Point></ogr:geometryProperty><ogr:label>gree</ogr:label><ogr:id>2323</ogr:id><ogr:rotatation>0</ogr:rotatation></ogr:qt_temp></gml:featureMember><gml:featureMember><ogr:qt_temp fid="F1"><ogr:geometryProperty><gml:Point><gml:coordinates>303426.941625767154619,6244549.021404636092484</gml:coordinates></gml:Point></ogr:geometryProperty><ogr:label>dwqdqwd</ogr:label><ogr:id>324324</ogr:id><ogr:rotatation>0</ogr:rotatation></ogr:qt_temp></gml:featureMember><gml:featureMember><ogr:qt_temp fid="F2"><ogr:geometryProperty><gml:Point><gml:coordinates>303718.645608660008293,6244565.313382403925061</gml:coordinates></gml:Point></ogr:geometryProperty><ogr:label>nhfgh</ogr:label><ogr:id>34634</ogr:id><ogr:rotatation>0</ogr:rotatation></ogr:qt_temp></gml:featureMember></ogr:FeatureCollection></wps:ComplexData>
+        </wps:Data>
+    </wps:Input>
+    <wps:Input>
+        <ows:Identifier>width</ows:Identifier>
+        <ows:Title>width</ows:Title>
+        <wps:Data>
+            <wps:LiteralData>10</wps:LiteralData>
+        </wps:Data>
+    </wps:Input>
+</wps:DataInputs>
+<wps:ResponseForm>
+    <wps:ResponseDocument lineage="false" storeExecuteResponse="true" status="false">
+        <wps:Output>
+            <ows:Identifier>text</ows:Identifier>
+        </wps:Output>
+        <wps:Output asReference="true" mimeType="text/xml" schema="">
+            <ows:Identifier>buffer</ows:Identifier>
+        </wps:Output>
+    </wps:ResponseDocument>
+</wps:ResponseForm>
 </wps:Execute>'''
-            """
-            if using urllib2.quote('...
-            get:
-            ValueError: unknown url type: http%3A//flexigeoweb.lat-lon.de/deegree-wps-demo/services%3FSERVICE%3DWPS%26VERSION%3D1.0.0%26REQUEST%3Dexecute%26IDENTIFIER%3DBufferProcess
-            """
-            self.url = 'http://flexigeoweb.lat-lon.de/deegree-wps-demo/services?SERVICE=WPS&VERSION=1.0.0&REQUEST=execute&IDENTIFIER=BufferProcess'
+            self.url = 'http://ict4eo.meraka.csir.co.za/cgi-bin/wps.py'
             #TEST POST END
 
-            print "\nWPS:174 self.postString\n", self.postString
-            print "\nWPS:175 self.url\n", self.url
+            #print "\nWPS:174 self.postString\n", self.postString
+            #print "\nWPS:175 self.url\n", self.url
 
             r = urllib2.Request(self.url, self.postString)
             f = urllib2.urlopen(r)
@@ -193,7 +179,8 @@ http://schemas.opengis.net/wps/1.0.0/wpsExecute_request.xsd">
             # set the output ports
             self.resultHandler(wpsRequestResult)
         else:
-            self.raiseError('Unable to set URL and POST string')
+            self.raiseError('Configuration Incomplete',\
+                            'Unable to set URL and POST string')
 
     def addLayersToPost(self, postStringIn, layers):
         """Insert the input port layer(s) as part of the POST request.
@@ -326,17 +313,21 @@ http://schemas.opengis.net/wps/1.0.0/wpsExecute_request.xsd">
 
                 # Fetch the referenced complex data
                 if f_element.elementsByTagNameNS("http://www.opengis.net/wps/1.0.0", "Reference").size() > 0:
-                    identifier = f_element.elementsByTagNameNS("http://www.opengis.net/ows/1.1", "Identifier").at(0).toElement().text().simplified()
-                    reference = f_element.elementsByTagNameNS("http://www.opengis.net/wps/1.0.0", "Reference").at(0).toElement()
+                    identifier = f_element.elementsByTagNameNS(
+                        "http://www.opengis.net/ows/1.1", "Identifier").at(0).toElement().text().simplified()
+                    reference = f_element.elementsByTagNameNS(
+                        "http://www.opengis.net/wps/1.0.0", "Reference").at(0).toElement()
 
                     # Get the reference
                     fileLink = reference.attribute("href", "0")
 
                     # Try with namespace if not successful
                     if fileLink == '0':
-                        fileLink = reference.attributeNS("http://www.w3.org/1999/xlink", "href", "0")
+                        fileLink = reference.attributeNS(
+                            "http://www.w3.org/1999/xlink", "href", "0")
                     if fileLink == '0':
-                        self.raiseError(str(QCoreApplication.translate("WPS Error: Unable to download the result of reference: ")) + str(fileLink))
+                        self.raiseError(str(QCoreApplication.translate(
+                            "WPS Error: Unable to download the result of reference: ")) + str(fileLink))
                         return
 
                     # Get the mime type of the result
@@ -344,8 +335,8 @@ http://schemas.opengis.net/wps/1.0.0/wpsExecute_request.xsd">
 
                     if fileLink != '0':
                         # Set a valid layerName
-                        layerName = self.uniqueLayerName(self.processIdentifier + "_" + identifier)
-
+                        layerName = self.uniqueLayerName(str(self.processID) + "_" + str(identifier))
+                        # Layer filename
                         resultFileConnector = urllib.urlretrieve(unicode(fileLink, 'latin1'))
                         resultFile = resultFileConnector[0]
                         # Vector data
@@ -365,6 +356,8 @@ http://schemas.opengis.net/wps/1.0.0/wpsExecute_request.xsd">
                         # Everything else
                         else:
                             # For unsupported mime types we assume text
+                            if DEBUG:
+                                print "WARNING - result is not a defined MIME type"
                             content = open(resultFile, 'r').read()
                             self.setResult(init.DATA_RESULT_PORT, content)
 
@@ -542,8 +535,56 @@ http://schemas.opengis.net/wps/1.0.0/wpsExecute_request.xsd">
             self.raiseError("WPS insertElement Error",
                 "Cannot use a ':' in an element name.")
 
+    def uniqueLayerName(self, name):
+        """TO DO: Check the output ports and assign a new unique name to the output layer
+        We need to discuss how to go about this"""
+        #print 'WPS: output layer'
+        mapLayers = QgsMapLayerRegistry.instance().mapLayers()
+        i = 1
+        layerNameList = []
+        for (k, layer) in mapLayers.iteritems():
+            layerNameList.append(layer.name())
+
+        layerNameList.sort()
+
+        for layerName in layerNameList:
+            if layerName == name + unicode(str(i), 'latin1'):
+                i += 1
+
+        newName = name + unicode(str(i), 'latin1')
+        return newName
+
+    def isMimeTypeVector(self, mimeType):
+        """Check for vector input. Zipped shapefiles must be extracted"""
+        if DEBUG:
+            print "WPS isMimeTypeVector:", mimeType.upper()
+        for vectorType in VECTOR_MIMETYPES:
+            if mimeType.upper() == vectorType["MIMETYPE"]:
+                return vectorType["GDALID"]
+        return None
+
+    def isMimeTypeText(self, mimeType):
+        """Check for text file input"""
+        if DEBUG:
+            print "WPS isMimeTypeText:", mimeType.upper()
+        if mimeType.upper() == "TEXT/PLAIN":
+            return "TXT"
+        else:
+            return None
+
+    def isMimeTypeRaster(self, mimeType):
+        """Check for raster input"""
+        if DEBUG:
+            print "WPS isMimeTypeRaster:", mimeType.upper()
+        for rasterType in RASTER_MIMETYPES:
+            if mimeType.upper() == rasterType["MIMETYPE"]:
+                return rasterType["GDALID"]
+        return None
+
+
 
 class WpsWidget(QWidget):
+    """TODO: add doc string"""
 
     def __init__(self, parent=None):
         QWidget.__init__(self, parent)
@@ -1183,6 +1224,8 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         # Attach configured data to input ports
         functions = []
         functions.append(
+            (init.WPS_PROCESS_PORT, [self.processIdentifier]),)
+        functions.append(
             (init.OGC_POST_DATA_PORT, [postString]),)
         functions.append(
             (init.OGC_REQUEST_PORT, [self.requestURL]),)
@@ -1504,7 +1547,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
     def getDefaultMimeType(self, inElement):
         """TODO: add doc string"""
         myElement = inElement.elementsByTagName("Default").at(0).toElement()
-        return self._getMimeTypeSchemaEncoding(myElement)
+        return self.getMimeTypeSchemaEncoding(myElement)
 
     def getSupportedMimeTypes(self, inElement):
         """TODO: add doc string"""
@@ -1513,10 +1556,10 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         myFormats = myElements.elementsByTagName('Format')
         for i in range(myFormats.size()):
             myElement = myFormats.at(i).toElement()
-            mimeTypes.append(self._getMimeTypeSchemaEncoding(myElement))
+            mimeTypes.append(self.getMimeTypeSchemaEncoding(myElement))
         return mimeTypes
 
-    def _getMimeTypeSchemaEncoding(self, Element):
+    def getMimeTypeSchemaEncoding(self, Element):
         """TODO: add doc string"""
         mimeType = ""
         schema = ""
@@ -1529,13 +1572,6 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
             pass
 
         return {"MimeType": mimeType, "Schema": schema, "Encoding": encoding}
-
-    def isMimeTypeVector(self, mimeType):
-        """Check for vector input. Zipped shapefiles must be extracted"""
-        for vectorType in VECTOR_MIMETYPES:
-            if mimeType.upper() == vectorType["MIMETYPE"]:
-                return vectorType["GDALID"]
-        return None
 
     def getLayerNameList(self, dataType=0, all=False):
         """TODO: add doc string"""
@@ -1555,25 +1591,6 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
                     myLayerList.append(mc.layer(l).name())
 
         return myLayerList
-
-    def uniqueLayerName(self, name):
-        """TO DO: Check the output ports and assign a new unique name to the output layer
-        We need to discuss how to go about this"""
-        #print 'WPS: output layer'
-        mapLayers = QgsMapLayerRegistry.instance().mapLayers()
-        i = 1
-        layerNameList = []
-        for (k, layer) in mapLayers.iteritems():
-            layerNameList.append(layer.name())
-
-        layerNameList.sort()
-
-        for layerName in layerNameList:
-            if layerName == name + unicode(str(i), 'latin1'):
-                i += 1
-
-        newName = name + unicode(str(i), 'latin1')
-        return newName
 
     def allowedValues(self, aValues):
         """TODO: add doc string"""
@@ -1600,20 +1617,6 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
 
         #print str(valList)
         return valList
-
-    def isMimeTypeText(self, mimeType):
-        """Check for text file input"""
-        if mimeType.upper() == "TEXT/PLAIN":
-            return "TXT"
-        else:
-            return None
-
-    def isMimeTypeRaster(self, mimeType):
-        """Check for raster input"""
-        for rasterType in RASTER_MIMETYPES:
-            if mimeType.upper() == rasterType["MIMETYPE"]:
-                return rasterType["GDALID"]
-        return None
 
     def popUpMessageBox(self, title, detailedText):
         """A message box used for debugging"""

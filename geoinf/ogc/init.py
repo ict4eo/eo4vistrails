@@ -10,6 +10,7 @@ VECTOR_PORT = "QgsVectorLayer"
 RASTER_PORT = "QgsRasterLayer"
 MAP_LAYER_PORT = "QgsMapLayer"
 DATA_RESULT_PORT = "WPS_data"
+WPS_PROCESS_PORT = "WPS_process"
 
 
 def initialize(*args, **keywords):
@@ -47,6 +48,10 @@ def initialize(*args, **keywords):
         WPS,
         OGC_URL_PORT,
         (core.modules.basic_modules.String, 'URL String'))#, True)
+    reg.add_input_port(
+        WPS,
+        WPS_PROCESS_PORT,
+        (core.modules.basic_modules.String, 'WPS Process'))#, True)
     reg.add_input_port(
         WPS,
         OGC_REQUEST_PORT,

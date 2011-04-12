@@ -62,22 +62,29 @@ class QGISMapCanvasCell(SpreadsheetCell):
         """ compute() -> None"""
         if self.hasInputFromPort("baselayer"):
             self.base_layer = self.getInputFromPort("baselayer")
-            #print "base_layer id/type/srs :", base_layer.getLayerID(), \
-            #    type(base_layer), base_layer.srs()
-            self.crsDest = QgsCoordinateReferenceSystem(self.base_layer.srs())
-            if self.hasInputFromPort("layer"):
-                self.layers = self.getInputListFromPort("layer")
-                # add base layer LAST (last in, first out)
-                self.layers.append(self.base_layer)
+            if self.base_layer:
+                #print "base_layer id/type/srs :", self.base_layer.getLayerID(), \
+                #    self.type(base_layer), self.base_layer.srs()
+                try:
+                    self.crsDest = QgsCoordinateReferenceSystem(self.base_layer.srs())
+                except:
+                    self.crsDest = None
+                if self.hasInputFromPort("layer"):
+                    self.layers = self.getInputListFromPort("layer")
+                    # add base layer LAST (last in, first out)
+                    self.layers.append(self.base_layer)
+                else:
+                    self.layers = self.getInputFromPort("baselayer")
+                self.cellWidget = self.displayAndWait(QGISMapCanvasCellWidget,
+                                                      (self.layers, self.crsDest))
             else:
-                self.layers = self.getInputFromPort("baselayer")
-            self.cellWidget = self.displayAndWait(QGISMapCanvasCellWidget,
-                                                  (self.layers, self.crsDest))
+                raise ModuleError(
+                    self,
+                    'A valid base layer must be defined')
         else:
             raise ModuleError(
                 self,
-                'A base layer must be set')
-
+                'The base layer port must be set')
 
 class QGISMapCanvasCellWidget(QCellWidget, QMainWindow):
     """TO DO: Add doc string
@@ -112,9 +119,9 @@ class QGISMapCanvasCellWidget(QCellWidget, QMainWindow):
         # layer explorer pane
         self.explorer = QDockWidget("Layers")
         self.explorer.resize(60, 100)
-        self.listWidget = QtGui.QListWidget()
-        self.listWidget.setObjectName("listWidget")
-        self.explorer.setWidget(self.listWidget)
+        self.explorerListWidget = QtGui.QListWidget()
+        self.explorerListWidget.setObjectName("listWidget")
+        self.explorer.setWidget(self.explorerListWidget)
 
         # create the map tools
         self.toolPan = QgsMapToolPan(self.canvas,)
@@ -189,8 +196,9 @@ class QGISMapCanvasCellWidget(QCellWidget, QMainWindow):
         myrender = self.canvas.mapRenderer()
         myrender.setProjectionsEnabled(True)
         #print self.canvas.hasCrsTransformEnabled()
-        myrender.setDestinationSrs(crsDest)
-
+        if crsDest:
+            myrender.setDestinationSrs(crsDest)
+        # Add layers to canvas
         mapCanvasLayers = []
         for layer in inputLayers:
             if layer.isValid():
@@ -206,15 +214,17 @@ class QGISMapCanvasCellWidget(QCellWidget, QMainWindow):
                 self.canvas.setLayerSet(mapCanvasLayers)
                 self.canvas.refresh()
                 self.update()
-
+        # Add widget for layer control to canvas
+        self.explorerListWidget.clear()
+        print "self.explorerListWidget count",self.explorerListWidget.count()
         for lyr in self.getLayerNames("all"):
             item = QtGui.QListWidgetItem()
             item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
             item.setCheckState(QtCore.Qt.Checked)
-            self.listWidget.addItem(item)
+            self.explorerListWidget.addItem(item)
             self.widget = QtGui.QLabel(str(lyr))
-            self.listWidget.setItemWidget(item, self.widget)
-        self.listWidget.itemClicked.connect(self.on_listWidget_itemClicked)
+            self.explorerListWidget.setItemWidget(item, self.widget)
+        self.explorerListWidget.itemClicked.connect(self.on_listWidget_itemClicked)
 
     def on_listWidget_itemClicked(self, item):
         """TO DO: Add doc string"""
