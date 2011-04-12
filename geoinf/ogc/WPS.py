@@ -23,10 +23,10 @@
 ## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ##
 ############################################################################
-"""This module provides an OGC (Open Geospatial Consortium) Web Processing Service
-(WPS) Client via pyWPS.
+"""This module provides an OGC (Open Geospatial Consortium) Web Processing
+Service (WPS) Client via pyWPS.
 
-Much of this code comes directly from the QGIS WPS Plugin (dated 09 November 2009)
+Much of this code comes directly from the QGIS WPS Plugin (dated 09/11/2009)
 
 """
 # library
@@ -49,7 +49,8 @@ from qgis.gui import *
 # vistrails
 import core.modules.module_registry
 from core.modules.module_configure import StandardModuleConfigurationWidget
-from core.modules.vistrails_module import Module, new_module, NotCacheable, ModuleError
+from core.modules.vistrails_module import Module, new_module, NotCacheable,\
+    ModuleError
 # eo4vistrails
 from packages.eo4vistrails.geoinf.datamodels import QgsLayer
 # local
@@ -57,22 +58,22 @@ import init
 
 
 # All supported import raster formats
-RASTER_MIMETYPES =        [{"MIMETYPE":"IMAGE/TIFF", "GDALID":"GTiff"},
-                           {"MIMETYPE":"IMAGE/PNG", "GDALID":"PNG"}, \
-                           {"MIMETYPE":"IMAGE/GIF", "GDALID":"GIF"}, \
-                           {"MIMETYPE":"IMAGE/JPEG", "GDALID":"JPEG"}, \
-                           {"MIMETYPE":"IMAGE/GEOTIFF", "GDALID":"GTiff"}, \
-                           {"MIMETYPE":"APPLICATION/X-ERDAS-HFA", "GDALID":"HFA"}, \
-                           {"MIMETYPE":"APPLICATION/NETCDF", "GDALID":"netCDF"}, \
-                           {"MIMETYPE":"APPLICATION/X-NETCDF", "GDALID":"netCDF"}, \
-                           {"MIMETYPE":"APPLICATION/GEOTIFF", "GDALID":"GTiff"}, \
-                           {"MIMETYPE":"APPLICATION/X-GEOTIFF", "GDALID":"GTiff"}]
+RASTER_MIMETYPES = [{"MIMETYPE":"IMAGE/TIFF", "GDALID":"GTiff"},
+                    {"MIMETYPE":"IMAGE/PNG", "GDALID":"PNG"}, \
+                    {"MIMETYPE":"IMAGE/GIF", "GDALID":"GIF"}, \
+                    {"MIMETYPE":"IMAGE/JPEG", "GDALID":"JPEG"}, \
+                    {"MIMETYPE":"IMAGE/GEOTIFF", "GDALID":"GTiff"}, \
+                    {"MIMETYPE":"APPLICATION/X-ERDAS-HFA", "GDALID":"HFA"}, \
+                    {"MIMETYPE":"APPLICATION/NETCDF", "GDALID":"netCDF"}, \
+                    {"MIMETYPE":"APPLICATION/X-NETCDF", "GDALID":"netCDF"}, \
+                    {"MIMETYPE":"APPLICATION/GEOTIFF", "GDALID":"GTiff"}, \
+                    {"MIMETYPE":"APPLICATION/X-GEOTIFF", "GDALID":"GTiff"}]
 # All supported input vector formats [mime type, schema]
-VECTOR_MIMETYPES =        [{"MIMETYPE":"TEXT/XML", "SCHEMA":"GML", "GDALID":"GML"}, \
-                           {"MIMETYPE":"TEXT/XML", "SCHEMA":"KML", "GDALID":"KML"}, \
-                           {"MIMETYPE":"APPLICATION/DGN", "SCHEMA":"", "GDALID":"DGN"}, \
-                           #{"MIMETYPE":"APPLICATION/X-ZIPPED-SHP", "SCHEMA":"", "GDALID":"ESRI_Shapefile"}, \
-                           {"MIMETYPE":"APPLICATION/SHP", "SCHEMA":"", "GDALID":"ESRI_Shapefile"}]
+VECTOR_MIMETYPES = [{"MIMETYPE":"TEXT/XML", "SCHEMA":"GML", "GDALID":"GML"}, \
+                    {"MIMETYPE":"TEXT/XML", "SCHEMA":"KML", "GDALID":"KML"}, \
+                    {"MIMETYPE":"APPLICATION/DGN", "SCHEMA":"", "GDALID":"DGN"}, \
+                    #{"MIMETYPE":"APPLICATION/X-ZIPPED-SHP", "SCHEMA":"", "GDALID":"ESRI_Shapefile"}, \
+                    {"MIMETYPE":"APPLICATION/SHP", "SCHEMA":"", "GDALID":"ESRI_Shapefile"}]
 DEBUG = False
 DEFAULT_URL = 'http://ict4eo.meraka.csir.co.za/cgi-bin/wps.py'
 
@@ -84,10 +85,11 @@ def xmlExecuteRequestInputStart(identifier, namespace=False):
         string += '<wps:Input xmlns:wps="http://www.opengis.net/wps/1.0.0" xmlns:ows="http://www.opengis.net/ows/1.1">\n'
     else:
         string += "<wps:Input>\n"
-    string += "<ows:Identifier>"+identifier+"</ows:Identifier>\n"
-    string += "<ows:Title>"+identifier+"</ows:Title>\n"
+    string += "<ows:Identifier>" + identifier + "</ows:Identifier>\n"
+    string += "<ows:Title>" + identifier + "</ows:Title>\n"
     string += "<wps:Data>\n"
     return string
+
 
 def xmlExecuteRequestInputEnd():
     """TODO: add doc string"""
@@ -100,6 +102,7 @@ def xmlExecuteRequestInputEnd():
 class WPS(Module):
     """TODO: write doc string
     """
+
     def __init__(self):
         Module.__init__(self)
 
@@ -199,9 +202,9 @@ http://schemas.opengis.net/wps/1.0.0/wpsExecute_request.xsd">
 
         if postStringIn:
             for layer in layers:
-                #print "WPS:138 layer type",type(layer)
+                #print "WPS:138 layer type", type(layer)
                 # start wrapper
-                postString = xmlExecuteRequestInputStart(layer.name(),True)
+                postString = xmlExecuteRequestInputStart(layer.name(), True)
                 # meta data
                 if isinstance(layer, QgsLayer.QgsVectorLayer):  #type(layer) == type(QgsLayer.QgsVectorLayer):
                     mimeType = "text/xml" # get from layer?  DO URGENTLY !!!
@@ -210,7 +213,7 @@ http://schemas.opengis.net/wps/1.0.0/wpsExecute_request.xsd">
                 elif isinstance(layer, QgsLayer.QgsRasterLayer):
                     mimeType = "tiff" # get from layer?  DO URGENTLY !!!
                 else:
-                    self.raiseError('Unknown layer type:'+str(type(layer)))
+                    self.raiseError('Unknown layer type:' + str(type(layer)))
                 # layer types
                 if  mimeType == "text/xml":
                     postString += '<wps:ComplexData mimeType="' + mimeType + '" schema="' + schema + '" encoding="' + encoding + '">'
@@ -218,14 +221,14 @@ http://schemas.opengis.net/wps/1.0.0/wpsExecute_request.xsd">
                     if GML:
                         postString += GML
                     else:
-                        self.raiseError('WPS Error','Unable to encode vector to GML')
+                        self.raiseError('WPS Error', 'Unable to encode vector to GML')
                 else:
                     postString += '<wps:ComplexData mimeType="' + mimeType + '" encoding="base64">'
                     data64 = self.createTmpBase64(layer)
                     if data64:
                         postString += data64
                     else:
-                        self.raiseError('WPS Error','Unable to encode raster to base64')
+                        self.raiseError('WPS Error', 'Unable to encode raster to base64')
                 # end wrapper
                 postString += "</wps:ComplexData>"
                 postString += xmlExecuteRequestInputEnd()
@@ -246,7 +249,7 @@ http://schemas.opengis.net/wps/1.0.0/wpsExecute_request.xsd">
         ######### CODE THAT NEEDS TO BE ADAPTED TO ENHANCE THE ABOVE ##########
         if self.isMimeTypeVector(mimeType) != None and mimeType == "text/xml":
             postString += "<wps:ComplexData mimeType=\"" + mimeType + "\" schema=\"" + schema + "\" encoding=\"" + encoding + "\">"
-            postString += self.createTmpGML(listWidget.text(), useSelected).replace("> <","><").replace("http://ogr.maptools.org/ qt_temp.xsd","http://ogr.maptools.org/qt_temp.xsd")
+            postString += self.createTmpGML(listWidget.text(), useSelected).replace("> <", "><").replace("http://ogr.maptools.org/ qt_temp.xsd", "http://ogr.maptools.org/qt_temp.xsd")
         elif self.isMimeTypeVector(mimeType) != None or self.isMimeTypeRaster(mimeType) != None:
             postString += "<wps:ComplexData mimeType=\"" + mimeType + "\" encoding=\"base64\">\n"
             postString += self.createTmpBase64(listWidget.text())
@@ -269,7 +272,7 @@ http://schemas.opengis.net/wps/1.0.0/wpsExecute_request.xsd">
 
             if self.isMimeTypeVector(mimeType) != None and mimeType == "text/xml":
                 postString += "<wps:ComplexData mimeType=\"" + mimeType + "\" schema=\"" + schema + "\" encoding=\"" + encoding + "\">"
-                postString += self.createTmpGML(comboBox.currentText(), useSelected).replace("> <","><")
+                postString += self.createTmpGML(comboBox.currentText(), useSelected).replace("> <", "><")
                 postString = postString.replace("xsi:schemaLocation=\"http://ogr.maptools.org/ qt_temp.xsd\"", "xsi:schemaLocation=\"http://schemas.opengis.net/gml/3.1.1/base/ gml.xsd\"")
             elif self.isMimeTypeVector(mimeType) != None or self.isMimeTypeRaster(mimeType) != None:
                 postString += "<wps:ComplexData mimeType=\"" + mimeType + "\" encoding=\"base64\">\n"
@@ -299,7 +302,7 @@ http://schemas.opengis.net/wps/1.0.0/wpsExecute_request.xsd">
             # TODO: Check for more types
             if self.isMimeTypeVector(mimeType) != None and mimeType == "text/xml":
                 postString += "<wps:ComplexData mimeType=\"" + mimeType + "\" schema=\"" + schema + "\" encoding=\"" + encoding + "\">"
-                postString += self.createTmpGML(listWidget.text(), useSelected).replace("> <","><").replace("http://ogr.maptools.org/ qt_temp.xsd","http://ogr.maptools.org/qt_temp.xsd")
+                postString += self.createTmpGML(listWidget.text(), useSelected).replace("> <", "><").replace("http://ogr.maptools.org/ qt_temp.xsd", "http://ogr.maptools.org/qt_temp.xsd")
             elif self.isMimeTypeVector(mimeType) != None or self.isMimeTypeRaster(mimeType) != None:
                 postString += "<wps:ComplexData mimeType=\"" + mimeType + "\" encoding=\"base64\">\n"
                 postString += self.createTmpBase64(listWidget.text())
@@ -314,66 +317,66 @@ http://schemas.opengis.net/wps/1.0.0/wpsExecute_request.xsd">
         """
         self.doc = QtXml.QDomDocument()
         self.doc.setContent(resultXML, True)
-        resultNodeList = self.doc.elementsByTagNameNS("http://www.opengis.net/wps/1.0.0","Output")
+        resultNodeList = self.doc.elementsByTagNameNS("http://www.opengis.net/wps/1.0.0", "Output")
 
         # TODO: Check if the process does not run correctly before
         if resultNodeList.size() > 0:
             for i in range(resultNodeList.size()):
-              f_element = resultNodeList.at(i).toElement()
+                f_element = resultNodeList.at(i).toElement()
 
-              # Fetch the referenced complex data
-              if f_element.elementsByTagNameNS("http://www.opengis.net/wps/1.0.0", "Reference").size() > 0:
-                identifier = f_element.elementsByTagNameNS("http://www.opengis.net/ows/1.1","Identifier").at(0).toElement().text().simplified()
-                reference = f_element.elementsByTagNameNS("http://www.opengis.net/wps/1.0.0","Reference").at(0).toElement()
+                # Fetch the referenced complex data
+                if f_element.elementsByTagNameNS("http://www.opengis.net/wps/1.0.0", "Reference").size() > 0:
+                    identifier = f_element.elementsByTagNameNS("http://www.opengis.net/ows/1.1", "Identifier").at(0).toElement().text().simplified()
+                    reference = f_element.elementsByTagNameNS("http://www.opengis.net/wps/1.0.0", "Reference").at(0).toElement()
 
-                # Get the reference
-                fileLink = reference.attribute("href", "0")
+                    # Get the reference
+                    fileLink = reference.attribute("href", "0")
 
-                # Try with namespace if not successful
-                if fileLink == '0':
-                  fileLink = reference.attributeNS("http://www.w3.org/1999/xlink", "href", "0")
-                if fileLink == '0':
-                  self.raiseError(str(QCoreApplication.translate("WPS Error: Unable to download the result of reference: ")) + str(fileLink))
-                  return
+                    # Try with namespace if not successful
+                    if fileLink == '0':
+                        fileLink = reference.attributeNS("http://www.w3.org/1999/xlink", "href", "0")
+                    if fileLink == '0':
+                        self.raiseError(str(QCoreApplication.translate("WPS Error: Unable to download the result of reference: ")) + str(fileLink))
+                        return
 
-                # Get the mime type of the result
-                mimeType = str(reference.attribute("mimeType", "0").toLower())
+                    # Get the mime type of the result
+                    mimeType = str(reference.attribute("mimeType", "0").toLower())
 
-                if fileLink != '0':
-                  # Set a valid layerName
-                  layerName = self.uniqueLayerName(self.processIdentifier + "_" + identifier)
+                    if fileLink != '0':
+                        # Set a valid layerName
+                        layerName = self.uniqueLayerName(self.processIdentifier + "_" + identifier)
 
-                  resultFileConnector = urllib.urlretrieve(unicode(fileLink,'latin1'))
-                  resultFile = resultFileConnector[0]
-                  # Vector data
-                  # TODO: Check for schema GML and KML
-                  if self.isMimeTypeVector(mimeType) != None:
-                    vlayer = QgsVectorLayer(resultFile, layerName, "ogr")
-                    self.setResult(init.MAP_LAYER_PORT, vlayer)
-                  # Raster data
-                  elif self.isMimeTypeRaster(mimeType) != None:
-                    # We can directly attach the new layer
-                    rLayer = QgsRasterLayer(resultFile, layerName)
-                    self.setResult(init.MAP_LAYER_PORT, rLayer)
-                  # Text data
-                  elif self.isMimeTypeText(mimeType) != None:
-                    text = open(resultFile, 'r').read()
-                    self.setResult(init.DATA_RESULT_PORT, text)
-                  # Everything else
-                  else:
-                    # For unsupported mime types we assume text
-                    content = open(resultFile, 'r').read()
-                    self.setResult(init.DATA_RESULT_PORT, content)
+                        resultFileConnector = urllib.urlretrieve(unicode(fileLink, 'latin1'))
+                        resultFile = resultFileConnector[0]
+                        # Vector data
+                        # TODO: Check for schema GML and KML
+                        if self.isMimeTypeVector(mimeType) != None:
+                            vlayer = QgsVectorLayer(resultFile, layerName, "ogr")
+                            self.setResult(init.MAP_LAYER_PORT, vlayer)
+                        # Raster data
+                        elif self.isMimeTypeRaster(mimeType) != None:
+                            # We can directly attach the new layer
+                            rLayer = QgsRasterLayer(resultFile, layerName)
+                            self.setResult(init.MAP_LAYER_PORT, rLayer)
+                        # Text data
+                        elif self.isMimeTypeText(mimeType) != None:
+                            text = open(resultFile, 'r').read()
+                            self.setResult(init.DATA_RESULT_PORT, text)
+                        # Everything else
+                        else:
+                            # For unsupported mime types we assume text
+                            content = open(resultFile, 'r').read()
+                            self.setResult(init.DATA_RESULT_PORT, content)
 
-              elif f_element.elementsByTagNameNS("http://www.opengis.net/wps/1.0.0", "LiteralData").size() > 0:
-                literalText = f_element.elementsByTagNameNS("http://www.opengis.net/wps/1.0.0", "LiteralData").at(0).toElement().text()
-                # TODO: how to handle this ?
-                #self.popUpMessageBox(QCoreApplication.translate("QgsWps",'Result'),literalText)
-              else:
-                self.raiseError(str(QCoreApplication.translate("WPS Error: Missing reference or literal data in response")))
+                elif f_element.elementsByTagNameNS("http://www.opengis.net/wps/1.0.0", "LiteralData").size() > 0:
+                    literalText = f_element.elementsByTagNameNS("http://www.opengis.net/wps/1.0.0", "LiteralData").at(0).toElement().text()
+                    # TODO: how to handle this ?
+                    #self.popUpMessageBox(QCoreApplication.translate("QgsWps", 'Result'),literalText)
+                else:
+                    self.raiseError(str(QCoreApplication.translate("WPS Error: Missing reference or literal data in response")))
 
             # TODO: how to handle this ?
-            #QMessageBox.information(None, QCoreApplication.translate("QgsWps",'Process result'), QCoreApplication.translate("QgsWps",'The process finished successful'))
+            #QMessageBox.information(None, QCoreApplication.translate("QgsWps", 'Process result'), QCoreApplication.translate("QgsWps", 'The process finished successful'))
         else:
             self.errorHandler(resultXML)
 
@@ -384,7 +387,7 @@ http://schemas.opengis.net/wps/1.0.0/wpsExecute_request.xsd">
         """
         myQTempFile = QTemporaryFile()
         myQTempFile.open()
-        tmpFile = unicode(myQTempFile.fileName(),'latin1')
+        tmpFile = unicode(myQTempFile.fileName(), 'latin1')
 
         if vLayer.dataProvider().name() == "postgres":
             encoding = self.getDBEncoding(vLayer.dataProvider())
@@ -392,10 +395,10 @@ http://schemas.opengis.net/wps/1.0.0/wpsExecute_request.xsd">
             encoding = vLayer.dataProvider().encoding()
 
         fieldList = self.getFieldList(vLayer)
-        writer = self.createGMLFileWriter(tmpFile, fieldList, vLayer.dataProvider().geometryType(),encoding)
+        writer = self.createGMLFileWriter(tmpFile, fieldList, vLayer.dataProvider().geometryType(), encoding)
 
         # error = QgsVectorFileWriter.writeAsShapefile(layer, "my_shapes.shp", "CP1250")
-        #print "WPS: TEMP-GML-File Name: "+tmpFile
+        #print "WPS: TEMP-GML-File Name: " + tmpFile
         provider = vLayer.dataProvider()
         feat = QgsFeature()
         allAttrs = provider.attributeIndexes()
@@ -444,7 +447,7 @@ http://schemas.opengis.net/wps/1.0.0/wpsExecute_request.xsd">
         outfile = open(filename, 'w')
         base64.encode(infile, outfile)
         outfile.close()
-        outfile =  open(filename, 'r')
+        outfile = open(filename, 'r')
         base64String = outfile.read()
         os.remove(filename)
         #except:
@@ -459,20 +462,20 @@ http://schemas.opengis.net/wps/1.0.0/wpsExecute_request.xsd">
         errorDoc = QtXml.QDomDocument()
         myResult = errorDoc.setContent(resultXML.strip(), True)
 
-        resultExceptionNodeList = errorDoc.elementsByTagNameNS("http://www.opengis.net/wps/1.0.0","ExceptionReport")
+        resultExceptionNodeList = errorDoc.elementsByTagNameNS("http://www.opengis.net/wps/1.0.0", "ExceptionReport")
         exceptionText = ''
         if not resultExceptionNodeList.isEmpty():
             for i in range(resultExceptionNodeList.size()):
                 resultElement = resultExceptionNodeList.at(i).toElement()
                 exceptionText += resultElement.text()
 
-        resultExceptionNodeList = errorDoc.elementsByTagNameNS("http://www.opengis.net/wps/1.0.0","ExceptionText")
+        resultExceptionNodeList = errorDoc.elementsByTagNameNS("http://www.opengis.net/wps/1.0.0", "ExceptionText")
         if not resultExceptionNodeList.isEmpty():
             for i in range(resultExceptionNodeList.size()):
                 resultElement = resultExceptionNodeList.at(i).toElement()
                 exceptionText += resultElement.text()
 
-        resultExceptionNodeList = errorDoc.elementsByTagNameNS("http://www.opengis.net/ows/1.1","ExceptionText")
+        resultExceptionNodeList = errorDoc.elementsByTagNameNS("http://www.opengis.net/ows/1.1", "ExceptionText")
         if not resultExceptionNodeList.isEmpty():
             for i in range(resultExceptionNodeList.size()):
                 resultElement = resultExceptionNodeList.at(i).toElement()
@@ -511,17 +514,17 @@ http://schemas.opengis.net/wps/1.0.0/wpsExecute_request.xsd">
         """Return updated source with element inserted at a specified 'node'.
 
         All items must arrive as strings; result is also a string"""
-        #print source,"\n",element,"\n", node,"\n"
-        #print "\nWPS:452 ELEMENT IN\n",element,"\n"
+        #print source, "\n",element, "\n", node, "\n"
+        #print "\nWPS:452 ELEMENT IN\n",element, "\n"
         if node and not ':' in node:
             import xml.etree.ElementTree as xml
             from xml.parsers.expat import ExpatError
             if namespace:
-                node = "{%s}%s" % (namespace,node)
+                node = "{%s}%s" % (namespace, node)
             element = str(element).encode("UTF-8")
             try:
                 doc = xml.fromstring(source)
-                result = doc.findall('.//'+node)
+                result = doc.findall('.//' + node)
                 if result:
                     if len(result) > 0:
                         target = result[0]
@@ -541,13 +544,15 @@ http://schemas.opengis.net/wps/1.0.0/wpsExecute_request.xsd">
 
 
 class WpsWidget(QWidget):
-    def __init__(self,  parent=None):
-        QWidget.__init__(self,  parent)
+
+    def __init__(self, parent=None):
+        QWidget.__init__(self, parent)
         self.setObjectName("WpsWidget")
 
 
 class WPSConfigurationWidget(StandardModuleConfigurationWidget):
     """Configuration widget on vistrails module"""
+
     def __init__(self, module, controller, parent=None):
         StandardModuleConfigurationWidget.__init__(self, module, controller, parent)
         self.setObjectName("WpsConfigWidget")
@@ -596,7 +601,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         self.mainLayout.addWidget(QLabel('WPS URL:'), 1, 0, 1, 1)
         self.URLConnect = QLineEdit(DEFAULT_URL)
         self.URLConnect.setEnabled(True) #sets it not to be editable
-        self.mainLayout.addWidget(self.URLConnect, 1,1, 1, -1)
+        self.mainLayout.addWidget(self.URLConnect, 1, 1, 1, -1)
 
         #self.mainLayout.addWidget(QLabel('Connection Name:'), 2, 0, 1, 1)
         #self.URLName= QLineEdit(' ')
@@ -605,8 +610,8 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
 
         self.mainLayout.addWidget(QLabel('WPS Version:'), 2, 0, 1, 1)
         self.launchversion = QComboBox()
-        self.launchversion.addItems(['1.0.0',])
-        self.mainLayout.addWidget(self.launchversion, 2,1, 1, 1)
+        self.launchversion.addItems(['1.0.0', ])
+        self.mainLayout.addWidget(self.launchversion, 2, 1, 1, 1)
 
         #self.hboxlayout = QHBoxLayout()
         #self.hboxlayout.setSpacing(6)
@@ -646,7 +651,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         self.treeWidget.setObjectName("treeWidget")
         self.mainLayout.addWidget(self.treeWidget, 4, 0, 1, -1)
         self.treeWidget.setSortingEnabled(True)
-        self.treeWidget.headerItem().setText(0,"Identifier")
+        self.treeWidget.headerItem().setText(0, "Identifier")
         self.treeWidget.headerItem().setText(1, "Title")
         self.treeWidget.headerItem().setText(2, "Abstract")
 
@@ -655,27 +660,23 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         self.connect(
             self.btnConnect,
             SIGNAL('clicked(bool)'),
-            self.connectServer
-            )
+            self.connectServer)
 
         #    Config button
         self.connect(
             self.btnConfig,
             SIGNAL('clicked(bool)'),
-            self.configButton_clicked
-            )
+            self.configButton_clicked)
         #    OK button
         self.connect(
             self.btnOk,
             SIGNAL('clicked(bool)'),
-            self.close
-            )
+            self.close)
         #    Cancel Button
         self.connect(
             self.btnCancel,
             SIGNAL('clicked(bool)'),
-            self.close
-            )
+            self.close)
 
     def connectServer(self, connection):
         """Add items to treeWidget
@@ -693,11 +694,11 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
     def webConnectionExists(self, connection):
         """TODO: add doc string"""
         try:
-            xmlString = self.getServiceXML(connection,"GetCapabilities")
+            xmlString = self.getServiceXML(connection, "GetCapabilities")
             #print 'WPS: connection exists'
             return True
         except:
-            QMessageBox.critical(None,'','Web Connection Failed')
+            QMessageBox.critical(None, '', 'Web Connection Failed')
             return False
 
     def getServiceXML(self, name, request, identifier=None):
@@ -713,16 +714,16 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         method = result["method"]
         version = result["version"]
         if identifier:
-            myRequest = "?Request="+request+"&identifier="+identifier+"&Service=WPS&Version="+version
+            myRequest = "?Request=" + request + "&identifier=" + identifier + "&Service=WPS&Version=" + version
         else:
-            myRequest = "?Request="+request+"&Service=WPS&Version="+version
+            myRequest = "?Request=" + request + "&Service=WPS&Version=" + version
 
-        myPath = path+myRequest
+        myPath = path + myRequest
         #print 'WPS: getServiceXML - myPath\n', myPath
         self.verbindung = HTTPConnection(str(server))
         #print "WPS: self.verbindung\n", self.verbindung
-        #print "WPS: about to call request\n",str(method),str(myPath)
-        foo = self.verbindung.request(str(method),str(myPath))
+        #print "WPS: about to call request\n", str(method), str(myPath)
+        foo = self.verbindung.request(str(method), str(myPath))
         #print "WPS: foo\n",foo
         results = self.verbindung.getresponse()
         #print "WPS: results\n", results
@@ -738,12 +739,12 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         myURL = urlparse(str(name))
         #print myURL
 
-        mySettings = "/WPS/"+name
+        mySettings = "/WPS/" + name
         #    settings.setValue("WPS/connections/selected", QVariant(name) )
         ##settings.setValue(mySettings+"/scheme",  QVariant(myURL.scheme))
         ##settings.setValue(mySettings+"/server",  QVariant(myURL.netloc))
         ##settings.setValue(mySettings+"/path", QVariant(myURL.path))
-        settings.setValue(mySettings+"/method",QVariant("GET"))
+        settings.setValue(mySettings + "/method", QVariant("GET"))
         #print 'WPS: getserver - mysettings\n',mySettings
 
         result = {}
@@ -751,7 +752,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         result["scheme"] = myURL.scheme #str(settings.value(mySettings+"/scheme").toString()) # str(mySettings+"/scheme")
         result["server"] = myURL.netloc # str(mySettings+"/server") # str(settings.value(mySettings+"/server").toString()) #
         result["path"] = myURL.path #str(settings.value(mySettings+"/path").toString()) # str(mySettings+"/path") #
-        result["method"] = str(settings.value(mySettings+"/method").toString()) #str(mySettings+"/method")
+        result["method"] = str(settings.value(mySettings + "/method").toString()) #str(mySettings+"/method")
         result["version"] = str(self.launchversion.currentText()) # str(mySettings+"/version") #settings.value(mySettings+"/version").toString()
 
         #print 'WPS: getserver - result\n',result
@@ -771,10 +772,10 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
             QMessageBox.information(None, 'Error', 'Only WPS Version 1.0.0 is supported')
             return 0
 
-        version    = self.doc.elementsByTagNameNS("http://www.opengis.net/wps/1.0.0","Process")
-        title      = self.doc.elementsByTagNameNS("http://www.opengis.net/ows/1.1","Title")
-        identifier = self.doc.elementsByTagNameNS("http://www.opengis.net/ows/1.1","Identifier")
-        abstract   = self.doc.elementsByTagNameNS("http://www.opengis.net/ows/1.1","Abstract")
+        version = self.doc.elementsByTagNameNS("http://www.opengis.net/wps/1.0.0", "Process")
+        title = self.doc.elementsByTagNameNS("http://www.opengis.net/ows/1.1", "Title")
+        identifier = self.doc.elementsByTagNameNS("http://www.opengis.net/ows/1.1", "Identifier")
+        abstract = self.doc.elementsByTagNameNS("http://www.opengis.net/ows/1.1", "Abstract")
 
         itemListAll = []
         for i in range(version.size()):
@@ -783,9 +784,9 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
             #print v_element.text()
             i_element = identifier.at(i).toElement()
             #print i_element.text()
-            t_element = title.at(i+1).toElement()
+            t_element = title.at(i + 1).toElement()
             #print t_element.text()
-            a_element = abstract.at(i+1).toElement()
+            a_element = abstract.at(i + 1).toElement()
             #print a_element.text()
             itemList = []
             itemList.append(i_element.text())
@@ -814,12 +815,12 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         itemList = []
         for items in taglist:
             item = QTreeWidgetItem()
-            ident = unicode(items[0],'latin1')
-            title = unicode(items[1],'latin1')
-            abstract = unicode(items[2],'latin1')
-            item.setText(0,ident.strip())
-            item.setText(1,title.strip())
-            item.setText(2,abstract.strip())
+            ident = unicode(items[0], 'latin1')
+            title = unicode(items[1], 'latin1')
+            abstract = unicode(items[2], 'latin1')
+            item.setText(0, ident.strip())
+            item.setText(1, title.strip())
+            item.setText(2, abstract.strip())
             itemList.append(item)
         self.treeWidget.addTopLevelItems(itemList)
 
@@ -829,8 +830,8 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
        response document. Mandatory inputs are marked as red, default is black
        """
         #print 'WPS: OPEN PROCESS GUI'
-        name= self.URLConnect.text()
-        item= self.treeWidget.currentItem()
+        name = self.URLConnect.text()
+        item = self.treeWidget.currentItem()
 
         #self.process = WPSProcessing()
         #self.process.create_process_GUI(self, pName, item)
@@ -842,7 +843,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
             self.processIdentifier = item.text(0)
             #print "WPS: processIdentifier", self.processIdentifier
         except:
-            QMessageBox.warning(None,'',QCoreApplication.translate("QgsWps",'Please select a Process'))
+            QMessageBox.warning(None, '', QCoreApplication.translate("QgsWps", 'Please select a Process'))
 
         # Lists which store the inputs and meta information (format, occurs, ...)
         # This list is initialized every time the GUI is created
@@ -861,7 +862,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         flags = Qt.WindowTitleHint | Qt.WindowSystemMenuHint | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint  # QgisGui.ModalDialogFlags
         # Receive the XML process description
         self.pDoc = QtXml.QDomDocument()
-        self.pDoc.setContent(self.getServiceXML(self.processName,"DescribeProcess",self.processIdentifier), True)
+        self.pDoc.setContent(self.getServiceXML(self.processName, "DescribeProcess", self.processIdentifier), True)
         DataInputs = self.pDoc.elementsByTagName("Input")
         #print DataInputs.size()
         DataOutputs = self.pDoc.elementsByTagName("Output")
@@ -887,7 +888,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         self.addIntroduction(identifier, title)
 
         # If no Input Data  are requested
-        if DataInputs.size()==0:
+        if DataInputs.size() == 0:
             self.startProcess()
         #return 0
 
@@ -912,7 +913,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
 
         self.dlgProcessLayout.addWidget(self.dlgProcessTab)
         self.dlgProcess.setLayout(self.dlgProcessLayout)
-        self.dlgProcess.setGeometry(QRect(190,100,800,600))
+        self.dlgProcess.setGeometry(QRect(190, 100, 800, 600))
         self.dlgProcess.show()
 
     def generateProcessInputsGUI(self, DataInputs):
@@ -977,7 +978,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
 
             if literalData.size() > 0:
                 allowedValuesElement = literalData.at(0).toElement()
-                aValues = allowedValuesElement.elementsByTagNameNS("http://www.opengis.net/ows/1.1","AllowedValues")
+                aValues = allowedValuesElement.elementsByTagNameNS("http://www.opengis.net/ows/1.1", "AllowedValues")
                 dValue = str(allowedValuesElement.elementsByTagName("DefaultValue").at(0).toElement().text())
                 #print "WPS: Checking allowed values " + str(aValues.size())
                 if aValues.size() > 0:
@@ -1015,7 +1016,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
 
                     self.literalInputComboBoxList.append(self.addLiteralComboBox("Supported CRS", inputIdentifier,crsListe, minOccurs))
 
-        self.addCheckBox(QCoreApplication.translate("QgsWps","Process selected objects only"), QCoreApplication.translate("QgsWps","Selected"))
+        self.addCheckBox(QCoreApplication.translate("QgsWps", "Process selected objects only"), QCoreApplication.translate("QgsWps", "Selected"))
 
         """
 
@@ -1076,13 +1077,13 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         groupbox.setLayout(layout)
         self.dlgProcessTabFrameLayout.addWidget(groupbox)
 
-        QObject.connect(btnOk,SIGNAL("clicked()"),self.startProcess)
-        QObject.connect(btnCancel,SIGNAL("clicked()"),self.dlgProcess.close)
+        QObject.connect(btnOk, SIGNAL("clicked()"), self.startProcess)
+        QObject.connect(btnCancel, SIGNAL("clicked()"), self.dlgProcess.close)
 
     def startProcess(self):
         """Create the execute request"""
         #print "WPS:976 top startProcess"
-        self.doc.setContent(self.getServiceXML(self.processName,"DescribeProcess",self.processIdentifier))
+        self.doc.setContent(self.getServiceXML(self.processName, "DescribeProcess", self.processIdentifier))
         dataInputs = self.doc.elementsByTagName("Input")
         dataOutputs = self.doc.elementsByTagName("Output")
 
@@ -1098,14 +1099,14 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         if len(checkBoxes) > 0:
             useSelected = checkBoxes[0].isChecked()
 
-        postString = '<wps:Execute service="WPS" version="'+ self.getServiceVersion() + '"' + \
+        postString = '<wps:Execute service="WPS" version="' + self.getServiceVersion() + '"' + \
                    ' xmlns:wps="http://www.opengis.net/wps/1.0.0"' + \
                    ' xmlns:ows="http://www.opengis.net/ows/1.1"' +\
                    ' xmlns:xlink="http://www.w3.org/1999/xlink"' +\
                    ' xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"'\
                    ' xsi:schemaLocation="http://www.opengis.net/wpsExecute_request.xsd">'
 
-        postString += '<ows:Identifier>'+self.processIdentifier+'</ows:Identifier>\n'
+        postString += '<ows:Identifier>' + self.processIdentifier + '</ows:Identifier>\n'
         postString += '<wps:DataInputs>'
 
         # text/plain inputs
@@ -1125,7 +1126,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
             if comboBox == None or comboBox.currentText() == "":
                 continue
             postString += xmlExecuteRequestInputStart(comboBox.objectName())
-            postString += "<wps:LiteralData>"+comboBox.currentText()+"</wps:LiteralData>\n"
+            postString += "<wps:LiteralData>" + comboBox.currentText() + "</wps:LiteralData>\n"
             postString += xmlExecuteRequestInputEnd()
 
         # Literal data as combo box choice
@@ -1133,7 +1134,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
             if lineEdit == None or lineEdit.text() == "":
                 continue
             postString += xmlExecuteRequestInputStart(lineEdit.objectName())
-            postString += "<wps:LiteralData>"+lineEdit.text()+"</wps:LiteralData>\n"
+            postString += "<wps:LiteralData>" + lineEdit.text() + "</wps:LiteralData>\n"
             postString += xmlExecuteRequestInputEnd()
         postString += "</wps:DataInputs>\n"
 
@@ -1152,7 +1153,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
                 # Complex data is always requested as reference
                 if literalOutputType.size() != 0:
                     postString += "<wps:Output>\n"
-                    postString += "<ows:Identifier>"+outputIdentifier+"</ows:Identifier>\n"
+                    postString += "<ows:Identifier>" + outputIdentifier + "</ows:Identifier>\n"
                     postString += "</wps:Output>\n"
 
             # Attach selected complex outputs
@@ -1171,28 +1172,24 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
                 postString += "</wps:Output>\n"
 
             postString += "</wps:ResponseDocument>\n"
-            postString  += "</wps:ResponseForm>\n"
+            postString += "</wps:ResponseForm>\n"
 
         postString += "</wps:Execute>\n"
 
         # Determine full execute request URL
-        self.requestURL = result["url"] + '?SERVICE=WPS&VERSION='+ \
+        self.requestURL = result["url"] + '?SERVICE=WPS&VERSION=' + \
             self.getServiceVersion() + '&REQUEST=execute&IDENTIFIER=' + \
             self.processIdentifier
         # Attach configured data to input ports
         functions = []
         functions.append(
-            (init.OGC_POST_DATA_PORT, [postString]),
-            )
+            (init.OGC_POST_DATA_PORT, [postString]),)
         functions.append(
-            (init.OGC_REQUEST_PORT, [self.requestURL]),
-            )
+            (init.OGC_REQUEST_PORT, [self.requestURL]),)
         functions.append(
-            (init.OGC_URL_PORT, [result["url"]]),
-            )
+            (init.OGC_URL_PORT, [result["url"]]),)
         self.controller.update_ports_and_functions(
-            self.module.id, [], [], functions
-            )
+            self.module.id, [], [], functions)
 
         # This is for debug purpose only
         if DEBUG == True:
@@ -1235,7 +1232,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         comboBox.setMinimumHeight(25)
 
         myLabel = QLabel(self.dlgProcessScrollAreaWidget)
-        myLabel.setObjectName("qLabel"+name)
+        myLabel.setObjectName("qLabel" + name)
 
         if minOccurs > 0:
             string = "[" + name + "] <br>" + title
@@ -1279,7 +1276,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         listWidget.setSelectionMode(QAbstractItemView.ExtendedSelection)
 
         myLabel = QLabel(self.dlgProcessScrollAreaWidget)
-        myLabel.setObjectName("qLabel"+name)
+        myLabel.setObjectName("qLabel" + name)
 
         if minOccurs > 0:
             string = "[" + name + "] <br>" + title
@@ -1316,7 +1313,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         textBox.setMinimumHeight(50)
 
         myLabel = QLabel(self.dlgProcessScrollAreaWidget)
-        myLabel.setObjectName("qLabel"+name)
+        myLabel.setObjectName("qLabel" + name)
 
         if minOccurs > 0:
             string = "[" + name + "] <br>" + title
@@ -1361,7 +1358,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         comboBox.setMinimumHeight(25)
 
         myLabel = QLabel(widget)
-        myLabel.setObjectName("qLabel"+name)
+        myLabel.setObjectName("qLabel" + name)
 
         string = "[" + name + "] <br>" + title
         myLabel.setText("<font color='Green'>" + string + "</font>" + " <br>(" + mimeType + ")")
@@ -1393,7 +1390,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         comboBox.setMinimumHeight(25)
 
         myLabel = QLabel(self.dlgProcessScrollAreaWidget)
-        myLabel.setObjectName("qLabel"+name)
+        myLabel.setObjectName("qLabel" + name)
 
         if minOccurs > 0:
             string = "[" + name + "] <br>" + title
@@ -1431,7 +1428,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         myLineEdit.setText(defaultValue)
 
         myLabel = QLabel(groupbox)
-        myLabel.setObjectName("qLabel"+name)
+        myLabel.setObjectName("qLabel" + name)
 
         if minOccurs > 0:
             string = "[" + name + "] <br>" + title
@@ -1462,11 +1459,11 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         layout = QHBoxLayout()
 
         myCheckBox = QCheckBox(groupbox)
-        myCheckBox.setObjectName("chkBox"+name)
+        myCheckBox.setObjectName("chkBox" + name)
         myCheckBox.setChecked(False)
 
         myLabel = QLabel(groupbox)
-        myLabel.setObjectName("qLabel"+name)
+        myLabel.setObjectName("qLabel" + name)
         myLabel.setText("(" + name + ")" + "\n" + title)
         myLabel.setMinimumWidth(400)
         myLabel.setMinimumHeight(25)
@@ -1482,9 +1479,9 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
 
     def getIdentifierTitleAbstractFromElement(self, element):
         """TODO: add doc string"""
-        inputIdentifier = element.elementsByTagNameNS("http://www.opengis.net/ows/1.1","Identifier").at(0).toElement().text().simplified()
-        title      = element.elementsByTagNameNS("http://www.opengis.net/ows/1.1","Title").at(0).toElement().text().simplified()
-        abstract   = element.elementsByTagNameNS("http://www.opengis.net/ows/1.1","Abstract").at(0).toElement().text().simplified()
+        inputIdentifier = element.elementsByTagNameNS("http://www.opengis.net/ows/1.1", "Identifier").at(0).toElement().text().simplified()
+        title = element.elementsByTagNameNS("http://www.opengis.net/ows/1.1", "Title").at(0).toElement().text().simplified()
+        abstract = element.elementsByTagNameNS("http://www.opengis.net/ows/1.1", "Abstract").at(0).toElement().text().simplified()
         return inputIdentifier, title, abstract
 
     def addIntroduction(self, name, title):
@@ -1494,7 +1491,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         layout = QVBoxLayout()
         # label
         myLabel = QLabel(groupbox)
-        myLabel.setObjectName("qLabel"+name)
+        myLabel.setObjectName("qLabel" + name)
         myLabel.setText(QString(title))
         myLabel.setMinimumWidth(600)
         myLabel.setMinimumHeight(25)
@@ -1531,7 +1528,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         except:
             pass
 
-        return {"MimeType":mimeType,"Schema":schema,"Encoding":encoding}
+        return {"MimeType": mimeType, "Schema": schema, "Encoding": encoding}
 
     def isMimeTypeVector(self, mimeType):
         """Check for vector input. Zipped shapefiles must be extracted"""
@@ -1550,7 +1547,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         else:
             #mc=self.iface.mapCanvas()
             mc = QgsMapCanvas()
-            nLayers=mc.layerCount()
+            nLayers = mc.layerCount()
 
             for l in range(nLayers):
                 # Nur die Layer des gewnschten Datentypes auswhlen 0=Vectorlayer 1=Rasterlayer
@@ -1564,7 +1561,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         We need to discuss how to go about this"""
         #print 'WPS: output layer'
         mapLayers = QgsMapLayerRegistry.instance().mapLayers()
-        i=1
+        i = 1
         layerNameList = []
         for (k, layer) in mapLayers.iteritems():
             layerNameList.append(layer.name())
@@ -1572,10 +1569,10 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         layerNameList.sort()
 
         for layerName in layerNameList:
-            if layerName == name+unicode(str(i),'latin1'):
+            if layerName == name + unicode(str(i), 'latin1'):
                 i += 1
 
-        newName = name+unicode(str(i),'latin1')
+        newName = name + unicode(str(i), 'latin1')
         return newName
 
     def allowedValues(self, aValues):
@@ -1583,23 +1580,23 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         valList = []
         # Manage a value list defined by a range
         value_element = aValues.at(0).toElement()
-        v_range_element = value_element.elementsByTagNameNS("http://www.opengis.net/ows/1.1","Range")
+        v_range_element = value_element.elementsByTagNameNS("http://www.opengis.net/ows/1.1", "Range")
 
         if v_range_element.size() > 0:
-            min_val = value_element.elementsByTagNameNS("http://www.opengis.net/ows/1.1","MinimumValue").at(0).toElement().text()
-            max_val = value_element.elementsByTagNameNS("http://www.opengis.net/ows/1.1","MaximumValue").at(0).toElement().text()
-        #       QMessageBox.information(None, '', min_val+' - '+max_val)
-            for n in range(int(min_val),int(max_val)+1):
+            min_val = value_element.elementsByTagNameNS("http://www.opengis.net/ows/1.1", "MinimumValue").at(0).toElement().text()
+            max_val = value_element.elementsByTagNameNS("http://www.opengis.net/ows/1.1", "MaximumValue").at(0).toElement().text()
+        #       QMessageBox.information(None, '', min_val+' - ' + max_val)
+            for n in range(int(min_val), int(max_val) + 1):
                 myVal = QString()
                 myVal.append(str(n))
                 valList.append(myVal)
 
         # Manage a value list defined by single values
-        v_element = value_element.elementsByTagNameNS("http://www.opengis.net/ows/1.1","Value")
+        v_element = value_element.elementsByTagNameNS("http://www.opengis.net/ows/1.1", "Value")
         if v_element.size() > 0:
             for n in range(v_element.size()):
                 mv_element = v_element.at(n).toElement()
-                valList.append(unicode(mv_element.text(),'latin1').strip())
+                valList.append(unicode(mv_element.text(), 'latin1').strip())
 
         #print str(valList)
         return valList
@@ -1628,7 +1625,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
     def getDBEncoding(self, layerProvider):
         """TODO: add doc string"""
         dbConnection = QgsDataSourceURI(layerProvider.dataSourceUri())
-        db = QSqlDatabase.addDatabase("QPSQL","WPSClient")
+        db = QSqlDatabase.addDatabase("QPSQL", "WPSClient")
         db.setHostName(dbConnection.host())
         db.setDatabaseName(dbConnection.database())
         db.setUserName(dbConnection.username())
@@ -1636,11 +1633,11 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         db.setPort(int(dbConnection.port()))
         db.open()
 
-        query =  "select pg_encoding_to_char(encoding) as encoding "
+        query = "select pg_encoding_to_char(encoding) as encoding "
         query += "from pg_catalog.pg_database "
-        query += "where datname = '"+dbConnection.database()+"' "
+        query += "where datname = '" + dbConnection.database() + "' "
 
-        result = QSqlQuery(query,db)
+        result = QSqlQuery(query, db)
         result.first()
         encoding = result.value(0).toString()
         db.close()
@@ -1654,6 +1651,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
 
 class WPSMessageBox(QMessageBox):
     """A resizable message box to show debug info"""
+
     def __init__(self):
         QMessageBox.__init__(self)
         self.setSizeGripEnabled(True)
@@ -1668,7 +1666,7 @@ class WPSMessageBox(QMessageBox):
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         textEdit = self.findChild(QTextEdit)
-        if textEdit != None :
+        if textEdit != None:
             textEdit.setMinimumHeight(300)
             textEdit.setMaximumHeight(16777215)
             textEdit.setMinimumWidth(300)

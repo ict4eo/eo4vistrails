@@ -46,6 +46,7 @@ class SOS(OGC, FeatureModel):
     Override for base OGC service class
 
     """
+
     def __init__(self):
         OGC.__init__(self)
         FeatureModel.__init__(self)
@@ -54,6 +55,7 @@ class SOS(OGC, FeatureModel):
 
 class SosCommonWidget(QtGui.QWidget):
     """Enable SOS-specific parameters to be obtained, displayed and selected."""
+
     def __init__(self, ogc_widget, parent=None):
         QtGui.QWidget.__init__(self, parent)
         self.setObjectName("SosCommonWidget")
@@ -64,13 +66,11 @@ class SosCommonWidget(QtGui.QWidget):
         self.connect(
             self.parent_widget,
             QtCore.SIGNAL('serviceActivated'),
-            self.loadOfferings
-            )
+            self.loadOfferings)
         self.connect(
             self.parent_widget,
             QtCore.SIGNAL('serviceDeactivated'),
-            self.removeOfferings
-            )
+            self.removeOfferings)
 
     def create_config_window(self):
         """Create datacontainers and layout for displaying SOS-specific data."""
@@ -114,8 +114,8 @@ class SosCommonWidget(QtGui.QWidget):
         self.detailsLayout.addWidget(QtGui.QLabel('Request Type'), 11, 0)
 
         #   data containers
-        self.lblDescription =  QtGui.QLabel('-')
-        self.detailsLayout.addWidget(self.lblDescription , 0, 1)
+        self.lblDescription = QtGui.QLabel('-')
+        self.detailsLayout.addWidget(self.lblDescription, 0, 1)
 
         self.boundingGroupBox = QtGui.QGroupBox("")
         self.boundingLayout = QtGui.QVBoxLayout()
@@ -127,10 +127,10 @@ class SosCommonWidget(QtGui.QWidget):
         self.minGroupBox.setLayout(self.minLayout)
         self.boundingLayout.addWidget(self.minGroupBox)
         self.minLayout.addWidget(QtGui.QLabel('Top Left X:'))
-        self.lblTL_X =  QtGui.QLabel('-')
+        self.lblTL_X = QtGui.QLabel('-')
         self.minLayout.addWidget(self.lblTL_X)
         self.minLayout.addWidget(QtGui.QLabel('Top Left Y:'))
-        self.lblTL_Y =  QtGui.QLabel('-')
+        self.lblTL_Y = QtGui.QLabel('-')
         self.minLayout.addWidget(self.lblTL_Y)
 
         self.maxGroupBox = QtGui.QGroupBox("")
@@ -139,10 +139,10 @@ class SosCommonWidget(QtGui.QWidget):
         self.maxGroupBox.setLayout(self.maxLayout)
         self.boundingLayout.addWidget(self.maxGroupBox)
         self.maxLayout.addWidget(QtGui.QLabel('Bottom Right X:'))
-        self.lblBR_X =  QtGui.QLabel('-')
+        self.lblBR_X = QtGui.QLabel('-')
         self.maxLayout.addWidget(self.lblBR_X)
         self.maxLayout.addWidget(QtGui.QLabel('Bottom Right Y:'))
-        self.lblBR_Y =  QtGui.QLabel('-')
+        self.lblBR_Y = QtGui.QLabel('-')
         self.maxLayout.addWidget(self.lblBR_Y)
 
         self.srsGroupBox = QtGui.QGroupBox("")
@@ -151,7 +151,7 @@ class SosCommonWidget(QtGui.QWidget):
         self.srsGroupBox.setLayout(self.srsLayout)
         self.boundingLayout.addWidget(self.srsGroupBox)
         self.srsLayout.addWidget(QtGui.QLabel('SRS:'))
-        self.lblSRS =  QtGui.QLabel('-')
+        self.lblSRS = QtGui.QLabel('-')
         self.srsLayout.addWidget(self.lblSRS)
 
         self.boundingLayout.addStretch()  # force items upwards -does not work??
@@ -161,10 +161,10 @@ class SosCommonWidget(QtGui.QWidget):
         self.timeLayout = QtGui.QVBoxLayout()
         self.timeGroupBox.setLayout(self.timeLayout)
         self.detailsLayout.addWidget(self.timeGroupBox, 2, 1)
-        self.lblStartTime =  QtGui.QLabel('-')
+        self.lblStartTime = QtGui.QLabel('-')
         self.timeLayout.addWidget(self.lblStartTime)
         self.timeLayout.addWidget(QtGui.QLabel('to:'))
-        self.lblEndTime =  QtGui.QLabel('-')
+        self.lblEndTime = QtGui.QLabel('-')
         self.timeLayout.addWidget(self.lblEndTime)
 
         self.cbProcedure = QtGui.QComboBox()
@@ -202,8 +202,7 @@ class SosCommonWidget(QtGui.QWidget):
         self.connect(
             self.lbxOfferings,
             QtCore.SIGNAL("itemClicked(QListWidgetItem*)"),
-            self.offeringsChanged
-            )
+            self.offeringsChanged)
 
     def getBoundingBoxOffering(self):
         """Return a tuple containing box co-ordinates.
@@ -214,8 +213,7 @@ class SosCommonWidget(QtGui.QWidget):
             self.lblTL_X.text(),
             self.lblTL_Y.text(),
             self.lblBR_X.text(),
-            self.lblBR_Y.text()
-            )
+            self.lblBR_Y.text())
 
     def getTimeIntervalOffering(self):
         """Return a tuple containing begin / end in universal time.
@@ -223,8 +221,7 @@ class SosCommonWidget(QtGui.QWidget):
         """
         return (
             self.lblStartTime.text(),
-            self.lblEndTime.text(),
-            )
+            self.lblEndTime.text(),)
 
     def removeOfferings(self):
         """Remove all offering details when no SOS is selected."""
@@ -310,6 +307,7 @@ class SosCommonWidget(QtGui.QWidget):
 
 class SOSConfigurationWidget(OgcConfigurationWidget):
     """makes use of code style from OgcConfigurationWidget"""
+
     def __init__(self, module, controller, parent=None):
         OgcConfigurationWidget.__init__(self, module, controller, parent)
         #self.parent_module = module
@@ -324,18 +322,14 @@ class SOSConfigurationWidget(OgcConfigurationWidget):
                 "OgcConfigurationWidget",
                 "SOS Specific Metadata",
                 None,
-                QtGui.QApplication.UnicodeUTF8
-                )
-            )
+                QtGui.QApplication.UnicodeUTF8))
         self.tabs.setTabToolTip(
             self.tabs.indexOf(self.config),
             QtGui.QApplication.translate(
                 "OgcConfigurationWidget",
                 "Select SOS-specific parameters",
                 None,
-                QtGui.QApplication.UnicodeUTF8
-                )
-            )
+                QtGui.QApplication.UnicodeUTF8))
         self.tabs.setCurrentIndex(0)
 
     def constructRequest(self):
@@ -384,9 +378,9 @@ class SOSConfigurationWidget(OgcConfigurationWidget):
             spatial_limit = None
         # primary parameters
         WARNING_MUST = '%s must be chosen for a "%s" request.'
-        WARNING_NOT  = '%s must NOT be chosen for a "%s" request.'
-        WARNING_CHOICE  = 'Either %s or %s must be chosen for a "%s" request.'
-        WARNING_ONLY_ONE  = 'Cannot select both %s and %s for a "%s" request.'
+        WARNING_NOT = '%s must NOT be chosen for a "%s" request.'
+        WARNING_CHOICE = 'Either %s or %s must be chosen for a "%s" request.'
+        WARNING_ONLY_ONE = 'Cannot select both %s and %s for a "%s" request.'
         # process by request type
         if rType == 'DescribeSensor':
             if procedure:
@@ -398,11 +392,11 @@ class SOSConfigurationWidget(OgcConfigurationWidget):
         elif rType == 'GetFeatureOfInterest':
             if not(foi) and not(spatial_limit):
                 self.showWarning(WARNING_CHOICE %
-                    ('Spatial Limit','Feature of Interest', rType))
+                    ('Spatial Limit', 'Feature of Interest', rType))
                 return None, None
             if spatial_limit and foi:
                 self.showWarning(WARNING_ONLY_ONE %
-                    ('Spatial Limit','Feature of Interest', rType))
+                    ('Spatial Limit', 'Feature of Interest', rType))
                 return None, None
             if foi:
                 data += '<FeatureOfInterestId>' + \
@@ -438,7 +432,7 @@ class SOSConfigurationWidget(OgcConfigurationWidget):
                 elif time_limit == self.config.TIME_OFFERING:
                     # see SpatialTemporalConfigurationWidget
                     timerange = self.config.getTimeIntervalOffering()
-                data += '<eventTime>\n <ogc:TM_During>\n'+\
+                data += '<eventTime>\n <ogc:TM_During>\n' + \
                     '  <ogc:PropertyName>om:samplingTime</ogc:PropertyName>' + \
                     '  <gml:TimePeriod>\n' + \
                     '   <gml:beginPosition>' + timerange[0] + \
@@ -460,7 +454,7 @@ class SOSConfigurationWidget(OgcConfigurationWidget):
                 return None, None
             if spatial_limit and foi:
                 self.showWarning(WARNING_ONLY_ONE %
-                    ('Spatial Limit','Feature of Interest', rType))
+                    ('Spatial Limit', 'Feature of Interest', rType))
                 return None, None
             if foi:
                 data += '<featureOfInterest><ObjectID>' + \
@@ -477,8 +471,7 @@ class SOSConfigurationWidget(OgcConfigurationWidget):
                     traceback.print_exc()
                     raise ModuleError(
                         self,
-                        'Unknown WFS bounding box type' + ': %s' % str(error)
-                        )
+                        'Unknown WFS bounding box type' + ': %s' % str(error))
                 data += '<featureOfInterest>\n <ogc:BBOX>\n' + \
                     '  <ogc:PropertyName>urn:ogc:data:location</ogc:PropertyName>\n' + \
                     '  <gml:Envelope srsName="' + \
@@ -536,12 +529,11 @@ class SOSConfigurationWidget(OgcConfigurationWidget):
         else:
             raise ModuleError(
                 self,
-                'Unknown SOS request type' + ': %s' % str(rType)
-                )
+                'Unknown SOS request type' + ': %s' % str(rType))
         # xml header
         data = '<?xml version="1.0" encoding="UTF-8"?>\n' + data
         #print data  # show line breaks for testing !!!
-        data = data.replace('\n','')  # remove line breaks
+        data = data.replace('\n', '')  # remove line breaks
         result['request_type'] = 'POST'
         result['data'] = data
         return result

@@ -11,6 +11,7 @@ RASTER_PORT = "QgsRasterLayer"
 MAP_LAYER_PORT = "QgsMapLayer"
 DATA_RESULT_PORT = "WPS_data"
 
+
 def initialize(*args, **keywords):
     """TO DO: Add doc string"""
     from core.modules.module_registry import get_module_registry
