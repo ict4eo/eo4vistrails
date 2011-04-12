@@ -79,18 +79,23 @@ DEBUG = False
 DEFAULT_URL = 'http://ict4eo.meraka.csir.co.za/cgi-bin/wps.py'
 
 
-def xmlExecuteRequestInputStart(identifier, namespace=False):
+def xmlExecuteRequestInputStart(identifier, namespace=False, title=None):
     """TODO: add doc string"""
-    string = ""
-    if namespace:
-        string += '<wps:Input xmlns:wps="http://www.opengis.net/wps/1.0.0" xmlns:ows="http://www.opengis.net/ows/1.1">\n'
+    if identifier:
+        string = ""
+        if namespace:
+            string += '<wps:Input xmlns:wps="http://www.opengis.net/wps/1.0.0" xmlns:ows="http://www.opengis.net/ows/1.1">\n'
+        else:
+            string += "<wps:Input>\n"
+        if not title:
+            title = identifier
+        string += "<ows:Identifier>" + identifier + "</ows:Identifier>\n"
+        string += "<ows:Title>" + title + "</ows:Title>\n"
+        string += "<wps:Data>\n"
+        return string
     else:
-        string += "<wps:Input>\n"
-    string += "<ows:Identifier>" + identifier + "</ows:Identifier>\n"
-    string += "<ows:Title>" + identifier + "</ows:Title>\n"
-    string += "<wps:Data>\n"
-    return string
-
+        self.raiseError('Invalid Layer Identifier',\
+                        'Unable to create ows:Identifier')
 
 def xmlExecuteRequestInputEnd():
     """TODO: add doc string"""
@@ -129,11 +134,16 @@ class WPS(Module):
             self.postString = \
                 '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' \
                 + self.addLayersToPost(self.postString, self.layers)
-            #print "\nWPS:124 self.postString\n", self.postString
-            #print "\nWPS:125 self.url\n", self.url
-            # connect to server
+            #print "\nWPS:133 self.url\n", self.url
+            #print "\nWPS:132 self.postString\n", self.postString
+            if DEBUG:
+                home = os.getenv("HOME")
+                outFile = open(home + '/Desktop/wps_poststring', 'w')
+                outFile.write(self.postString)
+                outFile.close()
 
-            """#TEST POST START           """
+            """#TEST POST START
+            self.url = 'http://ict4eo.meraka.csir.co.za/cgi-bin/wps.py'
             self.postString = '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <wps:Execute service="WPS" version="1.0.0" xmlns:wps="http://www.opengis.net/wps/1.0.0" xmlns:ows="http://www.opengis.net/ows/1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/wps/1.0.0 http://schemas.opengis.net/wps/1.0.0/wpsExecute_request.xsd">
 <ows:Identifier>foo2</ows:Identifier>
@@ -164,16 +174,17 @@ class WPS(Module):
     </wps:ResponseDocument>
 </wps:ResponseForm>
 </wps:Execute>'''
-            self.url = 'http://ict4eo.meraka.csir.co.za/cgi-bin/wps.py'
-            #TEST POST END
+            """#TEST POST END           """
 
             #print "\nWPS:174 self.postString\n", self.postString
             #print "\nWPS:175 self.url\n", self.url
 
+            # connect to server
             r = urllib2.Request(self.url, self.postString)
             f = urllib2.urlopen(r)
             #f = urllib2.urlopen(self.url, unicode(self.postString, "UTF-8"))
             #f = urllib2.urlopen(self.url, self.postString)
+
             # get the results back
             wpsRequestResult = f.read()
             # set the output ports
@@ -190,17 +201,22 @@ class WPS(Module):
         if postStringIn:
             for layer in layers:
                 #print "WPS:138 layer type", type(layer)
-                # start wrapper
-                postString = xmlExecuteRequestInputStart(layer.name(), True)
+
                 # meta data
                 if isinstance(layer, QgsLayer.QgsVectorLayer):  #type(layer) == type(QgsLayer.QgsVectorLayer):
-                    mimeType = "text/xml" # get from layer?  DO URGENTLY !!!
+                    mimeType = "text/xml" # get from layer?  TODO URGENTLY !!!
                     schema = "FOO"
                     encoding = "FOO"
+                    identifier = 'vector'
                 elif isinstance(layer, QgsLayer.QgsRasterLayer):
-                    mimeType = "tiff" # get from layer?  DO URGENTLY !!!
+                    mimeType = "image/tiff" # how to get from layer?  TODO URGENTLY !!!
+                    identifier = 'raster'
                 else:
                     self.raiseError('Unknown layer type:' + str(type(layer)))
+
+                # start wrapper
+                postString = xmlExecuteRequestInputStart(identifier, True, layer.name())
+
                 # layer types
                 if  mimeType == "text/xml":
                     postString += '<wps:ComplexData mimeType="' + mimeType + '" schema="' + schema + '" encoding="' + encoding + '">'
@@ -366,7 +382,9 @@ class WPS(Module):
                     # TODO: how to handle this ?
                     #self.popUpMessageBox(QCoreApplication.translate("QgsWps", 'Result'),literalText)
                 else:
-                    self.raiseError(str(QCoreApplication.translate("WPS Error: Missing reference or literal data in response")))
+                    self.raiseError(
+                        "WPS Error",
+                        "Missing Reference tag, or literal data, in response XML")
 
             # TODO: how to handle this ?
             #QMessageBox.information(None, QCoreApplication.translate("QgsWps", 'Process result'), QCoreApplication.translate("QgsWps", 'The process finished successful'))
