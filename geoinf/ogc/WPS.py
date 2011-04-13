@@ -57,6 +57,7 @@ from packages.eo4vistrails.geoinf.datamodels import QgsLayer
 import init
 
 
+DEBUG = False
 # All supported import raster formats
 RASTER_MIMETYPES = [{"MIMETYPE":"IMAGE/TIFF", "GDALID":"GTiff"},
                     {"MIMETYPE":"IMAGE/PNG", "GDALID":"PNG"}, \
@@ -75,7 +76,7 @@ VECTOR_MIMETYPES = [{"MIMETYPE":"TEXT/XML", "SCHEMA":"GML", "GDALID":"GML"}, \
                     {"MIMETYPE":"APPLICATION/DGN", "SCHEMA":"", "GDALID":"DGN"}, \
                     #{"MIMETYPE":"APPLICATION/X-ZIPPED-SHP", "SCHEMA":"", "GDALID":"ESRI_Shapefile"}, \
                     {"MIMETYPE":"APPLICATION/SHP", "SCHEMA":"", "GDALID":"ESRI_Shapefile"}]
-DEBUG = False
+# Other constants
 DEFAULT_URL = 'http://ict4eo.meraka.csir.co.za/cgi-bin/wps.py'
 
 
@@ -124,16 +125,16 @@ class WPS(Module):
         self.url = self.getInputFromPort(init.OGC_REQUEST_PORT)
         # get base POST request
         self.postString = self.getInputFromPort(init.OGC_POST_DATA_PORT)
-        # get layers
+        # get layer list
         self.layers = self.getInputListFromPort(init.MAP_LAYER_PORT)
         # get process name
-        self.processID = self.getInputListFromPort(init.WPS_PROCESS_PORT)
+        self.processID = self.getInputFromPort(init.WPS_PROCESS_PORT)
 
         if self.postString and self.url:
             # add in layer details to POST request
             self.postString = \
                 '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' \
-                + self.addLayersToPost(self.postString, self.layers)
+                + self.addLayersToPost(self.postString, self.layers, self.processID)
             #print "\nWPS:133 self.url\n", self.url
             #print "\nWPS:132 self.postString\n", self.postString
             if DEBUG:
@@ -193,14 +194,14 @@ class WPS(Module):
             self.raiseError('Configuration Incomplete',\
                             'Unable to set URL and POST string')
 
-    def addLayersToPost(self, postStringIn, layers):
+    def addLayersToPost(self, postStringIn, layers, processID):
         """Insert the input port layer(s) as part of the POST request.
 
         First draft: only handles one layer as input."""
 
         if postStringIn:
-            for layer in layers:
-                #print "WPS:138 layer type", type(layer)
+            for counter, layer in enumerate(layers):
+                #print "WPS:204 layer no., type", counter, type(layer), processID.upper()
 
                 # meta data
                 if isinstance(layer, QgsLayer.QgsVectorLayer):  #type(layer) == type(QgsLayer.QgsVectorLayer):
@@ -210,7 +211,18 @@ class WPS(Module):
                     identifier = 'vector'
                 elif isinstance(layer, QgsLayer.QgsRasterLayer):
                     mimeType = "image/tiff" # how to get from layer?  TODO URGENTLY !!!
-                    identifier = 'raster'
+                    # ##########################################################
+                    # HACKY HACKY CODE FOR DEMO- REPLACE ASAP !!!
+
+                    if processID.upper() == 'MYNDVI':
+                        if counter == 0:
+                            identifier = 'layer1'
+                        elif counter == 1:
+                            identifier = 'layer2'
+                    else:
+                        identifier = 'raster'
+
+                    # ##########################################################
                 else:
                     self.raiseError('Unknown layer type:' + str(type(layer)))
 
@@ -242,9 +254,11 @@ class WPS(Module):
                 postStringIn = self.insertElement(postStringIn, postString,
                     'DataInputs', 'http://www.opengis.net/wps/1.0.0')
                 #print "WPS:177 postStringIn POST",postStringIn
-                f = open("/home/dhohls/Desktop/post_request.xml", "w")
-                f.write(postStringIn)
-                f.close()
+                if DEBUG:
+                    home = os.getenv("HOME")
+                    outFile = open(home + '/Desktop/post_request.xml', 'w')
+                    outFile.write(postStringIn)
+                    outFile.close()
         #print "WPS:165",postStringIn
         return postStringIn
 
@@ -1252,11 +1266,11 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         self.controller.update_ports_and_functions(
             self.module.id, [], [], functions)
 
-        # This is for debug purpose only
-        if DEBUG == True:
+        if DEBUG:
             self.popUpMessageBox("Execute request", postString)
             # Write the request into a file
-            outFile = open('/tmp/qwps_execute_request.xml', 'w')
+            home = os.getenv("HOME")
+            outFile = open(home + '/Desktop/qwps_execute_request.xml', 'w')
             outFile.write(postString)
             outFile.close()
 
