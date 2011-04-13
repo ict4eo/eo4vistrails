@@ -58,6 +58,9 @@ QgsApplication.initQgis()
 class QGISMapCanvasCell(ThreadSafeMixin, SpreadsheetCell):
     """TO DO: Add doc string
     """
+    def __init__(self):
+        ThreadSafeMixin.__init__(self)
+        SpreadsheetCell.__init__(self)
 
     def compute(self):
         """ compute() -> None"""
