@@ -46,6 +46,7 @@ from packages.spreadsheet.basic_widgets import SpreadsheetCell
 from packages.spreadsheet.spreadsheet_cell import QCellWidget
 # eo4vistrails
 import packages.eo4vistrails.geoinf.visual
+from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
 # local
 
 
@@ -54,7 +55,7 @@ QgsApplication.setPrefixPath("/usr", True)
 QgsApplication.initQgis()
 
 
-class QGISMapCanvasCell(SpreadsheetCell):
+class QGISMapCanvasCell(ThreadSafeMixin, SpreadsheetCell):
     """TO DO: Add doc string
     """
 

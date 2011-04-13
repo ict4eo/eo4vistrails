@@ -47,6 +47,36 @@ import rpyc
 #node has dummy versions of these so not a problem
 from core.modules.vistrails_module import Module, NotCacheable
 
+def getRemoteConnection(ip, port=18812):
+    from rpyc.core.service import SlaveService
+    connection = rpyc.connect(ip,port,SlaveService, 
+                        {'allow_all_attrs':True, 
+                         'instantiate_custom_exceptions':True,
+                         'import_custom_exceptions':True})
+    return connection
+
+def getSubConnection():
+    from rpyc.core.service import SlaveService
+    from rpyc.utils import factory
+    connection = factory.connect_subproc(["python", "-u",
+                                         rpyc.classic.SERVER_FILE,
+                                         "-q", "-m", "stdio"], 
+                                         SlaveService,
+                                         {'allow_all_attrs':True, 
+                                          'instantiate_custom_exceptions':True,
+                                          'import_custom_exceptions':True})
+
+    #connection = rpyc.classic.connect_subproc()
+    #make sure all packages are in the path
+    print "Got a subProc"
+    import core.system
+    import sys       
+    connection.modules.sys.path.append(sys.path)
+    connection.modules.sys.path.append(core.system.vistrails_root_directory())
+    
+    return connection
+
+
 class RPyCModule(Module):
     '''
     This module is important as it forms the basis for ensuring that
@@ -99,6 +129,7 @@ class RPyCSafeMixin(object):
     """
     
     def clear(self):
+        print "clear"
         Module.clear(self)
         if self.conn:
             try:
@@ -120,18 +151,10 @@ class RPyCSafeMixin(object):
                 connection = None
                 
             elif str(v[0]) == 'own':
-                connection = rpyc.classic.connect_subproc()
-                #self.isSubProc = True
-                #connection = rpyc.classic.connect_subproc()
-                #make sure all packages are in the path
-                print "Got a subProc"
-                import core.system
-                import sys       
-                connection.modules.sys.path.append(sys.path)
-                connection.modules.sys.path.append(core.system.vistrails_root_directory())
+                connection = getSubConnection()
                 
             else:
-                connection = rpyc.classic.connect(v[0], v[1])
+                connection = getRemoteConnection(v[0], v[1])
 
                 print "Got a Remote Node"
                 #Make sure all the right stuff is in place espcially dummy core and packages
@@ -231,12 +254,7 @@ class RPyCSafeMixin(object):
             #Hook Up Shadow Objects Methods and Attributes
             #attributes
             for attribute in Module.__dict__:
-                try:
-                    print "1", attribute
-                    if not str(attribute) in ('compute', '__dict__', '__module__', '__doc__', '__str__', '__weakref__', '__init__'):
-                        shadow.__setattr__(str(attribute), self.__getattribute__(str(attribute)))
-                except AttributeError:
-                    print "2", attribute
+                if not str(attribute) in ('compute', '__dict__', '__module__', '__doc__', '__str__', '__weakref__', '__init__'):
                     shadow.__setattr__(str(attribute), self.__getattribute__(str(attribute)))
                     
             print "Executing in the shadow class"

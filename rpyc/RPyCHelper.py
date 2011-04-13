@@ -41,7 +41,7 @@ It also has the rpyc remote code that is used
 
 from core.modules.vistrails_module import ModuleError, NotCacheable
 from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
-from RPyC import RPyCModule
+from RPyC import RPyCModule, getSubConnection, getRemoteConnection
 from packages.eo4vistrails.utils.DropDownListWidget import ComboBoxWidget
 from core.modules import basic_modules
 import rpyc
@@ -64,6 +64,7 @@ class RPyCCode(ThreadSafeMixin, RPyCModule):
         RPyCModule.__init__(self)
     
     def clear(self):
+        print "clear"
         RPyCModule.clear(self)
         if self.conn:
             try:
@@ -72,35 +73,22 @@ class RPyCCode(ThreadSafeMixin, RPyCModule):
             except:
                 pass
             self.conn.close()
-       
-    def getSubConnection(self):
-        connection = rpyc.classic.connect_subproc()
-        #self.isSubProc = True
-        #self.conn = rpyc.classic.connect_subproc()
-        #make sure all packages are in the path
-        print "Got a subProc"
-        import core.system
-        import sys       
-        connection.modules.sys.path.append(sys.path)
-        connection.modules.sys.path.append(core.system.vistrails_root_directory())
-        
-        return connection
-        
+               
     def getConnection(self):
         if self.hasInputFromPort('rpycnode'):
             v = self.getInputFromPort('rpycnode')
             print v
              
             if str(v[0]) == 'None' or str(v[0]) == '':
-                connection = self.getSubConnection()
+                connection = getSubConnection()
             elif str(v[0]) == 'main':
-                connection = self.getSubConnection()
+                connection = getSubConnection()
             elif str(v[0]) == 'own':
-                connection = self.getSubConnection()
+                connection = getSubConnection()
             else:
-                connection = rpyc.classic.connect(v[0], v[1])
+                connection = getRemoteConnection(v[0], v[1])
         else:
-            connection = self.getSubConnection()
+            connection = getSubConnection()
         
         return connection
 
@@ -165,6 +153,7 @@ class RPyCCode(ThreadSafeMixin, RPyCModule):
             str(self.forceGetInputFromPort('source', ''))
             )
         self.run_code(s, self.conn, use_input=True, use_output=True)
+
 
 class RPyCNodeWidget(ComboBoxWidget):
     discoveredSlaves = None

@@ -33,26 +33,43 @@ This module holds a rpycnode type that can be passed around between modules.
 import networkx as nx
 from core.modules.vistrails_module import Module
 
-class NetworkxModule(object):
-    pass
+from packages.eo4vistrails.rpyc.RPyC import RPyCModule, RPyCSafeModule
+from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
 
-class Graph(NetworkxModule, Module, nx.Graph):
-    """ Container class for the pysal.W class """
+
+class NetworkxModule(ThreadSafeMixin):
     def __init__(self):
-        Module.__init__(self)
+        ThreadSafeMixin.__init__(self)
+
+@RPyCSafeModule()
+class Graph(NetworkxModule, RPyCModule, nx.Graph):
+    """ Represents a network Graph  """
+
+    _input_ports  = [('neighbors', '(edu.utah.sci.vistrails.basic:List)')]
+    _output_ports = [('value', '(za.co.csir.eo4vistrails:Graph:networkx)')]
+
+    def __init__(self):
+        RPyCModule.__init__(self)
+        NetworkxModule.__init__(self)
         nx.Graph.__init__(self)
 
     def compute(self):
-        #TODO: check the shape
-        ndArray = self.forceGetInputFromPort('neighbors')
-        self.add_edges_from(ndArray.get_array())
+        neighbors = self.getInputFromPort('neighbors')
+        self.add_edges_from(neighbors)
+        #self.add_edges_from(ndArray.get_array())
         self.setResult("value", self)
 
-class connected_components(NetworkxModule, Module):
+@RPyCSafeModule()
+class connected_components(NetworkxModule, RPyCModule):
     """ Container class for the pysal.W class """
+
+    _input_ports  = [('graph', '(za.co.csir.eo4vistrails:Graph:networkx)')]
+    _output_ports = [('value', '(edu.utah.sci.vistrails.basic:List)')]
+
     def __init__(self):
-        Module.__init__(self)
+        RPyCModule.__init__(self)
+        NetworkxModule.__init__(self)
 
     def compute(self):
-        self._graph = self.forceGetInputFromPort('graph')
+        self._graph = self.getInputFromPort('graph')
         self.setResult("value", nx.connected_components(self._graph))

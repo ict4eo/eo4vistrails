@@ -45,11 +45,11 @@ qgis.core.QgsApplication.setPrefixPath("/usr", True)
 qgis.core.QgsApplication.initQgis()
 
 
-class QgsMapLayer(Module):
+class QgsMapLayer(ThreadSafeMixin, Module):
     """This module will create a QGIS layer from a file
     """
     def __init__(self):
-        #ThreadSafeMixin.__init__(self)
+        ThreadSafeMixin.__init__(self)
         Module.__init__(self)
         
     def raiseError(self, msg, error=''):
@@ -70,7 +70,6 @@ class QgsMapLayer(Module):
         else:
             self.raiseError('All Map Layer Properties must be set')
 
-#@RPyCSafeModule()
 class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
     """Create a QGIS vector layer.
     """
@@ -86,8 +85,12 @@ class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
         try:
             thefile = self.forceGetInputFromPort('file', None)
             dataReq = self.forceGetInputFromPort('dataRequest', None)
-
-            isFILE = (thefile != None) and (thefile.name != '')
+            
+            try:
+                isFILE = (thefile != None) and (thefile.name != '')
+            except AttributeError:
+                isFILE = (thefile.name != '')
+                
             #Note this is case sensitive -> "WFS"
             isQGISSuported = isinstance(dataReq, DataRequest) and \
                             dataReq.get_driver() in self.SUPPORTED_DRIVERS
@@ -107,14 +110,17 @@ class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
                     dataReq.get_layername(),
                     dataReq.get_driver())
             else:
-                self.raiseError('Vector Layer Driver %s not supported' %
-                                str(dataReq.get_driver()))
+                if dataReq:
+                    self.raiseError('Vector Layer Driver %s not supported' %
+                                    str(dataReq.get_driver()))
+                else:
+                    pass
+                    self.raiseError('No valid data request')
 
             self.setResult('value', self)
         except Exception, e:
             self.raiseError('Cannot set output port: %s' % str(e))
 
-#@RPyCSafeModule()
 class QgsRasterLayer(QgsMapLayer, qgis.core.QgsRasterLayer):
     """Create a QGIS raster layer.
     """

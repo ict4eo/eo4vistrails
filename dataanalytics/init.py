@@ -66,14 +66,14 @@ def initialize(*args, **keywords):
      #Add Networkx
     reg.add_module(Networkx.Graph,
                    namespace=mynamespace)
-    reg.add_input_port(Networkx.Graph, 'neighbors',
-                       NDArray)
-    reg.add_output_port(Networkx.Graph, "value",
-                        (Networkx.Graph, 'value'))
+#    reg.add_input_port(Networkx.Graph, 'neighbors',
+#                       NDArray)
+#    reg.add_output_port(Networkx.Graph, "value",
+#                        (Networkx.Graph, 'value'))
 
     reg.add_module(Networkx.connected_components,
                    namespace=mynamespace)
-    reg.add_input_port(Networkx.connected_components, 'graph',
-                       Networkx.Graph)
-    reg.add_output_port(Networkx.connected_components, "value",
-                        (basic_modules.List, 'value'))
+#    reg.add_input_port(Networkx.connected_components, 'graph',
+#                       Networkx.Graph)
+#    reg.add_output_port(Networkx.connected_components, "value",
+#                        (basic_modules.List, 'value'))

@@ -26,3 +26,5 @@
 """This package provides statistical capabilities for eo4vistrails.
 R, SciPy are proposed to be used
 """
+
+identifier = 'za.co.csir.eo4vistrails'

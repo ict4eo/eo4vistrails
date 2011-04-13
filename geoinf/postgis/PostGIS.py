@@ -42,7 +42,7 @@ from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
 from packages.eo4vistrails.utils.Array import NDArray
 from packages.eo4vistrails.utils.session import Session
 
-from core.modules.vistrails_module import Module, ModuleError
+from core.modules.vistrails_module import ModuleError
 from core.modules.source_configure import SourceConfigurationWidget
 
 import urllib
@@ -79,7 +79,6 @@ class PostGisNumpyReturningCursor(ThreadSafeMixin, RPyCModule):
         RPyCModule.__init__(self)
         ThreadSafeMixin.__init__(self)
         
-
     def compute(self):
         """Will need to fetch a PostGisSession object on its input port
         Overrides supers method"""
@@ -97,11 +96,12 @@ class PostGisNumpyReturningCursor(ThreadSafeMixin, RPyCModule):
             sql_input = sql_input.split(";")[0] #ogr does not want a trailing ';'
             '''here we substitute input port values within the source'''
             
+            parameters = {}
             for k in self.inputPorts:
-                value = self.getInputFromPort(k)
-                sql_input = sql_input.replace(k, value.__str__())
+                v = self.getInputFromPort(k)
+                parameters[k] = v
 
-            curs.execute(sql_input)
+            curs.execute(sql_input, parameters)
             
             import numpy
 
@@ -125,7 +125,7 @@ class PostGisNumpyReturningCursor(ThreadSafeMixin, RPyCModule):
 
                 npRecArray = numpy.fromiter(curs, dtype=dtype)
                 
-                #QUESTION: Is this meaningfull in all cases, shoudl we be doing this
+                #QUESTION: Is this meaningfull in all cases, should we be doing this
                 if sameType:
                     npArray = npRecArray.view(dtype=firstType).reshape(-1,len(npRecArray[0]))               
                     out.set_array(npArray)
@@ -134,16 +134,18 @@ class PostGisNumpyReturningCursor(ThreadSafeMixin, RPyCModule):
             
                 self.setResult('nummpyArray', out)
                 
+                pgconn.commit()
                 curs.close()
                 pgconn.close()
             else:
                 raise ModuleError,  (PostGisNumpyReturningCursor,  "no records returned")
+                
         except Exception as ex:
+            pgconn.rollback()
             curs.close()
             pgconn.close()
             print ex
             raise ModuleError,  (PostGisNumpyReturningCursor,  "Could not execute SQL Statement")
-
 
 @RPyCSafeModule()
 class PostGisFeatureReturningCursor(ThreadSafeMixin, RPyCModule):
@@ -152,7 +154,8 @@ class PostGisFeatureReturningCursor(ThreadSafeMixin, RPyCModule):
     """
     #multi inheritance of module subclasses is a problem
     def __init__(self):
-        Module.__init__(self)
+        RPyCModule.__init__(self)
+        ThreadSafeMixin.__init__(self)
 
     def compute(self):
         """Will need to fetch a PostGisSession object on its input port
@@ -162,9 +165,8 @@ class PostGisFeatureReturningCursor(ThreadSafeMixin, RPyCModule):
         try:
 
             sql_input = urllib.unquote(str(self.forceGetInputFromPort('source', '')))
-            sql_input = sql_input.split(";")[0]#ogr does not want a trailing ';'
-            '''here we substitute input port values within the source'''
             
+            '''here we substitute input port values within the source'''
             for k in self.inputPorts:
                 value = self.getInputFromPort(k)
                 sql_input = sql_input.replace(k, value.__str__())
@@ -205,8 +207,8 @@ class PostGisBasicReturningCursor(ThreadSafeMixin, RPyCModule):
     """
 
     def __init__(self):
-        Module.__init__(self)
-        
+        RPyCModule.__init__(self)
+        ThreadSafeMixin.__init__(self)
 
     def compute(self):
         """Fetches and executes a PostGisSession object on the input port
@@ -223,18 +225,23 @@ class PostGisBasicReturningCursor(ThreadSafeMixin, RPyCModule):
             sql_input = sql_input.split(";")[0]#ogr does not want a trailing ';'
             
             '''here we substitute input port values within the source'''
+            parameters = {}
             for k in self.inputPorts:
-                value = self.getInputFromPort(k)
-                sql_input = sql_input.replace(k, value.__str__())
+                v = self.getInputFromPort(k)
+                parameters[k] = v
             
-            curs.execute(sql_input)
+            curs.execute(sql_input, parameters)
+            
             sql_return_list = curs.fetchall()
             
             self.setResult('records',  sql_return_list)
+            
+            pgconn.commit()
             curs.close()
             pgconn.close()
             
         except Exception as ex:
+            pgconn.rollback()
             curs.close()
             pgconn.close()
             print ex
@@ -254,7 +261,8 @@ class PostGisNonReturningCursor(ThreadSafeMixin, RPyCModule):
     """
 
     def __init__(self):
-        Module.__init__(self)
+        RPyCModule.__init__(self)
+        ThreadSafeMixin.__init__(self)
 
     def compute(self):
         """Will need to fetch a PostGisSession object on its input port
@@ -270,25 +278,51 @@ class PostGisNonReturningCursor(ThreadSafeMixin, RPyCModule):
             
             resultstatus =[]
             sql_input = urllib.unquote(str(self.forceGetInputFromPort('source', '')))
-            sql_input = sql_input.rstrip()
-            sql_input = sql_input.lstrip()
-            
-            for k in self.inputPorts:
-                value = self.getInputFromPort(k)
-                sql_input = sql_input.replace(k, value.__str__())
+            #sql_input = sql_input.rstrip()
+            #sql_input = sql_input.lstrip()
             
             for query in sql_input.split(";"):
-                if len(query) != 0:
-                    if query[len(query)-1] != ";": query = query + ";"
-                    #print "about to execute: " + query
-                    curs.execute(query)
-                    resultstatus.append(curs.statusmessage)
+                if len(query) > 0:
+                    values = {}
+                    for k in self.inputPorts:
+                        values[k] = self.getInputFromPort(k)
+                    
+                    theLen = 0
+                    for k, v in values.items():
+                        if type(v) in [list, dict, tuple]:
+                            if theLen == 0 and len(v) > 0:
+                                theLen = len(v)
+                            if theLen > 0 and len(v) != theLen:
+                                raise ModuleError,  (PostGisNonReturningCursor,\
+                                         "All list like params must have same length")
+                    
+                    if theLen > 0:
+                        parameters = [{} for x in xrange(theLen)]
+                        for i in range(theLen):
+                            for k, v in values.items():
+                                if type(v) in (list, dict, tuple):
+                                    parameters[i][k] = v[i]
+                                else:
+                                    parameters[i][k] = v
+                        curs.executemany(query+";", parameters)
+                        pgconn.commit()
+                        resultstatus.append(curs.statusmessage)
+                    else:
+                        parameters = {}
+                        for k, v in values.items():
+                            parameters[k] = v
+        
+                        curs.execute(query+";", parameters)
+                        
+                        resultstatus.append(curs.statusmessage)
             
             self.setResult('status', resultstatus)
-            curs.close()
+            pgconn.commit()
+            curs.close()            
             pgconn.close()
             
-        except Exception as ex:
+        except AttributeError as ex:
+            pgconn.rollback()
             curs.close()
             pgconn.close()
             print ex
