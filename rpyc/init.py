@@ -52,6 +52,10 @@ def initialize(*args, **keywords):
     reg = get_module_registry()
     mynamespace = "rpyc"
 
+#Add RPyCNode
+    reg.add_module(RPyCHelper.RpyCNodie,
+                   name="RpyC Nodie",
+                   namespace=mynamespace)
     #Add RPyCNode
     reg.add_module(RPyCHelper.RPyCNode,
                    name="RpyC Node",

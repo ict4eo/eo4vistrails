@@ -69,29 +69,52 @@ class RPyCCode(ThreadSafeMixin, RPyCModule):
         if self.conn:
             try:
                 self.conn.proc.terminate()
+            except:
+                pass
+            try:
                 self.conn.proc.wait()
             except:
                 pass
-            self.conn.close()
-               
-    def getConnection(self):
-        if self.hasInputFromPort('rpycnode'):
-            v = self.getInputFromPort('rpycnode')
-            print v
-             
-            if str(v[0]) == 'None' or str(v[0]) == '':
-                connection = getSubConnection()
-            elif str(v[0]) == 'main':
-                connection = getSubConnection()
-            elif str(v[0]) == 'own':
-                connection = getSubConnection()
-            else:
-                connection = getRemoteConnection(v[0], v[1])
-        else:
-            connection = getSubConnection()
-        
-        return connection
+            try:
+                self.conn.close()
+            except:
+                pass
 
+    def run_code_orig(self, code_str, use_input=False, use_output=False):
+        """run_code runs a piece of code as a VisTrails module.
+        use_input and use_output control whether to use the inputport
+        and output port dictionary as local variables inside the
+        execution."""
+        import core.packagemanager
+        def fail(msg):
+            raise ModuleError(self, msg)
+        def cache_this():
+            self.is_cacheable = lambda *args, **kwargs: True
+        locals_ = locals()
+        if use_input:
+            inputDict = dict([(k, self.getInputFromPort(k))
+                              for k in self.inputPorts])
+            locals_.update(inputDict)
+        if use_output:
+            outputDict = dict([(k, None)
+                               for k in self.outputPorts])
+            locals_.update(outputDict)
+        _m = core.packagemanager.get_package_manager()
+        from core.modules.module_registry import get_module_registry
+        reg = get_module_registry()
+        locals_.update({'fail': fail,
+                        'package_manager': _m,
+                        'cache_this': cache_this,
+                        'registry': reg,
+                        'self': self})
+        del locals_['source']
+        print "hehehe"
+        exec code_str in locals_, locals_
+        if use_output:
+            for k in outputDict.iterkeys():
+                if locals_[k] != None:
+                    self.setResult(k, locals_[k])
+                    
     def run_code(self, code_str, conn, use_input=False, use_output=False):
         """
         run_code runs a piece of code as a VisTrails module.
@@ -110,7 +133,7 @@ class RPyCCode(ThreadSafeMixin, RPyCModule):
 
         #TODO: changed to demo that this is in the cloud!!!!
         import sys
-        conn.modules.sys.stdout = sys.stdout        
+        conn.modules.sys.stdout = sys.stdout
         
         if use_input:
             inputDict = dict([(k, self.getInputFromPort(k)) for k in self.inputPorts])
@@ -146,14 +169,22 @@ class RPyCCode(ThreadSafeMixin, RPyCModule):
         """
         Vistrails Module Compute, Entry Point Refer, to Vistrails Docs
         """
-        self.conn = self.getConnection()
+        self.conn = None
+        if self.hasInputFromPort('rpycnode'):
+            v = self.getInputFromPort('rpycnode')          
+            print v
+        
+            (isRemote, self.conn) = self.inputPorts['rpycnode'][0].obj.getSharedConnection()
         
         from core.modules import basic_modules
         s = basic_modules.urllib.unquote(
             str(self.forceGetInputFromPort('source', ''))
             )
-        self.run_code(s, self.conn, use_input=True, use_output=True)
-
+            
+        if self.conn:
+            self.run_code(s, self.conn, use_input=True, use_output=True)
+        else:
+            self.run_code_orig(s, use_input=True, use_output=True)
 
 class RPyCNodeWidget(ComboBoxWidget):
     discoveredSlaves = None
@@ -169,11 +200,46 @@ class RPyCNodeWidget(ComboBoxWidget):
             except rpyc.utils.factory.DiscoveryError:
                 pass
         return self.discoveredSlaves
-           
+
+
+
+class RpyCNodie(basic_modules.Constant):
+
+    def _getConnection(self, allowNone):
+        v = self.get_output('value')
+        print v
+        connection = None        
+        if str(v[0]) == 'None' or str(v[0]) == '' and not allowNone:
+            isRemote = False
+            connection = None
+            
+        elif str(v[0]) == 'main'  and not allowNone:
+            isRemote = False
+            connection = None
+            
+        elif str(v[0]) == 'own' or allowNone:
+            isRemote = False
+            connection = getSubConnection()
+            
+        else:
+            isRemote = True
+            connection = getRemoteConnection(v[0], v[1])
+            
+        return (isRemote, connection)
+
+    def getSharedConnection(self, allowNone=False):
+        try:            
+            if not self.conn:
+                (self.isRemote, self.conn) = self._getConnection(allowNone)
+        except:
+            (self.isRemote, self.conn) = self._getConnection(allowNone)
+        return (self.isRemote, self.conn)
+
 #Add ComboBox
 RPyCNode = basic_modules.new_constant('RpyCNode',
                                        staticmethod(eval),
                                        ('main',0),
                                        staticmethod(lambda x: type(x) == tuple),
-                                       RPyCNodeWidget)
+                                       RPyCNodeWidget,
+                                       base_class=RpyCNodie)
 

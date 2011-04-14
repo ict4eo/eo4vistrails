@@ -43,7 +43,7 @@ from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
 from packages.eo4vistrails.utils.Array import NDArray
 from packages.eo4vistrails.utils.session import Session
 
-from core.modules.vistrails_module import ModuleError
+from core.modules.vistrails_module import ModuleError, NotCacheable
 from core.modules.source_configure import SourceConfigurationWidget
 
 import urllib
@@ -98,8 +98,9 @@ class PostGisNumpyReturningCursor(ThreadSafeMixin, RPyCModule):
             
             parameters = {}
             for k in self.inputPorts:
-                v = self.getInputFromPort(k)
-                parameters[k] = v
+                if k not in ['source', 'PostGisSessionObject', 'rpycnode', 'self']:
+                    v = self.getInputFromPort(k)
+                    parameters[k] = v
                        
             curs.execute(sql_input, parameters)
             
@@ -139,7 +140,7 @@ class PostGisNumpyReturningCursor(ThreadSafeMixin, RPyCModule):
             else:
                 raise ModuleError,  (PostGisNumpyReturningCursor,  "no records returned")
                 
-        except ProgrammingError as ex:
+        except Exception as ex:
             print ex
             raise ModuleError,  (PostGisNumpyReturningCursor,  "Could not execute SQL Statement")
         finally:
@@ -167,8 +168,9 @@ class PostGisFeatureReturningCursor(ThreadSafeMixin, RPyCModule):
             
             '''here we substitute input port values within the source'''
             for k in self.inputPorts:
-                value = self.getInputFromPort(k)
-                sql_input = sql_input.replace(k, value.__str__())
+                if k not in ['source', 'PostGisSessionObject', 'rpycnode', 'self']:
+                    value = self.getInputFromPort(k)
+                    sql_input = sql_input.replace(k, value.__str__())
 
             postGISRequest = PostGISRequest()
             postGISRequest.setConnection(pgsession.host,
@@ -192,7 +194,7 @@ class PostGisFeatureReturningCursor(ThreadSafeMixin, RPyCModule):
             self.setResult('PostGISRequest', postGISRequest)
             self.setResult('QgsVectorLayer', qgsVectorLayer)
 
-        except ProgrammingError as ex:
+        except Exception as ex:
             print ex
             raise ModuleError,  (PostGisFeatureReturningCursor, \
                                  "Could not execute SQL Statement")
@@ -221,21 +223,22 @@ class PostGisBasicReturningCursor(ThreadSafeMixin, RPyCModule):
             curs = pgconn.cursor()
             
             sql_input = urllib.unquote(str(self.forceGetInputFromPort('source', '')))
-            sql_input = sql_input.split(";")[0]#ogr does not want a trailing ';'
             
             '''here we substitute input port values within the source'''
             parameters = {}
             for k in self.inputPorts:
-                v = self.getInputFromPort(k)
-                parameters[k] = v
+                if k not in ['source', 'PostGisSessionObject', 'rpycnode', 'self']:
+                    v = self.getInputFromPort(k)
+                    parameters[k] = v
             
+            print curs.mogrify(sql_input, parameters)
             curs.execute(sql_input, parameters)
             
             sql_return_list = curs.fetchall()
             
             self.setResult('records',  sql_return_list)
             
-        except ProgrammingError as ex:
+        except Exception as ex:
             print ex
             raise ModuleError,  (PostGisFeatureReturningCursor,\
                                  "Could not execute SQL Statement")
@@ -245,7 +248,7 @@ class PostGisBasicReturningCursor(ThreadSafeMixin, RPyCModule):
             #set output port to receive this list
 
 @RPyCSafeModule()
-class PostGisNonReturningCursor(ThreadSafeMixin, RPyCModule):
+class PostGisNonReturningCursor(NotCacheable, ThreadSafeMixin, RPyCModule):
     """Returns a list of result strings to indicate success or failure.
 
     Usually to be used as a way to do an insert, update, delete operation
@@ -263,10 +266,10 @@ class PostGisNonReturningCursor(ThreadSafeMixin, RPyCModule):
         """Will need to fetch a PostGisSession object on its input port
         Overrides supers method"""
         pgsession = self.getInputFromPort("PostGisSessionObject")
-
+        print pgsession
         try:
             # we could be dealing with multiple requests here,
-            #   so parse string and execute requests one by one
+            #   so parse string and execute requests one by one            
             pgconn = psycopg2.connect(pgsession.connectstr)
             
             curs = pgconn.cursor()
@@ -275,38 +278,39 @@ class PostGisNonReturningCursor(ThreadSafeMixin, RPyCModule):
             sql_input = urllib.unquote(str(self.forceGetInputFromPort('source', '')))
             #sql_input = sql_input.rstrip()
             #sql_input = sql_input.lstrip()
-            
             for query in sql_input.split(";"):
                 if len(query) > 0:
                     values = {}
                     for k in self.inputPorts:
-                        values[k] = self.getInputFromPort(k)
+                        if k not in ['source', 'PostGisSessionObject', 'rpycnode', 'self']:
+                            values[k] = self.getInputFromPort(k)
                     
                     theLen = 0
                     for k, v in values.items():
-                        if type(v) in [list, dict, tuple]:
+                        if type(v) in [list]:
                             if theLen == 0 and len(v) > 0:
                                 theLen = len(v)
                             if theLen > 0 and len(v) != theLen:
+                                print k, v, theLen
                                 raise ModuleError,  (PostGisNonReturningCursor,\
                                          "All list like params must have same length")
-                    
                     if theLen > 0:
                         parameters = [{} for x in xrange(theLen)]
                         for i in range(theLen):
                             for k, v in values.items():
-                                if type(v) in (list, dict, tuple):
+                                if type(v) in [list]:
                                     parameters[i][k] = v[i]
                                 else:
                                     parameters[i][k] = v
-                        curs.executemany(query+";", parameters)
+                        
+                        curs.executemany(query+";", parameters)                        
                         pgconn.commit()
                         resultstatus.append(curs.statusmessage)
                     else:
                         parameters = {}
                         for k, v in values.items():
                             parameters[k] = v
-        
+                        
                         curs.execute(query+";", parameters)
                         
                         resultstatus.append(curs.statusmessage)
@@ -315,7 +319,7 @@ class PostGisNonReturningCursor(ThreadSafeMixin, RPyCModule):
             
             self.setResult('status', resultstatus)
             
-        except ProgrammingError as ex:
+        except Exception as ex:
             print ex
             raise ModuleError,  (PostGisFeatureReturningCursor,\
                                  "Could not execute SQL Statement")

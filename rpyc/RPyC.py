@@ -134,28 +134,27 @@ class RPyCSafeMixin(object):
         if self.conn:
             try:
                 self.conn.proc.terminate()
+            except:
+                pass
+            try:
                 self.conn.proc.wait()
             except:
                 pass
-            self.conn.close()
+            try:
+                self.conn.close()
+            except:
+                pass
 
-    def getConnection(self):
+    def getConnection(self):   
+        connection = None
         if self.hasInputFromPort('rpycnode'):
             v = self.getInputFromPort('rpycnode')
             print v
-             
-            if str(v[0]) == 'None' or str(v[0]) == '':
-                connection = None
+            
+            (isRemote, connection) = self.inputPorts['rpycnode'][0].obj.getSharedConnection()
+            
+            if isRemote:
                 
-            elif str(v[0]) == 'main':
-                connection = None
-                
-            elif str(v[0]) == 'own':
-                connection = getSubConnection()
-                
-            else:
-                connection = getRemoteConnection(v[0], v[1])
-
                 print "Got a Remote Node"
                 #Make sure all the right stuff is in place espcially dummy core and packages
                 #on the remote node, no need for this if local as the machine is already set up            
@@ -166,7 +165,7 @@ class RPyCSafeMixin(object):
                 #make sure all packages are in the path
                 if not "./tmp" in connection.modules.sys.path:
                     connection.modules.sys.path.append('./tmp')
-
+                
                 #Check version info
                 force=False
                 try:                    
@@ -178,17 +177,17 @@ class RPyCSafeMixin(object):
                 except ImportError:
                     print "Core System Not Loaded"
                     connection.modules.sys.path_importer_cache['./tmp'] = None
-                    
+                
                 print "Uploading requirements to node...."
                 import packages.eo4vistrails.rpyc.tmp
                 rpyc.classic.upload_package(connection, packages.eo4vistrails.rpyc.tmp, "./tmp")
-
+                
                 self.refreshPackage(connection, "core", force=force)
-
+                
                 self.refreshPackage(connection, "gui", force=force)
                 
                 self.refreshPackage(connection, "db", force=force)
-                
+                            
                 #TODO: remove once finishing dev should just work of version numbers
                 force=True
                 #Upload any vistrails packages that may be required
@@ -202,10 +201,7 @@ class RPyCSafeMixin(object):
                 rmodule = connection.modules[self.__module__]
                 connection.modules.__builtin__.reload(rmodule)
                 print "Reloaded current module %s...."%str(self.__module__)
-                
-        else:
-            connection = None
-
+            
         return connection
 
     def refreshPackage(self, connection, packageName, checkVersion=False, force=False):
@@ -236,6 +232,7 @@ class RPyCSafeMixin(object):
         
         if not self.conn:
             #run as per normal
+            print "run as per normal", self
             self._original_compute()
         else:
             #redirect StdIO back here so we can see what is going on    
@@ -256,7 +253,21 @@ class RPyCSafeMixin(object):
             for attribute in Module.__dict__:
                 if not str(attribute) in ('compute', '__dict__', '__module__', '__doc__', '__str__', '__weakref__', '__init__'):
                     shadow.__setattr__(str(attribute), self.__getattribute__(str(attribute)))
-                    
+            
+            shadow.inputPorts = self.inputPorts
+            shadow.outputPorts = self.outputPorts
+            shadow.is_method = self.is_method
+            shadow.upToDate = self.upToDate
+            shadow.logging = self.logging
+            shadow._latest_method_order = self._latest_method_order
+            shadow.moduleInfo = self.moduleInfo
+            shadow.is_breakpoint = self.is_breakpoint
+            shadow.is_fold_operator = self.is_fold_operator
+            shadow.is_fold_module = self.is_fold_module
+            shadow.computed = self.computed
+            shadow.signature = self.signature
+            
+            
             print "Executing in the shadow class"
             #Call the Shadow Objects Compute
             shadow.compute()
