@@ -34,6 +34,7 @@ connection and allows random queries to be executed against the chosen database.
 # library
 # third party
 import psycopg2
+from psycopg2 import ProgrammingError
 
 from packages.eo4vistrails.geoinf.datamodels.QgsLayer import QgsVectorLayer
 from packages.eo4vistrails.utils.DataRequest import PostGISRequest
@@ -93,14 +94,13 @@ class PostGisNumpyReturningCursor(ThreadSafeMixin, RPyCModule):
             curs = pgconn.cursor('VISTRAILS'+str(random.randint(0,10000)))
 
             sql_input = urllib.unquote(str(self.forceGetInputFromPort('source', '')))
-            sql_input = sql_input.split(";")[0] #ogr does not want a trailing ';'
             '''here we substitute input port values within the source'''
             
             parameters = {}
             for k in self.inputPorts:
                 v = self.getInputFromPort(k)
                 parameters[k] = v
-
+                       
             curs.execute(sql_input, parameters)
             
             import numpy
@@ -131,21 +131,20 @@ class PostGisNumpyReturningCursor(ThreadSafeMixin, RPyCModule):
                     out.set_array(npArray)
                 else:
                     out.set_array(npRecArray)
+                
+                print out
             
                 self.setResult('nummpyArray', out)
                 
-                pgconn.commit()
-                curs.close()
-                pgconn.close()
             else:
                 raise ModuleError,  (PostGisNumpyReturningCursor,  "no records returned")
                 
-        except Exception as ex:
-            pgconn.rollback()
-            curs.close()
-            pgconn.close()
+        except ProgrammingError as ex:
             print ex
             raise ModuleError,  (PostGisNumpyReturningCursor,  "Could not execute SQL Statement")
+        finally:
+            curs.close()
+            pgconn.close()
 
 @RPyCSafeModule()
 class PostGisFeatureReturningCursor(ThreadSafeMixin, RPyCModule):
@@ -193,7 +192,7 @@ class PostGisFeatureReturningCursor(ThreadSafeMixin, RPyCModule):
             self.setResult('PostGISRequest', postGISRequest)
             self.setResult('QgsVectorLayer', qgsVectorLayer)
 
-        except Exception as ex:
+        except ProgrammingError as ex:
             print ex
             raise ModuleError,  (PostGisFeatureReturningCursor, \
                                  "Could not execute SQL Statement")
@@ -236,17 +235,13 @@ class PostGisBasicReturningCursor(ThreadSafeMixin, RPyCModule):
             
             self.setResult('records',  sql_return_list)
             
-            pgconn.commit()
-            curs.close()
-            pgconn.close()
-            
-        except Exception as ex:
-            pgconn.rollback()
-            curs.close()
-            pgconn.close()
+        except ProgrammingError as ex:
             print ex
             raise ModuleError,  (PostGisFeatureReturningCursor,\
                                  "Could not execute SQL Statement")
+        finally:
+            curs.close()
+            pgconn.close()
             #set output port to receive this list
 
 @RPyCSafeModule()
@@ -316,19 +311,18 @@ class PostGisNonReturningCursor(ThreadSafeMixin, RPyCModule):
                         
                         resultstatus.append(curs.statusmessage)
             
-            self.setResult('status', resultstatus)
             pgconn.commit()
-            curs.close()            
-            pgconn.close()
             
-        except AttributeError as ex:
-            pgconn.rollback()
-            curs.close()
-            pgconn.close()
+            self.setResult('status', resultstatus)
+            
+        except ProgrammingError as ex:
             print ex
             raise ModuleError,  (PostGisFeatureReturningCursor,\
                                  "Could not execute SQL Statement")
-
+        finally:
+            curs.close()
+            pgconn.close()
+            
 
 class SQLSourceConfigurationWidget(SourceConfigurationWidget):
     """NOT IN USE"""
