@@ -81,6 +81,8 @@ class QGISMapCanvasCell(SpreadsheetCell): #(ThreadSafeMixin, SpreadsheetCell):
                     self.layers = self.getInputFromPort("baselayer")
                 self.cellWidget = self.displayAndWait(QGISMapCanvasCellWidget,
                                                       (self.layers, self.crsDest))
+                                                
+                
             else:
                 raise ModuleError(
                     self,
@@ -164,6 +166,9 @@ class QGISMapCanvasCellWidget(QCellWidget, QMainWindow):
         self.connect(actionZoomOut, SIGNAL("activated()"), self.zoomOut)
         self.connect(actionPan, SIGNAL("activated()"), self.pan)
 
+        #global list to hold inputlayers list and later accessible for toggleLayer
+        self.mylist = []        
+        
     def addLayer(self):
         """TO DO: Add doc string"""
         QtGui.QMessageBox.information(
@@ -204,7 +209,9 @@ class QGISMapCanvasCellWidget(QCellWidget, QMainWindow):
             myrender.setDestinationSrs(crsDest)
         # Add layers to canvas
         mapCanvasLayers = []
+        
         for layer in inputLayers:
+            
             if layer.isValid():
                 # Add layer to the registry (one registry for ALL maps ???)
                 QgsMapLayerRegistry.instance().addMapLayer(layer, True)
@@ -218,46 +225,51 @@ class QGISMapCanvasCellWidget(QCellWidget, QMainWindow):
                 self.canvas.setLayerSet(mapCanvasLayers)
                 self.canvas.refresh()
                 self.update()
+                
+                # populate mylist with inputLayers's items
+                self.mylist.append(layer)
+                    
+                       
         # Add widget for layer control to canvas
         self.explorerListWidget.clear()
         print "self.explorerListWidget count",self.explorerListWidget.count()
-        for lyr in self.getLayerNames("all"):
+        
+        # get layernames from inputLayers, and use them as labells in explorerListWidget
+        for lyr in inputLayers:    
             item = QtGui.QListWidgetItem()
             item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
             item.setCheckState(QtCore.Qt.Checked)
             self.explorerListWidget.addItem(item)
-            self.widget = QtGui.QLabel(str(lyr))
+            self.widget = QtGui.QLabel(lyr.name())
             self.explorerListWidget.setItemWidget(item, self.widget)
         self.explorerListWidget.itemClicked.connect(self.on_listWidget_itemClicked)
-
+        
+        
     def on_listWidget_itemClicked(self, item):
         """TO DO: Add doc string"""
         if item.listWidget().itemWidget(item) != None:
             if item.checkState() == QtCore.Qt.Checked:
-                item.setCheckState(QtCore.Qt.Unchecked)
                 self.searchLayerIndex(item)
+                item.setCheckState(QtCore.Qt.Unchecked)                            
             else:
                 item.setCheckState(QtCore.Qt.Checked)
                 self.searchLayerIndex(item)
 
+
     def searchLayerIndex(self, item):
         """TO DO: Add doc string"""
+                
         selected_layer = item.listWidget().itemWidget(item).text()
-        #print selected_layer
-        lyrNo = -1
-        try:
-            while 1:
-                lyrNo = self.getLayerNames("all").index(selected_layer,\
-                                                        lyrNo + 1)
-                #print "match at", lyrNo
-                indexValue = lyrNo
-                self.toggleLayer(indexValue)
-        except ValueError:
-            pass
-
-    def me2(self):
-        self.changeValue(2)
-
+        
+        for lyrIndx in self.mylist:
+            
+            # store the index of layer           
+            indxValue = self.mylist.index(lyrIndx)
+                        
+            if selected_layer == str(lyrIndx.name()):
+                self.toggleLayer(indxValue)
+        
+        
     def toggleLayer(self, lyrNr):
         """TO DO: Add doc string"""
         lyr = self.canvas.layer(lyrNr)
@@ -265,43 +277,42 @@ class QGISMapCanvasCellWidget(QCellWidget, QMainWindow):
             cTran = lyr.getTransparency()
             lyr.setTransparency(0 if cTran > 100 else 255)
             self.canvas.refresh()
-
-    def changeValue(self, value):
-        layer = self.canvas.layer(2)
-        if(layer):
-            nF = layer.selectedFeatureCount()
-            if (nF > 0):
-                layer.startEditing()
-                ob = layer.selectedFeaturesIds()
-                b = QVariant(value)
-                if (nF > 1):
-                    for i in ob:
-                        layer.changeAttributeValue(int(i), 1, b)
-                        # 1 being the second column
-                else:
-                    layer.changeAttributeValue(int(ob[0]), 1, b)
-                    # 1 being the second column
-                layer.commitChanges()
-
-            else:
-                QMessageBox.critical(self, "Error",
-                    "Please select at least one feature from current layer")
-        else:
-            QMessageBox.critical(self, "Error", "Please select a layer")
-
-    def getLayerNames(self, inputLayers):
+            
+    '''        
+    def getLayerNames(self):
+        
         """Return list of names of all layers in QgsMapLayerRegistry"""
         layermap = QgsMapLayerRegistry.instance().mapLayers()
+        
         layerlist = []
-        if inputLayers == "all":
-            for name, layer in layermap.iteritems():
-                layerlist.append(layer.name())
+        
+        #if mapCanvasLayers == "all":
+            
+        for name, layer in layermap.iteritems():
+            
+            layerlist.append(layer.name())
+            
+            #layerlist.insert(0,layer.name()) 
+                
+        print "layers in QgsMapLayerRegistry in GetLayers Methods"
+        
+        for lyr in layerlist:
+            
+            x = layerlist.index(lyr)
+            
+            print lyr , x
+                  
+                  
+                    
         else:
+            
             for name, layer in layermap.iteritems():
                 if layer.type() == QgsMapLayer.VectorLayer:
-                    if layer.geometryType() in inputLayers:
+                    if layer.geometryType() in mapCanvasLayers:
                         layerlist.append(layer.name())
                 elif layer.type() == QgsMapLayer.RasterLayer:
                     if "Raster" in inputLayers:
                         layerlist.append(layer.name())
+                        
         return layerlist
+    '''
