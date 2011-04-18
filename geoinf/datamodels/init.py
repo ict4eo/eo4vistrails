@@ -102,3 +102,4 @@ def initialize(*args, **keywords):
 
     # RasterModel
     reg.add_module(RasterModel, namespace=mynamespace, abstract=True) #abstract
+    reg.add_module(RasterImport, configureWidgetType=RasterImportConfigurationWidget, namespace = mynamespace)
