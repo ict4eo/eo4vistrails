@@ -101,13 +101,12 @@ class PostGisNumpyReturningCursor(ThreadSafeMixin, RPyCModule):
                 if k not in ['source', 'PostGisSessionObject', 'rpycnode', 'self']:
                     v = self.getInputFromPort(k)
                     parameters[k] = v
-                       
+            
             curs.execute(sql_input, parameters)
             
             import numpy
-
-            rec = curs.fetchone()
             
+            rec = curs.fetchone()
             if rec:
                 dtype = []                
                 i = 0
@@ -119,22 +118,20 @@ class PostGisNumpyReturningCursor(ThreadSafeMixin, RPyCModule):
                     #TODO: What about dates? How should they be handled.
                     dtype.append((curs.description[i][0], type(item)))
                     i += 1
-                    
+                
                 curs.scroll(-1)
-                
-                out = NDArray()
 
-                npRecArray = numpy.fromiter(curs, dtype=dtype)
+                out = NDArray()
                 
+                npRecArray = numpy.fromiter(curs, dtype=dtype)
+
                 #QUESTION: Is this meaningfull in all cases, should we be doing this
                 if sameType:
                     npArray = npRecArray.view(dtype=firstType).reshape(-1,len(npRecArray[0]))               
                     out.set_array(npArray)
                 else:
                     out.set_array(npRecArray)
-                
-                print out
-            
+
                 self.setResult('nummpyArray', out)
                 
             else:
@@ -163,7 +160,7 @@ class PostGisFeatureReturningCursor(ThreadSafeMixin, RPyCModule):
         pgsession = self.getInputFromPort("PostGisSessionObject")
         
         try:
-
+            
             sql_input = urllib.unquote(str(self.forceGetInputFromPort('source', '')))
             
             '''here we substitute input port values within the source'''
@@ -263,6 +260,7 @@ class PostGisNonReturningCursor(NotCacheable, ThreadSafeMixin, RPyCModule):
         ThreadSafeMixin.__init__(self)
 
     def compute(self):
+        print "Hello"
         """Will need to fetch a PostGisSession object on its input port
         Overrides supers method"""
         pgsession = self.getInputFromPort("PostGisSessionObject")
@@ -271,13 +269,13 @@ class PostGisNonReturningCursor(NotCacheable, ThreadSafeMixin, RPyCModule):
             # we could be dealing with multiple requests here,
             #   so parse string and execute requests one by one            
             pgconn = psycopg2.connect(pgsession.connectstr)
-            
+            print pgconn
             curs = pgconn.cursor()
-            
+            print curs
             resultstatus =[]
+
             sql_input = urllib.unquote(str(self.forceGetInputFromPort('source', '')))
-            #sql_input = sql_input.rstrip()
-            #sql_input = sql_input.lstrip()
+
             for query in sql_input.split(";"):
                 if len(query) > 0:
                     values = {}
@@ -303,6 +301,7 @@ class PostGisNonReturningCursor(NotCacheable, ThreadSafeMixin, RPyCModule):
                                 else:
                                     parameters[i][k] = v
                         
+                        print "about to execute many"
                         curs.executemany(query+";", parameters)                        
                         pgconn.commit()
                         resultstatus.append(curs.statusmessage)
@@ -312,10 +311,9 @@ class PostGisNonReturningCursor(NotCacheable, ThreadSafeMixin, RPyCModule):
                             parameters[k] = v
                         
                         curs.execute(query+";", parameters)
-                        
+                        pgconn.commit()
                         resultstatus.append(curs.statusmessage)
             
-            pgconn.commit()
             
             self.setResult('status', resultstatus)
             

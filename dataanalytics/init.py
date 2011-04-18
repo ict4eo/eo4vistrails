@@ -53,12 +53,14 @@ def initialize(*args, **keywords):
     #Add PySAL
     reg.add_module(PySAL.W,
                    namespace=mynamespace)
-    reg.add_input_port(PySAL.W, 'neighbors',
-                       basic_modules.Dictionary)
-    reg.add_input_port(PySAL.W, 'weights',
-                       basic_modules.Dictionary)
-    reg.add_output_port(PySAL.W, "value",
-                        (PySAL.W, 'value'))
+
+    import Rasterlang
+    mynamespace = "rasterlang"
+    
+    #Add Rasterlang
+    reg.add_module(Rasterlang.layerAsArray, namespace=mynamespace)
+    reg.add_module(Rasterlang.writeGeoTiff, namespace=mynamespace)
+    reg.add_module(Rasterlang.arrayAsLayer, namespace=mynamespace)
 
     import Networkx
     mynamespace = "networkx"
@@ -66,14 +68,6 @@ def initialize(*args, **keywords):
      #Add Networkx
     reg.add_module(Networkx.Graph,
                    namespace=mynamespace)
-#    reg.add_input_port(Networkx.Graph, 'neighbors',
-#                       NDArray)
-#    reg.add_output_port(Networkx.Graph, "value",
-#                        (Networkx.Graph, 'value'))
 
     reg.add_module(Networkx.connected_components,
                    namespace=mynamespace)
-#    reg.add_input_port(Networkx.connected_components, 'graph',
-#                       Networkx.Graph)
-#    reg.add_output_port(Networkx.connected_components, "value",
-#                        (basic_modules.List, 'value'))

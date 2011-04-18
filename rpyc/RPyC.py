@@ -267,7 +267,6 @@ class RPyCSafeMixin(object):
             shadow.computed = self.computed
             shadow.signature = self.signature
             
-            
             print "Executing in the shadow class"
             #Call the Shadow Objects Compute
             shadow.compute()

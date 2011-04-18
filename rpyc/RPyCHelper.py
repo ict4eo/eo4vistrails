@@ -108,12 +108,13 @@ class RPyCCode(ThreadSafeMixin, RPyCModule):
                         'registry': reg,
                         'self': self})
         del locals_['source']
-        print "hehehe"
+        print "Starting executing in main thread"
         exec code_str in locals_, locals_
         if use_output:
             for k in outputDict.iterkeys():
                 if locals_[k] != None:
                     self.setResult(k, locals_[k])
+        print "Finished executing in main thread"
                     
     def run_code(self, code_str, conn, use_input=False, use_output=False):
         """

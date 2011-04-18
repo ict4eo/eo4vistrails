@@ -32,13 +32,11 @@ in the format defined by QGIS.
 # third party
 import qgis.core
 from PyQt4.QtCore import QFileInfo
+from qgis.core import QgsVectorFileWriter, QgsCoordinateReferenceSystem
 # vistrails
 from core.modules.vistrails_module import Module, ModuleError
 # eo4vistrails
 # local
-
-
-from packages.eo4vistrails.utils.DataRequest import DataRequest
 
 #export set PYTHONPATH=/usr/lib/python2.6
 qgis.core.QgsApplication.setPrefixPath("/usr", True)
@@ -65,8 +63,9 @@ class QgsLayerWriter(Module):
 
             if isFILE:
                 thefilepath = thefile.name
-                thefilename = QFileInfo(thefilepath).fileName()
-                self.write_vector_layer(layer, filename, 'SHP') # QGIS 1.6 only handles shapefile
+                #thefilename = QFileInfo(thefilepath).fileName()
+                                
+                self.write_vector_layer(thelayer, thefilepath, 'SHP') # QGIS 1.6 only handles shapefile
             else:
                 self.raiseError('Invalid output file')
 
@@ -83,7 +82,9 @@ class QgsLayerWriter(Module):
                 encoding = 'CP1250'
             if filetype in SUPPORTED:
                 if filetype == 'SHP':
-                    error = QgsVectorFileWriter.writeAsShapefile(layer, filename, encoding)
+                    crsDest = QgsCoordinateReferenceSystem(layer.srs())
+                    error = QgsVectorFileWriter.writeAsShapefile(layer, filename, encoding,  crsDest, False)
+                    print error, layer, filename, encoding, crsDest
                 # IN FUTURE
                 #   add support for other vector types !!!
             else:

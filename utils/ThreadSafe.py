@@ -107,9 +107,9 @@ class ThreadSafeMixin(object):
             pass
     
     def lockedUpdate(self):
-        print self, " get compute lock"
+        print self, "get compute lock"
+        self.logging.begin_update(self)
         with self.computeLock:
-            self.logging.begin_update(self)
             self.updateUpstream()
             if self.upToDate:
                 if not self.computed:
@@ -142,7 +142,7 @@ class ThreadSafeMixin(object):
             self.upToDate = True
             self.logging.end_update(self)
             self.logging.signalSuccess(self)
-        print self, " release compute lock"
+        print self, "release compute lock"
 
 class Fork(ThreadSafeMixin, NotCacheable, Module):
     """TODO:"""
