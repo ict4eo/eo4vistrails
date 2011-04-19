@@ -8,6 +8,7 @@ def initialize(*args, **keywords):
     from WebRequest import WebRequest
     from DataRequest import DataRequest, PostGISRequest
     from Array import NDArray
+    from CsvWriter import  CsvWriter
 
     reg = get_module_registry()
     utils_namespace = "utils"
@@ -75,3 +76,5 @@ def initialize(*args, **keywords):
         WebRequest,
         'out',
         basic_modules.Variant)
+    
+    reg.add_module(CsvWriter,  namespace = utils_namespace)
