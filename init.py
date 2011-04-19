@@ -1,14 +1,16 @@
-#brings in threading and session modules
-try:
-    from utils import init as utils_init
-except:
-    import utils.init as utils_init
 
 #Brings in cloud modules
 try:
     from rpyc import init as rpyc_init
 except:
     import rpyc.init as rpyc_init
+
+#brings in threading and session modules
+try:
+    from utils import init as utils_init
+except:
+    import utils.init as utils_init
+
 
 #brings in PostGIS modules
 try:

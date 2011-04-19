@@ -29,6 +29,7 @@ handle write csv files to a given location with or without headers.
 """
 import csv
 from core.modules.vistrails_module import Module,  ModuleError
+from core.modules import basic_modules
 from packages.eo4vistrails.rpyc.RPyC import RPyCModule, RPyCSafeModule
 from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
 
