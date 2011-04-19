@@ -28,6 +28,7 @@
 handle write csv files to a given location with or without headers.
 """
 import csv
+import os,  os.path
 from core.modules.vistrails_module import Module,  ModuleError
 from core.modules import basic_modules
 from packages.eo4vistrails.rpyc.RPyC import RPyCModule, RPyCSafeModule
@@ -38,7 +39,7 @@ class CsvWriter(ThreadSafeMixin,  RPyCModule):
     
     _input_ports  = [('directorypath', '(edu.utah.sci.vistrails.basic:String)'), 
                                ('filename',  '(edu.utah.sci.vistrails.basic:String)'), 
-                               ('column__header_list',  '(edu.utah.sci.vistrails.basic:List)'),
+                               ('column_header_list',  '(edu.utah.sci.vistrails.basic:List)'),
                                ('data_values_listoflists',  '(edu.utah.sci.vistrails.basic:List)') 
                                ]
     _output_ports = [('created_file', '(edu.utah.sci.vistrails.basic:String)')]
@@ -50,9 +51,29 @@ class CsvWriter(ThreadSafeMixin,  RPyCModule):
         
         
     def compute (self) :
-        pass  
+        fn = self.getInputFromPort('filename') 
+        dp = self.getInputFromPort('directorypath')
+        chl = self.getInputFromPort('column_header_list')
+        dvll = self.getInputFromPort('data_values_listoflists')
         
+        if not os.path.isdir(dp):
+            os.mkdir(dp)
+            
+        newfile = os.path.join(dp, fn)
+        try:
+            csvfile = csv.writer(open(newfile, 'w'),  delimiter=',',  quotechar="'")
+            
+            if chl != []:
+                csvfile.writerow(chl)
+            if dvll != []:
+                csvfile.writerows(dvll)
+            self.setResult('created_file', newfile)
         
+        except:
+            
+            pass
+            #raise an error
+        csvfile = None #flush to disk
     
     
     
