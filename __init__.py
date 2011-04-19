@@ -40,8 +40,9 @@ OpenNebula cloud environments.
 
 identifier = 'za.co.csir.eo4vistrails'
 name = 'eo4vistrails'
-version = '0.0.1'
-author_list = 'tvanzyl,bcwele'
+version = '0.1.0'
+author_list = 'tvanzyl,bcwele,gmcferren,dhohls,pshabangu,bsibolla'
+
 
 def package_requirements():
     import core.requirements
@@ -62,8 +63,10 @@ def package_requirements():
     if not core.requirements.python_module_exists('osgeo'):
         raise core.requirements.MissingRequirement('osgeo')
 
+
 def package_dependencies():
-    return ['edu.utah.sci.vistrails.spreadsheet','edu.utah.sci.vistrails.numpyscipy']
+    return ['edu.utah.sci.vistrails.spreadsheet',
+            'edu.utah.sci.vistrails.numpyscipy']
 #    import core.packagemanager
 #    manager = core.packagemanager.get_package_manager()
 #    if manager.has_package('edu.utah.sci.vistrails.spreadsheet'):

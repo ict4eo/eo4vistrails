@@ -34,18 +34,24 @@
 """This module provides a Raster file Import
 """
 
-#from owslib.wfs import WFS
+# library
+import os
+import sys
+# third party
+import fnmatch
+from numpy import *
+from osgeo import ogr, gdal, osr
+from PyQt4 import QtCore, QtGui
+from scipy import *
+# core
 import core.modules.module_registry
 import core.system
-from PyQt4 import QtCore, QtGui
+# eo4vistrails
 from packages.eo4vistrails.geoinf.datamodels.Raster import RasterModel
-from packages.eo4vistrails.geoinf.ogc.OgcConfigurationWidget import OgcConfigurationWidget
-from core.modules.vistrails_module import Module, new_module, NotCacheable, ModuleError
-import os, sys
-from numpy import*
-from osgeo import ogr,gdal,  osr
-import fnmatch
-from scipy import*
+from packages.eo4vistrails.geoinf.ogc.OgcConfigurationWidget import \
+    OgcConfigurationWidget
+from core.modules.vistrails_module import Module, new_module, NotCacheable, \
+    ModuleError
 
 
 #need to import the configuration widget we develop
@@ -53,6 +59,7 @@ class RasterImport(RasterModel):
     """TO DO - add docstring
 
     """
+
     def __init__(self):
         RasterModel.__init__(self)
 
@@ -64,6 +71,7 @@ class RasterImportCommonWidget(QtGui.QWidget):
     """TO DO - add docstring
 
     """
+
     def __init__(self, ogc_widget, parent=None):
         QtGui.QWidget.__init__(self, parent)
         self.setObjectName("RasterImportCommonWidget")
@@ -98,7 +106,7 @@ class RasterImportCommonWidget(QtGui.QWidget):
 
         #self.split = QtGui.QSplitter(QtCore.Qt.Vertical)
         #self.mainLayout.addWidget(self.split)
-        self.detailsGroupBox = QtGui.QGroupBox("Rasterfile Metadata")                
+        self.detailsGroupBox = QtGui.QGroupBox("Rasterfile Metadata")
         self.mainLayout.addWidget(self.detailsGroupBox)
         self.detailsLayout = QtGui.QGridLayout()
         self.detailsGroupBox.setLayout(self.detailsLayout)
@@ -119,33 +127,32 @@ class RasterImportCommonWidget(QtGui.QWidget):
         self.buttonLayout = QtGui.QHBoxLayout()
         self.buttonGroupBox.setLayout(self.buttonLayout)
         self.detailsLayout.addWidget(self.buttonGroupBox)
-        self.btnCancel = QtGui.QPushButton("Cancel");
-        self.btnExecute = QtGui.QPushButton("Execute");
+        self.btnCancel = QtGui.QPushButton("Cancel")
+        self.btnExecute = QtGui.QPushButton("Execute")
         self.buttonLayout.addWidget(self.btnCancel)
         self.buttonLayout.addWidget(self.btnExecute)
 
-        self.connect(self.placesGroupBoxButton, QtCore.SIGNAL('clicked(bool)'), self.showDialog)
+        self.connect(self.placesGroupBoxButton,
+                     QtCore.SIGNAL('clicked(bool)'), self.showDialog)
 
-        self.connect(self.btnExecute, QtCore.SIGNAL('clicked(bool)'), self.getRasterFileMetaData)
+        self.connect(self.btnExecute, QtCore.SIGNAL('clicked(bool)'),
+                     self.getRasterFileMetaData)
 
     def showDialog(self):
-
-        filename = QtGui.QFileDialog.getOpenFileName(self, 'Open file','/home')
-
-        self.placesGroupBox.setText(str(filename))        
-
+        """TO DO - add docstring"""
+        filename = QtGui.QFileDialog.getOpenFileName(
+            self, 'Open file', '/home')
+        self.placesGroupBox.setText(str(filename))
         fname = open(filename)
-
         data = fname.read()
-
         self.lbxDetails.addItem(str(data))
 
-
     def getRasterFileMetaData(self):
-
+        """TO DO - add docstring"""
         rstfile = self.placesGroupBox.text()
         metadata = os.popen('gdalinfo ' + str(rstfile)).read()
         self.lbxDetails.addItem(str(metadata))
+
 
 def initialize(*args, **keywords):
     """sets everything up"""
@@ -153,22 +160,26 @@ def initialize(*args, **keywords):
     # we can refer to it in a shorter way.
     reg = core.modules.module_registry.get_module_registry()
     reg.add_module(RasterModel)
+    """
     #input ports
-    
-    #reg.add_input_port(RasterModel, "service_version", (core.modules.basic_modules.String, 'Web Map Service version - default 1.1.1'))   
+    #reg.add_input_port(
+        RasterModel,
+        "service_version",
+        (core.modules.basic_modules.String,
+        'Web Map Service version - default 1.1.1'))
+    """
     #output ports
     reg.add_output_port(
         RasterModel,
         "OGRDataset",
-        (ogr.Dataset, 'Raster data in OGR Dataset')
-    )
+        (ogr.Dataset, 'Raster data in OGR Dataset'))
 
 
 class RasterImportConfigurationWidget(OgcConfigurationWidget):
-
     """makes use of code style from OgcConfigurationWidget"""
-    def __init__(self,  module, controller, parent=None):
-        OgcConfigurationWidget.__init__(self,  module, controller, parent)
+
+    def __init__(self, module, controller, parent=None):
+        OgcConfigurationWidget.__init__(self, module, controller, parent)
         # pass in parent widget i.e. OgcCommonWidget class
         self.wfs_config = RasterImportCommonWidget(self.ogc_common_widget)
         # tabs
@@ -179,14 +190,10 @@ class RasterImportConfigurationWidget(OgcConfigurationWidget):
                 "cConfigurationWidget",
                 "RasterImportCommonWidget",
                 None,
-                QtGui.QApplication.UnicodeUTF8
-            )
-        )
+                QtGui.QApplication.UnicodeUTF8))
         self.tabs.setTabToolTip(
             self.tabs.indexOf(self.wfs_config),
-            QtGui.QApplication.translate('mmmmm', 'nnnn',               
+            QtGui.QApplication.translate('mmmmm', 'nnnn',
                 None,
-                QtGui.QApplication.UnicodeUTF8
-            )
-        )
+                QtGui.QApplication.UnicodeUTF8))
         self.tabs.setCurrentIndex(0)
