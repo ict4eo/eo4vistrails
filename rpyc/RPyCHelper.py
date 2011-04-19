@@ -187,6 +187,139 @@ class RPyCCode(ThreadSafeMixin, RPyCModule):
         else:
             self.run_code_orig(s, use_input=True, use_output=True)
 
+class RPyC_C_Code(RPyCCode):
+    
+    def run_code_orig(self, code_str, use_input=False, use_output=False):
+        """run_code runs a piece of code as a VisTrails module.
+        use_input and use_output control whether to use the inputport
+        and output port dictionary as local variables inside the
+        execution."""
+        import core.packagemanager
+        def fail(msg):
+            raise ModuleError(self, msg)
+        def cache_this():
+            self.is_cacheable = lambda *args, **kwargs: True
+        locals_ = locals()
+        if use_input:
+            inputDict = dict([(k, self.getInputFromPort(k))
+                              for k in self.inputPorts])
+            locals_.update(inputDict)
+        if use_output:
+            outputDict = dict([(k, None)
+                               for k in self.outputPorts])
+            locals_.update(outputDict)
+        _m = core.packagemanager.get_package_manager()
+        from core.modules.module_registry import get_module_registry
+        reg = get_module_registry()
+        locals_.update({'fail': fail,
+                        'package_manager': _m,
+                        'cache_this': cache_this,
+                        'registry': reg,
+                        'self': self})
+        
+        print "Starting executing in main thread"
+        
+        from scipy.weave import inline
+        from scipy.weave.converters import blitz
+        try:
+            del inputDict['source']
+        except:
+            pass
+        try:
+            del inputDict['rpycnode']
+        except:
+            pass
+        try:
+            del outputDict['self']
+        except:
+            pass
+        
+        keys = inputDict.keys() + outputDict.keys()
+
+        err = inline(code_str, keys, type_converters=blitz, compiler = 'gcc')
+        print err
+        #exec code_str in locals_, locals_
+        if use_output:
+            for k in outputDict.iterkeys():
+                if locals_[k] != None:
+                    self.setResult(k, locals_[k])
+        print "Finished executing in main thread"
+                    
+    def run_code(self, code_str, conn, use_input=False, use_output=False):
+        """
+        run_code runs a piece of code as a VisTrails module.
+        use_input and use_output control whether to use the inputport
+        and output port dictionary as local variables inside the
+        execution.
+        """
+        if code_str == '':
+            return
+        
+        def fail(msg):
+            raise ModuleError(self, msg)
+
+        def cache_this():
+            self.is_cacheable = lambda *args, **kwargs: True    
+
+        #TODO: changed to demo that this is in the cloud!!!!
+        import sys
+        conn.modules.sys.stdout = sys.stdout
+
+        if use_input:
+            inputDict = dict([(k, self.getInputFromPort(k)) for k in self.inputPorts])
+            conn.namespace.update(inputDict)
+        
+        if use_output:
+            outputDict = dict([(k, self.get_output(k)) for k in self.outputPorts])
+            conn.namespace.update(outputDict)
+       
+        from core import packagemanager
+        _m = packagemanager.get_package_manager()
+        from core.modules.module_registry import get_module_registry
+        reg = get_module_registry()
+        conn.namespace.update({'fail': fail,
+                               'package_manager': _m,
+                               'cache_this': cache_this,
+                               'registry': reg,
+                               'self': self})
+        
+        #del conn.namespace['source']
+        
+        try:
+            del inputDict['source']
+        except:
+            pass
+        try:
+            del inputDict['rpycnode']
+        except:
+            pass
+        try:
+            del outputDict['self']
+        except:
+            pass
+        
+        conn.execute("from scipy.weave import inline")        
+        conn.execute("from scipy.weave.converters import blitz")
+        
+        conn.namespace["code_str"] = code_str
+        
+        keys = inputDict.keys() + outputDict.keys()
+        conn.namespace["keys"] = keys
+
+        err = conn.eval("inline(code_str, keys, type_converters=blitz, compiler = 'gcc')")
+        #err = inline(code_str, keys, type_converters=blitz, compiler = 'gcc')
+        print err
+        #conn.execute(code_str)
+        
+        if use_output:
+            for k in outputDict.iterkeys():
+                try:
+                    if conn.namespace[k] != None:
+                        self.setResult(k, conn.namespace[k])
+                except AttributeError:
+                    self.setResult(k, conn.namespace[k])    
+
+
 class RPyCNodeWidget(ComboBoxWidget):
     discoveredSlaves = None
     default = ('main',0)

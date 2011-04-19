@@ -60,7 +60,10 @@ class layerAsArray(RasterlangModule, RPyCModule):
         
         array = rasterlang.layers.layerAsArray(layer)
         
-        self.setResult("numpy array", array)
+        ndarray = NDArray()
+        ndarray.set_array(array)
+        
+        self.setResult("numpy array", ndarray)
 
 @RPyCSafeModule()
 class arrayAsLayer(RasterlangModule, RPyCModule):
@@ -80,7 +83,7 @@ class arrayAsLayer(RasterlangModule, RPyCModule):
         os.remove(self.fileName)
 
     def compute(self):        
-        array = self.getInputFromPort('numpy array')
+        ndarray = self.getInputFromPort('numpy array')
         layer = self.getInputFromPort('QgsMapLayer')
                         
         e = layer.extent()
@@ -93,7 +96,7 @@ class arrayAsLayer(RasterlangModule, RPyCModule):
         self.fileName = "/tmp/rasterlang" + self.number + ".tiff"
 
 
-        rasterlang.layers.writeGeoTiff(array, extent, self.fileName)
+        rasterlang.layers.writeGeoTiff(ndarray.get_array(), extent, self.fileName)
         from packages.eo4vistrails.geoinf.datamodels.QgsLayer import QgsRasterLayer
         
         outlayer = QgsRasterLayer(self.fileName, self.number)
@@ -114,10 +117,10 @@ class writeGeoTiff(RasterlangModule, RPyCModule):
 
     def compute(self):
         outfile = self.getInputFromPort('output file')
-        array = self.getInputFromPort('numpy array')
+        ndarray = self.getInputFromPort('numpy array')
         layer = self.getInputFromPort('QgsMapLayer')
         
         e = layer.extent()
         extent = [e.xMinimum(),e.yMinimum(),e.xMaximum(),e.yMaximum()]
         
-        rasterlang.layers.writeGeoTiff(array, extent, outfile.name)
+        rasterlang.layers.writeGeoTiff(ndarray.get_array(), extent, outfile.name)

@@ -79,6 +79,11 @@ def initialize(*args, **keywords):
     reg.add_output_port(RPyCHelper.RPyCCode, 'self',
                         basic_modules.Module)
 
+    reg.add_module(RPyCHelper.RPyC_C_Code,
+                   name = "RPyC C Code",
+                   configureWidgetType=PythonSourceConfigurationWidget,
+                   namespace=mynamespace)
+
     #Add RPyCTestModule
     reg.add_module(RPyCTest.RPyCTestModule,
                    name="RpyC Test Module",
