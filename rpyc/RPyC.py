@@ -47,43 +47,43 @@ import rpyc
 #node has dummy versions of these so not a problem
 from core.modules.vistrails_module import Module, NotCacheable
 
-def getRemoteConnection(ip, port=18812):
-    from rpyc.core.service import SlaveService
-    connection = rpyc.connect(ip,port,SlaveService, 
-                        {'allow_all_attrs':True, 
-                         'instantiate_custom_exceptions':True,
-                         'import_custom_exceptions':True})
-    return connection
-
-def getSubConnection():
-    from rpyc.core.service import SlaveService
-    from rpyc.utils import factory
-    connection = factory.connect_subproc(["python", "-u",
-                                         rpyc.classic.SERVER_FILE,
-                                         "-q", "-m", "stdio"], 
-                                         SlaveService,
-                                         {'allow_all_attrs':True, 
-                                          'instantiate_custom_exceptions':True,
-                                          'import_custom_exceptions':True})
-
-    #connection = rpyc.classic.connect_subproc()
-    #make sure all packages are in the path
-    print "Got a subProc"
-    import core.system
-    import sys       
-    connection.modules.sys.path.append(sys.path)
-    connection.modules.sys.path.append(core.system.vistrails_root_directory())
+def refreshPackage(connection, packageName, checkVersion=False, force=False):
+    reFresh = force
+    package = __import__(packageName, fromlist=['packages'])
+        
+    try:
+        rpackage = connection.modules[packageName]
+    except ImportError, er:
+        print packageName, er
+        reFresh = True
+        
+    if (not reFresh) and checkVersion and (rpackage.version != package.version):
+        print packageName, "Version Differ"
+        reFresh = True
     
-    return connection
-
+    if reFresh:
+        print "Uploading %s..."%packageName
+        rpyc.classic.upload_package(connection, package, "./tmp/"+packageName.replace(".","/"))
+        print "Refreshing Modules for  %s..."%packageName
+        refreshmodules = [(mod if mod.startswith(packageName) else None) for mod in connection.modules.sys.modules.keys()]
+        for refreshmodule in refreshmodules:
+            if refreshmodule:
+                try:
+                    rpackage = connection.modules[refreshmodule]                   
+                    connection.modules.__builtin__.reload(rpackage)
+                    #print "Refreshed Module %s..."%refreshmodule
+                except ImportError:
+                    pass
+                    #print "Module %s not refreshed..."%refreshmodule
+    else:
+        print "Skipping %s..."%packageName
 
 class RPyCModule(Module):
     '''
     This module is important as it forms the basis for ensuring that
     rpyc based modules have the correct input ports
     '''
-    pass
-
+    _input_ports  = [('rpycnode', '(za.co.csir.eo4vistrails:RpyC Node:rpyc)')]
 
 class RPyCSafeModule(object):
     """
@@ -108,11 +108,19 @@ class RPyCSafeModule(object):
             Shared.isRemoteRPyCNode = False
         except NameError:
             Shared.isRemoteRPyCNode = False
+
+        if RPyCModule not in clazz.__bases__:
+            try:
+                clazz._input_ports = clazz._input_ports + RPyCModule._input_ports
+            except AttributeError:
+                clazz._input_ports = RPyCModule._input_ports
+                pass
         
         if RPyCSafeMixin not in clazz.__bases__:
             new__bases__ = (RPyCSafeMixin,) + clazz.__bases__
             new__dict__ = clazz.__dict__.copy()
             new__dict__['_original_compute']  = new__dict__['compute']
+            
             del(new__dict__['compute']) # = RPyCSafeMixin.compute
 
         return type(clazz.__name__, new__bases__, new__dict__)
@@ -154,76 +162,15 @@ class RPyCSafeMixin(object):
             (isRemote, connection) = self.inputPorts['rpycnode'][0].obj.getSharedConnection()
             
             if isRemote:
-                
-                print "Got a Remote Node"
-                #Make sure all the right stuff is in place espcially dummy core and packages
-                #on the remote node, no need for this if local as the machine is already set up            
-                #import packages.eo4vistrails.rpyc.dummycore
-                #rpyc.classic.upload_package(connection, packages.eo4vistrails.rpyc.dummycore, "./tmp/core")
-                print "Checking requirements on node..."
-                
-                #make sure all packages are in the path
-                if not "./tmp" in connection.modules.sys.path:
-                    connection.modules.sys.path.append('./tmp')
-                
-                #Check version info
-                force=False
-                try:                    
-                    core_system = connection.modules["core.system"]
-                    import core.system
-                    if core_system.vistrails_version() != core.system.vistrails_version():
-                        force=True
-                        print "Different Versions....", core_system.vistrails_version()
-                except ImportError:
-                    print "Core System Not Loaded"
-                    connection.modules.sys.path_importer_cache['./tmp'] = None
-                
-                print "Uploading requirements to node...."
-                import packages.eo4vistrails.rpyc.tmp
-                rpyc.classic.upload_package(connection, packages.eo4vistrails.rpyc.tmp, "./tmp")
-                
-                self.refreshPackage(connection, "core", force=force)
-                
-                self.refreshPackage(connection, "gui", force=force)
-                
-                self.refreshPackage(connection, "db", force=force)
-                            
                 #TODO: remove once finishing dev should just work of version numbers
-                force=True
                 #Upload any vistrails packages that may be required
                 for packageName in self._requiredVisPackages:
-                    self.refreshPackage(connection, packageName, checkVersion=True, force=force)
+                    refreshPackage(connection, packageName, checkVersion=True, force=True)
+                    
+                print "Finished uploading module requirements to node...."
                 
-                print "Finished uploading requirements to node...."
-                
-                #Reload the current module
-                print self.__module__
-                rmodule = connection.modules[self.__module__]
-                connection.modules.__builtin__.reload(rmodule)
-                print "Reloaded current module %s...."%str(self.__module__)
-            
         return connection
-
-    def refreshPackage(self, connection, packageName, checkVersion=False, force=False):
-        reFresh = force
-        package = __import__(packageName, fromlist=['packages'])
-
-        try:
-            rpackage = connection.modules[packageName]
-        except ImportError:
-            reFresh = True
-            
-        if (not reFresh) and checkVersion and (rpackage.version != package.version):
-            reFresh = True
-
-        if reFresh:
-            print "Uploading %s..."%packageName
-            rpyc.classic.upload_package(connection, package, "./tmp/"+packageName.replace(".","/"))
-            rpackage = connection.modules[packageName]
-            connection.modules.__builtin__.reload(rpackage)
-        else:
-            print "Skipping %s..."%packageName
-    
+   
     def compute(self):
         #Get RPyC Node in good standing
         #input from rpycmodule

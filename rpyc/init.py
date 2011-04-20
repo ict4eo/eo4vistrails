@@ -66,8 +66,6 @@ def initialize(*args, **keywords):
     reg.add_module(RPyC.RPyCModule,
                    namespace=mynamespace,
                    abstract=True)
-    reg.add_input_port(RPyC.RPyCModule, 'rpycnode',
-                      (RPyCHelper.RPyCNode, 'A valid RPYC Node, if not given will execute locally'))
     
     #Add RPyCCode
     reg.add_module(RPyCHelper.RPyCCode,

@@ -42,7 +42,7 @@ class NetworkxModule(ThreadSafeMixin):
         ThreadSafeMixin.__init__(self)
 
 @RPyCSafeModule()
-class Graph(NetworkxModule, RPyCModule, nx.Graph):
+class Graph(NetworkxModule, Module, nx.Graph):
     """ Represents a network Graph  """
 
     _input_ports  = [('neighbors list', '(edu.utah.sci.vistrails.basic:List)'), 
@@ -50,7 +50,7 @@ class Graph(NetworkxModule, RPyCModule, nx.Graph):
     _output_ports = [('value', '(za.co.csir.eo4vistrails:Graph:networkx)')]
 
     def __init__(self):
-        RPyCModule.__init__(self)
+        Module.__init__(self)
         NetworkxModule.__init__(self)
         nx.Graph.__init__(self)
 
@@ -65,14 +65,14 @@ class Graph(NetworkxModule, RPyCModule, nx.Graph):
         self.setResult("value", self)
 
 @RPyCSafeModule()
-class connected_components(NetworkxModule, RPyCModule):
+class connected_components(NetworkxModule, Module):
     """ Container class for the connected components command """
 
     _input_ports  = [('graph', '(za.co.csir.eo4vistrails:Graph:networkx)')]
     _output_ports = [('value', '(edu.utah.sci.vistrails.basic:List)')]
 
     def __init__(self):
-        RPyCModule.__init__(self)
+        Module.__init__(self)
         NetworkxModule.__init__(self)
 
     def compute(self):

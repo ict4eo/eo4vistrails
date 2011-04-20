@@ -41,10 +41,75 @@ It also has the rpyc remote code that is used
 
 from core.modules.vistrails_module import ModuleError, NotCacheable
 from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
-from RPyC import RPyCModule, getSubConnection, getRemoteConnection
+from RPyC import RPyCModule,refreshPackage
 from packages.eo4vistrails.utils.DropDownListWidget import ComboBoxWidget
 from core.modules import basic_modules
 import rpyc
+
+def getRemoteConnection(ip, port):
+    from rpyc.core.service import SlaveService
+    connection = rpyc.connect(ip,port,SlaveService, 
+                        {'allow_all_attrs':True, 
+                         'instantiate_custom_exceptions':True,
+                         'import_custom_exceptions':True})
+
+    print "Got a Remote Node"
+    #Make sure all the right stuff is in place espcially dummy core and packages
+    #on the remote node, no need for this if local as the machine is already set up
+    print "Checking requirements on node..."
+    
+    #make sure all packages are in the path
+    if not "./tmp" in connection.modules.sys.path:
+        connection.modules.sys.path.append('./tmp')
+    
+    #Check version info
+    force=False
+    try:             
+        core_system = connection.modules["core.system"]
+        import core.system
+        if core_system.vistrails_version() != core.system.vistrails_version():
+            force=True
+            print "Different Versions....", core_system.vistrails_version(), "and", core.system.vistrails_version()
+        else:
+            print "Vistrails Ok..."
+    except ImportError:
+        print "Core System Not Loaded"
+        connection.modules.sys.path_importer_cache['./tmp'] = None
+    
+    print "Uploading requirements to node...."
+    import packages.eo4vistrails.rpyc.tmp
+    rpyc.classic.upload_package(connection, packages.eo4vistrails.rpyc.tmp, "./tmp")
+    
+    refreshPackage(connection, "core", force=force)
+    
+    refreshPackage(connection, "gui", force=force)
+    
+    refreshPackage(connection, "db", force=force)
+    
+    print "Finished uploading vistrails requirements to node...."
+
+    return connection
+
+def getSubConnection():
+    from rpyc.core.service import SlaveService
+    from rpyc.utils import factory
+    connection = factory.connect_subproc(["python", "-u",
+                                         rpyc.classic.SERVER_FILE,
+                                         "-q", "-m", "stdio"], 
+                                         SlaveService,
+                                         {'allow_all_attrs':True, 
+                                          'instantiate_custom_exceptions':True,
+                                          'import_custom_exceptions':True})
+
+    #connection = rpyc.classic.connect_subproc()
+    #make sure all packages are in the path
+    print "Got a subProc"
+    import core.system
+    import sys
+    connection.modules.sys.path.append(sys.path)
+    connection.modules.sys.path.append(core.system.vistrails_root_directory())
+    
+    return connection
 
 class RPyCCode(ThreadSafeMixin, RPyCModule):
     """
