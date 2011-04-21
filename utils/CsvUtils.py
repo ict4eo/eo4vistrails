@@ -68,7 +68,7 @@ class ListDirContent(ThreadSafeMixin,  Module):
             
         for fname in _index(dp):
             try:
-                if fname.split(".")[1] in fel:
+                if fname.split(".")[-1] in fel:
                     filename_list.append(fname)
             except:
                 #likely a directory, ignore

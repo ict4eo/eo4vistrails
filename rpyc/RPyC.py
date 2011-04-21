@@ -165,7 +165,7 @@ class RPyCSafeMixin(object):
                 #TODO: remove once finishing dev should just work of version numbers
                 #Upload any vistrails packages that may be required
                 for packageName in self._requiredVisPackages:
-                    refreshPackage(connection, packageName, checkVersion=True, force=True)
+                    refreshPackage(connection, packageName, checkVersion=True, force=False)
                     
                 print "Finished uploading module requirements to node...."
                 
