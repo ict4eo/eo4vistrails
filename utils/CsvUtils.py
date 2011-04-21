@@ -30,12 +30,12 @@ handle write csv files to a given location with or without headers.
 import csv
 import os,  os.path
 from core.modules.vistrails_module import Module,  ModuleError
-from core.modules import basic_modules
-from packages.eo4vistrails.rpyc.RPyC import RPyCModule, RPyCSafeModule
+
+from packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
 from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
 
 @RPyCSafeModule()
-class WalkDirForCsvs(ThreadSafeMixin,  Module):
+class ListDirContent(ThreadSafeMixin,  Module):
     '''A utility for walking a directory to discover csv files with specified filenames 
     Returns a list of full filenames. Runs on RPyC nodes, and in such a case would 
     refer to that remote filesystem
@@ -132,7 +132,6 @@ class CsvWriter(ThreadSafeMixin,  Module):
     def __init__(self):
         ThreadSafeMixin.__init__(self)
         Module.__init__(self)
-        
         
         
     def compute (self) :
