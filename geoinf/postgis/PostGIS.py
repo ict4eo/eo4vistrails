@@ -43,8 +43,9 @@ from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
 from packages.eo4vistrails.utils.Array import NDArray
 from packages.eo4vistrails.utils.session import Session
 
-from core.modules.vistrails_module import ModuleError, NotCacheable
+from core.modules.vistrails_module import ModuleError, NotCacheable, Module
 from core.modules.source_configure import SourceConfigurationWidget
+from core.system import touch
 
 import urllib
 
@@ -273,9 +274,9 @@ class PostGisNonReturningCursor(NotCacheable, ThreadSafeMixin, RPyCModule):
             curs = pgconn.cursor()
             print curs
             resultstatus =[]
-
+            
             sql_input = urllib.unquote(str(self.forceGetInputFromPort('source', '')))
-
+            
             for query in sql_input.split(";"):
                 if len(query) > 0:
                     values = {}
@@ -324,8 +325,127 @@ class PostGisNonReturningCursor(NotCacheable, ThreadSafeMixin, RPyCModule):
         finally:
             curs.close()
             pgconn.close()
-            
 
+@RPyCSafeModule()
+class PostGisCopyFrom(NotCacheable, ThreadSafeMixin, RPyCModule):
+    """
+        Copies from CSV file to a table
+        http://initd.org/psycopg/docs/cursor.html#cursor.copy_from
+    """
+
+    _input_ports  = [('PostGisSessionObject','(za.co.csir.eo4vistrails:PostGisSession:postGIS)'),
+                     ('fullfilepath','(edu.utah.sci.vistrails.basic:String)'),
+                     ('headers','(edu.utah.sci.vistrails.basic:List)'),
+                     ('delimiter','(edu.utah.sci.vistrails.basic:String)', True, '\t'),
+                     ('nullvalue','(edu.utah.sci.vistrails.basic:String)', False, '\N'),
+                     ('tablename','(edu.utah.sci.vistrails.basic:String)'),
+                     ]
+    _output_ports = [('status','(edu.utah.sci.vistrails.basic:List)'),
+                     ('self','(edu.utah.sci.vistrails.basic:Module)')]
+
+    def __init__(self):
+        RPyCModule.__init__(self)
+        ThreadSafeMixin.__init__(self)
+
+    def compute(self):
+        """Will need to fetch a PostGisSession object on its input port
+        Overrides supers method"""
+        pgsession = self.getInputFromPort("PostGisSessionObject")
+        print pgsession
+        try:
+            # we could be dealing with multiple requests here,
+            #   so parse string and execute requests one by one            
+            pgconn = psycopg2.connect(pgsession.connectstr)
+            print pgconn
+            curs = pgconn.cursor()
+            print curs
+            resultstatus =[]
+            
+            csvfile = self.getInputFromPort('fullfilepath')
+            csvheader = self.forceGetInputFromPort('headers', None)
+            csvdelimiter = self.forceGetInputFromPort('delimiter', '\t')
+            csvnullvalue = self.forceGetInputFromPort('nullvalue', '\N')
+            
+            tablename = self.getInputFromPort('tablename')
+                        
+            thefile = open(csvfile, "r")       
+            
+            curs.copy_from(thefile, tablename, sep=csvdelimiter, null=csvnullvalue, columns=csvheader)
+            
+            pgconn.commit()
+            resultstatus.append(curs.statusmessage)
+            
+            self.setResult('status', resultstatus)
+            
+        except Exception as ex:
+            print ex
+            raise ModuleError,  (PostGisFeatureReturningCursor,\
+                                 "Could not execute SQL Statement")
+        finally:
+            curs.close()
+            pgconn.close()
+            
+@RPyCSafeModule()
+class PostGisCopyTo(NotCacheable, ThreadSafeMixin, Module):
+    """
+        Copies from CSV file to a table
+        http://initd.org/psycopg/docs/cursor.html#cursor.copy_from
+    """
+
+    _input_ports  = [('PostGisSessionObject','(za.co.csir.eo4vistrails:PostGisSession:postGIS)'),
+                     ('fullfilepath','(edu.utah.sci.vistrails.basic:String)'),
+                     ('headers','(edu.utah.sci.vistrails.basic:List)'),
+                     ('delimiter','(edu.utah.sci.vistrails.basic:String)', True, '\t'),
+                     ('nullvalue','(edu.utah.sci.vistrails.basic:String)', False, '\N'),
+                     ('tablename','(edu.utah.sci.vistrails.basic:String)'),
+                     ]
+    _output_ports = [('status','(edu.utah.sci.vistrails.basic:List)'),
+                     ('self','(edu.utah.sci.vistrails.basic:Module)')]
+
+    def __init__(self):
+        Module.__init__(self)
+        ThreadSafeMixin.__init__(self)
+
+    def compute(self):
+        """Will need to fetch a PostGisSession object on its input port
+        Overrides supers method"""
+        pgsession = self.getInputFromPort("PostGisSessionObject")
+        print pgsession
+        try:
+            # we could be dealing with multiple requests here,
+            #   so parse string and execute requests one by one            
+            pgconn = psycopg2.connect(pgsession.connectstr)
+            print pgconn
+            curs = pgconn.cursor()
+            print curs
+            resultstatus =[]
+            
+            csvfile = self.getInputFromPort('fullfilepath')
+            csvheader = self.forceGetInputFromPort('headers', None)
+            csvdelimiter = self.forceGetInputFromPort('delimiter', '\t')
+            csvnullvalue = self.forceGetInputFromPort('nullvalue', '\N')
+            
+            tablename = self.getInputFromPort('tablename')
+            
+            touch(csvfile)
+
+            thefile = open(csvfile,"w")
+            
+            curs.copy_to(thefile, tablename, sep=csvdelimiter, null=csvnullvalue, columns=csvheader)
+            
+            pgconn.commit()
+            resultstatus.append(curs.statusmessage)
+            
+            self.setResult('status', resultstatus)
+            
+        except Exception as ex:
+            print ex
+            raise ModuleError,  (PostGisFeatureReturningCursor,\
+                                 "Could not execute SQL Statement")
+        finally:
+            curs.close()
+            pgconn.close()
+            
 class SQLSourceConfigurationWidget(SourceConfigurationWidget):
     """NOT IN USE"""
     pass

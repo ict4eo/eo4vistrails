@@ -55,15 +55,15 @@ class ListDirContent(ThreadSafeMixin,  Module):
         fel = self.getInputFromPort('file_extensions')
         
         def _index(directory):
-            stack = [directory]
+            #stack = [directory]
             files = []
-            while stack:
-                directory = stack.pop()
-                for file in os.listdir(directory):
-                    fullname = os.path.join(directory,  file)
-                    files.append(fullname)
-                    if os.path.isdir(fullname) and not os.path.islink(fullname):
-                        stack.append(fullname)
+            #while stack:
+                #directory = stack.pop()
+            for filename in os.listdir(directory):
+                fullname = os.path.join(directory,  filename)
+                files.append(fullname)
+                    #if os.path.isdir(fullname) and not os.path.islink(fullname):
+                    #    stack.append(fullname)
             return files
             
         for fname in _index(dp):
@@ -101,14 +101,14 @@ class CsvReader(ThreadSafeMixin,  Module):
 
         if os.path.isfile(fn):
             try:
-                if chl != []:
+                if len(chl) > 0:
                     list_of_lists.append(chl)
                 csvfile = csv.reader(open(fn, 'r'),  delimiter = kd)
                 for row in csvfile:
                      list_of_lists.append(row)
                 self.setResult('read_data_listoflists', list_of_lists)
-            except:
-                pass#raise error?
+            except Exception, ex:
+                print ex
             csvfile = None
  
         
@@ -147,15 +147,16 @@ class CsvWriter(ThreadSafeMixin,  Module):
         try:
             csvfile = csv.writer(open(newfile, 'w'),  delimiter=',',  quotechar="'")
             
-            if chl != []:
+            if len(chl) > 0:
                 csvfile.writerow(chl)
-            if dvll != []:
+            if len(dvll) > 0:
                 csvfile.writerows(dvll)
+            
             self.setResult('created_file', newfile)
         
-        except:
-            
-            pass
+        except Exception, ex:
+            print ex
+
             #raise an error
         csvfile = None #flush to disk
     

@@ -89,3 +89,7 @@ def initialize(*args, **keywords):
     reg.add_input_port(PostGisNonReturningCursor,  "source",  core.modules.basic_modules.String)
     reg.add_output_port(PostGisNonReturningCursor, 'status', core.modules.basic_modules.List)
     reg.add_output_port(PostGisNonReturningCursor, 'self', PostGisNonReturningCursor)#supports ControlFlow ExecuteInOrder
+
+    reg.add_module(PostGisCopyFrom, name="Copy From File To Table",  namespace = postgis_namespace)
+    reg.add_module(PostGisCopyTo, name="Copy From Table To File",  namespace = postgis_namespace)
+
