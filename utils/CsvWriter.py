@@ -31,11 +31,12 @@ import csv
 import os,  os.path
 from core.modules.vistrails_module import Module,  ModuleError
 from core.modules import basic_modules
+from core.modules.basic_modules import Module
 from packages.eo4vistrails.rpyc.RPyC import RPyCModule, RPyCSafeModule
 from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
 
 @RPyCSafeModule()
-class CsvWriter(ThreadSafeMixin,  RPyCModule):
+class CsvWriter(ThreadSafeMixin,  Module):
     
     _input_ports  = [('directorypath', '(edu.utah.sci.vistrails.basic:String)'), 
                                ('filename',  '(edu.utah.sci.vistrails.basic:String)'), 
@@ -46,7 +47,7 @@ class CsvWriter(ThreadSafeMixin,  RPyCModule):
     
     def __init__(self):
         ThreadSafeMixin.__init__(self)
-        RPyCModule.__init__(self)
+        Module.__init__(self)
         
         
         

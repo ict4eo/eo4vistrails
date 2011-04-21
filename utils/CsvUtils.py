@@ -35,7 +35,7 @@ from packages.eo4vistrails.rpyc.RPyC import RPyCModule, RPyCSafeModule
 from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
 
 @RPyCSafeModule()
-class WalkDirForCsvs(ThreadSafeMixin,  RPyCModule):
+class WalkDirForCsvs(ThreadSafeMixin,  Module):
     '''A utility for walking a directory to discover csv files with specified filenames 
     Returns a list of full filenames. Runs on RPyC nodes, and in such a case would 
     refer to that remote filesystem
@@ -47,7 +47,7 @@ class WalkDirForCsvs(ThreadSafeMixin,  RPyCModule):
 
     def __init__(self):
         ThreadSafeMixin.__init__(self)
-        RPyCModule.__init__(self)
+        Module.__init__(self)
         
     def compute(self):
         filename_list = []
@@ -77,7 +77,7 @@ class WalkDirForCsvs(ThreadSafeMixin,  RPyCModule):
         self.setResult('csv_list',  filename_list)
     
 @RPyCSafeModule()
-class CsvReader(ThreadSafeMixin,  RPyCModule):
+class CsvReader(ThreadSafeMixin,  Module):
     
     _input_ports  = [('fullfilename',  '(edu.utah.sci.vistrails.basic:String)'), 
                                ('column_header_list',  '(edu.utah.sci.vistrails.basic:List)'),
@@ -87,7 +87,7 @@ class CsvReader(ThreadSafeMixin,  RPyCModule):
     
     def __init__(self):
         ThreadSafeMixin.__init__(self)
-        RPyCModule.__init__(self)
+        Module.__init__(self)
         
     def compute (self) :
         fn = self.getInputFromPort('fullfilename') 
@@ -115,7 +115,7 @@ class CsvReader(ThreadSafeMixin,  RPyCModule):
         
         
 @RPyCSafeModule()
-class CsvWriter(ThreadSafeMixin,  RPyCModule):
+class CsvWriter(ThreadSafeMixin,  Module):
     '''Simple csv file writer utility, taking in a directory path where 
     the file will be written to,  a filename , a column headings list 
     (which can be an empty list) and a list of  lists containing the 
@@ -131,7 +131,7 @@ class CsvWriter(ThreadSafeMixin,  RPyCModule):
     
     def __init__(self):
         ThreadSafeMixin.__init__(self)
-        RPyCModule.__init__(self)
+        Module.__init__(self)
         
         
         
