@@ -53,6 +53,8 @@ from core.modules.vistrails_module import Module, new_module, NotCacheable,\
     ModuleError
 # eo4vistrails
 from packages.eo4vistrails.geoinf.datamodels import QgsLayer
+from packages.eo4vistrails.geoinf.ogc.PortConfigurationWidget import \
+    PortConfigurationWidget
 # local
 import init
 
@@ -71,11 +73,10 @@ RASTER_MIMETYPES = [{"MIMETYPE":"IMAGE/TIFF", "GDALID":"GTiff"},
                     {"MIMETYPE":"APPLICATION/X-GEOTIFF", "GDALID":"GTiff"}]
 # All supported input vector formats [mime type, schema]
 VECTOR_MIMETYPES = [{"MIMETYPE":"TEXT/XML", "SCHEMA":"GML", "GDALID":"GML"}, \
-                    {"MIMETYPE":"APPLICATION/XML", "SCHEMA":"GML", "GDALID":"GML"}, \
-                    {"MIMETYPE":"TEXT/XML", "SCHEMA":"KML", "GDALID":"KML"}, \
-                    {"MIMETYPE":"APPLICATION/DGN", "SCHEMA":"", "GDALID":"DGN"}, \
-                    #{"MIMETYPE":"APPLICATION/X-ZIPPED-SHP", "SCHEMA":"", "GDALID":"ESRI_Shapefile"}, \
-                    {"MIMETYPE":"APPLICATION/SHP", "SCHEMA":"", "GDALID":"ESRI_Shapefile"}]
+    {"MIMETYPE":"APPLICATION/XML", "SCHEMA":"GML", "GDALID":"GML"}, \
+    {"MIMETYPE":"TEXT/XML", "SCHEMA":"KML", "GDALID":"KML"}, \
+    {"MIMETYPE":"APPLICATION/DGN", "SCHEMA":"", "GDALID":"DGN"}, \
+    {"MIMETYPE":"APPLICATION/SHP", "SCHEMA":"", "GDALID":"ESRI_Shapefile"}]
 # Other constants
 DEFAULT_URL = 'http://ict4eo.meraka.csir.co.za/cgi-bin/wps.py'
 
@@ -97,6 +98,7 @@ def xmlExecuteRequestInputStart(identifier, namespace=False, title=None):
     else:
         self.raiseError('Invalid Layer Identifier',\
                         'Unable to create ows:Identifier')
+
 
 def xmlExecuteRequestInputEnd():
     """TODO: add doc string"""
@@ -614,7 +616,6 @@ class WPS(Module):
         return None
 
 
-
 class WpsWidget(QWidget):
     """TODO: add doc string"""
 
@@ -623,11 +624,26 @@ class WpsWidget(QWidget):
         self.setObjectName("WpsWidget")
 
 
-class WPSConfigurationWidget(StandardModuleConfigurationWidget):
-    """Configuration widget on vistrails module"""
+class WPSConfigurationWidget(PortConfigurationWidget):
+    """TODO: add doc string"""
 
     def __init__(self, module, controller, parent=None):
-        StandardModuleConfigurationWidget.__init__(self, module, controller, parent)
+        """ UntupleConfigurationWidget(module: Module,
+                                     controller: VistrailController,
+                                     parent: QWidget)
+                                     -> UntupleConfigurationWidget
+        Let StandardModuleConfigurationWidget constructor store the
+        controller/module object from the builder and set up the
+        configuration widget.
+        After StandardModuleConfigurationWidget constructor, all of
+        these will be available:
+        * self.module : the Module object into the pipeline
+        * self.module_descriptor: the descriptor for the type in the registry
+        * self.controller: the current vistrail controller
+
+        """
+        PortConfigurationWidget.__init__(self, module,
+                                        controller, parent)
         self.setObjectName("WpsConfigWidget")
         self.create_config_window()
 
@@ -967,7 +983,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
 
         # Generate the input GUI buttons and widgets
         self.generateProcessInputsGUI(DataInputs)
-        # Generate the editable outpt widgets, you can set the output to none if it is not requested
+        # Generate the editable output widgets, you can set the output to none if it is not requested
         self.generateProcessOutputsGUI(DataOutputs)
 
         self.dlgProcessScrollAreaWidgetLayout.setSpacing(10)
@@ -989,15 +1005,42 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         self.dlgProcess.setGeometry(QRect(190, 100, 800, 600))
         self.dlgProcess.show()
 
+    def updateVistrail(self):
+        """ updateVistrail() -> None
+        Update Vistrail to contain changes in the port table
+
+        """
+
+        (deleted_ports, added_ports) = self.getPortDiff('output',
+                                                        self.portTable)
+        if len(deleted_ports) + len(added_ports) == 0:
+            # nothing changed
+            return
+        current_ports = self.portTable.getPorts()
+        # note that the sigstring for deletion doesn't matter
+        deleted_ports.append(('input', 'value'))
+        if len(current_ports) > 0:
+            spec = "(" + ','.join(p[1][1:-1] for p in current_ports) + ")"
+            added_ports.append(('input', 'value', spec, -1))
+        try:
+            self.controller.update_ports(self.module.id, deleted_ports,
+                                         added_ports)
+        except PortAlreadyExists, e:
+            debug.critical('Port Already Exists %s' % str(e))
+            return False
+        return True
+
     def generateProcessInputsGUI(self, DataInputs):
         """Generate the GUI for all inputs defined in the process description
         XML file.
 
         TODO: This will all need to be replaced/extended by input ports, set
         dynamically on the WPS module itself.
+
+        SEE updateVistrail
         """
-        pass
-        """
+        #pass
+
         # Create the complex inputs at first
         for i in range(DataInputs.size()):
             f_element = DataInputs.at(i).toElement()
@@ -1022,7 +1065,12 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
                 # Vector inputs
                     layerNamesList = self.getLayerNameList(0)
                     if maxOccurs == 1:
-                        self.complexInputComboBoxList.append(self.addComplexInputComboBox(title, inputIdentifier, str(complexDataFormat), layerNamesList, minOccurs))
+                        self.complexInputComboBoxList.append(
+                            self.addComplexInputComboBox(
+                                title, inputIdentifier,
+                                str(complexDataFormat),
+                                layerNamesList,
+                                minOccurs))
                     else:
                         self.complexInputListWidgetList.append(self.addComplexInputListWidget(title, inputIdentifier, str(complexDataFormat), layerNamesList, minOccurs))
                 elif self.isMimeTypeText(complexDataFormat["MimeType"]) != None:
@@ -1091,7 +1139,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
 
         self.addCheckBox(QCoreApplication.translate("QgsWps", "Process selected objects only"), QCoreApplication.translate("QgsWps", "Selected"))
 
-        """
+        #"""
 
     def generateProcessOutputsGUI(self, DataOutputs):
         """Generate the GUI for all complex ouputs
@@ -1155,7 +1203,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
 
     def startProcess(self):
         """Create the execute request"""
-        #print "WPS:976 top startProcess"
+        print "WPS:1201 - top startProcess - called by btnOK"
         self.doc.setContent(self.getServiceXML(self.processName, "DescribeProcess", self.processIdentifier))
         dataInputs = self.doc.elementsByTagName("Input")
         dataOutputs = self.doc.elementsByTagName("Output")
@@ -1254,6 +1302,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
             self.getServiceVersion() + '&REQUEST=execute&IDENTIFIER=' + \
             self.processIdentifier
         # Attach configured data to input ports
+        # TODO: replace with dynamic configuration
         functions = []
         functions.append(
             (init.WPS_PROCESS_PORT, [self.processIdentifier]),)
@@ -1274,8 +1323,12 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
             outFile.write(postString)
             outFile.close()
 
+        if self.updateVistrail():
+            print "WPS:1322 - done updateVistrail()"
+            self.emit(QtCore.SIGNAL('doneConfigure()'))
+
         self.dlgProcess.close()
-        #print "WPS:1092 bottom startProcess"
+        #print "WPS:1326 bottom startProcess"
 
     def addDocumentationTab(self, abstract):
         """TODO: add doc string"""
@@ -1606,6 +1659,7 @@ class WPSConfigurationWidget(StandardModuleConfigurationWidget):
         return {"MimeType": mimeType, "Schema": schema, "Encoding": encoding}
 
     def getLayerNameList(self, dataType=0, all=False):
+        #TO DO - this function was copied from QGIS - cannot be used here !!!
         """TODO: add doc string"""
         myLayerList = []
         if all:
