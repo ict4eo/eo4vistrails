@@ -35,12 +35,27 @@ from core.modules.module_registry import get_module_registry
 from core.utils import PortAlreadyExists
 
 
+class Port():
+    #see: /vistrails/core/vistrail/port_spec.py
+    def __init__(self, id=None, name=None,
+                 sigstring='edu.utah.sci.vistrails.basic:String',
+                 type='input', sort_key=True):
+        self.id = id
+        self.name = name
+        self.sigstring = sigstring
+        self.type = type
+        self.sort_key = sort_key
+
+    def value(self):
+        return (self.id, self.name, self.sigstring)
+
+
 class PortConfigurationWidget(StandardModuleConfigurationWidget):
     """
     PortConfigurationWidget is the configuration widget for a
     tuple-like module, we want to build an interface for specifying a
     number of input (output) ports and the type of each port. Then
-    compose (decompose) a tuple of those input as a result.
+    compose (decompose) a tuple of those inputs as a result.
 
     When subclassing StandardModuleConfigurationWidget, there are
     only two things we need to care about:
@@ -85,9 +100,10 @@ class PortConfigurationWidget(StandardModuleConfigurationWidget):
         """
         StandardModuleConfigurationWidget.__init__(self, module,
                                                    controller, parent)
+        self.ports = []
 
     def updateVistrail(self):
-        msg = "Must implement updateVistrail in subclass"
+        msg = "Must implement updateVistrail in subclass!"
         raise VistrailsInternalError(msg)
 
     def createButtons(self):
@@ -144,7 +160,8 @@ class PortConfigurationWidget(StandardModuleConfigurationWidget):
         added_ports = [p for p in new_ports if p not in old_ports]
         return (deleted_ports, added_ports)
 
-    def getPortDiff(self, p_type, port_table):
+    def getPortDiff(self, p_type):
+        #print "getPortDiff - p_type", p_type
         if p_type == 'input':
             old_ports = [(p.name, p.sigstring, p.sort_key)
                          for p in self.module.input_port_specs]
@@ -154,9 +171,31 @@ class PortConfigurationWidget(StandardModuleConfigurationWidget):
         else:
             old_ports = []
         # old_ports = self.getRegistryPorts(self.module.registry, p_type)
-        new_ports = port_table.getPorts()
+        new_ports = self.getPorts(type=p_type)
         (deleted_ports, added_ports) = \
             self.registryChanges(old_ports, new_ports)
         deleted_ports = [(p_type,) + p for p in deleted_ports]
         added_ports = [(p_type,) + p for p in added_ports]
         return (deleted_ports, added_ports)
+
+    def getPorts(self, type='input'):
+        port_list = []
+        for p in self.ports:
+            #print "port:", p.id, p.type, ":", p.value()
+            if p.type == type or not type:
+                port_list.append(p.value())
+        #print 'getPorts for type', type, port_list
+        return port_list
+
+    def getPortValues(self, type=None):
+        port_list = []
+        for p in self.ports:
+            if p.type == type or not type:
+                port_list.append(p)
+        #print 'getPortValues', port_list
+        return port_list
+
+    def addPort(self, port):
+        #print 'PortConfigurationWidget - added port:\n   ', port.id, port.type, ":", port.value()
+        self.ports.append(port)
+        #ports.append((name, '(' + sigstring + ')', i))

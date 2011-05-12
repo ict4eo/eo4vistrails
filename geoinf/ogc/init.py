@@ -36,6 +36,7 @@ def initialize(*args, **keywords):
     reg.add_module(WCS, configureWidgetType=WCSConfigurationWidget, namespace=ogc_namespace)
 
     # WPS MODULE
+    """
     reg.add_input_port(
         WPS,
         MAP_LAYER_PORT,
@@ -60,6 +61,7 @@ def initialize(*args, **keywords):
         WPS,
         WEB_REQUEST_PORT,
         (WebRequest, 'Web Request'))#,True)
+    """
 
     reg.add_output_port(
         WPS,
