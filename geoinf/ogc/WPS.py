@@ -79,7 +79,7 @@ VECTOR_MIMETYPES = [{"MIMETYPE":"TEXT/XML", "SCHEMA":"GML", "GDALID":"GML"}, \
     {"MIMETYPE":"APPLICATION/SHP", "SCHEMA":"", "GDALID":"ESRI_Shapefile"}]
 # Other constants
 DEFAULT_URL = 'http://ict4eo.meraka.csir.co.za/cgi-bin/wps.py'
-MAP_LAYER = 'packages.eo4vistrails.geoinf.datamodels.QgsLayer:QgsMapLayer'
+MAP_LAYER = 'za.co.csir.eo4vistrails:QgsMapLayer:data'
 
 def xmlExecuteRequestInputStart(identifier, namespace=False, title=None):
     """TODO: add doc string"""
@@ -888,6 +888,10 @@ class WPSConfigurationWidget(PortConfigurationWidget):
         Update Vistrails to register changes in the port tables
 
         """
+
+        print self.module_descriptor
+        print self.module.module_ports('input', self.module_descriptor)
+
         # Inputs
         (deleted_ports, added_ports) = self.getPortDiff('input')
         if len(deleted_ports) + len(added_ports) == 0:

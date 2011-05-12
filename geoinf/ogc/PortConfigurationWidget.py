@@ -47,7 +47,7 @@ class Port():
         self.sort_key = sort_key
 
     def value(self):
-        return (self.id, self.name, self.sigstring)
+        return (self.id, '('+self.sigstring+')', self.name)
 
 
 class PortConfigurationWidget(StandardModuleConfigurationWidget):
