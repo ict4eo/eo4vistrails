@@ -54,8 +54,6 @@ def initialize(*args, **keywords):
     #Isolate the registration of the modules
 
     #NOTE! order does count
-
-
     rpyc_init.initialize(*args, **keywords)
     utils_init.initialize(*args, **keywords)    
     datamodels_init.initialize(*args, **keywords)

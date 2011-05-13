@@ -43,6 +43,10 @@ name = 'eo4vistrails'
 version = '0.1.0'
 author_list = 'tvanzyl,bcwele,gmcferren,dhohls,pshabangu,bsibolla'
 
+import sys
+import os.path
+from core.system import packages_directory
+sys.path = [os.path.join(packages_directory(),'eo4vistrails/lib')] + sys.path
 
 def package_requirements():
     import core.requirements
@@ -65,8 +69,8 @@ def package_requirements():
 
 
 def package_dependencies():
-    return ['edu.utah.sci.vistrails.spreadsheet',
-            'edu.utah.sci.vistrails.numpyscipy']
+    return ['edu.utah.sci.vistrails.spreadsheet']
+#	   ,'edu.utah.sci.vistrails.numpyscipy']
 #    import core.packagemanager
 #    manager = core.packagemanager.get_package_manager()
 #    if manager.has_package('edu.utah.sci.vistrails.spreadsheet'):
