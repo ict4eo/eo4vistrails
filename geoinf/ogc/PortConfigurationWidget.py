@@ -102,9 +102,9 @@ class PortConfigurationWidget(StandardModuleConfigurationWidget):
                                                    controller, parent)
         self.ports = []
 
-    def updateVistrail(self):
-        msg = "Must implement updateVistrail in subclass!"
-        raise VistrailsInternalError(msg)
+#    def updateVistrail(self):
+#        msg = "Must implement updateVistrail in subclass!"
+#        raise VistrailsInternalError(msg)
 
     def createButtons(self):
         """ createButtons() -> None
@@ -199,3 +199,21 @@ class PortConfigurationWidget(StandardModuleConfigurationWidget):
         #print 'PortConfigurationWidget - added port:\n   ', port.id, port.type, ":", port.value()
         self.ports.append(port)
         #ports.append((name, '(' + sigstring + ')', i))
+
+    def updateVistrail(self):
+        deleted_ports = []
+        added_ports = []
+        (input_deleted_ports, input_added_ports) = self.getPortDiff('input')
+        deleted_ports.extend(input_deleted_ports)
+        added_ports.extend(input_added_ports)
+        (output_deleted_ports, output_added_ports) = self.getPortDiff('output')
+        deleted_ports.extend(output_deleted_ports)
+        added_ports.extend(output_added_ports)
+
+        try:
+            self.controller.update_ports(self.module.id, deleted_ports, added_ports)
+        
+        except PortAlreadyExists, e:
+            debug.critical('Port Already Exists %s' % str(e))
+            return False
+        return True

@@ -884,25 +884,6 @@ class WPSConfigurationWidget(PortConfigurationWidget):
             self.emit(SIGNAL('doneConfigure()'))
             self.close()
 
-    def updateVistrail(self):
-        deleted_ports = []
-        added_ports = []
-        (input_deleted_ports, input_added_ports) = self.getPortDiff('input')
-        deleted_ports.extend(input_deleted_ports)
-        added_ports.extend(input_added_ports)
-        (output_deleted_ports, output_added_ports) = self.getPortDiff('output')
-        deleted_ports.extend(output_deleted_ports)
-        added_ports.extend(output_added_ports)
-
-        try:
-            self.controller.update_ports(self.module.id, deleted_ports,
-                                             added_ports)
-        except PortAlreadyExists, e:
-            debug.critical('Port Already Exists %s' % str(e))
-            return False
-        return True
-
-
     def updateVistrail_old(self):
         """ updateVistrail() -> None
         Update Vistrails to register changes in the port tables
