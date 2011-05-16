@@ -39,7 +39,7 @@ class Port():
     #see: /vistrails/core/vistrail/port_spec.py
     def __init__(self, id=None, name=None,
                  sigstring='edu.utah.sci.vistrails.basic:String',
-                 type='input', sort_key=True):
+                 type='input', sort_key=-1):
         self.id = id
         self.name = name
         self.sigstring = sigstring
@@ -47,7 +47,7 @@ class Port():
         self.sort_key = sort_key
 
     def value(self):
-        return (self.id, '('+self.sigstring+')', self.name)
+        return ((self.name, '('+self.sigstring+')', self.sort_key))
 
 
 class PortConfigurationWidget(StandardModuleConfigurationWidget):

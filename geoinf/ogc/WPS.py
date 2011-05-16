@@ -901,7 +901,7 @@ class WPSConfigurationWidget(PortConfigurationWidget):
         if len(deleted_ports) + len(added_ports) == 0:
             pass # nothing changed
         else:
-            current_ports = self.getPortValues(type='input')
+            current_ports = self.getPorts(type='input')
             print 'WPS:905 current input ports\n', current_ports
             # note that the sigstring for deletion doesn't matter
             deleted_ports.append(('input', 'value'))
@@ -914,6 +914,7 @@ class WPSConfigurationWidget(PortConfigurationWidget):
             except PortAlreadyExists, e:
                 debug.critical('input port already exists %s' % str(e))
                 return False
+
         # Outputs
         (deleted_ports, added_ports) = self.getPortDiff('output')
         if len(deleted_ports) + len(added_ports) == 0:
