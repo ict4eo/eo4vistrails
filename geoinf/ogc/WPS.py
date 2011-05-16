@@ -906,7 +906,7 @@ class WPSConfigurationWidget(PortConfigurationWidget):
             # note that the sigstring for deletion doesn't matter
             deleted_ports.append(('input', 'value'))
             if len(current_ports) > 0:
-                spec = "(" + ','.join(str(p.sigstring) for p in current_ports) + ")"
+                spec = "(" + ','.join(p[1][1:-1] for p in current_ports) + ")"
                 added_ports.append(('input', 'value', spec, -1))
             try:
                 self.controller.update_ports(self.module.id, deleted_ports,
@@ -920,7 +920,7 @@ class WPSConfigurationWidget(PortConfigurationWidget):
         if len(deleted_ports) + len(added_ports) == 0:
             pass # nothing changed
         else:
-            current_ports = self.getPortValues(type='output')
+            current_ports = self.getPorts(type='output')
             # note that the sigstring and sort_key for deletion doesn't matter
             deleted_ports.append(('output', 'value'))
             if len(current_ports) > 0:
