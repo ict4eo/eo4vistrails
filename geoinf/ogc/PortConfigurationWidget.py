@@ -40,22 +40,22 @@ class Port():
     def __init__(self, id=None, name=None,
                  sigstring='edu.utah.sci.vistrails.basic:String',
                  type='input', sort_key=-1):
-        self.id = id
-        self.name = name
-        self.sigstring = sigstring
+        self.id = str(id)
+        self.name = str(name)
+        self.sigstring = str(sigstring)
         self.type = type
         self.sort_key = sort_key
 
     def value(self):
-        return ((self.name, '('+self.sigstring+')', self.sort_key))
+        """Create a tuple-form of a port, for use by Vistrails module"""
+        return ((self.id, '('+self.sigstring+')', self.sort_key))
 
 
 class PortConfigurationWidget(StandardModuleConfigurationWidget):
     """
     PortConfigurationWidget is the configuration widget for a
-    tuple-like module, we want to build an interface for specifying a
-    number of input (output) ports and the type of each port. Then
-    compose (decompose) a tuple of those inputs as a result.
+    specifying any number of input (output) ports and the type of each port.
+    Then compose (decompose) a tuple of those inputs as a result.
 
     When subclassing StandardModuleConfigurationWidget, there are
     only two things we need to care about:
@@ -87,24 +87,22 @@ class PortConfigurationWidget(StandardModuleConfigurationWidget):
                                          controller: VistrailController,
                                          parent: QWidget)
                                          -> PortConfigurationWidget
+
         Let StandardModuleConfigurationWidget constructor store the
         controller/module object from the builder and set up the
         configuration widget.
+
         After StandardModuleConfigurationWidget constructor, all of
         these will be available:
-        self.module : the Module object int the pipeline
-        self.module_descriptor: the descriptor for the type registered in the registry,
+        * self.module : the Module object int the pipeline
+        * self.module_descriptor: the descriptor for the type registered in the registry,
                           i.e. Tuple
-        self.controller: the current vistrail controller
+        * self.controller: the current vistrail controller
 
         """
         StandardModuleConfigurationWidget.__init__(self, module,
                                                    controller, parent)
         self.ports = []
-
-#    def updateVistrail(self):
-#        msg = "Must implement updateVistrail in subclass!"
-#        raise VistrailsInternalError(msg)
 
     def createButtons(self):
         """ createButtons() -> None
@@ -145,6 +143,10 @@ class PortConfigurationWidget(StandardModuleConfigurationWidget):
             self.close()
 
     def getRegistryPorts(self, registry, type):
+        """Return list of tuples containing port types and descriptors
+
+        Example: self.getRegistryPorts(self.module.registry, 'input')
+        """
         if not registry:
             return []
         if type == 'input':
@@ -161,7 +163,6 @@ class PortConfigurationWidget(StandardModuleConfigurationWidget):
         return (deleted_ports, added_ports)
 
     def getPortDiff(self, p_type):
-        #print "getPortDiff - p_type", p_type
         if p_type == 'input':
             old_ports = [(p.name, p.sigstring, p.sort_key)
                          for p in self.module.input_port_specs]
@@ -181,26 +182,20 @@ class PortConfigurationWidget(StandardModuleConfigurationWidget):
     def getPorts(self, type='input'):
         port_list = []
         for p in self.ports:
-            #print "port:", p.id, p.type, ":", p.value()
             if p.type == type or not type:
                 port_list.append(p.value())
         #print 'getPorts for type', type, port_list
         return port_list
 
-    def getPortValues(self, type=None):
-        port_list = []
-        for p in self.ports:
-            if p.type == type or not type:
-                port_list.append(p)
-        #print 'getPortValues', port_list
-        return port_list
-
     def addPort(self, port):
-        #print 'PortConfigurationWidget - added port:\n   ', port.id, port.type, ":", port.value()
+        # print port
         self.ports.append(port)
-        #ports.append((name, '(' + sigstring + ')', i))
 
     def updateVistrail(self):
+        """Cause the added/deleted ports to be set for this instance of the
+        Module.
+
+        """
         deleted_ports = []
         added_ports = []
         (input_deleted_ports, input_added_ports) = self.getPortDiff('input')
@@ -212,7 +207,7 @@ class PortConfigurationWidget(StandardModuleConfigurationWidget):
 
         try:
             self.controller.update_ports(self.module.id, deleted_ports, added_ports)
-        
+
         except PortAlreadyExists, e:
             debug.critical('Port Already Exists %s' % str(e))
             return False

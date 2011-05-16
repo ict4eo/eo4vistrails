@@ -157,8 +157,13 @@ class WPS(Module):
     def compute(self):
         self.url = self.getInputFromPort(init.OGC_REQUEST_PORT) #base URL
         self.postString = self.getInputFromPort(init.OGC_POST_DATA_PORT)
-        self.layers = self.getInputListFromPort(init.MAP_LAYER_PORT)
         self.processID = self.getInputFromPort(init.WPS_PROCESS_PORT) #name
+        # some WPS will deal with layers...
+        # need to iterate through ports and check sigstring for suitable type.
+        inputs = self.inputPorts
+        print inputs
+        # TO DO !!!
+        self.layers = None
 
         if self.postString and self.url:
             # add in layer details to POST request
@@ -240,7 +245,7 @@ class WPS(Module):
 
         First draft: only handles one layer as input."""
 
-        if postStringIn:
+        if postStringIn and layers:
             for counter, layer in enumerate(layers):
                 #print "\WPS:244 layer no., type", counter, type(layer), processID.upper()
                 # meta data
@@ -871,76 +876,17 @@ class WPSConfigurationWidget(PortConfigurationWidget):
         DataInputs = self.pDoc.elementsByTagName("Input")
         #print DataInputs.size()
         DataOutputs = self.pDoc.elementsByTagName("Output")
-        # Check if Input Data are requested
-        if DataInputs.size() == 0:
-            self.getProcessInfo()
         # Generate the input ports
         self.generateProcessInputPorts(DataInputs)
         # Generate the output ports, set the output to none if not requested
         self.generateProcessOutputPorts(DataOutputs)
-        # Update VisTrails with module port information
-        if self.updateVistrail():
+        # Update VisTrails with new port details for module
+        if self.updateVistrail():  # PortConfigurationWidget
+            # set default port info (request, processID etc)
+            self.getProcessInfo()
             #print "WPS:883 - done updateVistrail()"
             self.emit(SIGNAL('doneConfigure()'))
             self.close()
-
-    def updateVistrail_old(self):
-        """ updateVistrail() -> None
-        Update Vistrails to register changes in the port tables
-
-        """
-
-        print "WPS:893 BEFORE REG."
-        reg = get_module_registry()
-        #print "WPS:893 module_descriptor\n", self.module_descriptor
-        print "WPS:896 reg.module_ports in\n", reg.module_ports('input', self.module_descriptor)
-        print "WPS:897 reg.module_ports out\n", reg.module_ports('output', self.module_descriptor)
-
-        # Inputs
-        (deleted_ports, added_ports) = self.getPortDiff('input')
-        if len(deleted_ports) + len(added_ports) == 0:
-            pass # nothing changed
-        else:
-            current_ports = self.getPorts(type='input')
-            print 'WPS:905 current input ports\n', current_ports
-            # note that the sigstring for deletion doesn't matter
-            deleted_ports.append(('input', 'value'))
-            if len(current_ports) > 0:
-                spec = "(" + ','.join(p[1][1:-1] for p in current_ports) + ")"
-                added_ports.append(('input', 'value', spec, -1))
-            try:
-                self.controller.update_ports(self.module.id, deleted_ports,
-                                             added_ports)
-            except PortAlreadyExists, e:
-                debug.critical('input port already exists %s' % str(e))
-                return False
-
-        # Outputs
-        (deleted_ports, added_ports) = self.getPortDiff('output')
-        if len(deleted_ports) + len(added_ports) == 0:
-            pass # nothing changed
-        else:
-            current_ports = self.getPorts(type='output')
-            # note that the sigstring and sort_key for deletion doesn't matter
-            deleted_ports.append(('output', 'value'))
-            if len(current_ports) > 0:
-                spec = "(" + ','.join(p[1][1:-1] for p in current_ports) + ")"
-                added_ports.append(('output', 'value', spec, -1))
-            try:
-                self.controller.update_ports(self.module.id, deleted_ports,
-                                             added_ports)
-            except PortAlreadyExists, e:
-                debug.critical('output port already exists %s' % str(e))
-                return False
-
-        print "WPS:935 AFTER REG."
-        reg = get_module_registry()
-        print "WPS:937 reg.module_ports in\n", reg.module_ports('input', self.module_descriptor)
-        print "WPS:938 reg.module_ports out\n", reg.module_ports('output', self.module_descriptor)
-
-        # Finally
-        #print 'WPS:927 - updateVistrail complete'
-        return True
 
     def generateProcessInputPorts(self, DataInputs):
         """Generate the ports for all inputs defined in process description
@@ -973,75 +919,25 @@ class WPSConfigurationWidget(PortConfigurationWidget):
                 # Vector inputs
                     if maxOccurs == 1:
                         port = Port(id=inputIdentifier, name=title, type='input')
-                        self.addPort(port)
-                        """
-                        #self.complexInputComboBoxList
-                                title,
-                                inputIdentifier,
-                                str(complexDataFormat),
-                                layerNamesList,
-                                minOccurs))
-                        """
+                        self.addPort(port)  # PortConfigurationWidget
                     else:
                         port = Port(id=inputIdentifier, name=title, type='input', sigstring=MAP_LAYER)
-                        self.addPort(port)
-                        """
-                        self.complexInputListWidgetList.append(
-                            self.addComplexInputListWidget(
-                                title,
-                                inputIdentifier,
-                                str(complexDataFormat),
-                                layerNamesList,
-                                minOccurs))
-                        """
+                        self.addPort(port)  # PortConfigurationWidget
                 elif isMimeTypeText(complexDataFormat["MimeType"]) != None:
                     port = Port(id=inputIdentifier, name=title, type='input', sigstring=MAP_LAYER)
-                    self.addPort(port)
-                    """
-                    # Text inputs
-                    self.complexInputTextBoxList.append(
-                        self.addComplexInputTextBox(
-                            title,
-                            inputIdentifier,
-                            minOccurs))
-                    """
+                    self.addPort(port)  # PortConfigurationWidget
                 elif isMimeTypeRaster(complexDataFormat["MimeType"]) != None:
                     # Raster inputs
                     if maxOccurs == 1:
                         port = Port(id=inputIdentifier, name=title, type='input', sigstring=MAP_LAYER)
-                        self.addPort(port)
-                        """
-                        self.complexInputComboBoxList.append(
-                            self.addComplexInputComboBox(
-                                title,
-                                inputIdentifier,
-                                str(complexDataFormat),
-                                layerNamesList,
-                                minOccurs))
-                        """
+                        self.addPort(port)  # PortConfigurationWidget
                     else:
                         port = Port(id=inputIdentifier, name=title, type='input', sigstring=MAP_LAYER)
-                        self.addPort(port)
-                        """
-                        self.complexInputListWidgetList.append(
-                            self.addComplexInputListWidget(
-                                title,
-                                inputIdentifier,
-                                str(complexDataFormat),
-                                layerNamesList,
-                                minOccurs))
-                        """
+                        self.addPort(port)  # PortConfigurationWidget
                 else:
                     # We assume text inputs in case of an unknown mime type
                     port = Port(id=inputIdentifier, name=title, type='input')
-                    self.addPort(port)
-                    """
-                    self.complexInputTextBoxList.append(
-                        self.addComplexInputTextBox(
-                            title,
-                            inputIdentifier,
-                            minOccurs))
-                    """
+                    self.addPort(port)  # PortConfigurationWidget
 
         # Create the literal inputs as second
         for i in range(DataInputs.size()):
@@ -1063,28 +959,14 @@ class WPSConfigurationWidget(PortConfigurationWidget):
                     if len(valList) > 0:
                         if len(valList[0]) > 0:
                             port = Port(id=inputIdentifier, name=title, type='input')
-                            self.addPort(port)
-                            '''
-                            self.literalInputComboBoxList.append(
-                                self.addLiteralComboBox(
-                                    title, inputIdentifier, valList, minOccurs))
-                            '''
+                            self.addPort(port)  # PortConfigurationWidget
                         else:
                             port = Port(id=inputIdentifier, name=title, type='input')
-                            self.addPort(port)
-                            '''
-                            self.literalInputLineEditList.append(
-                                self.addLiteralLineEdit(
-                                    title, inputIdentifier, minOccurs, str(valList)))
-                            '''
+                            self.addPort(port)  # PortConfigurationWidget
+
                 else:
                     port = Port(id=inputIdentifier, name=title, type='input')
-                    self.addPort(port)
-                    '''
-                    self.literalInputLineEditList.append(
-                        self.addLiteralLineEdit(
-                            title, inputIdentifier, minOccurs, dValue))
-                    '''
+                    self.addPort(port)  # PortConfigurationWidget
 
         """
         # At last, create the bounding box inputs
@@ -1093,7 +975,7 @@ class WPSConfigurationWidget(PortConfigurationWidget):
             inputIdentifier, title, abstract = self.getIdentifierTitleAbstractFromElement(f_element)
 
             #port = Port(id=inputIdentifier, name=title, type='input')
-            #self.addPort(port)
+            #self.addPort(port)  # PortConfigurationWidget
 
 
             bBoxData = f_element.elementsByTagName("BoundingBoxData")
@@ -1126,8 +1008,6 @@ class WPSConfigurationWidget(PortConfigurationWidget):
         XML file.
 
         """
-        pass
-        """ TO DO
         if DataOutputs.size() < 1:
             return
 
@@ -1150,19 +1030,12 @@ class WPSConfigurationWidget(PortConfigurationWidget):
                 self.outputDataTypeList[outputIdentifier] = complexOutputFormat
 
                 port = Port(id=outputIdentifier, name=title, type='output')
-                self.addPort(port)
+                self.addPort(port)  # PortConfigurationWidget
 
-                '''
-                widget, comboBox = self.addComplexOutputComboBox(
-                    groupbox, outputIdentifier, title, str(complexOutputFormat))
-                self.complexOutputComboBoxList.append(comboBox)
-                layout.addWidget(widget)
-                '''
-        """
 
     def getProcessInfo(self):
         """Get information about the selected web process"""
-        #print "WPS:1149 - top getProcessInfo - called by btnOK"
+        #print "WPS:1039 - top getProcessInfo - called by btnOK"
         self.doc.setContent(self.getServiceXML(self.processName, "DescribeProcess", self.processIdentifier))
         dataInputs = self.doc.elementsByTagName("Input")
         dataOutputs = self.doc.elementsByTagName("Output")
@@ -1172,12 +1045,8 @@ class WPSConfigurationWidget(PortConfigurationWidget):
         scheme = result["scheme"]
         path = result["path"]
         server = result["server"]
-        #print "WPS:988 result", result
+        #print "WPS:1047 result", result
 
-        checkBoxes = self.dlgProcess.findChildren(QCheckBox)
-
-        if len(checkBoxes) > 0:
-            useSelected = checkBoxes[0].isChecked()
 
         postString = '<wps:Execute service="WPS" version="' + self.getServiceVersion() + '"' + \
                    ' xmlns:wps="http://www.opengis.net/wps/1.0.0"' + \
@@ -1187,8 +1056,10 @@ class WPSConfigurationWidget(PortConfigurationWidget):
                    ' xsi:schemaLocation="http://www.opengis.net/wpsExecute_request.xsd">'
 
         postString += '<ows:Identifier>' + self.processIdentifier + '</ows:Identifier>\n'
-        postString += '<wps:DataInputs>'
+        postString += '<wps:DataInputs>' + "</wps:DataInputs>\n"
 
+        """
+        # MOVED LAYER-RELATED POST INFO TO "WPS compute()"
         # text/plain inputs
         for textBox in self.complexInputTextBoxList:
 
@@ -1198,8 +1069,6 @@ class WPSConfigurationWidget(PortConfigurationWidget):
             postString += xmlExecuteRequestInputStart(textBox.objectName())
             postString += "<wps:ComplexData>" + textBox.document().toPlainText() + "</wps:ComplexData>\n"
             postString += xmlExecuteRequestInputEnd()
-
-        # MOVED LAYER-RELATED POST INFO TO "WPS compute()"
 
         # Literal data as combo box choice
         for comboBox in self.literalInputComboBoxList:
@@ -1217,9 +1086,10 @@ class WPSConfigurationWidget(PortConfigurationWidget):
             postString += "<wps:LiteralData>" + lineEdit.text() + "</wps:LiteralData>\n"
             postString += xmlExecuteRequestInputEnd()
         postString += "</wps:DataInputs>\n"
+        """
 
         # Attach only defined outputs
-        if dataOutputs.size() > 0 and len(self.complexOutputComboBoxList) > 0:
+        if dataOutputs.size() > 0:
             postString += "<wps:ResponseForm>\n"
             # The server should store the result. No lineage should be returned or status
             postString += "<wps:ResponseDocument lineage=\"false\" storeExecuteResponse=\"true\" status=\"false\">\n"
@@ -1233,9 +1103,11 @@ class WPSConfigurationWidget(PortConfigurationWidget):
                 # Complex data is always requested as reference
                 if literalOutputType.size() != 0:
                     postString += "<wps:Output>\n"
-                    postString += "<ows:Identifier>" + outputIdentifier + "</ows:Identifier>\n"
+                    postString += "<ows:Identifier>" + outputIdentifier + \
+                                  "</ows:Identifier>\n"
                     postString += "</wps:Output>\n"
 
+            """
             # Attach selected complex outputs
             for comboBox in self.complexOutputComboBoxList:
                 # Do not add undefined outputs
@@ -1252,6 +1124,7 @@ class WPSConfigurationWidget(PortConfigurationWidget):
                 postString += "<ows:Identifier>" + outputIdentifier + \
                               "</ows:Identifier>\n"
                 postString += "</wps:Output>\n"
+            """
 
             postString += "</wps:ResponseDocument>\n"
             postString += "</wps:ResponseForm>\n"
@@ -1263,20 +1136,17 @@ class WPSConfigurationWidget(PortConfigurationWidget):
             self.getServiceVersion() + '&REQUEST=execute&IDENTIFIER=' + \
             self.processIdentifier
 
-        """
-        # TODO: replace with dynamic configuration
+        # Fixed ports
         functions = []
+        functions.append(
+            (init.OGC_REQUEST_PORT, [self.requestURL]),)
+        print "WPS:1140 requestURL", self.requestURL
         functions.append(
             (init.WPS_PROCESS_PORT, [self.processIdentifier]),)
         functions.append(
             (init.OGC_POST_DATA_PORT, [postString]),)
-        functions.append(
-            (init.OGC_REQUEST_PORT, [self.requestURL]),)
-        functions.append(
-            (init.OGC_URL_PORT, [result["url"]]),)
         self.controller.update_ports_and_functions(
             self.module.id, [], [], functions)
-        """
 
         if DEBUG:
             self.popUpMessageBox("Execute request", postString)
@@ -1285,35 +1155,6 @@ class WPSConfigurationWidget(PortConfigurationWidget):
             outFile = open(home + '/Desktop/qwps_execute_request.xml', 'w')
             outFile.write(postString)
             outFile.close()
-
-    def addComplexInputComboBox(self, title, name, mimeType, namesList, minOccurs):
-        """Adds a combobox to select a raster or vector map as input to the process tab"""
-        pass # REMOVE !!!
-
-    def addComplexInputListWidget(self, title, name, mimeType, namesList, minOccurs):
-        """Adds a widget for multiple raster or vector selections as inputs to the process tab"""
-        pass # REMOVE !!!
-
-    def addComplexInputTextBox(self, title, name, minOccurs):
-        """Adds a widget to insert text as complex inputs to the process tab"""
-        pass # REMOVE !!!
-
-    def addComplexOutputComboBox(self, widget, name, title, mimeType):
-        """Adds a combobox to select a raster or vector map
-        as input to the process tab"""
-        pass # REMOVE !!!
-
-    def addLiteralComboBox(self, title, name, namesList, minOccurs):
-        """TODO: add doc string"""
-        pass # REMOVE !!!
-
-    def addLiteralLineEdit(self, title, name, minOccurs, defaultValue=""):
-        """TODO: add doc string"""
-        pass # REMOVE !!!
-
-    def addCheckBox(self, title, name):
-        """TODO: add doc string"""
-        pass # REMOVE !!!
 
     def getIdentifierTitleAbstractFromElement(self, element):
         """Return identifier, title, abstract from an element"""
@@ -1369,7 +1210,8 @@ class WPSConfigurationWidget(PortConfigurationWidget):
                 myVal.append(str(n))
                 valList.append(myVal)
         # Manage a value list defined by single values
-        v_element = value_element.elementsByTagNameNS("http://www.opengis.net/ows/1.1", "Value")
+        v_element = value_element.elementsByTagNameNS(
+            "http://www.opengis.net/ows/1.1", "Value")
         if v_element.size() > 0:
             for n in range(v_element.size()):
                 mv_element = v_element.at(n).toElement()
