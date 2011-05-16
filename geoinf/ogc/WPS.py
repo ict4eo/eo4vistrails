@@ -47,10 +47,11 @@ from PyQt4 import QtXml
 from qgis.core import *
 from qgis.gui import *
 # vistrails
-import core.modules.module_registry
+from core.modules.module_registry import get_module_registry
 from core.modules.module_configure import StandardModuleConfigurationWidget
 from core.modules.vistrails_module import Module, new_module, NotCacheable,\
     ModuleError
+from core.utils import PortAlreadyExists
 # eo4vistrails
 from packages.eo4vistrails.geoinf.datamodels import QgsLayer
 from packages.eo4vistrails.geoinf.ogc.PortConfigurationWidget import \
@@ -889,8 +890,11 @@ class WPSConfigurationWidget(PortConfigurationWidget):
 
         """
 
-        print self.module_descriptor
-        print self.module.module_ports('input', self.module_descriptor)
+        print "WPS:893 BEFORE REG."
+        reg = get_module_registry()
+        #print "WPS:893 module_descriptor\n", self.module_descriptor
+        print "WPS:896 reg.module_ports in\n", reg.module_ports('input', self.module_descriptor)
+        print "WPS:897 reg.module_ports out\n", reg.module_ports('output', self.module_descriptor)
 
         # Inputs
         (deleted_ports, added_ports) = self.getPortDiff('input')
@@ -898,7 +902,7 @@ class WPSConfigurationWidget(PortConfigurationWidget):
             pass # nothing changed
         else:
             current_ports = self.getPortValues(type='input')
-            print 'WPS:897 current input ports', current_ports
+            print 'WPS:905 current input ports\n', current_ports
             # note that the sigstring for deletion doesn't matter
             deleted_ports.append(('input', 'value'))
             if len(current_ports) > 0:
@@ -927,6 +931,12 @@ class WPSConfigurationWidget(PortConfigurationWidget):
             except PortAlreadyExists, e:
                 debug.critical('output port already exists %s' % str(e))
                 return False
+
+        print "WPS:935 AFTER REG."
+        reg = get_module_registry()
+        print "WPS:937 reg.module_ports in\n", reg.module_ports('input', self.module_descriptor)
+        print "WPS:938 reg.module_ports out\n", reg.module_ports('output', self.module_descriptor)
+
         # Finally
         #print 'WPS:927 - updateVistrail complete'
         return True
