@@ -887,12 +887,10 @@ class WPSConfigurationWidget(PortConfigurationWidget):
     def updateVistrail(self):
         deleted_ports = []
         added_ports = []
-        (input_deleted_ports, input_added_ports) = \
-            self.getPortDiff('input', self.inputPortTable)
+        (input_deleted_ports, input_added_ports) = self.getPortDiff('input')
         deleted_ports.extend(input_deleted_ports)
         added_ports.extend(input_added_ports)
-        (output_deleted_ports, output_added_ports) = \
-            self.getPortDiff('output', self.outputPortTable)
+        (output_deleted_ports, output_added_ports) = self.getPortDiff('output')
         deleted_ports.extend(output_deleted_ports)
         added_ports.extend(output_added_ports)
 
