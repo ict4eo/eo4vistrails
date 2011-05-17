@@ -94,14 +94,15 @@ class PortConfigurationWidget(StandardModuleConfigurationWidget):
 
         After StandardModuleConfigurationWidget constructor, all of
         these will be available:
-        * self.module : the Module object int the pipeline
-        * self.module_descriptor: the descriptor for the type registered in the registry,
-                          i.e. Tuple
+        * self.module : the Module object in the pipeline
+        * self.module_descriptor: the descriptor for the type
+                                    registered in the registry
         * self.controller: the current vistrail controller
 
         """
         StandardModuleConfigurationWidget.__init__(self, module,
                                                    controller, parent)
+        self.module = module
         self.ports = []
 
     def createButtons(self):
@@ -145,7 +146,10 @@ class PortConfigurationWidget(StandardModuleConfigurationWidget):
     def getRegistryPorts(self, registry, type):
         """Return list of tuples containing port types and descriptors
 
-        Example: self.getRegistryPorts(self.module.registry, 'input')
+        Example:
+            from core.modules.module_registry import get_module_registry
+            registry = get_module_registry()
+            port_name_sigstring = self.getRegistryPorts(registry, 'input')
         """
         if not registry:
             return []

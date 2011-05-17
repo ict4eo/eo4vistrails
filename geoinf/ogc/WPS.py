@@ -47,8 +47,9 @@ from PyQt4 import QtXml
 from qgis.core import *
 from qgis.gui import *
 # vistrails
-from core.modules.module_registry import get_module_registry
+from core.modules.module_descriptor import ModuleDescriptor
 from core.modules.module_configure import StandardModuleConfigurationWidget
+from core.modules.module_registry import get_module_registry
 from core.modules.vistrails_module import Module, new_module, NotCacheable,\
     ModuleError
 from core.utils import PortAlreadyExists
@@ -155,32 +156,27 @@ class WPS(Module):
         raise ModuleError(self, msg + ': %s' % str(error))
 
     def compute(self):
+        # "fixed" ports
         self.url = self.getInputFromPort(init.OGC_REQUEST_PORT) #base URL
         self.postString = self.getInputFromPort(init.OGC_POST_DATA_PORT)
         self.processID = self.getInputFromPort(init.WPS_PROCESS_PORT) #name
-        # some WPS will deal with layers...
-        # need to iterate through ports and check sigstring for suitable type.
-        inputs = self.inputPorts
-        print inputs
-        # TO DO !!!
-        self.layers = None
 
         if self.postString and self.url:
-            # add in layer details to POST request
+            # add input port details to POST request
             self.postString = \
                 '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' \
-                + self.addLayersToPost(
+                + self.addInputsToPOST(
                     self.postString,
-                    self.layers,
                     self.processID)
-            #print "\nWPS:132 self.postString\n", self.url, self.postString
+            #print "\nWPS:172 self.postString\n", self.url, self.postString
             if DEBUG:
                 home = os.getenv("HOME")
                 outFile = open(home + '/Desktop/wps_poststring', 'w')
                 outFile.write(self.postString)
                 outFile.close()
 
-            """#TEST POST START
+            """
+            #TEST POST START
             self.url = 'http://ict4eo.meraka.csir.co.za/cgi-bin/wps.py'
             self.postString = '''<?xml version="1.0" \
                               encoding="UTF-8" standalone="yes"?>
@@ -221,17 +217,12 @@ class WPS(Module):
                 </wps:ResponseDocument>
             </wps:ResponseForm>
             </wps:Execute>'''
-            """#TEST POST END           """
-
-            #print "\nWPS:174 self.postString\n", self.postString
-            #print "\nWPS:175 self.url\n", self.url
+            #TEST POST END
+            """
 
             # connect to server
             r = urllib2.Request(self.url, self.postString)
             f = urllib2.urlopen(r)
-            #f = urllib2.urlopen(self.url, unicode(self.postString, "UTF-8"))
-            #f = urllib2.urlopen(self.url, self.postString)
-
             # get the results back
             wpsRequestResult = f.read()
             # set the output ports
@@ -240,129 +231,70 @@ class WPS(Module):
             self.raiseError('Configuration Incomplete',\
                             'Unable to set URL and POST string')
 
-    def addLayersToPost(self, postStringIn, layers, processID):
-        """Insert the input port layer(s) as part of the POST request.
-
-        First draft: only handles one layer as input."""
-
-        if postStringIn and layers:
-            for counter, layer in enumerate(layers):
-                #print "\WPS:244 layer no., type", counter, type(layer), processID.upper()
-                # meta data
-                if isinstance(layer, QgsLayer.QgsVectorLayer):
-                    #type(layer) == type(QgsLayer.QgsVectorLayer):
-                    mimeType = "text/xml" # get from layer?  TODO URGENTLY !!!
-                    schema = "FOO"
-                    encoding = "FOO"
-                    identifier = 'vector'
-                elif isinstance(layer, QgsLayer.QgsRasterLayer):
-                    mimeType = "image/tiff" # how to get from layer?  TODO URGENTLY !!!
-                    # ##########################################################
-                    # HACKY HACKY CODE FOR DEMO- REPLACE ASAP !!!
-
-                    if processID.upper() == 'MYNDVI':
-                        if counter == 0:
-                            identifier = 'layer1'
-                        elif counter == 1:
-                            identifier = 'layer2'
-                    else:
-                        identifier = 'raster'
-
-                    # ##########################################################
-                else:
-                    self.raiseError('Unknown layer type:' + str(type(layer)))
-
-                # start wrapper
-                postString = xmlExecuteRequestInputStart(identifier, True, layer.name())
-
-                # layer types
-                if  mimeType == "text/xml":
-                    postString += '<wps:ComplexData mimeType="' + mimeType + '" schema="' + schema + '" encoding="' + encoding + '">'
-                    GML = self.createTmpGML(layer)
-                    if GML:
-                        postString += GML
-                    else:
-                        self.raiseError('WPS Error', 'Unable to encode vector to GML')
-                else:
-                    postString += '<wps:ComplexData mimeType="' + mimeType + '" encoding="base64">'
-                    data64 = self.createTmpBase64(layer)
-                    if data64:
-                        postString += data64
-                    else:
-                        self.raiseError('WPS Error', 'Unable to encode raster to base64')
-                # end wrapper
-                postString += "</wps:ComplexData>"
-                postString += xmlExecuteRequestInputEnd()
-                #print "WPS:160 postString",postString
-                # insert new XML into the existing POST string in the DataInputs
-                # NB: NO prefix on search node
-                #print "WPS:174 postStringIn PRE",postStringIn
-                postStringIn = self.insertElement(postStringIn, postString,
-                    'DataInputs', 'http://www.opengis.net/wps/1.0.0')
-                #print "WPS:177 postStringIn POST",postStringIn
-                if DEBUG:
-                    home = os.getenv("HOME")
-                    outFile = open(home + '/Desktop/post_request.xml', 'w')
-                    outFile.write(postStringIn)
-                    outFile.close()
-        #print "WPS:165",postStringIn
-        return postStringIn
+    def addInputsToPOST(self, postStringIn, processID):
+        """Insert the input port data as part of the POST request.
 
         """
-        ######### CODE THAT NEEDS TO BE ADAPTED TO ENHANCE THE ABOVE ##########
-        if isMimeTypeVector(mimeType) != None and mimeType == "text/xml":
-            postString += "<wps:ComplexData mimeType=\"" + mimeType + "\" schema=\"" + schema + "\" encoding=\"" + encoding + "\">"
-            postString += self.createTmpGML(listWidget.text(), useSelected).replace("> <", "><").replace("http://ogr.maptools.org/ qt_temp.xsd", "http://ogr.maptools.org/qt_temp.xsd")
-        elif isMimeTypeVector(mimeType) != None or isMimeTypeRaster(mimeType) != None:
-            postString += "<wps:ComplexData mimeType=\"" + mimeType + "\" encoding=\"base64\">\n"
-            postString += self.createTmpBase64(listWidget.text())
+        if postStringIn:
+            #   iterate through dynamic input ports and check for matching type
+            #   NB: self.inputPorts only shows "template" (fixed) ports UNLESS
+            #       the port is already hooked up to another pipeline input!
+            for key in self.inputPorts.iterkeys():
+                #print "244: key", key, self.inputPorts[key]
+                port_object = self.inputPorts[key][0].obj
+                #print "246: key:port_object", key, ":", port_object, type(port_object)
+                if isinstance(port_object, QgsLayer.QgsVectorLayer):
+                    mimeType = "text/xml"  # get from layer???
+                    schema = "FOO"
+                    encoding = "FOO"
+                    identifier = key
+                elif isinstance(port_object, QgsLayer.QgsRasterLayer):
+                    mimeType = "image/tiff"  # get from layer???
+                    identifier = key
+                else:
+                    pass
 
-        postString += "</wps:ComplexData>\n"
-        postString += xmlExecuteRequestInputEnd()
+                # some WPS will deal with layers...
+                if isinstance(port_object, QgsLayer.QgsVectorLayer) or \
+                    isinstance(port_object, QgsLayer.QgsRasterLayer):
+                    layer = port_object
+                    # start wrapper
+                    postString = xmlExecuteRequestInputStart(identifier, True, layer.name())
+                    # check layer type
+                    if  mimeType == "text/xml":
+                        postString += '<wps:ComplexData mimeType="' + mimeType +\
+                                      '" schema="' + schema + \
+                                      '" encoding="' + encoding + '">'
+                        GML = self.createTmpGML(layer)
+                        if GML:
+                            postString += GML
+                        else:
+                            self.raiseError('WPS Error', 'Unable to encode vector to GML')
+                    else:
+                        postString += '<wps:ComplexData mimeType="' + mimeType +\
+                                      '" encoding="base64">'
+                        data64 = self.createTmpBase64(layer)
+                        if data64:
+                            postString += data64
+                        else:
+                            self.raiseError('WPS Error', 'Unable to encode raster to base64')
+                    # end wrapper
+                    postString += "</wps:ComplexData>"
+                    postString += xmlExecuteRequestInputEnd()
+                    # insert new XML into the existing POST string in the DataInputs
+                    # NB: NO prefix on search node
+                    #print "WPS:286 postString", postString
+                    postStringIn += self.insertElement(postStringIn, postString,
+                        'DataInputs', 'http://www.opengis.net/wps/1.0.0')
+                    #print "WPS:290 postStringIn POST",postStringIn
+                    if DEBUG:
+                        home = os.getenv("HOME")
+                        outFile = open(home + '/Desktop/post_request.xml', 'w')
+                        outFile.write(postStringIn)
+                        outFile.close()
 
-        # Single raster and vector inputs
-        for comboBox in self.complexInputComboBoxList:
-        # Do not add undefined inputs
-            if comboBox == None or unicode(comboBox.currentText(), 'latin1') == "<None>":
-                continue
-
-            postString += xmlExecuteRequestInputStart(comboBox.objectName())
-
-            # TODO: Check for more types
-            mimeType = self.inputDataTypeList[comboBox.objectName()]["MimeType"]
-            schema = self.inputDataTypeList[comboBox.objectName()]["Schema"]
-            encoding = self.inputDataTypeList[comboBox.objectName()]["Encoding"]
-
-            if isMimeTypeVector(mimeType) != None and mimeType == "text/xml":
-                postString += "<wps:ComplexData mimeType=\"" + mimeType + "\" schema=\"" + schema + "\" encoding=\"" + encoding + "\">"
-                postString += self.createTmpGML(comboBox.currentText(), useSelected).replace("> <", "><")
-                postString = postString.replace("xsi:schemaLocation=\"http://ogr.maptools.org/ qt_temp.xsd\"", "xsi:schemaLocation=\"http://schemas.opengis.net/gml/3.1.1/base/ gml.xsd\"")
-            elif isMimeTypeVector(mimeType) != None or isMimeTypeRaster(mimeType) != None:
-                postString += "<wps:ComplexData mimeType=\"" + mimeType + "\" encoding=\"base64\">\n"
-                postString += self.createTmpBase64(comboBox.currentText())
-
-            postString += "</wps:ComplexData>\n"
-            postString += xmlExecuteRequestInputEnd()
-
-        # Multiple raster and vector inputs
-        for listWidgets in self.complexInputListWidgetList:
-        # Do not add undefined inputs
-            if listWidgets == None:
-                continue
-
-            mimeType = self.inputDataTypeList[listWidgets.objectName()]["MimeType"]
-            schema = self.inputDataTypeList[listWidgets.objectName()]["Schema"]
-            encoding = self.inputDataTypeList[listWidgets.objectName()]["Encoding"]
-
-        # Iterate over each selected item
-        for i in range(listWidgets.count()):
-            listWidget = listWidgets.item(i)
-            if listWidget == None or listWidget.isSelected() == False or str(listWidget.text()) == "<None>":
-                continue
-
-            postString += xmlExecuteRequestInputStart(listWidgets.objectName())
-
-            # TODO: Check for more types
+            """
+            ######### CODE THAT NEEDS TO BE ADAPTED TO ENHANCE THE ABOVE ##########
             if isMimeTypeVector(mimeType) != None and mimeType == "text/xml":
                 postString += "<wps:ComplexData mimeType=\"" + mimeType + "\" schema=\"" + schema + "\" encoding=\"" + encoding + "\">"
                 postString += self.createTmpGML(listWidget.text(), useSelected).replace("> <", "><").replace("http://ogr.maptools.org/ qt_temp.xsd", "http://ogr.maptools.org/qt_temp.xsd")
@@ -372,7 +304,63 @@ class WPS(Module):
 
             postString += "</wps:ComplexData>\n"
             postString += xmlExecuteRequestInputEnd()
-        """
+
+            # Single raster and vector inputs
+            for comboBox in self.complexInputComboBoxList:
+            # Do not add undefined inputs
+                if comboBox == None or unicode(comboBox.currentText(), 'latin1') == "<None>":
+                    continue
+
+                postString += xmlExecuteRequestInputStart(comboBox.objectName())
+
+                # TODO: Check for more types
+                mimeType = self.inputDataTypeList[comboBox.objectName()]["MimeType"]
+                schema = self.inputDataTypeList[comboBox.objectName()]["Schema"]
+                encoding = self.inputDataTypeList[comboBox.objectName()]["Encoding"]
+
+                if isMimeTypeVector(mimeType) != None and mimeType == "text/xml":
+                    postString += "<wps:ComplexData mimeType=\"" + mimeType + "\" schema=\"" + schema + "\" encoding=\"" + encoding + "\">"
+                    postString += self.createTmpGML(comboBox.currentText(), useSelected).replace("> <", "><")
+                    postString = postString.replace("xsi:schemaLocation=\"http://ogr.maptools.org/ qt_temp.xsd\"", "xsi:schemaLocation=\"http://schemas.opengis.net/gml/3.1.1/base/ gml.xsd\"")
+                elif isMimeTypeVector(mimeType) != None or isMimeTypeRaster(mimeType) != None:
+                    postString += "<wps:ComplexData mimeType=\"" + mimeType + "\" encoding=\"base64\">\n"
+                    postString += self.createTmpBase64(comboBox.currentText())
+
+                postString += "</wps:ComplexData>\n"
+                postString += xmlExecuteRequestInputEnd()
+
+            # Multiple raster and vector inputs
+            for listWidgets in self.complexInputListWidgetList:
+            # Do not add undefined inputs
+                if listWidgets == None:
+                    continue
+
+                mimeType = self.inputDataTypeList[listWidgets.objectName()]["MimeType"]
+                schema = self.inputDataTypeList[listWidgets.objectName()]["Schema"]
+                encoding = self.inputDataTypeList[listWidgets.objectName()]["Encoding"]
+
+            # Iterate over each selected item
+            for i in range(listWidgets.count()):
+                listWidget = listWidgets.item(i)
+                if listWidget == None or listWidget.isSelected() == False or str(listWidget.text()) == "<None>":
+                    continue
+
+                postString += xmlExecuteRequestInputStart(listWidgets.objectName())
+
+                # TODO: Check for more types
+                if isMimeTypeVector(mimeType) != None and mimeType == "text/xml":
+                    postString += "<wps:ComplexData mimeType=\"" + mimeType + "\" schema=\"" + schema + "\" encoding=\"" + encoding + "\">"
+                    postString += self.createTmpGML(listWidget.text(), useSelected).replace("> <", "><").replace("http://ogr.maptools.org/ qt_temp.xsd", "http://ogr.maptools.org/qt_temp.xsd")
+                elif isMimeTypeVector(mimeType) != None or isMimeTypeRaster(mimeType) != None:
+                    postString += "<wps:ComplexData mimeType=\"" + mimeType + "\" encoding=\"base64\">\n"
+                    postString += self.createTmpBase64(listWidget.text())
+
+                postString += "</wps:ComplexData>\n"
+                postString += xmlExecuteRequestInputEnd()
+            """
+
+        #print "WPS:365",postStringIn
+        return postStringIn
 
     def resultHandler(self, resultXML, resultType="store"):
         """Handle the result of the WPS Execute request and add the outputs to
@@ -594,8 +582,8 @@ class WPS(Module):
         """Return updated source with element inserted at a specified 'node'.
 
         All items must arrive as strings; result is also a string"""
-        #print source, "\n",element, "\n", node, "\n"
-        #print "\nWPS:452 ELEMENT IN\n",element, "\n"
+        print "insertElement:\n **Source**", source, "\n**Element**",element, "\n**node**", node
+        #print "\nWPS:582 ELEMENT IN\n",element, "\n"
         if node and not ':' in node:
             import xml.etree.ElementTree as xml
             from xml.parsers.expat import ExpatError
@@ -603,6 +591,7 @@ class WPS(Module):
                 node = "{%s}%s" % (namespace, node)
             element = str(element).encode("UTF-8")
             try:
+                if len(source) > 529: print "*****", source[529:]
                 doc = xml.fromstring(source)
                 result = doc.findall('.//' + node)
                 if result:
@@ -743,6 +732,10 @@ class WPSConfigurationWidget(PortConfigurationWidget):
             return 0
         itemListAll = self.getCapabilities(connection)
         self.initTreeWPSServices(itemListAll)
+
+        #test delete !!!
+        #registry = get_module_registry()
+        #print self.getRegistryPorts(registry, 'input')
 
     def webConnectionExists(self, connection):
         """Return True if server returns GetCapabilities as XML"""
@@ -1140,7 +1133,7 @@ class WPSConfigurationWidget(PortConfigurationWidget):
         functions = []
         functions.append(
             (init.OGC_REQUEST_PORT, [self.requestURL]),)
-        print "WPS:1140 requestURL", self.requestURL
+        #print "WPS:1130 requestURL", self.requestURL
         functions.append(
             (init.WPS_PROCESS_PORT, [self.processIdentifier]),)
         functions.append(
