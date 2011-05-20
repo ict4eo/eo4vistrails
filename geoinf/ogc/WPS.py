@@ -307,10 +307,8 @@ class WPS(Module):
                         # end wrapper
                         postString = xmlExecuteRequestInputStart(identifier, True, "")
                         postString += '<wps:LiteralData>'
-
-                        bar = port_object.get_output(port_port) #see 454 in vistrails_module.py
-                        print "309:bar",key,type(bar),bar
-
+                        #bar = port_object.get_output(port_port) #see 454 in vistrails_module.py
+                        #print "309:bar",key,type(bar),bar
                         postString += port_object.get_output(port_port) #string.get_output('value')
                         postString += '</wps:LiteralData>'
                         # end wrapper
@@ -630,7 +628,7 @@ class WPS(Module):
                                 target = result[0]
                             else:
                                 target = result
-                            print "WPS:630\n", element
+                            #print "WPS:630\n", element
                             new_element = xml.fromstring(element)
                             target.append(new_element)
                             return xml.tostring(doc)
