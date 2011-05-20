@@ -36,46 +36,20 @@ def initialize(*args, **keywords):
     reg.add_module(WCS, configureWidgetType=WCSConfigurationWidget, namespace=ogc_namespace)
 
     # WPS MODULE
-    # This module also has dynamically configured ports,
-    #   by inheriting the PortConfigurationWidget
+    # This module will also be able to have dynamically configured ports,
+    #   (created in code) by inheriting from the PortConfigurationWidget
     reg.add_input_port(
         WPS,
         OGC_REQUEST_PORT,
-        (core.modules.basic_modules.String, 'Configured Request'))#, True)
+        (core.modules.basic_modules.String, 'Configured Request'), optional=True)
     reg.add_input_port(
         WPS,
         OGC_POST_DATA_PORT,
-        (core.modules.basic_modules.String, 'POST Data'))#, True)
+        (core.modules.basic_modules.String, 'POST Data'), optional=True)
     reg.add_input_port(
         WPS,
         WPS_PROCESS_PORT,
-        (core.modules.basic_modules.String, 'WPS Process'))#, True)
-
-    """
-    reg.add_input_port(
-        WPS,
-        MAP_LAYER_PORT,
-        (QgsMapLayer, 'QGIS Map Layer'))
-
-    reg.add_input_port(
-        WPS,
-        OGC_URL_PORT,
-        (core.modules.basic_modules.String, 'URL String'))#, True)
-
-    reg.add_input_port(
-        WPS,
-        WEB_REQUEST_PORT,
-        (WebRequest, 'Web Request'))#,True)
-
-    reg.add_output_port(
-        WPS,
-        MAP_LAYER_PORT,
-        (QgsMapLayer, 'QGIS Map Layer'))
-    reg.add_output_port(
-        WPS,
-        DATA_RESULT_PORT,
-        (QgsMapLayer, 'QGIS Map Layer'))
-    """
+        (core.modules.basic_modules.String, 'WPS Process'), optional=True)
 
     # WFS MODULE
     reg.add_input_port(

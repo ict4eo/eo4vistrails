@@ -192,7 +192,7 @@ class PortConfigurationWidget(StandardModuleConfigurationWidget):
         return port_list
 
     def addPort(self, port):
-        # print port
+        #print 'port:',port
         self.ports.append(port)
 
     def updateVistrail(self):
