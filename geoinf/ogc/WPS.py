@@ -170,7 +170,7 @@ class WPS(Module):
                 + self.addInputsToPOST(
                     self.postString,
                     self.processID)
-            print "\nWPS:172 POST self.postString\n", self.postString, "\n\n"
+            #print "\nWPS:172 POST self.postString\n", self.postString, "\n\n"
             if DEBUG:
                 home = os.getenv("HOME")
                 outFile = open(home + '/Desktop/wps_poststring', 'w')
@@ -657,6 +657,19 @@ class WPS(Module):
         return newName
 
 
+class WPSConfigurationWidgetTabs(QTabWidget):
+    """Configuration Tab Widgets
+    are added via the addTab method of the QTabWidget
+
+    """
+    def __init__(self, parent=None):
+        QTabWidget.__init__(self, parent)
+        self.setGeometry(QRect(20, 20, 790, 540)) # 20, 20, 990, 740
+        self.setTabShape(QTabWidget.Rounded)
+        self.setElideMode(Qt.ElideNone)
+        self.setObjectName("WPSConfigurationWidgetTabsInstance")
+
+
 class WPSConfigurationWidget(PortConfigurationWidget):
     """TODO: add doc string"""
 
@@ -865,8 +878,8 @@ class WPSConfigurationWidget(PortConfigurationWidget):
             itemList.append(item)
         self.treeWidget.addTopLevelItems(itemList)
 
-    def btnOK_clicked(self, bool):
-        """Create dynamic ports based on process description."""
+    def getProcessDescription(self):
+        """Get and store the selected process meta-data"""
         # Process identifier
         name = self.URLConnect.text()
         item = self.treeWidget.currentItem()
@@ -892,12 +905,50 @@ class WPSConfigurationWidget(PortConfigurationWidget):
         # Process description attributes
         process_attr = self.pDoc.elementsByTagName("ProcessDescription")
         self.processAttributes = self.getProcessAttributes(process_attr)
-        # Generate the input ports
-        data_inputs = self.pDoc.elementsByTagName("Input")
-        self.generateProcessInputPorts(data_inputs)
-        # Generate the output ports, set the output to none if not requested
-        data_outputs = self.pDoc.elementsByTagName("Output")
-        self.generateProcessOutputPorts(data_outputs)
+        self.dataInputs = self.pDoc.elementsByTagName("Input")
+        self.dataOutputs = self.pDoc.elementsByTagName("Output")
+
+    def displayProcessDescription(self):
+        """Use a tab to display the selected  process description."""
+        self.tabs.insertTab(0, self.ogc_common_widget, "")
+        self.tabs.setTabText(
+            self.tabs.indexOf(self.ogc_common_widget),
+            QtGui.QApplication.translate(
+                "OgcConfigurationWidget",
+                "Service Metadata",
+                None,
+                QtGui.QApplication.UnicodeUTF8
+                )
+            )
+        self.tabs.setTabToolTip(
+            self.tabs.indexOf(self.ogc_common_widget),
+            QtGui.QApplication.translate(
+                "OgcConfigurationWidget",
+                "Inspect basic service metadata for your chosen OGC service",
+                None,
+                QtGui.QApplication.UnicodeUTF8
+                )
+            )
+        # Descriptions
+        for i in range(self.dataInputs.size()):
+            f_element = self.dataInputs.at(i).toElement()
+            identifier, title, abstract = self.getIdentifierTitleAbstractFromElement(f_element)
+            # add to list
+            # ???
+        for i in range(self.dataOutputs.size()):
+            f_element = self.dataOutputs.at(i).toElement()
+            identifier, title, abstract = self.getIdentifierTitleAbstractFromElement(f_element)
+            # add to list
+            # ???
+
+
+
+    def btnOK_clicked(self, bool):
+        """Create dynamic ports based on process description."""
+        self.getProcessDescription()
+        # Generate the ports
+        self.generateProcessInputPorts(self.dataInputs)
+        self.generateProcessOutputPorts(self.dataOutputs)
         # Update VisTrails with new port details for module
         if self.updateVistrail():  # PortConfigurationWidget
             # set default port info (request, processID etc)
