@@ -714,7 +714,7 @@ class WPSConfigurationWidget(PortConfigurationWidget):
         self.btnConnect.setEnabled(True)
         self.btnConnect.setObjectName("btnConnect")
         self.btnConnect.setText("Connect")
-        self.mainLayout.addWidget(self.btnConnect, 3, 0, 1, 1)
+        self.mainLayout.addWidget(self.btnConnect, 3, 1, 1, 1)
 
         #at runtime be will parsing a url
         self.mainLayout.addWidget(QLabel('WPS URL:'), 1, 0, 1, 1)
@@ -727,26 +727,61 @@ class WPSConfigurationWidget(PortConfigurationWidget):
         self.launchversion.addItems(['1.0.0', ])
         self.mainLayout.addWidget(self.launchversion, 2, 1, 1, 1)
 
-        spacerItem1 = QSpacerItem(10, 10, QSizePolicy.Expanding, QSizePolicy.Minimum)
-        self.mainLayout.addItem(spacerItem1, 5, 2, 1, 1)
+        # tabs
+        self.tabWidget = QTabWidget()
+        self.tabService = QWidget()
+        self.tabProcess = QWidget()
+        #tab = QtGui.QWidget()
+        self.tabProcessLayout = QVBoxLayout(self.tabProcess)
+        self.tabServiceLayout = QVBoxLayout(self.tabService)
+        self.tabWidget.addTab(self.tabService, "Process &List")
+        self.tabWidget.addTab(self.tabProcess, "Process &Inputs/Outputs")
+
+        # service tree
+        self.treeWidgetService = QTreeWidget()
+        self.treeWidgetService.setColumnCount(3)
+        self.treeWidgetService.setObjectName("treeWidget")
+        self.treeWidgetService.setSortingEnabled(True)
+        self.treeWidgetService.headerItem().setText(0, "Identifier")
+        self.treeWidgetService.headerItem().setText(1, "Title")
+        self.treeWidgetService.headerItem().setText(2, "Abstract")
+        self.treeWidgetService.sortByColumn(0,0) # column, order (0=ASC)
+        self.treeWidgetService.setWordWrap(True) # only wraps at linebreaks
+        self.tabServiceLayout.addWidget(self.treeWidgetService)
+
+        # process tree
+        self.treeWidgetProcess = QTreeWidget()
+        self.treeWidgetProcess.setColumnCount(4)
+        self.treeWidgetProcess.setObjectName("treeWidget")
+        self.treeWidgetProcess.setSortingEnabled(True)
+        self.treeWidgetProcess.headerItem().setText(0, "Type")
+        self.treeWidgetProcess.headerItem().setText(1, "Identifier")
+        self.treeWidgetProcess.headerItem().setText(2, "Title")
+        self.treeWidgetProcess.headerItem().setText(3, "Abstract")
+        self.treeWidgetProcess.sortByColumn(0,0) # column, order (0=ASC)
+        self.treeWidgetProcess.setWordWrap(True) # only wraps at linebreaks
+        self.tabProcessLayout.addWidget(self.treeWidgetProcess)
+        self.tabWidget.setTabEnabled(1,False)
+
+        self.mainLayout.addWidget(self.tabWidget, 4, 0, 1, -1)
+
+        #spacerItem1 = QSpacerItem(10, 10, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        #self.mainLayout.addItem(spacerItem1, 5, 2, 1, 1)
+        self.buttons = QWidget()
+        self.buttonLayout = QHBoxLayout(self.buttons)
+        #self.buttonLayout.setGeometry(QtCore.QRect(300, 500, 780, 680))
+        self.buttonLayout.setMargin(5)
+        self.buttonLayout.addStretch(1)
 
         self.btnCancel = QPushButton('&Cancel', self)
         self.btnCancel.setAutoDefault(False)
         self.btnCancel.setShortcut('Esc')
-        self.mainLayout.addWidget(self.btnCancel, 5, 4, 1, 1)
-
+        self.buttonLayout.addWidget(self.btnCancel)
         self.btnOk = QPushButton('&OK', self)
         self.btnOk.setAutoDefault(False)
-        self.mainLayout.addWidget(self.btnOk, 5, 6, 1, 1)
-
-        self.treeWidget = QTreeWidget()
-        self.treeWidget.setColumnCount(3)
-        self.treeWidget.setObjectName("treeWidget")
-        self.mainLayout.addWidget(self.treeWidget, 4, 0, 1, -1)
-        self.treeWidget.setSortingEnabled(True)
-        self.treeWidget.headerItem().setText(0, "Identifier")
-        self.treeWidget.headerItem().setText(1, "Title")
-        self.treeWidget.headerItem().setText(2, "Abstract")
+        self.buttonLayout.addWidget(self.btnOk)
+        self.mainLayout.addWidget(self.buttons, 5, 0, 1, -1)
+        #self.layout().addLayout(self.buttonLayout)
 
         # Connect button
         self.connect(
@@ -763,6 +798,11 @@ class WPSConfigurationWidget(PortConfigurationWidget):
             self.btnCancel,
             SIGNAL('clicked(bool)'),
             self.close)
+        # Tab
+        self.connect(
+            self.tabWidget,
+            SIGNAL('currentChanged(int)'),
+            self.showProcess)
 
     def connectServer(self, connection):
         """Add items to treeWidget
@@ -771,9 +811,18 @@ class WPSConfigurationWidget(PortConfigurationWidget):
         # pass version here
         version = self.launchversion.currentText()
         if not self.webConnectionExists(connection):
+            self.tabWidget.setTabEnabled(1,False)
             return 0
-        itemListAll = self.getCapabilities(connection)
-        self.initTreeWPSServices(itemListAll)
+        else:
+            itemListAll = self.getCapabilities(connection)
+            self.initTreeWPSServices(itemListAll)
+            self.tabWidget.setTabEnabled(1,True)
+
+    def showProcess(self, selected_index):
+        """Display process details when process details tab selected."""
+        if selected_index == 1:
+            if self.getProcessDescription():
+                self.displayProcessDescription()
 
     def webConnectionExists(self, connection):
         """Return True if server returns GetCapabilities as XML"""
@@ -824,7 +873,7 @@ class WPSConfigurationWidget(PortConfigurationWidget):
         return result
 
     def getCapabilities(self, connection):
-        """Return core metadata from WPS GetCapabilities request"""
+        """Return Qt list of core metadata from WPS GetCapabilities request"""
         xmlString = self.getServiceXML(connection, "GetCapabilities")
         self.doc = QtXml.QDomDocument()
         test = self.doc.setContent(xmlString, True)
@@ -864,8 +913,8 @@ class WPSConfigurationWidget(PortConfigurationWidget):
 
     def initTreeWPSServices(self, taglist):
         """TODO: add doc string"""
-        self.treeWidget.setColumnCount(self.treeWidget.columnCount())
-        self.treeWidget.clear()
+        self.treeWidgetService.setColumnCount(self.treeWidgetService.columnCount())
+        self.treeWidgetService.clear()
         itemList = []
         for items in taglist:
             item = QTreeWidgetItem()
@@ -876,18 +925,19 @@ class WPSConfigurationWidget(PortConfigurationWidget):
             item.setText(1, title.strip())
             item.setText(2, abstract.strip())
             itemList.append(item)
-        self.treeWidget.addTopLevelItems(itemList)
+        self.treeWidgetService.addTopLevelItems(itemList)
 
     def getProcessDescription(self):
         """Get and store the selected process meta-data"""
         # Process identifier
         name = self.URLConnect.text()
-        item = self.treeWidget.currentItem()
+        item = self.treeWidgetService.currentItem()
         try:
             self.processIdentifier = item.text(0)
         except:
             QMessageBox.warning(None, '',
                 QCoreApplication.translate("WPS", 'Please select a Process'))
+            return False
         # Data Storage
         self.inputsMetaInfo = {} # input metainfo, key is input identifier
         self.outputsMetaInfo = {} # output metainfo, key is output identifier
@@ -907,41 +957,36 @@ class WPSConfigurationWidget(PortConfigurationWidget):
         self.processAttributes = self.getProcessAttributes(process_attr)
         self.dataInputs = self.pDoc.elementsByTagName("Input")
         self.dataOutputs = self.pDoc.elementsByTagName("Output")
+        self.tabWidget.setTabText(
+            1,"Process "+str(self.processIdentifier)+" &Inputs/Outputs")
+        return True
 
     def displayProcessDescription(self):
-        """Use a tab to display the selected  process description."""
-        self.tabs.insertTab(0, self.ogc_common_widget, "")
-        self.tabs.setTabText(
-            self.tabs.indexOf(self.ogc_common_widget),
-            QtGui.QApplication.translate(
-                "OgcConfigurationWidget",
-                "Service Metadata",
-                None,
-                QtGui.QApplication.UnicodeUTF8
-                )
-            )
-        self.tabs.setTabToolTip(
-            self.tabs.indexOf(self.ogc_common_widget),
-            QtGui.QApplication.translate(
-                "OgcConfigurationWidget",
-                "Inspect basic service metadata for your chosen OGC service",
-                None,
-                QtGui.QApplication.UnicodeUTF8
-                )
-            )
-        # Descriptions
-        for i in range(self.dataInputs.size()):
-            f_element = self.dataInputs.at(i).toElement()
-            identifier, title, abstract = self.getIdentifierTitleAbstractFromElement(f_element)
-            # add to list
-            # ???
+        """Use treeWidgetProcess to display the selected process details."""
+        # Setup Qt list
+        itemList = []
+        # Get Descriptions
         for i in range(self.dataOutputs.size()):
             f_element = self.dataOutputs.at(i).toElement()
             identifier, title, abstract = self.getIdentifierTitleAbstractFromElement(f_element)
-            # add to list
-            # ???
-
-
+            item = QTreeWidgetItem()
+            item.setText(0, "Output")
+            item.setText(1, identifier)
+            item.setText(2, title)
+            item.setText(3, abstract)
+            itemList.append(item)
+        for i in range(self.dataInputs.size()):
+            f_element = self.dataInputs.at(i).toElement()
+            identifier, title, abstract = self.getIdentifierTitleAbstractFromElement(f_element)
+            item = QTreeWidgetItem()
+            item.setText(0, "Input")
+            item.setText(1, identifier)
+            item.setText(2, title)
+            item.setText(3, abstract)
+            itemList.append(item)
+        # Add to tree
+        self.treeWidgetProcess.clear()
+        self.treeWidgetProcess.addTopLevelItems(itemList)
 
     def btnOK_clicked(self, bool):
         """Create dynamic ports based on process description."""
