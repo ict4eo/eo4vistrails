@@ -171,6 +171,7 @@ class WPS(Module):
                     self.postString,
                     self.processID)
             #print "\nWPS:172 POST self.postString\n", self.postString, "\n\n"
+            print "\nWPS:173 POST len(self.postString)\n", len(self.postString)
             if DEBUG:
                 home = os.getenv("HOME")
                 outFile = open(home + '/Desktop/wps_poststring', 'w')
