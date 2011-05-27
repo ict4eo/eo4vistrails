@@ -63,7 +63,7 @@ import init
 
 
 DEBUG = False
-# All supported import raster formats
+# All supported import raster formats [mime type, GDAL id]
 RASTER_MIMETYPES = [{"MIMETYPE":"IMAGE/TIFF", "GDALID":"GTiff"},
                     {"MIMETYPE":"IMAGE/PNG", "GDALID":"PNG"}, \
                     {"MIMETYPE":"IMAGE/GIF", "GDALID":"GIF"}, \
@@ -74,7 +74,7 @@ RASTER_MIMETYPES = [{"MIMETYPE":"IMAGE/TIFF", "GDALID":"GTiff"},
                     {"MIMETYPE":"APPLICATION/X-NETCDF", "GDALID":"netCDF"}, \
                     {"MIMETYPE":"APPLICATION/GEOTIFF", "GDALID":"GTiff"}, \
                     {"MIMETYPE":"APPLICATION/X-GEOTIFF", "GDALID":"GTiff"}]
-# All supported input vector formats [mime type, schema]
+# All supported input vector formats [mime type, schema, GDAL id]
 VECTOR_MIMETYPES = [{"MIMETYPE":"TEXT/XML", "SCHEMA":"GML", "GDALID":"GML"}, \
     {"MIMETYPE":"APPLICATION/XML", "SCHEMA":"GML", "GDALID":"GML"}, \
     {"MIMETYPE":"TEXT/XML", "SCHEMA":"KML", "GDALID":"KML"}, \
@@ -83,6 +83,7 @@ VECTOR_MIMETYPES = [{"MIMETYPE":"TEXT/XML", "SCHEMA":"GML", "GDALID":"GML"}, \
 # Other constants
 DEFAULT_URL = 'http://ict4eo.meraka.csir.co.za/cgi-bin/wps.py'
 MAP_LAYER = 'za.co.csir.eo4vistrails:QgsMapLayer:data'
+
 
 def xmlExecuteRequestInputStart(identifier, namespace=False, title=None):
     """TODO: add doc string"""
@@ -658,19 +659,6 @@ class WPS(Module):
         return newName
 
 
-class WPSConfigurationWidgetTabs(QTabWidget):
-    """Configuration Tab Widgets
-    are added via the addTab method of the QTabWidget
-
-    """
-    def __init__(self, parent=None):
-        QTabWidget.__init__(self, parent)
-        self.setGeometry(QRect(20, 20, 790, 540)) # 20, 20, 990, 740
-        self.setTabShape(QTabWidget.Rounded)
-        self.setElideMode(Qt.ElideNone)
-        self.setObjectName("WPSConfigurationWidgetTabsInstance")
-
-
 class WPSConfigurationWidget(PortConfigurationWidget):
     """TODO: add doc string"""
 
@@ -717,7 +705,7 @@ class WPSConfigurationWidget(PortConfigurationWidget):
         self.btnConnect.setText("Connect")
         self.mainLayout.addWidget(self.btnConnect, 3, 1, 1, 1)
 
-        #at runtime be will parsing a url
+        #at runtime will be parsing a url
         self.mainLayout.addWidget(QLabel('WPS URL:'), 1, 0, 1, 1)
         self.URLConnect = QLineEdit(DEFAULT_URL)
         self.URLConnect.setEnabled(True) #sets it not to be editable
@@ -732,7 +720,6 @@ class WPSConfigurationWidget(PortConfigurationWidget):
         self.tabWidget = QTabWidget()
         self.tabService = QWidget()
         self.tabProcess = QWidget()
-        #tab = QtGui.QWidget()
         self.tabProcessLayout = QVBoxLayout(self.tabProcess)
         self.tabServiceLayout = QVBoxLayout(self.tabService)
         self.tabWidget.addTab(self.tabService, "Process &List")
@@ -746,7 +733,7 @@ class WPSConfigurationWidget(PortConfigurationWidget):
         self.treeWidgetService.headerItem().setText(0, "Identifier")
         self.treeWidgetService.headerItem().setText(1, "Title")
         self.treeWidgetService.headerItem().setText(2, "Abstract")
-        self.treeWidgetService.sortByColumn(0,0) # column, order (0=ASC)
+        self.treeWidgetService.sortByColumn(0, 0) # column, order (0=ASC)
         self.treeWidgetService.setWordWrap(True) # only wraps at linebreaks
         self.tabServiceLayout.addWidget(self.treeWidgetService)
 
@@ -755,14 +742,15 @@ class WPSConfigurationWidget(PortConfigurationWidget):
         self.treeWidgetProcess.setColumnCount(4)
         self.treeWidgetProcess.setObjectName("treeWidget")
         self.treeWidgetProcess.setSortingEnabled(True)
-        self.treeWidgetProcess.headerItem().setText(0, "Type")
+        self.treeWidgetProcess.headerItem().setText(0, "In/Out")
         self.treeWidgetProcess.headerItem().setText(1, "Identifier")
-        self.treeWidgetProcess.headerItem().setText(2, "Title")
-        self.treeWidgetProcess.headerItem().setText(3, "Abstract")
-        self.treeWidgetProcess.sortByColumn(0,0) # column, order (0=ASC)
+        self.treeWidgetProcess.headerItem().setText(2, "MIME Type")
+        self.treeWidgetProcess.headerItem().setText(3, "Title")
+        self.treeWidgetProcess.headerItem().setText(4, "Abstract")
+        self.treeWidgetProcess.sortByColumn(0, 0) # column, order (0=ASC)
         self.treeWidgetProcess.setWordWrap(True) # only wraps at linebreaks
         self.tabProcessLayout.addWidget(self.treeWidgetProcess)
-        self.tabWidget.setTabEnabled(1,False)
+        self.tabWidget.setTabEnabled(1, False)
 
         self.mainLayout.addWidget(self.tabWidget, 4, 0, 1, -1)
 
@@ -812,12 +800,12 @@ class WPSConfigurationWidget(PortConfigurationWidget):
         # pass version here
         version = self.launchversion.currentText()
         if not self.webConnectionExists(connection):
-            self.tabWidget.setTabEnabled(1,False)
+            self.tabWidget.setTabEnabled(1, False)
             return 0
         else:
             itemListAll = self.getCapabilities(connection)
             self.initTreeWPSServices(itemListAll)
-            self.tabWidget.setTabEnabled(1,True)
+            self.tabWidget.setTabEnabled(1, True)
 
     def showProcess(self, selected_index):
         """Display process details when process details tab selected."""
@@ -959,7 +947,7 @@ class WPSConfigurationWidget(PortConfigurationWidget):
         self.dataInputs = self.pDoc.elementsByTagName("Input")
         self.dataOutputs = self.pDoc.elementsByTagName("Output")
         self.tabWidget.setTabText(
-            1,"Process "+str(self.processIdentifier)+" &Inputs/Outputs")
+            1, "Process " + str(self.processIdentifier) + " &Inputs/Outputs")
         return True
 
     def displayProcessDescription(self):
@@ -969,21 +957,25 @@ class WPSConfigurationWidget(PortConfigurationWidget):
         # Get Descriptions
         for i in range(self.dataOutputs.size()):
             f_element = self.dataOutputs.at(i).toElement()
-            identifier, title, abstract = self.getIdentifierTitleAbstractFromElement(f_element)
+            identifier, title, abstract, mime_type = \
+                self.getIdentifierTitleAbstractFromElement(f_element)
             item = QTreeWidgetItem()
             item.setText(0, "Output")
             item.setText(1, identifier)
-            item.setText(2, title)
-            item.setText(3, abstract)
+            item.setText(2, mime_type)
+            item.setText(3, title)
+            item.setText(4, abstract)
             itemList.append(item)
         for i in range(self.dataInputs.size()):
             f_element = self.dataInputs.at(i).toElement()
-            identifier, title, abstract = self.getIdentifierTitleAbstractFromElement(f_element)
+            identifier, title, abstract, mime_type = \
+                self.getIdentifierTitleAbstractFromElement(f_element)
             item = QTreeWidgetItem()
             item.setText(0, "Input")
             item.setText(1, identifier)
-            item.setText(2, title)
-            item.setText(3, abstract)
+            item.setText(2, mime_type)
+            item.setText(3, title)
+            item.setText(4, abstract)
             itemList.append(item)
         # Add to tree
         self.treeWidgetProcess.clear()
@@ -1024,7 +1016,8 @@ class WPSConfigurationWidget(PortConfigurationWidget):
         # Create the complex inputs at first
         for i in range(DataInputs.size()):
             f_element = DataInputs.at(i).toElement()
-            inputIdentifier, title, abstract = self.getIdentifierTitleAbstractFromElement(f_element)
+            inputIdentifier, title, abstract, mime_type = \
+                self.getIdentifierTitleAbstractFromElement(f_element)
             complexData = f_element.elementsByTagName("ComplexData")
             minOccurs = int(f_element.attribute("minOccurs"))
             maxOccurs = int(f_element.attribute("maxOccurs"))
@@ -1035,13 +1028,10 @@ class WPSConfigurationWidget(PortConfigurationWidget):
                 complexDataTypeElement = complexData.at(0).toElement()
                 complexDataFormat = self.getDefaultMimeType(complexDataTypeElement)
                 supportedComplexDataFormat = self.getSupportedMimeTypes(complexDataTypeElement)
-
                 # Store the input formats
                 self.inputsMetaInfo[inputIdentifier] = supportedComplexDataFormat
                 self.inputDataTypeList[inputIdentifier] = complexDataFormat
-
-                #print "WPS:905 Input Port #", i, inputIdentifier, title, str(complexDataFormat)
-
+                #print "WPS:1045 Input Port #", i, inputIdentifier, title, str(complexDataFormat)
                 # Attach the selected vector or raster maps
                 if isMimeTypeVector(complexDataFormat["MimeType"]) != None:
                 # Vector inputs
@@ -1070,8 +1060,8 @@ class WPSConfigurationWidget(PortConfigurationWidget):
         # Create the literal inputs as second
         for i in range(DataInputs.size()):
             f_element = DataInputs.at(i).toElement()
-            inputIdentifier, title, abstract = self.getIdentifierTitleAbstractFromElement(f_element)
-
+            inputIdentifier, title, abstract, mime_type = \
+                self.getIdentifierTitleAbstractFromElement(f_element)
             literalData = f_element.elementsByTagName("LiteralData")
             minOccurs = int(f_element.attribute("minOccurs"))
             maxOccurs = int(f_element.attribute("maxOccurs"))
@@ -1080,7 +1070,8 @@ class WPSConfigurationWidget(PortConfigurationWidget):
                 allowedValuesElement = literalData.at(0).toElement()
                 aValues = allowedValuesElement.elementsByTagNameNS(
                     "http://www.opengis.net/ows/1.1", "AllowedValues")
-                dValue = str(allowedValuesElement.elementsByTagName("DefaultValue").at(0).toElement().text())
+                dValue = str(allowedValuesElement.elementsByTagName(
+                    "DefaultValue").at(0).toElement().text())
                 #print "WPS:945 Checking allowed values " + str(aValues.size())
                 if aValues.size() > 0:
                     valList = self.allowedValues(aValues)
@@ -1091,7 +1082,6 @@ class WPSConfigurationWidget(PortConfigurationWidget):
                         else:
                             port = Port(id=inputIdentifier, name=title, type='input')
                             self.addPort(port)  # PortConfigurationWidget
-
                 else:
                     port = Port(id=inputIdentifier, name=title, type='input')
                     self.addPort(port)  # PortConfigurationWidget
@@ -1141,7 +1131,8 @@ class WPSConfigurationWidget(PortConfigurationWidget):
         # Add all outputs
         for i in range(DataOutputs.size()):
             f_element = DataOutputs.at(i).toElement()
-            outputIdentifier, title, abstract = self.getIdentifierTitleAbstractFromElement(f_element)
+            outputIdentifier, title, abstract, mime_type = \
+                self.getIdentifierTitleAbstractFromElement(f_element)
 
             # Iterate over all complex outputs
             complexOutput = f_element.elementsByTagName("ComplexOutput")
@@ -1293,14 +1284,16 @@ class WPSConfigurationWidget(PortConfigurationWidget):
             outFile.close()
 
     def getIdentifierTitleAbstractFromElement(self, element):
-        """Return identifier, title, abstract from an element"""
+        """Return identifier, title, abstract, mime_type from an element"""
         inputIdentifier = element.elementsByTagNameNS(
             "http://www.opengis.net/ows/1.1", "Identifier").at(0).toElement().text().simplified()
         title = element.elementsByTagNameNS(
             "http://www.opengis.net/ows/1.1", "Title").at(0).toElement().text().simplified()
         abstract = element.elementsByTagNameNS(
             "http://www.opengis.net/ows/1.1", "Abstract").at(0).toElement().text().simplified()
-        return inputIdentifier, title, abstract
+        mime_type = element.elementsByTagName(
+            "MimeType").at(0).toElement().text().simplified().toLower()
+        return inputIdentifier, title, abstract, mime_type
 
     def getDefaultMimeType(self, inElement):
         """TODO: add doc string"""
@@ -1319,16 +1312,19 @@ class WPSConfigurationWidget(PortConfigurationWidget):
 
     def getMimeTypeSchemaEncoding(self, Element):
         """TODO: add doc string"""
-        mimeType = ""
+        mime_type = ""
         schema = ""
         encoding = ""
         try:
-            mimeType = str(Element.elementsByTagName("MimeType").at(0).toElement().text().simplified().toLower())
-            schema = str(Element.elementsByTagName("Schema").at(0).toElement().text().simplified().toLower())
-            encoding = str(Element.elementsByTagName("Encoding").at(0).toElement().text().simplified().toLower())
+            mime_type = str(Element.elementsByTagName(
+                "MimeType").at(0).toElement().text().simplified().toLower())
+            schema = str(Element.elementsByTagName(
+                "Schema").at(0).toElement().text().simplified().toLower())
+            encoding = str(Element.elementsByTagName(
+                "Encoding").at(0).toElement().text().simplified().toLower())
         except:
             pass
-        return {"MimeType": mimeType, "Schema": schema, "Encoding": encoding}
+        return {"MimeType": mime_type, "Schema": schema, "Encoding": encoding}
 
     def allowedValues(self, aValues):
         """TODO: add doc string"""
