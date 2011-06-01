@@ -95,26 +95,26 @@ class _OgrMemModel():
         """Loads content off web service, feed etc, like a WFS, GeoRSS
         Could use OGR WFS driver here, but incoming url may not be properly setup.
         Also, OGR WFS support requires compiling GDAL/OGR with libcurl support.
-        
+
         So, this method will need to implement things a bit more generically....
         The OGR in-memory model will still be used, but not fed by OGR internals.
-        Rather, we need to read in from a temporary file (e.g. a GML file) retrieved 
+        Rather, we need to read in from a temporary file (e.g. a GML file) retrieved
         by urllib or stream data from urllib into the memory model
-        
+
         #uri: string of the service endpoint
         #getStatement: a string of the xml of the request parameters
         webrequest: a WebRequest Object, which has url, data attributes
-        These two variables allow creation of get/post requests and also allow us 
+        These two variables allow creation of get/post requests and also allow us
         to make OGR sensibly deal with the inputs.
         """
-        
-       
+
+
         #to test, just split, but should use elementtree
         #print getStatement
         fmt = ""
         if webrequest.data:
             test = {
-                'responseformat':('<responseformat>',  '</responseformat>'), 
+                'responseformat':('<responseformat>',  '</responseformat>'),
                 'outputformat':('outputformat="', '"')
             }
             getStatement = webrequest.data
@@ -129,13 +129,13 @@ class _OgrMemModel():
         else:
             getStatement = ""
 
-        
+
         #type = getStatement.lower().split('<responseformat>')
 
         #type = type[1].split('<responseformat>')[0]
-        
 
-        
+
+
         def _guessOutputType(type_string = ""):
             print type_string
             if type_string.split(';')[0].lower() == "text/xml":
@@ -145,7 +145,7 @@ class _OgrMemModel():
                 return ".gml"
             else:
                 return ".gml"
-                
+
         def _viaCache():
             temp_filepath = core.system.default_dot_vistrails() + "/eo4vistrails/ogr/"
             if not os.path.exists(temp_filepath):
@@ -156,16 +156,16 @@ class _OgrMemModel():
             #print postdata
             u = urllib.urlretrieve(url = webrequest.url,  filename = temp_filename,  data = postdata,)
             self.loadContentFromFile(temp_filename)
-            
+
         def _viaStream():
             pass
-        
+
         outputtype = _guessOutputType(fmt)
-        #implement first a non-streaming version of this method, 
+        #implement first a non-streaming version of this method,
         #i.e. fetches from uri, caches, reads from cache
-        
+
         _viaCache()
-    
+
     def loadContentFromString(self,  gstr):
         '''Loads up a string of spatial data of some kind, e.g. GeoJSON, GML.
         Expects GeoStrings objects such as GMLString, GeoJSONString'''
@@ -177,32 +177,32 @@ class _OgrMemModel():
 
             if not os.path.exists(temp_filepath):
                 os.mkdirs(temp_filepath)
-            
+
             t= str(type(gstr))
             tl = t.split("'")
             tll = tl[1].split(".")
             gstrtype =  tll[len(tll) - 1]
-            
+
             def _get_ext():
                 if gstrtype == "GeoJSONString": return "json"
                 if gstrtype == "GMLString": return "gml"
-            
+
             temp_filename = temp_filepath + hashlib.sha1(str(len(gstr.__dict__['outputPorts']["value_as_string"]))).hexdigest() +  "." +  _get_ext()#gstr.__name__
             f = open(temp_filename, 'w')
             f.write(gstr.__dict__['outputPorts']["value_as_string"])
             f.close()
             self.loadContentFromFile(temp_filename)
             #os.remove(temp_filename)
-        
+
         if gstr != "":
             _viaCache()
-        
-        
+
+
     def dumpToFile(self,  filesource,  datasetType = "ESRI Shapefile"):
         #always overwrites
         if not os.path.exists(filesource):
             os.remove(filesource) #but for shapefiles? maybe the dataset creation process has an override option rather...
-        
+
         try:
             driver = ogr.GetDriverByName(datasetType)
             if datasetType == "CSV":
@@ -269,7 +269,7 @@ class MemFeatureModel(Module):
 #                self.loadContentFromURI(self.getInputFromPort("uri"),  self.getInputFromPort("uri_data"))
         elif (self.hasInputFromPort("webrequest") and self.getInputFromPort("webrequest")):
                 self.loadContentFromURI(self.getInputFromPort("webrequest"))
-                
+
         elif (self.hasInputFromPort("gstring") and self.getInputFromPort("gstring")) :
                 self.loadContentFromString(self.inputPorts["gstring"][0].obj)
         else:
@@ -281,8 +281,9 @@ class MemFeatureModel(Module):
 
 class FileFeatureModel(File):
     """
-    Persists a FeatureModel to disk at a user specified location;
-    Likely outputs via OGR would be :
+    Persists a FeatureModel to disk at a user specified location.
+
+    Likely outputs via OGR would be:
     {shapefile, a postgis database dump, a CSV file ,a GML file,  a KML file or GeoJSON}
     """
     def __init__(self):
@@ -305,13 +306,13 @@ class FileFeatureModel(File):
                 raise ModuleError(self, 'File "%s" does not exist' % source_file)
             ogr  = _OgrMemModel()
             ogr.loadContentFromFile(source_file)
-        
+
         elif (self.hasInputFromPort("source_feature_dataset")): #and self.getInputFromPort("source_feature_dataset")):
             ogr = self.getInputFromPort("source_feature_dataset").feature_model #which is the same, an instance of _OgrMemModel
             print ogr
         elif (self.hasInputFromPort("webrequest") and self.getInputFromPort("webrequest")):
             ogr  = _OgrMemModel()
-            ogr.loadContentFromURI(self.getInputFromPort("webrequest"))           
+            ogr.loadContentFromURI(self.getInputFromPort("webrequest"))
         else:
             raise ModuleError(self, 'No feature_dataset or source file is supplied - an OGR dataset cannot be generated')
 
