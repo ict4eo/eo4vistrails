@@ -18,9 +18,10 @@ import sys, os
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #sys.path.insert(0, os.path.abspath('.'))
 
-#sys.path.insert(0, os.path.abspath('../'))
-sys.path.insert(0, os.path.abspath('/home/dhohls/Projects/eo4vistrails/'))
+sys.path.insert(0, os.path.abspath('../'+'/'))
 print "Project Directory:",sys.path[0]
+sys.path.insert(0, os.path.abspath('/home/dhohls/Downloads/VisTrails/vistrails-src-1.6-e9f97c5908ac/vistrails/'))
+print "VisTrails Directory:",sys.path[0]
 
 # -- General configuration -----------------------------------------------------
 

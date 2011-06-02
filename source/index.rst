@@ -3,10 +3,11 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-EO4vistrails's documentation
+EO4vistrails's Documentation
 ============================
 
 Contents:
+---------
 
 .. toctree::
    :maxdepth: 3
@@ -18,8 +19,8 @@ Indices and tables
 * :ref:`modindex`
 * :ref:`search`
 
-Packages
-========
+Packages!
+=========
 
 GeoInf
 ------
@@ -30,16 +31,16 @@ GeoInf
 GeoInf: DataModels
 ~~~~~~~~~~~~~~~~~~
 
-.. automodule:: geoinf.datamodels
-   :members:
+.. .. automodule:: geoinf.datamodels
 
 Modules
 +++++++
 
-.. automodule:: geoinf.datamodels.Feature
-
-.. autoclass:: geoinf.datamodels.Feature.MemFeatureModel
+.. automodule:: geoinf.datamodels.Test
    :members:
+
+.. .. autoclass:: geoinf.datamodels.Feature.MemFeatureModel
+..    :members:
 
 DataAnalytics
 -------------

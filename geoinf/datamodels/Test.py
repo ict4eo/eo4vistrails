@@ -23,9 +23,19 @@
 ## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ##
 ############################################################################
-"""This package provides consistent internal data models for feature, raster
-and time-series data. Proposes use of gdal, ogr (or GeoJson) and hdf
+"""This module provides a test bed for Sphinx document generation.
 """
 
-#from Feature import *
-pass
+import os
+#import core.system
+#import core.modules.module_registry
+#from core.modules.vistrails_module import Module, ModuleError
+#from core.modules.basic_modules import File
+
+
+class TestModel():
+    """This is Sphinx Test"""
+
+    def FirstMethod():
+        """This is Method 1"""
+        return True
