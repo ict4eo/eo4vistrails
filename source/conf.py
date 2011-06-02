@@ -20,6 +20,7 @@ import sys, os
 
 sys.path.insert(0, os.path.abspath('../'+'/'))
 print "Project Directory:",sys.path[0]
+
 sys.path.insert(0, os.path.abspath('/home/dhohls/Downloads/VisTrails/vistrails-src-1.6-e9f97c5908ac/vistrails/'))
 print "VisTrails Directory:",sys.path[0]
 
