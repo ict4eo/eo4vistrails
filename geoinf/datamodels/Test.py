@@ -27,15 +27,16 @@
 """
 
 import os
-#import core.system
-#import core.modules.module_registry
-#from core.modules.vistrails_module import Module, ModuleError
-#from core.modules.basic_modules import File
+import core.system
+import core.modules.module_registry
+from core.modules.vistrails_module import Module, ModuleError
+
+import core.modules.basic_modules
 
 
 class TestModel():
-    """This is Sphinx Test"""
+    """This is a Sphinx Documentation Test"""
 
     def FirstMethod():
-        """This is Method 1"""
+        """This is Method First"""
         return True

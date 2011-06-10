@@ -3,10 +3,10 @@
 ###
 ### Copyright (C) 2010 CSIR Meraka Institute. All rights reserved.
 ###
-### This full package extends VisTrails, providing GIS/Earth Observation 
-### ingestion, pre-processing, transformation, analytic and visualisation 
-### capabilities . Included is the abilty to run code transparently in 
-### OpenNebula cloud environments. There are various software 
+### This full package extends VisTrails, providing GIS/Earth Observation
+### ingestion, pre-processing, transformation, analytic and visualisation
+### capabilities . Included is the abilty to run code transparently in
+### OpenNebula cloud environments. There are various software
 ### dependencies, but all are FOSS.
 ###
 ### This file may be used under the terms of the GNU General Public
@@ -24,19 +24,11 @@
 ### WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ###
 #############################################################################
-"""
-Created on Tue Dec 14 09:38:10 2010
+"""This module is a globals dummy module.
 
-@author: tvzyl
-
-Module forms part of the rpyc vistrails capabilties, used to add multicore
-parallel and distributed processing to vistrails.
-
-This Module is a globals dummy module, the variable isRemoteRPyCNode is set in
-this module to allow remote and local nodes become aware of whether they are 
-the master node or not
+The variable isRemoteRPyCNode is set in this module to allow remote and local
+nodes to become aware of whether they are the master node or not
 
 """
 #History
 #Terence van Zyl, 15 Dec 2010, Version 1.0
-

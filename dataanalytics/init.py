@@ -24,22 +24,15 @@
 ### WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ###
 #############################################################################
-"""
-Created on Tue Dec 14 09:38:10 2010
-
-@author: tvzyl
-
-Module forms part of the rpyc vistrails capabilties, used to add multicore
-parallel and distributed processing to vistrails.
-
-This Module is the called by higher level inits to ensure that regsitration with
-vsitrails takes place
-
+"""This module forms part of the rpyc vistrails capabilties, and is used to add
+multicore parallel and distributed processing to VisTrails.
 """
 #History
 #Terence van Zyl, 15 Dec 2010, Version 1.0
 
 def initialize(*args, **keywords):
+    """Called by higher level inits to ensure that regsitration with
+    VisTrails takes place."""
     from core.modules.module_registry import get_module_registry
     from core.modules import basic_modules
     from core.vistrail.port import PortEndPoint
@@ -56,7 +49,7 @@ def initialize(*args, **keywords):
 
     import Rasterlang
     mynamespace = "rasterlang"
-    
+
     #Add Rasterlang
     reg.add_module(Rasterlang.layerAsArray, namespace=mynamespace)
     reg.add_module(Rasterlang.writeGeoTiff, namespace=mynamespace)

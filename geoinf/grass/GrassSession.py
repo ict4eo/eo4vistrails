@@ -2,10 +2,10 @@
 ##
 ## Copyright (C) 2010 CSIR Meraka Institute. All rights reserved.
 ##
-## eo4vistrails extends VisTrails, providing GIS/Earth Observation 
-## ingestion, pre-processing, transformation, analytic and visualisation 
-## capabilities . Included is the abilty to run code transparently in 
-## OpenNebula cloud environments. There are various software 
+## eo4vistrails extends VisTrails, providing GIS/Earth Observation
+## ingestion, pre-processing, transformation, analytic and visualisation
+## capabilities . Included is the abilty to run code transparently in
+## OpenNebula cloud environments. There are various software
 ## dependencies, but all are FOSS.
 ##
 ## This file may be used under the terms of the GNU General Public
@@ -39,7 +39,8 @@ http://grass.osgeo.org/wiki/GRASS_and_Python
 #export GISRC="$HOME/.grassrc6"
 
 from utils.session import Session
-from SpatialTemporalConfigurationWidget import SpatialTemporalConfigurationWidget
+from packages.eo4vistrails.geoinf.SpatialTemporalConfigurationWidget import \
+    SpatialTemporalConfigurationWidget
 
 
 class GrassSession(Session):
@@ -50,9 +51,9 @@ class GrassSession(Session):
     def compute(self):
         pass
 
-    def updateLayers(self,  layername,  layertype):    
+    def updateLayers(self,  layername,  layertype):
         """Updates info on layers available in current GRASS location
-        requires a string for the layername and a string, one of{'v', 'r'} 
+        requires a string for the layername and a string, one of{'v', 'r'}
         to denote the type"""
         if layername.lower() == 'v':
             self.layers['vector'].append(layername)
@@ -61,7 +62,7 @@ class GrassSession(Session):
 
     def readLayers(self,  layertype):
         """Reads info on layers available in current GRASS location
-        requires a string for the layername and a string, one of{'v', 'r'} 
+        requires a string for the layername and a string, one of{'v', 'r'}
         to denote the type"""
         if layername.lower() == 'v':
            return tuple(self.layers['vector'])

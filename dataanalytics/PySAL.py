@@ -3,10 +3,10 @@
 ###
 ### Copyright (C) 2010 CSIR Meraka Institute. All rights reserved.
 ###
-### This full package extends VisTrails, providing GIS/Earth Observation 
-### ingestion, pre-processing, transformation, analytic and visualisation 
-### capabilities . Included is the abilty to run code transparently in 
-### OpenNebula cloud environments. There are various software 
+### This full package extends VisTrails, providing GIS/Earth Observation
+### ingestion, pre-processing, transformation, analytic and visualisation
+### capabilities . Included is the abilty to run code transparently in
+### OpenNebula cloud environments. There are various software
 ### dependencies, but all are FOSS.
 ###
 ### This file may be used under the terms of the GNU General Public
@@ -24,32 +24,24 @@
 ### WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ###
 #############################################################################
-"""
-Created on Tue Dec 14 09:38:10 2010
-
-@author: tvzyl
-
-Module forms part of the rpyc vistrails capabilties, used to add multicore
-parallel and distributed processing to vistrails.
-
-This Module hold a rpycnode type that can be past around between modules
-
+"""This module holds a rpycnode type that can be passed around between modules.
 """
 #History
 #Terence van Zyl, 10 Feb 2011, Version 0.1
 
 from core.modules.vistrails_module import Module
+import pysal
+
 
 class PySALModule(object):
     pass
 
-import pysal
 
 class W(PySALModule, Module, pysal.W):
     """ Container class for the pysal.W class """
-    
+
     _output_ports = [('value', '(za.co.csir.eo4vistrails:W:pysal)')]
-    
+
     def __init__(self):
         Module.__init__(self)
 

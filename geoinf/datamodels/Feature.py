@@ -50,6 +50,7 @@ class _OgrMemModel():
     in-memory OGR data provider or not, data will always be passed
     into OGR control via instances of _OgrMemModel
     """
+
     def __init__(self):
         self.driver = ogr.GetDriverByName('Memory')
         self.datasource = self.driver.CreateDataSource("working_ds")
@@ -83,7 +84,7 @@ class _OgrMemModel():
         connection string and layer defined by a Select statement"""
         conn = ogr.Open(connstr)
         lyr = conn.ExecuteSQL(getStatement)
-        self.datasource.CopyLayer(lyr,  lyr.GetName())
+        self.datasource.CopyLayer(lyr, lyr.GetName())
         try:
             self.datasource.ReleaseResultLayer(lyr)
         except:
@@ -93,30 +94,29 @@ class _OgrMemModel():
 
     def loadContentFromURI(self, webrequest):
         """Loads content off web service, feed etc, like a WFS, GeoRSS
-        Could use OGR WFS driver here, but incoming url may not be properly setup.
-        Also, OGR WFS support requires compiling GDAL/OGR with libcurl support.
 
-        So, this method will need to implement things a bit more generically....
+        If an OGR WFS driver was used here, the incoming url might not be
+        properly setup.  Also, OGR WFS support requires compiling GDAL/OGR
+        with libcurl support.
+
+        This method will implement things a bit more generically.
         The OGR in-memory model will still be used, but not fed by OGR internals.
-        Rather, we need to read in from a temporary file (e.g. a GML file) retrieved
-        by urllib or stream data from urllib into the memory model
+        Rather, it reads in from a temporary file (e.g. a GML file) retrieved
+        by urllib or stream data from urllib into the memory model.
 
-        #uri: string of the service endpoint
-        #getStatement: a string of the xml of the request parameters
-        webrequest: a WebRequest Object, which has url, data attributes
-        These two variables allow creation of get/post requests and also allow us
-        to make OGR sensibly deal with the inputs.
+        `webrequest`:
+            a WebRequest Object, which has url, data attributes
+            These two variables allow creation of get/post requests, and allow
+            to make OGR sensibly deal with the inputs.
         """
-
 
         #to test, just split, but should use elementtree
         #print getStatement
         fmt = ""
         if webrequest.data:
             test = {
-                'responseformat':('<responseformat>',  '</responseformat>'),
-                'outputformat':('outputformat="', '"')
-            }
+                'responseformat': ('<responseformat>', '</responseformat>'),
+                'outputformat': ('outputformat="', '"')}
             getStatement = webrequest.data
             for ky in test:
                 try:
@@ -129,14 +129,10 @@ class _OgrMemModel():
         else:
             getStatement = ""
 
-
         #type = getStatement.lower().split('<responseformat>')
-
         #type = type[1].split('<responseformat>')[0]
 
-
-
-        def _guessOutputType(type_string = ""):
+        def _guessOutputType(type_string=""):
             print type_string
             if type_string.split(';')[0].lower() == "text/xml":
                 #is gml, O&M etc
@@ -154,7 +150,7 @@ class _OgrMemModel():
             #core.system.touch(temp_filename)
             postdata = urllib.urlencode({'request': getStatement})
             #print postdata
-            u = urllib.urlretrieve(url = webrequest.url,  filename = temp_filename,  data = postdata,)
+            u = urllib.urlretrieve(url=webrequest.url, filename=temp_filename, data=postdata,)
             self.loadContentFromFile(temp_filename)
 
         def _viaStream():
@@ -166,7 +162,7 @@ class _OgrMemModel():
 
         _viaCache()
 
-    def loadContentFromString(self,  gstr):
+    def loadContentFromString(self, gstr):
         '''Loads up a string of spatial data of some kind, e.g. GeoJSON, GML.
         Expects GeoStrings objects such as GMLString, GeoJSONString'''
         #FIXME: get rid of string truncation by getting conf from the proper widget - for moment make sure strings are small...
@@ -178,16 +174,19 @@ class _OgrMemModel():
             if not os.path.exists(temp_filepath):
                 os.mkdirs(temp_filepath)
 
-            t= str(type(gstr))
+            t = str(type(gstr))
             tl = t.split("'")
             tll = tl[1].split(".")
-            gstrtype =  tll[len(tll) - 1]
+            gstrtype = tll[len(tll) - 1]
 
             def _get_ext():
-                if gstrtype == "GeoJSONString": return "json"
-                if gstrtype == "GMLString": return "gml"
+                if gstrtype == "GeoJSONString":
+                    return "json"
+                if gstrtype == "GMLString":
+                    return "gml"
 
-            temp_filename = temp_filepath + hashlib.sha1(str(len(gstr.__dict__['outputPorts']["value_as_string"]))).hexdigest() +  "." +  _get_ext()#gstr.__name__
+            temp_filename = temp_filepath + hashlib.sha1(
+                str(len(gstr.__dict__['outputPorts']["value_as_string"]))).hexdigest() + "." + _get_ext()#gstr.__name__
             f = open(temp_filename, 'w')
             f.write(gstr.__dict__['outputPorts']["value_as_string"])
             f.close()
@@ -197,8 +196,7 @@ class _OgrMemModel():
         if gstr != "":
             _viaCache()
 
-
-    def dumpToFile(self,  filesource,  datasetType = "ESRI Shapefile"):
+    def dumpToFile(self, filesource, datasetType="ESRI Shapefile"):
         #always overwrites
         if not os.path.exists(filesource):
             os.remove(filesource) #but for shapefiles? maybe the dataset creation process has an override option rather...
@@ -206,16 +204,16 @@ class _OgrMemModel():
         try:
             driver = ogr.GetDriverByName(datasetType)
             if datasetType == "CSV":
-                ds = driver.CreateDataSource( filesource,  options=["GEOMETRY=AS_XY"])
-                ds.CopyLayer(self.datasource.GetLayer(0),  self.datasource.GetLayer(0).GetName(),  options=["GEOMETRY=AS_XY"])
+                ds = driver.CreateDataSource(filesource, options=["GEOMETRY=AS_XY"])
+                ds.CopyLayer(self.datasource.GetLayer(0), self.datasource.GetLayer(0).GetName(), options=["GEOMETRY=AS_XY"])
             else:
-                ds = driver.CreateDataSource( filesource)
-                ds.CopyLayer(self.datasource.GetLayer(0),  self.datasource.GetLayer(0).GetName())
+                ds = driver.CreateDataSource(filesource)
+                ds.CopyLayer(self.datasource.GetLayer(0), self.datasource.GetLayer(0).GetName())
             filename = ds.GetName()
             ds = None
         except:
-            return (False,  "")
-        return (True,  filename)
+            return (False, "")
+        return (True, filename)
 
     def __del__(self):
         """connection resetting, memory deallocation"""
@@ -231,20 +229,21 @@ class _OgrMemModel():
 
 class MemFeatureModel(Module):
     """Retains a copy of an OGR dataset in memory."""
+
     def __init__(self):
         Module.__init__(self)
         self.feature_model = _OgrMemModel()
 
-    def loadContentFromDB(self,  dbconnstr,  sql):
-        self.feature_model.loadContentFromDB(dbconnstr,  sql)
+    def loadContentFromDB(self, dbconnstr, sql):
+        self.feature_model.loadContentFromDB(dbconnstr, sql)
 
-    def loadContentFromFile(self,  source_file):
+    def loadContentFromFile(self, source_file):
         self.feature_model.loadContentFromFile(source_file)
 
-    def loadContentFromURI(self,  webrequest):
+    def loadContentFromURI(self, webrequest):
         self.feature_model.loadContentFromURI(webrequest)
 
-    def loadContentFromString(self,  gstr):
+    def loadContentFromString(self, gstr):
         self.feature_model.loadContentFromString(gstr)
 #    def dumpToFile(self):
 #        print "dumping featuremodel"
@@ -258,25 +257,25 @@ class MemFeatureModel(Module):
             #self.feature_model.loadContentFromFile(source_file)
             self.loadContentFromFile(source_file)
         elif (self.hasInputFromPort("dbconn") and self.getInputFromPort("dbconn")) \
-            and (self.hasInputFromPort("sql") and self.getInputFromPort("sql")) :
+            and (self.hasInputFromPort("sql") and self.getInputFromPort("sql")):
             #dbconn = self.getInputFromPort("dbconn")
             #sql = self.getInputFromPort("sql")
-            #self.feature_model.loadContentFromDB("some connstr",  "some SQL")#get sql to execute
-            self.loadContentFromDB(self.getInputFromPort("dbconn"),  self.getInputFromPort("sql"))
+            #self.feature_model.loadContentFromDB("some connstr", "some SQL")#get sql to execute
+            self.loadContentFromDB(self.getInputFromPort("dbconn"), self.getInputFromPort("sql"))
             #self.dumpToFile()
 #        elif (self.hasInputFromPort("uri") and self.getInputFromPort("uri")) \
 #            and (self.hasInputFromPort("uri_data") and self.getInputFromPort("uri_data")):
-#                self.loadContentFromURI(self.getInputFromPort("uri"),  self.getInputFromPort("uri_data"))
+#                self.loadContentFromURI(self.getInputFromPort("uri"), self.getInputFromPort("uri_data"))
         elif (self.hasInputFromPort("webrequest") and self.getInputFromPort("webrequest")):
                 self.loadContentFromURI(self.getInputFromPort("webrequest"))
 
-        elif (self.hasInputFromPort("gstring") and self.getInputFromPort("gstring")) :
+        elif (self.hasInputFromPort("gstring") and self.getInputFromPort("gstring")):
                 self.loadContentFromString(self.inputPorts["gstring"][0].obj)
         else:
             raise ModuleError(self, 'No source file is supplied - an OGR dataset cannot be generated')
 
-        #self.setResult("feature_dataset",  self.feature_model)
-        self.setResult("feature_dataset",  self)
+        #self.setResult("feature_dataset", self.feature_model)
+        self.setResult("feature_dataset", self)
 
 
 class FileFeatureModel(File):
@@ -284,8 +283,9 @@ class FileFeatureModel(File):
     Persists a FeatureModel to disk at a user specified location.
 
     Likely outputs via OGR would be:
-    {shapefile, a postgis database dump, a CSV file ,a GML file,  a KML file or GeoJSON}
+    {shapefile, a postgis database dump, a CSV file ,a GML file, a KML file or GeoJSON}
     """
+
     def __init__(self):
         File.__init__(self)
 
@@ -304,20 +304,17 @@ class FileFeatureModel(File):
             print source_file
             if not os.path.isfile(source_file):
                 raise ModuleError(self, 'File "%s" does not exist' % source_file)
-            ogr  = _OgrMemModel()
+            ogr = _OgrMemModel()
             ogr.loadContentFromFile(source_file)
 
         elif (self.hasInputFromPort("source_feature_dataset")): #and self.getInputFromPort("source_feature_dataset")):
             ogr = self.getInputFromPort("source_feature_dataset").feature_model #which is the same, an instance of _OgrMemModel
             print ogr
         elif (self.hasInputFromPort("webrequest") and self.getInputFromPort("webrequest")):
-            ogr  = _OgrMemModel()
+            ogr = _OgrMemModel()
             ogr.loadContentFromURI(self.getInputFromPort("webrequest"))
         else:
             raise ModuleError(self, 'No feature_dataset or source file is supplied - an OGR dataset cannot be generated')
-
-
-
 
         if (self.hasInputFromPort("output_type") and self.getInputFromPort("output_type")):
             output_type = self._ogr_format_check(self.getInputFromPort("output_type"))
@@ -327,7 +324,7 @@ class FileFeatureModel(File):
         if (self.hasInputFromPort("create_file") and
             self.getInputFromPort("create_file")):
             #core.system.touch(n)
-            success,  fn = ogr.dumpToFile(n,  output_type)
+            success, fn = ogr.dumpToFile(n, output_type)
             if success == True:
                 #TODO: check if local_filename is necessary?
                 self.setResult("local_filename", fn)
@@ -352,23 +349,24 @@ class FileFeatureModel(File):
         fmt = fmt.lower()
         for sfmt in supported_ogr_formats:
             if sfmt.lower() == fmt:
-               return sfmt
+                return sfmt
         return "ESRI Shapefile"
 
 
 class FeatureModel(Module):
     """This is a common representation of Vector/Feature
-    data, sourced from numerous places {postgis, shapefiles, wfs's, gml,...}
+    data, sourced from numerous places {postgis, shapefiles, wfs's, gml, etc.}
     Representation is provided by the GDAL/OGR (OGR) library.
 
     Classes that implement this module are expected to generate the
     internal OGR objects. Optionally, they may expose ports that
-    serialise the OGR objects, but is more likely to take place
+    serialise the OGR objects, but that is more likely to take place
     via external serialisers.
 
-    ? Should there be an in-memory and a cacheable version of this?
-      # I have had to make SOS NotCacheable to work (Derek, 2010/12/04)
+    .. Should there be an in-memory and a cacheable version of this?
+    .. I have had to make SOS NotCacheable to work (Derek, 2010/12/04)
     """
+
     def __init__(self):
         Module.__init__(self)
 
@@ -402,10 +400,11 @@ class FeatureModelGeometryComparitor(Module):
             Segmentize, SetCoordinateDimension, SetPoint, SetPoint_2D, Transform,
             TransformTo
     * Calcs: Distance, GetArea, GetBoundary, GetEnvelope,
-    * Info: GetCoordinateDimension , GetDimension,  GetGeometryCount, GetGeometryName,
+    * Info: GetCoordinateDimension , GetDimension, GetGeometryCount, GetGeometryName,
             GetGeometryRef, GetGeometryType, GetPointCount, GetSpatialReference,GetX,
             GetY, GetZ IsEmpty, IsRing, IsSimple, IsValid
     """
+
     def __init__(self):
         Module.__init__()
 
@@ -422,6 +421,7 @@ class FeatureModelGeometryComparitor(Module):
         if (self.hasInputFromPort("geometrySetB") and self.getInputFromPort("geometrySetB")):
             geomSetA = self.getInputFromPort("geometrySetB")
 
+
 def initialize(*args, **keywords):
     """sets everything up"""
     # We'll first create a local alias for the module_registry so that
@@ -434,5 +434,4 @@ def initialize(*args, **keywords):
     reg.add_output_port(
         FeatureModel,
         "OGRDataset",
-        (ogr.Dataset, 'Feature data in OGR Dataset')
-    )
+        (ogr.Dataset, 'Feature data in OGR Dataset'))

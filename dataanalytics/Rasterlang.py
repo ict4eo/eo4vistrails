@@ -24,10 +24,7 @@
 ### WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ###
 #############################################################################
-"""This module forms part of the rpyc eo4vistrails capabilties;
-used to add multicore parallel and distributed processing to vistrails.
-
-This module holds a rpycnode type that can be passed around between modules.
+"""This module holds a rpycnode type that can be passed around between modules.
 """
 
 import networkx as nx
@@ -40,9 +37,11 @@ from packages.eo4vistrails.geoinf.datamodels.QgsLayer import QgsMapLayer
 
 import rasterlang.layers #layerAsArray, writeGeoTiff
 
+
 class RasterlangModule(ThreadSafeMixin):
     def __init__(self):
         ThreadSafeMixin.__init__(self)
+
 
 @RPyCSafeModule()
 class layerAsArray(RasterlangModule, RPyCModule):
@@ -57,13 +56,14 @@ class layerAsArray(RasterlangModule, RPyCModule):
 
     def compute(self):
         layer = self.getInputFromPort('QgsMapLayer')
-        
+
         array = rasterlang.layers.layerAsArray(layer)
-        
+
         ndarray = NDArray()
         ndarray.set_array(array)
-        
+
         self.setResult("numpy array", ndarray)
+
 
 @RPyCSafeModule()
 class arrayAsLayer(RasterlangModule, RPyCModule):
@@ -82,10 +82,10 @@ class arrayAsLayer(RasterlangModule, RPyCModule):
         import os
         os.remove(self.fileName)
 
-    def compute(self):        
+    def compute(self):
         ndarray = self.getInputFromPort('numpy array')
         layer = self.getInputFromPort('QgsMapLayer')
-                        
+
         e = layer.extent()
         extent = [e.xMinimum(),e.yMinimum(),e.xMaximum(),e.yMaximum()]
 
@@ -98,10 +98,11 @@ class arrayAsLayer(RasterlangModule, RPyCModule):
 
         rasterlang.layers.writeGeoTiff(ndarray.get_array(), extent, self.fileName)
         from packages.eo4vistrails.geoinf.datamodels.QgsLayer import QgsRasterLayer
-        
+
         outlayer = QgsRasterLayer(self.fileName, self.number)
-        
+
         self.setResult("raster layer", outlayer)
+
 
 @RPyCSafeModule()
 class writeGeoTiff(RasterlangModule, RPyCModule):
@@ -119,8 +120,8 @@ class writeGeoTiff(RasterlangModule, RPyCModule):
         outfile = self.getInputFromPort('output file')
         ndarray = self.getInputFromPort('numpy array')
         layer = self.getInputFromPort('QgsMapLayer')
-        
+
         e = layer.extent()
         extent = [e.xMinimum(),e.yMinimum(),e.xMaximum(),e.yMaximum()]
-        
+
         rasterlang.layers.writeGeoTiff(ndarray.get_array(), extent, outfile.name)

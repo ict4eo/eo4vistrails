@@ -24,10 +24,7 @@
 ### WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ###
 #############################################################################
-"""This module forms part of the rpyc eo4vistrails capabilties;
-used to add multicore parallel and distributed processing to vistrails.
-
-This module holds a rpycnode type that can be passed around between modules.
+"""This module holds a rpycnode type that can be passed around between modules.
 """
 
 import networkx as nx
@@ -41,11 +38,12 @@ class NetworkxModule(ThreadSafeMixin):
     def __init__(self):
         ThreadSafeMixin.__init__(self)
 
+
 @RPyCSafeModule()
 class Graph(NetworkxModule, Module, nx.Graph):
-    """ Represents a network Graph  """
+    """ Represents a network graph ."""
 
-    _input_ports  = [('neighbors list', '(edu.utah.sci.vistrails.basic:List)'), 
+    _input_ports  = [('neighbors list', '(edu.utah.sci.vistrails.basic:List)'),
                      ('neighbors numpy', '(edu.utah.sci.vistrails.numpyscipy:Numpy Array:numpy|array)')]
     _output_ports = [('value', '(za.co.csir.eo4vistrails:Graph:networkx)')]
 
@@ -60,9 +58,10 @@ class Graph(NetworkxModule, Module, nx.Graph):
         else:
             ndArray = self.getInputFromPort('neighbors numpy')
             neighbors = ndArray.get_array()
-        
+
         self.add_edges_from(neighbors)
         self.setResult("value", self)
+
 
 @RPyCSafeModule()
 class connected_components(NetworkxModule, Module):

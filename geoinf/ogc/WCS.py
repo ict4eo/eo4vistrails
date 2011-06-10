@@ -48,6 +48,7 @@ class WCS(OGC, RasterModel):
     Override for base OGC service class
 
     """
+
     def __init__(self):
         OGC.__init__(self)
         RasterModel.__init__(self)
@@ -56,18 +57,21 @@ class WCS(OGC, RasterModel):
 
 class WCSCommonWidget(QtGui.QWidget):
     """
-    WCS module allows connection to a web-based OGC (Open Geospatial Consortium)
-    web coverage service.
+    The WCS module establishes and processes connection to a web-based OGC
+    (Open Geospatial Consortium) web coverage service.
+
     Configuration allows the base URL for the service to be set and called.
     Choosing the appropriate combination of specific service type and other
     parameters, will cause the input port to be set with a specific POST call,
     once the configuration interface is closed.
-    Running the WCS will cause the specific, parameterised WCS to be called
+
+    Running the workflow will cause the specific, parameterised WCS to be called
     and output from the request to be available via the output port(s).
 
     """
+
     def __init__(self, ogc_widget, spatial_widget, parent=None):
-        """sets parameters for wcs request"""
+        """Set parameters for the WCS request."""
         QtGui.QWidget.__init__(self, parent)
         self.setObjectName("WCSCommonWidget")
         self.parent_widget = ogc_widget
@@ -80,13 +84,11 @@ class WCSCommonWidget(QtGui.QWidget):
         self.connect(
             self.parent_widget,
             QtCore.SIGNAL('serviceActivated'),
-            self.loadRequests
-            )
+            self.loadRequests)
         self.connect(
             self.parent_widget,
             QtCore.SIGNAL('serviceDeactivated'),
-            self.removeRequests
-            )
+            self.removeRequests)
 
     def create_wcs_config_window(self):
         """TO DO - add docstring"""
@@ -142,42 +144,42 @@ class WCSCommonWidget(QtGui.QWidget):
         self.dcLayerId = QtGui.QLabel('__')
         self.detailsLayout.addWidget(self.dcLayerId, 0, 1)
         self.dcLayerDescription = QtGui.QLabel('__')
-        self.detailsLayout.addWidget(self.dcLayerDescription, 1,1)
+        self.detailsLayout.addWidget(self.dcLayerDescription, 1, 1)
 
         #Bounding box - Grid Envelope
         self.dcULX = QtGui.QLineEdit(' ')
         self.dcULX.setEnabled(False) #sets it not to be editable
-        self.detailsLayout.addWidget(self.dcULX, 3,1)
+        self.detailsLayout.addWidget(self.dcULX, 3, 1)
         self.dcLRX = QtGui.QLineEdit(' ')
         self.dcLRX.setEnabled(False)
-        self.detailsLayout.addWidget(self.dcLRX, 3,3)
+        self.detailsLayout.addWidget(self.dcLRX, 3, 3)
         self.dcULY = QtGui.QLineEdit(' ')
         self.dcULY.setEnabled(False)
-        self.detailsLayout.addWidget(self.dcULY, 4,1)
+        self.detailsLayout.addWidget(self.dcULY, 4, 1)
         self.dcLRY = QtGui.QLineEdit(' ')
         self.dcLRY.setEnabled(False)
-        self.detailsLayout.addWidget(self.dcLRY, 4,3)
+        self.detailsLayout.addWidget(self.dcLRY, 4, 3)
 
         #Bounding Box Spatial subset
         self.ssULX = QtGui.QLabel(' ')
         #self.ssULX.setEnabled(False) #sets it not to be editable
-        self.detailsLayout.addWidget(self.ssULX, 6,1)
+        self.detailsLayout.addWidget(self.ssULX, 6, 1)
         self.ssLRX = QtGui.QLabel(' ')
         #self.ssLRX.setEnabled(False)
-        self.detailsLayout.addWidget(self.ssLRX, 6,3)
+        self.detailsLayout.addWidget(self.ssLRX, 6, 3)
         self.ssULY = QtGui.QLabel(' ')
         #self.ssULY.setEnabled(False)
-        self.detailsLayout.addWidget(self.ssULY, 7,1)
+        self.detailsLayout.addWidget(self.ssULY, 7, 1)
         self.ssLRY = QtGui.QLabel(' ')
         #self.ssLRY.setEnabled(False)
-        self.detailsLayout.addWidget(self.ssLRY, 7,3)
+        self.detailsLayout.addWidget(self.ssLRY, 7, 3)
 
         self.dcWidth = QtGui.QLabel(' ')
         #self.dcWidth.setEnabled(False)
-        self.detailsLayout.addWidget(self.dcWidth, 8,1)
+        self.detailsLayout.addWidget(self.dcWidth, 8, 1)
         self.dcHeight = QtGui.QLabel(' ')
         #self.dcHeight.setEnabled(False)
-        self.detailsLayout.addWidget(self.dcHeight, 8,3)
+        self.detailsLayout.addWidget(self.dcHeight, 8, 3)
 
         self.dcSRS = QtGui.QLabel('__')
         self.detailsLayout.addWidget(self.dcSRS, 9, 1)
@@ -203,8 +205,7 @@ class WCSCommonWidget(QtGui.QWidget):
         self.connect(
             self.requestLbx,
             QtCore.SIGNAL("itemClicked(QListWidgetItem*)"),
-            self.coverageNameChanged
-            )
+            self.coverageNameChanged)
 
         #for message box
         self.arrowCursor = QtGui.QCursor(QtCore.Qt.ArrowCursor)
@@ -216,7 +217,7 @@ class WCSCommonWidget(QtGui.QWidget):
         """
         bbox = self.spatial_widget.getBoundingBox()
         return str(self.dcULX.text()) + ',' + str(self.dcLRX.text()) + ','\
-            +  str(self.dcULY.text()) + ',' + str(self.dcLRY.text())
+            + str(self.dcULY.text()) + ',' + str(self.dcLRY.text())
 
     def removeRequests(self):
         """Remove all details when no WCS is selected."""
@@ -314,14 +315,12 @@ class WCSCommonWidget(QtGui.QWidget):
             self.dcULX.text(),
             self.dcULY.text(),
             self.dcLRX.text(),
-            self.dcLRY.text()
-            )
+            self.dcLRY.text())
 
     def showWarning(self, message):
         """Show user a warning dialog."""
         self.setCursor(self.arrowCursor)
-        QtGui.QMessageBox.warning(self,"Error",message,QtGui.QMessageBox.Ok)
-
+        QtGui.QMessageBox.warning(self, "Error", message, QtGui.QMessageBox.Ok)
 
     def loadRequests(self):
         """ loadRequest() -> None
@@ -335,10 +334,11 @@ class WCSCommonWidget(QtGui.QWidget):
 
 class WCSConfigurationWidget(OgcConfigurationWidget):
     """makes use of code style from OgcConfigurationWidget"""
+
     def __init__(self, module, controller, parent=None):
         OgcConfigurationWidget.__init__(self, module, controller, parent)
         # pass in parent widget i.e. OgcCommonWidget class and SpatialWidget Class to read changed coords
-        self.wcs_config_widget = WCSCommonWidget(self.ogc_common_widget,  self.spatial_widget)
+        self.wcs_config_widget = WCSCommonWidget(self.ogc_common_widget, self.spatial_widget)
         # tabs
         self.tabs.insertTab(1, self.wcs_config_widget, "")
         self.tabs.setTabText(
@@ -347,9 +347,7 @@ class WCSConfigurationWidget(OgcConfigurationWidget):
                 "OgcConfigurationWidget",
                 "WCS Specific Metadata",
                 None,
-                QtGui.QApplication.UnicodeUTF8
-                )
-            )
+                QtGui.QApplication.UnicodeUTF8))
 
         self.tabs.setTabToolTip(
             self.tabs.indexOf(self.wcs_config_widget),
@@ -357,9 +355,7 @@ class WCSConfigurationWidget(OgcConfigurationWidget):
                 "OgcConfigurationWidget",
                 "Select WCS-specific parameters",
                 None,
-                QtGui.QApplication.UnicodeUTF8
-                    )
-                )
+                QtGui.QApplication.UnicodeUTF8))
         self.tabs.setCurrentIndex(0)
 
     def constructRequest(self):
@@ -384,7 +380,7 @@ class WCSConfigurationWidget(OgcConfigurationWidget):
         except:
             coord_system = None
         try:
-            formats =  self.wcs_config_widget.dcReqFormat.currentText()
+            formats = self.wcs_config_widget.dcReqFormat.currentText()
         except:
             formats = None
         try:
@@ -404,8 +400,7 @@ class WCSConfigurationWidget(OgcConfigurationWidget):
                 traceback.print_exc()
                 raise ModuleError(
                     self,
-                    'Unknown WCS bounding box type' + ': %s' % str(error)
-                    )
+                    'Unknown WCS bounding box type' + ': %s' % str(error))
         else:
             self.bbox = None
 
@@ -443,12 +438,12 @@ class WCSConfigurationWidget(OgcConfigurationWidget):
             response = myWCS.getCoverage(
                 identifier=selectedCoverageId,
                 bbox=self.bbox,
-                crs= coord_system,
+                crs=coord_system,
                 format=formats)
             # TO DO - update this to handle files as per VisTrails "filePool"
             # http://www.vistrails.org/index.php/UsersGuideVisTrailsPackages#Dealing_with_command_line_tools_and_side_effects
             # derek->bolelang -- but why do we want to do this???
-            f=open('myfile.'+ formats,  'wb')
+            f = open('myfile.' + formats, 'wb')
             f.write(response.read())
             f.close()
 
@@ -473,8 +468,7 @@ class WCSConfigurationWidget(OgcConfigurationWidget):
         else:
             raise ModuleError(
                 self,
-                'Unknown WCS request type' + ': %s' % str(rType)
-                )
+                'Unknown WCS request type' + ': %s' % str(rType))
 
         result['layername'] = selectedCoverageId
         return result

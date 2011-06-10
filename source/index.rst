@@ -3,6 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+============================
 EO4vistrails's Documentation
 ============================
 
@@ -12,6 +13,10 @@ Contents:
 .. toctree::
    :maxdepth: 3
 
+   overview
+   modules
+   glossary
+
 Indices and tables
 ==================
 
@@ -19,43 +24,3 @@ Indices and tables
 * :ref:`modindex`
 * :ref:`search`
 
-Packages!
-=========
-
-GeoInf
-------
-
-.. automodule:: geoinf
-   :members:
-
-GeoInf: DataModels
-~~~~~~~~~~~~~~~~~~
-
-.. .. automodule:: geoinf.datamodels
-
-Modules
-+++++++
-
-.. automodule:: geoinf.datamodels.Test
-   :members:
-
-.. .. autoclass:: geoinf.datamodels.Feature.MemFeatureModel
-..    :members:
-
-DataAnalytics
--------------
-
-.. automodule:: dataanalytics
-   :members:
-
-RPyC
-----
-
-.. automodule:: rpyc
-   :members:
-
-Utils
------
-
-.. automodule:: utils
-   :members:

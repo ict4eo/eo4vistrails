@@ -23,12 +23,13 @@
 ## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ##
 ############################################################################
-"""This package provides GIS capabilities for eo4vistrails.
-In particular, this module provides PostGIS clients via psycopg2.
-This is not a SQL Builder - it assumes you know SQL and, in particular,
+"""This module provides PostGIS clients via psycopg2.
+
+This module is *not* a SQL Builder - it assumes you know SQL and, in particular,
 spatial SQL as provided by PostGIS.
-You will need to write raw sql by hand. Provides a session a.k.a. a postgis
-connection and allows random queries to be executed against the chosen database.
+
+This module provides a session i.e. a postgis connection, and allows manually-
+created SQL queries to be executed against the chosen database.
 """
 
 # library
@@ -52,10 +53,11 @@ import urllib
 
 class PostGisSession(Session):
     """Responsible for making a connection to a postgis database.
-    
+
     Ultimately, objects of this class will need to be passed from
     execution step to execution step, so may need to be a constant?
     """
+
     def __init__(self):
         Session.__init__(self)
 
@@ -64,52 +66,45 @@ class PostGisSession(Session):
         self.host = self.forceGetInputFromPort('postgisHost', 'localhost')
         self.port = self.forceGetInputFromPort('postgisPort', '5432')
         self.user = self.forceGetInputFromPort('postgisUser', 'default')
-        self.pwd =  self.forceGetInputFromPort('postgisPassword', 'default')
+        self.pwd = self.forceGetInputFromPort('postgisPassword', 'default')
         self.database = self.forceGetInputFromPort('postgisDatabase', 'default')
-
-        self.connectstr = "host=" + self.host+ " dbname=" + self.database + \
+        self.connectstr = "host=" + self.host + " dbname=" + self.database + \
                           " user=" + self.user + " password=" + self.pwd
-
-        self.setResult("PostGisSession",  self)
+        self.setResult("PostGisSession", self)
 
 
 @RPyCSafeModule()
 class PostGisNumpyReturningCursor(ThreadSafeMixin, RPyCModule):
     """Returns data in the form of a eo4vistrails FeatureModel if user binds to self output port"""
-    #multi inheritance of module subclasses is a problem
+    #multi inheritance of module subclasses is problematic
+
     def __init__(self):
         RPyCModule.__init__(self)
         ThreadSafeMixin.__init__(self)
-        
+
     def compute(self):
         """Will need to fetch a PostGisSession object on its input port
         Overrides supers method"""
         pgsession = self.getInputFromPort("PostGisSessionObject")
-        
+
         try:
             import random
             random.seed()
-            
             pgconn = psycopg2.connect(pgsession.connectstr)
-            
-            curs = pgconn.cursor('VISTRAILS'+str(random.randint(0,10000)))
-
+            curs = pgconn.cursor('VISTRAILS' + str(random.randint(0, 10000)))
             sql_input = urllib.unquote(str(self.forceGetInputFromPort('source', '')))
             '''here we substitute input port values within the source'''
-            
             parameters = {}
             for k in self.inputPorts:
                 if k not in ['source', 'PostGisSessionObject', 'rpycnode', 'self']:
                     v = self.getInputFromPort(k)
                     parameters[k] = v
-            
             curs.execute(sql_input, parameters)
-            
+
             import numpy
-            
             rec = curs.fetchone()
             if rec:
-                dtype = []                
+                dtype = []
                 i = 0
                 sameType = True
                 firstType = type(rec[0])
@@ -119,38 +114,33 @@ class PostGisNumpyReturningCursor(ThreadSafeMixin, RPyCModule):
                     #TODO: What about dates? How should they be handled.
                     dtype.append((curs.description[i][0], type(item)))
                     i += 1
-                
                 curs.scroll(-1)
-
                 out = NDArray()
-                
                 npRecArray = numpy.fromiter(curs, dtype=dtype)
-
-                #QUESTION: Is this meaningfull in all cases, should we be doing this
+                #TODO QUESTION: Is this meaningful in all cases, should we be doing this
                 if sameType:
-                    npArray = npRecArray.view(dtype=firstType).reshape(-1,len(npRecArray[0]))               
+                    npArray = npRecArray.view(dtype=firstType).reshape(-1, len(npRecArray[0]))
                     out.set_array(npArray)
                 else:
                     out.set_array(npRecArray)
-
                 self.setResult('nummpyArray', out)
-                
             else:
-                raise ModuleError,  (PostGisNumpyReturningCursor,  "no records returned")
-                
+                raise ModuleError, (PostGisNumpyReturningCursor, "no records returned")
         except Exception as ex:
-            print ex
-            raise ModuleError,  (PostGisNumpyReturningCursor,  "Could not execute SQL Statement")
+            #print "PostGIS:130 ", ex
+            raise ModuleError, (PostGisNumpyReturningCursor, "Could not execute SQL Statement")
         finally:
             curs.close()
             pgconn.close()
+
 
 @RPyCSafeModule()
 class PostGisFeatureReturningCursor(ThreadSafeMixin, RPyCModule):
     """Returns data in the form of a eo4vistrails FeatureModel
     if user binds to self output port
     """
-    #multi inheritance of module subclasses is a problem
+    #multi inheritance of module subclasses is a problem #TO DO: clarify this!
+
     def __init__(self):
         RPyCModule.__init__(self)
         ThreadSafeMixin.__init__(self)
@@ -159,43 +149,38 @@ class PostGisFeatureReturningCursor(ThreadSafeMixin, RPyCModule):
         """Will need to fetch a PostGisSession object on its input port
         Overrides supers method"""
         pgsession = self.getInputFromPort("PostGisSessionObject")
-        
         try:
-            
             sql_input = urllib.unquote(str(self.forceGetInputFromPort('source', '')))
-            
             '''here we substitute input port values within the source'''
             for k in self.inputPorts:
                 if k not in ['source', 'PostGisSessionObject', 'rpycnode', 'self']:
                     value = self.getInputFromPort(k)
                     sql_input = sql_input.replace(k, value.__str__())
-
             postGISRequest = PostGISRequest()
             postGISRequest.setConnection(pgsession.host,
                               pgsession.port,
                               pgsession.database,
                               pgsession.user,
                               pgsession.pwd)
-            postGISRequest.setDataSource('',                 #schema must be blank
-                              '('+sql_input+')',
-                              'the_geom',         #TODO: assuming the_geom, this mus be looked up
+            postGISRequest.setDataSource('',      #schema must be blank
+                              '(' + sql_input + ')',
+                              'the_geom',         #TODO: assuming the_geom, this must be looked up
                               '',                 #where clause must be blank
-                              'gid')              #TODO: assuming gid, this mus be looked up
-
+                              'gid')              #TODO: assuming gid, this must be looked up
             #select * from ba_modis_giglio limit 10000
             #TODO: make sure that the user can select a layer name or we generate a random one
             qgsVectorLayer = QgsVectorLayer(
                 postGISRequest.get_uri(),
                 postGISRequest.get_layername(),
                 postGISRequest.get_driver())
-
             self.setResult('PostGISRequest', postGISRequest)
             self.setResult('QgsVectorLayer', qgsVectorLayer)
 
         except Exception as ex:
-            print ex
-            raise ModuleError,  (PostGisFeatureReturningCursor, \
+            #print "PostGIS:180 ", ex
+            raise ModuleError, (PostGisFeatureReturningCursor, \
                                  "Could not execute SQL Statement")
+
 
 @RPyCSafeModule()
 class PostGisBasicReturningCursor(ThreadSafeMixin, RPyCModule):
@@ -214,36 +199,29 @@ class PostGisBasicReturningCursor(ThreadSafeMixin, RPyCModule):
 
         Overrides supers method"""
         pgsession = self.getInputFromPort("PostGisSessionObject")
-
         try:
             pgconn = psycopg2.connect(pgsession.connectstr)
-        
             curs = pgconn.cursor()
-            
             sql_input = urllib.unquote(str(self.forceGetInputFromPort('source', '')))
-            
             '''here we substitute input port values within the source'''
             parameters = {}
             for k in self.inputPorts:
                 if k not in ['source', 'PostGisSessionObject', 'rpycnode', 'self']:
                     v = self.getInputFromPort(k)
                     parameters[k] = v
-            
-            print curs.mogrify(sql_input, parameters)
+            #print "PostGIS:212 ", curs.mogrify(sql_input, parameters)
             curs.execute(sql_input, parameters)
-            
             sql_return_list = curs.fetchall()
-            
-            self.setResult('records',  sql_return_list)
-            
+            self.setResult('records', sql_return_list)
         except Exception as ex:
-            print ex
-            raise ModuleError,  (PostGisFeatureReturningCursor,\
+            #print "PostGIS:217 ", ex
+            raise ModuleError, (PostGisFeatureReturningCursor,\
                                  "Could not execute SQL Statement")
         finally:
             curs.close()
             pgconn.close()
             #set output port to receive this list
+
 
 @RPyCSafeModule()
 class PostGisNonReturningCursor(NotCacheable, ThreadSafeMixin, RPyCModule):
@@ -261,37 +239,34 @@ class PostGisNonReturningCursor(NotCacheable, ThreadSafeMixin, RPyCModule):
         ThreadSafeMixin.__init__(self)
 
     def compute(self):
-        print "Hello"
+        #print "PostGIS:242 ", "Hello"
         """Will need to fetch a PostGisSession object on its input port
         Overrides supers method"""
         pgsession = self.getInputFromPort("PostGisSessionObject")
-        print pgsession
+        #print pgsession
         try:
             # we could be dealing with multiple requests here,
-            #   so parse string and execute requests one by one            
+            #   so parse string and execute requests one by one
             pgconn = psycopg2.connect(pgsession.connectstr)
-            print pgconn
+            #print pgconn
             curs = pgconn.cursor()
-            print curs
-            resultstatus =[]
-            
+            #print curs
+            resultstatus = []
             sql_input = urllib.unquote(str(self.forceGetInputFromPort('source', '')))
-            
             for query in sql_input.split(";"):
                 if len(query) > 0:
                     values = {}
                     for k in self.inputPorts:
                         if k not in ['source', 'PostGisSessionObject', 'rpycnode', 'self']:
                             values[k] = self.getInputFromPort(k)
-                    
                     theLen = 0
                     for k, v in values.items():
                         if type(v) in [list]:
                             if theLen == 0 and len(v) > 0:
                                 theLen = len(v)
                             if theLen > 0 and len(v) != theLen:
-                                print k, v, theLen
-                                raise ModuleError,  (PostGisNonReturningCursor,\
+                                #print "PostGIS:268" k, v, theLen
+                                raise ModuleError, (PostGisNonReturningCursor,\
                                          "All list like params must have same length")
                     if theLen > 0:
                         parameters = [{} for x in xrange(theLen)]
@@ -301,30 +276,26 @@ class PostGisNonReturningCursor(NotCacheable, ThreadSafeMixin, RPyCModule):
                                     parameters[i][k] = v[i]
                                 else:
                                     parameters[i][k] = v
-                        
-                        print "about to execute many"
-                        curs.executemany(query+";", parameters)                        
+                        #print "PostGIS:279 ", "about to execute many"
+                        curs.executemany(query + ";", parameters)
                         pgconn.commit()
                         resultstatus.append(curs.statusmessage)
                     else:
                         parameters = {}
                         for k, v in values.items():
                             parameters[k] = v
-                        
-                        curs.execute(query+";", parameters)
+                        curs.execute(query + ";", parameters)
                         pgconn.commit()
                         resultstatus.append(curs.statusmessage)
-            
-            
             self.setResult('status', resultstatus)
-            
         except Exception as ex:
-            print ex
-            raise ModuleError,  (PostGisFeatureReturningCursor,\
+            #print "PostGIS:292 ",ex
+            raise ModuleError, (PostGisFeatureReturningCursor, \
                                  "Could not execute SQL Statement")
         finally:
             curs.close()
             pgconn.close()
+
 
 @RPyCSafeModule()
 class PostGisCopyFrom(NotCacheable, ThreadSafeMixin, RPyCModule):
@@ -333,15 +304,15 @@ class PostGisCopyFrom(NotCacheable, ThreadSafeMixin, RPyCModule):
         http://initd.org/psycopg/docs/cursor.html#cursor.copy_from
     """
 
-    _input_ports  = [('PostGisSessionObject','(za.co.csir.eo4vistrails:PostGisSession:postGIS)'),
-                     ('fullfilepath','(edu.utah.sci.vistrails.basic:String)'),
-                     ('headers','(edu.utah.sci.vistrails.basic:List)'),
-                     ('delimiter','(edu.utah.sci.vistrails.basic:String)', True, '\t'),
-                     ('nullvalue','(edu.utah.sci.vistrails.basic:String)', False, '\N'),
-                     ('tablename','(edu.utah.sci.vistrails.basic:String)'),
+    _input_ports = [('PostGisSessionObject', '(za.co.csir.eo4vistrails:PostGisSession:postGIS)'),
+                     ('fullfilepath', '(edu.utah.sci.vistrails.basic:String)'),
+                     ('headers', '(edu.utah.sci.vistrails.basic:List)'),
+                     ('delimiter', '(edu.utah.sci.vistrails.basic:String)', True, '\t'),
+                     ('nullvalue', '(edu.utah.sci.vistrails.basic:String)', False, '\N'),
+                     ('tablename', '(edu.utah.sci.vistrails.basic:String)'),
                      ]
-    _output_ports = [('status','(edu.utah.sci.vistrails.basic:List)'),
-                     ('self','(edu.utah.sci.vistrails.basic:Module)')]
+    _output_ports = [('status', '(edu.utah.sci.vistrails.basic:List)'),
+                     ('self', '(edu.utah.sci.vistrails.basic:Module)')]
 
     def __init__(self):
         RPyCModule.__init__(self)
@@ -351,40 +322,34 @@ class PostGisCopyFrom(NotCacheable, ThreadSafeMixin, RPyCModule):
         """Will need to fetch a PostGisSession object on its input port
         Overrides supers method"""
         pgsession = self.getInputFromPort("PostGisSessionObject")
-        print pgsession
+        #print "PostGIS:325 ", pgsession
         try:
             # we could be dealing with multiple requests here,
-            #   so parse string and execute requests one by one            
+            #   so parse string and execute requests one by one
             pgconn = psycopg2.connect(pgsession.connectstr)
-            print pgconn
+            #print "PostGIS:330 ", pgconn
             curs = pgconn.cursor()
-            print curs
-            resultstatus =[]
-            
+            #print "PostGIS:332 ", curs
+            resultstatus = []
             csvfile = self.getInputFromPort('fullfilepath')
             csvheader = self.forceGetInputFromPort('headers', None)
             csvdelimiter = self.forceGetInputFromPort('delimiter', '\t')
             csvnullvalue = self.forceGetInputFromPort('nullvalue', '\N')
-            
             tablename = self.getInputFromPort('tablename')
-                        
-            thefile = open(csvfile, "r")       
-            
+            thefile = open(csvfile, "r")
             curs.copy_from(thefile, tablename, sep=csvdelimiter, null=csvnullvalue, columns=csvheader)
-            
             pgconn.commit()
             resultstatus.append(curs.statusmessage)
-            
             self.setResult('status', resultstatus)
-            
         except Exception as ex:
-            print ex
-            raise ModuleError,  (PostGisFeatureReturningCursor,\
+            #print "PostGIS:345 ", ex
+            raise ModuleError, (PostGisFeatureReturningCursor,\
                                  "Could not execute SQL Statement")
         finally:
             curs.close()
             pgconn.close()
-            
+
+
 @RPyCSafeModule()
 class PostGisCopyTo(NotCacheable, ThreadSafeMixin, Module):
     """
@@ -392,15 +357,15 @@ class PostGisCopyTo(NotCacheable, ThreadSafeMixin, Module):
         http://initd.org/psycopg/docs/cursor.html#cursor.copy_from
     """
 
-    _input_ports  = [('PostGisSessionObject','(za.co.csir.eo4vistrails:PostGisSession:postGIS)'),
-                     ('fullfilepath','(edu.utah.sci.vistrails.basic:String)'),
-                     ('headers','(edu.utah.sci.vistrails.basic:List)'),
-                     ('delimiter','(edu.utah.sci.vistrails.basic:String)', True, '\t'),
-                     ('nullvalue','(edu.utah.sci.vistrails.basic:String)', False, '\N'),
-                     ('tablename','(edu.utah.sci.vistrails.basic:String)'),
+    _input_ports = [('PostGisSessionObject', '(za.co.csir.eo4vistrails:PostGisSession:postGIS)'),
+                     ('fullfilepath', '(edu.utah.sci.vistrails.basic:String)'),
+                     ('headers', '(edu.utah.sci.vistrails.basic:List)'),
+                     ('delimiter', '(edu.utah.sci.vistrails.basic:String)', True, '\t'),
+                     ('nullvalue', '(edu.utah.sci.vistrails.basic:String)', False, '\N'),
+                     ('tablename', '(edu.utah.sci.vistrails.basic:String)'),
                      ]
-    _output_ports = [('status','(edu.utah.sci.vistrails.basic:List)'),
-                     ('self','(edu.utah.sci.vistrails.basic:Module)')]
+    _output_ports = [('status', '(edu.utah.sci.vistrails.basic:List)'),
+                     ('self', '(edu.utah.sci.vistrails.basic:Module)')]
 
     def __init__(self):
         Module.__init__(self)
@@ -410,46 +375,40 @@ class PostGisCopyTo(NotCacheable, ThreadSafeMixin, Module):
         """Will need to fetch a PostGisSession object on its input port
         Overrides supers method"""
         pgsession = self.getInputFromPort("PostGisSessionObject")
-        print pgsession
+        #print "PostGIS:328 ", pgsession
         try:
             # we could be dealing with multiple requests here,
-            #   so parse string and execute requests one by one            
+            #   so parse string and execute requests one by one
             pgconn = psycopg2.connect(pgsession.connectstr)
-            print pgconn
+            #print "PostGIS:383 ", pgconn
             curs = pgconn.cursor()
-            print curs
-            resultstatus =[]
-            
+            #print "PostGIS:385 ", curs
+            resultstatus = []
             csvfile = self.getInputFromPort('fullfilepath')
             csvheader = self.forceGetInputFromPort('headers', None)
             csvdelimiter = self.forceGetInputFromPort('delimiter', '\t')
             csvnullvalue = self.forceGetInputFromPort('nullvalue', '\N')
-            
             tablename = self.getInputFromPort('tablename')
-            
             touch(csvfile)
-
-            thefile = open(csvfile,"w")
-            
+            thefile = open(csvfile, "w")
             curs.copy_to(thefile, tablename, sep=csvdelimiter, null=csvnullvalue, columns=csvheader)
-            
             pgconn.commit()
             resultstatus.append(curs.statusmessage)
-            
             self.setResult('status', resultstatus)
-            
         except Exception as ex:
-            print ex
-            raise ModuleError,  (PostGisFeatureReturningCursor,\
+            #print "PostGIS:399 ", ex
+            raise ModuleError, (PostGisFeatureReturningCursor,\
                                  "Could not execute SQL Statement")
         finally:
             curs.close()
             pgconn.close()
-            
-class SQLSourceConfigurationWidget(SourceConfigurationWidget):
-    """NOT IN USE"""
+
+
+class _SQLSourceConfigurationWidget(SourceConfigurationWidget):
+    """THIS CLASS IS NOT IN USE"""
     pass
     '''removed by tvz so as to allow for parameterisation of SQL queries'''
+
     #def __init__(self, module, controller, parent=None):
     #    SourceConfigurationWidget.__init__(self, module, controller, None,
     #                                       False, False, parent)

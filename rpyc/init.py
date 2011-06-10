@@ -3,10 +3,10 @@
 ###
 ### Copyright (C) 2010 CSIR Meraka Institute. All rights reserved.
 ###
-### This full package extends VisTrails, providing GIS/Earth Observation 
-### ingestion, pre-processing, transformation, analytic and visualisation 
-### capabilities . Included is the abilty to run code transparently in 
-### OpenNebula cloud environments. There are various software 
+### This full package extends VisTrails, providing GIS/Earth Observation
+### ingestion, pre-processing, transformation, analytic and visualisation
+### capabilities . Included is the abilty to run code transparently in
+### OpenNebula cloud environments. There are various software
 ### dependencies, but all are FOSS.
 ###
 ### This file may be used under the terms of the GNU General Public
@@ -24,28 +24,21 @@
 ### WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ###
 #############################################################################
-"""
-Created on Tue Dec 14 09:38:10 2010
-
-@author: tvzyl
-
-Module forms part of the rpyc vistrails capabilties, used to add multicore
-parallel and distributed processing to vistrails.
-
-This Module is the called by higher level inits to ensure that regsitration with 
-vsitrails takes place
-
+"""This module forms part of the rpyc vistrails capabilties.  It adds multicore
+parallel and distributed processing to VisTrails.
 """
 #History
 #Terence van Zyl, 15 Dec 2010, Version 1.0
 
 def initialize(*args, **keywords):
+    """This method is called by higher-level ones,
+    to ensure that registration with VisTrails takes place."""
     from core.modules.module_registry import get_module_registry
     from core.modules.python_source_configure import PythonSourceConfigurationWidget
     from core.modules import basic_modules
-   
+
     import RPyC, RPyCHelper, RPyCTest
-    
+
     """
     sets everything up called from the top level initialize
     """
@@ -61,12 +54,12 @@ def initialize(*args, **keywords):
     reg.add_module(RPyCHelper.RPyCNode,
                    name="RpyC Node",
                    namespace=mynamespace)
-    
+
     #Dummy Module Mixed into all RPYCSafeModules
     reg.add_module(RPyC.RPyCModule,
                    namespace=mynamespace,
                    abstract=True)
-    
+
     #Add RPyCCode
     reg.add_module(RPyCHelper.RPyCCode,
                    name = "RPyC Code",
