@@ -39,10 +39,13 @@ import core.modules.module_registry
 import core.system
 from PyQt4 import QtCore, QtGui
 from packages.eo4vistrails.geoinf.datamodels.Feature import FeatureModel
-from packages.eo4vistrails.geoinf.ogc.OgcConfigurationWidget import OgcConfigurationWidget
-from core.modules.vistrails_module import Module, new_module, NotCacheable, ModuleError
+from packages.eo4vistrails.geoinf.ogc.OgcConfigurationWidget import \
+    OgcConfigurationWidget
+from core.modules.vistrails_module import Module, new_module, NotCacheable,\
+    ModuleError
 #from geoinf.datamodels.Raster import RasterModel
-import os, sys
+import os
+import sys
 from numpy import *
 from osgeo import ogr, gdal
 import fnmatch
@@ -52,8 +55,8 @@ from scipy import *
 #need to import the configuration widget we develop
 class FeatureImport(FeatureModel):
     """TO DO - add docstring
-
     """
+
     def __init__(self):
         FeatureModel.__init__(self)
 
@@ -63,8 +66,8 @@ class FeatureImport(FeatureModel):
 
 class FeatureImportCommonWidget(QtGui.QWidget):
     """TO DO - add docstring
-
     """
+
     def __init__(self, ogc_widget, parent=None):
         QtGui.QWidget.__init__(self, parent)
         self.setObjectName("FeatureImportCommonWidget")
@@ -85,92 +88,79 @@ class FeatureImportCommonWidget(QtGui.QWidget):
         )"""
 
     def create_config_window(self):
-       """Create datacontainers and layout for displaying Feature data."""
-       self.setWindowTitle("FeatureImport Configuration Widget")
-       self.setMinimumSize(900, 675)
-       # main layout
-       self.mainLayout = QtGui.QVBoxLayout()
-       self.setLayout(self.mainLayout)
-       self.placesGroupBoxButton = QtGui.QPushButton("Load Shape File")
-       self.placesGroupBox = QtGui.QLineEdit("Select Shapefile")
-       self.placesLayout = QtGui.QHBoxLayout()
-       self.placesGroupBox.setLayout(self.placesLayout)
-       self.mainLayout.addWidget(self.placesGroupBoxButton)
-       self.mainLayout.addWidget(self.placesGroupBox)
+        """Create datacontainers and layout for displaying Feature data."""
+        self.setWindowTitle("FeatureImport Configuration Widget")
+        self.setMinimumSize(900, 675)
+        # main layout
+        self.mainLayout = QtGui.QVBoxLayout()
+        self.setLayout(self.mainLayout)
+        self.placesGroupBoxButton = QtGui.QPushButton("Load Shape File")
+        self.placesGroupBox = QtGui.QLineEdit("Select Shapefile")
+        self.placesLayout = QtGui.QHBoxLayout()
+        self.placesGroupBox.setLayout(self.placesLayout)
+        self.mainLayout.addWidget(self.placesGroupBoxButton)
+        self.mainLayout.addWidget(self.placesGroupBox)
 
-       #self.split = QtGui.QSplitter(QtCore.Qt.Vertical)
-       #self.mainLayout.addWidget(self.split)
-       self.detailsGroupBox = QtGui.QGroupBox("Shapefile Metadata")
-       self.mainLayout.addWidget(self.detailsGroupBox)
-       self.detailsLayout = QtGui.QGridLayout()
-       self.detailsGroupBox.setLayout(self.detailsLayout)
-       # places
-       #self.lbxPlaces = QtGui.QListWidget()
-       #self.placesLayout.addWidget(self.lbxPlaces)
-       #self.btnPlaces = QtGui.QPushButton("Add");
-       #self.placesLayout.addWidget(self.btnPlaces)
-       # places details layout
-       #   labels
-       #   data containers
-       self.lbxDetails = QtGui.QListWidget()
-       self.detailsLayout.addWidget(self.lbxDetails)
-       # self.cbxPlaces = QtGui.QComboBox();
-       #self.detailsLayout.addWidget(self.cbxPlaces)
+        #self.split = QtGui.QSplitter(QtCore.Qt.Vertical)
+        #self.mainLayout.addWidget(self.split)
+        self.detailsGroupBox = QtGui.QGroupBox("Shapefile Metadata")
+        self.mainLayout.addWidget(self.detailsGroupBox)
+        self.detailsLayout = QtGui.QGridLayout()
+        self.detailsGroupBox.setLayout(self.detailsLayout)
+        # places
+        #self.lbxPlaces = QtGui.QListWidget()
+        #self.placesLayout.addWidget(self.lbxPlaces)
+        #self.btnPlaces = QtGui.QPushButton("Add");
+        #self.placesLayout.addWidget(self.btnPlaces)
+        # places details layout
+        #   labels
+        #   data containers
+        self.lbxDetails = QtGui.QListWidget()
+        self.detailsLayout.addWidget(self.lbxDetails)
+        # self.cbxPlaces = QtGui.QComboBox();
+        #self.detailsLayout.addWidget(self.cbxPlaces)
 
-       self.buttonGroupBox = QtGui.QGroupBox("")
-       self.buttonLayout = QtGui.QHBoxLayout()
-       self.buttonGroupBox.setLayout(self.buttonLayout)
-       self.detailsLayout.addWidget(self.buttonGroupBox)
-       self.btnCancel = QtGui.QPushButton("Cancel");
-       self.btnExecute = QtGui.QPushButton("Execute");
-       self.buttonLayout.addWidget(self.btnCancel)
-       self.buttonLayout.addWidget(self.btnExecute)
+        self.buttonGroupBox = QtGui.QGroupBox("")
+        self.buttonLayout = QtGui.QHBoxLayout()
+        self.buttonGroupBox.setLayout(self.buttonLayout)
+        self.detailsLayout.addWidget(self.buttonGroupBox)
+        self.btnCancel = QtGui.QPushButton("Cancel")
+        self.btnExecute = QtGui.QPushButton("Execute")
+        self.buttonLayout.addWidget(self.btnCancel)
+        self.buttonLayout.addWidget(self.btnExecute)
 
-       self.connect(self.placesGroupBoxButton, QtCore.SIGNAL('clicked(bool)'), self.showDialog)
-
-       self.connect(self.btnExecute, QtCore.SIGNAL('clicked(bool)'), self.getShapeFileMetaData)
-
+        self.connect(self.placesGroupBoxButton, QtCore.SIGNAL('clicked(bool)'), self.showDialog)
+        self.connect(self.btnExecute, QtCore.SIGNAL('clicked(bool)'), self.getShapeFileMetaData)
 
     def showDialog(self):
-
-        filename = QtGui.QFileDialog.getOpenFileName(self, 'Open file','/home')
-
+        """TO DO - add docstring"""
+        filename = QtGui.QFileDialog.getOpenFileName(self, 'Open file', '/home')
         self.placesGroupBox.setText(str(filename))
-
         fname = open(filename)
-
         data = fname.read()
-
         self.lbxDetails.addItem(str(data))
 
-
     def getShapeFileMetaData(self):
-
+        """TO DO - add docstring"""
         shpfile = self.placesGroupBox.text()
-        
         #ogr_driver_name = ogr.GetDriverByName("ESRI Shapefile")
-
         browser = MetaDataBrowser("ESRI Shapefile")
-
         data = browser.get_metadata(str(shpfile))
-
         self.lbxDetails.addItem(str(data))
 
 
 class MetaDataBrowser:
- 
+    """TO DO - add docstring
+    """
+
     def __init__(self, ogr_driver_name):
         """
         Valid driver names are: ESRI_Shapefile, GTiff, GRASS, PostgreSQL, etc.
         """
         self.ogr_driver_name = ogr_driver_name
-
         self.driver = ogr.GetDriverByName(ogr_driver_name)
-
         if self.driver is None:
-
             raise ValueError("Invalid driver name: %s" % ogr_driver_name)
-
 
     def get_metadata(self, filename):
         """
@@ -183,17 +173,15 @@ class MetaDataBrowser:
         #filename = self.placesGroupBox.text() #"/home/petrus/Desktop/GIS_data/Rivers/main_rivers.shp"
 
         ds = self.driver.Open(filename)
-
-        result = {
-        'file': ds.name
-        }
+        result = {'file': ds.name}
 
         for l in xrange(ds.GetLayerCount()):
             layer = ds.GetLayerByIndex(l)
 
             sr = layer.GetSpatialRef()
             proj4 = ''
-            if sr: proj4 = sr.ExportToProj4()
+            if sr:
+                proj4 = sr.ExportToProj4()
 
             for f in xrange(layer.GetFeatureCount()):
                 feat = layer.GetFeature(f)
@@ -202,14 +190,14 @@ class MetaDataBrowser:
                     flddef = feat.GetFieldDefnRef(fld)
                     fldnames.append(flddef.name)
 
-            result["layer %d"%l] = {
-            'name'    : layer.GetName(),
+            result["layer %d" % l] = {
+            'name': layer.GetName(),
             'extent': layer.GetExtent(),
-            'proj4'    : proj4,
-            'fields': fldnames
-            }
+            'proj4': proj4,
+            'fields': fldnames}
         return result
-        
+
+
 def initialize(*args, **keywords):
     """sets everything up"""
     # We'll first create a local alias for the module_registry so that
@@ -222,15 +210,16 @@ def initialize(*args, **keywords):
     #output ports
     reg.add_output_port(FeatureImport, "OGRDataset", (ogr.Dataset, 'Feature data in OGR Dataset'))
 
-class FeatureImportConfigurationWidget(OgcConfigurationWidget):
 
+class FeatureImportConfigurationWidget(OgcConfigurationWidget):
     """makes use of code style from OgcConfigurationWidget"""
-    def __init__(self,  module, controller, parent=None):
-        OgcConfigurationWidget.__init__(self,  module, controller, parent)
+
+    def __init__(self, module, controller, parent=None):
+        OgcConfigurationWidget.__init__(self, module, controller, parent)
         # pass in parent widget i.e. OgcCommonWidget class
         self.wfs_config = FeatureImportCommonWidget(self.ogc_common_widget)
         # tabs
         self.tabs.insertTab(1, self.wfs_config, "")
-        self.tabs.setTabText(self.tabs.indexOf(self.wfs_config), QtGui.QApplication.translate("cConfigurationWidget","FeatureImportCommonWidget", None, QtGui.QApplication.UnicodeUTF8))
-        self.tabs.setTabToolTip( self.tabs.indexOf(self.wfs_config), QtGui.QApplication.translate( "cConfigurationWidget", "FeatureImportCommonWidget", None, QtGui.QApplication.UnicodeUTF8 ))
+        self.tabs.setTabText(self.tabs.indexOf(self.wfs_config), QtGui.QApplication.translate("cConfigurationWidget", "FeatureImportCommonWidget", None, QtGui.QApplication.UnicodeUTF8))
+        self.tabs.setTabToolTip(self.tabs.indexOf(self.wfs_config), QtGui.QApplication.translate("cConfigurationWidget", "FeatureImportCommonWidget", None, QtGui.QApplication.UnicodeUTF8))
         self.tabs.setCurrentIndex(0)

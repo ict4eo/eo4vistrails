@@ -30,10 +30,12 @@ various services (via owslib).
 Requirements:
     owslib 0.3.2 or higher
 
-NOTE: As at 2010-11-09, you will need to patch version 0.3.4b for owslib sos.py:
-        self.filters=filter.Filter_Capabilities(val)
+NOTE:
+    As at 2010-11-09, you will need to patch version 0.3.4b for owslib sos.py:
+        `self.filters=filter.Filter_Capabilities(val)`
     should be:
-        self.filters=filter.FilterCapabilities(val)
+        `self.filters=filter.FilterCapabilities(val)`
+
 """
 
 import traceback

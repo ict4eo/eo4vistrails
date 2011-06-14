@@ -57,13 +57,20 @@ class _OgrMemModel():
 
     def loadContentFromFile(self, sourceDS, getStatement=""):
         """Loads content off filesystem, e.g. from a shapefile
-        Expects datasets with one layer, so some arcane formats are out...
-        sourceDS is a path to a file.
-        {
-        shapefiles;
-        csv files;
-        gml files;
-        }
+
+        Expects datasets with one layer, so some arcane formats are out.
+
+        Args:
+            sourceDS:
+                a path to a file; allowable file types are:
+                        {
+                        shapefiles;
+                        csv files;
+                        gml files;
+                        }
+            getStatement:
+                a Select statement
+
         """
         if os.path.exists(sourceDS):
             conn = ogr.Open(sourceDS)
@@ -80,8 +87,14 @@ class _OgrMemModel():
             raise ValueError, "Path to OGR dataset does not exist"
 
     def loadContentFromDB(self, connstr, getStatement):
-        """Loads content off PostGIS or SpatialLite database, specified by
-        connection string and layer defined by a Select statement"""
+        """Loads content off PostGIS or SpatialLite database.
+
+        Args:
+            connstr:
+                connection string
+            getStatement:
+                a Select statement which defines a layer
+        """
         conn = ogr.Open(connstr)
         lyr = conn.ExecuteSQL(getStatement)
         self.datasource.CopyLayer(lyr, lyr.GetName())
@@ -104,10 +117,11 @@ class _OgrMemModel():
         Rather, it reads in from a temporary file (e.g. a GML file) retrieved
         by urllib or stream data from urllib into the memory model.
 
-        `webrequest`:
-            a WebRequest Object, which has url, data attributes
-            These two variables allow creation of get/post requests, and allow
-            to make OGR sensibly deal with the inputs.
+        Args:
+            webrequest:
+                a WebRequest Object, which has `url` and `data` attributes.
+                These two variables allow creation of get/post requests, and
+                allow OGR to sensibly deal with the inputs.
         """
 
         #to test, just split, but should use elementtree
@@ -133,7 +147,7 @@ class _OgrMemModel():
         #type = type[1].split('<responseformat>')[0]
 
         def _guessOutputType(type_string=""):
-            print type_string
+            """TO DO Add docstring"""
             if type_string.split(';')[0].lower() == "text/xml":
                 #is gml, O&M etc
                 return ".xml"
@@ -143,6 +157,7 @@ class _OgrMemModel():
                 return ".gml"
 
         def _viaCache():
+            """TO DO Add docstring"""
             temp_filepath = core.system.default_dot_vistrails() + "/eo4vistrails/ogr/"
             if not os.path.exists(temp_filepath):
                 os.mkdirs(temp_filepath)
@@ -154,18 +169,20 @@ class _OgrMemModel():
             self.loadContentFromFile(temp_filename)
 
         def _viaStream():
+            """TO DO Add docstring"""
             pass
 
         outputtype = _guessOutputType(fmt)
         #implement first a non-streaming version of this method,
         #i.e. fetches from uri, caches, reads from cache
-
         _viaCache()
 
-    def loadContentFromString(self, gstr):
+    def loadContentFromString(self, geo_string):
         '''Loads up a string of spatial data of some kind, e.g. GeoJSON, GML.
+
         Expects GeoStrings objects such as GMLString, GeoJSONString'''
-        #FIXME: get rid of string truncation by getting conf from the proper widget - for moment make sure strings are small...
+        #FIXME: get rid of string truncation by getting conf from the proper widget
+        #- for now, make sure strings are small...
 
         #will write string to temp file , then load it up
         def _viaCache():
@@ -174,7 +191,7 @@ class _OgrMemModel():
             if not os.path.exists(temp_filepath):
                 os.mkdirs(temp_filepath)
 
-            t = str(type(gstr))
+            t = str(type(geo_string))
             tl = t.split("'")
             tll = tl[1].split(".")
             gstrtype = tll[len(tll) - 1]
@@ -186,17 +203,18 @@ class _OgrMemModel():
                     return "gml"
 
             temp_filename = temp_filepath + hashlib.sha1(
-                str(len(gstr.__dict__['outputPorts']["value_as_string"]))).hexdigest() + "." + _get_ext()#gstr.__name__
+                str(len(geo_string.__dict__['outputPorts']["value_as_string"]))).hexdigest() + "." + _get_ext()#geo_string.__name__
             f = open(temp_filename, 'w')
-            f.write(gstr.__dict__['outputPorts']["value_as_string"])
+            f.write(geo_string.__dict__['outputPorts']["value_as_string"])
             f.close()
             self.loadContentFromFile(temp_filename)
             #os.remove(temp_filename)
 
-        if gstr != "":
+        if geo_string != "":
             _viaCache()
 
     def dumpToFile(self, filesource, datasetType="ESRI Shapefile"):
+        """TODO add docstring"""
         #always overwrites
         if not os.path.exists(filesource):
             os.remove(filesource) #but for shapefiles? maybe the dataset creation process has an override option rather...
@@ -243,8 +261,8 @@ class MemFeatureModel(Module):
     def loadContentFromURI(self, webrequest):
         self.feature_model.loadContentFromURI(webrequest)
 
-    def loadContentFromString(self, gstr):
-        self.feature_model.loadContentFromString(gstr)
+    def loadContentFromString(self, geo_string):
+        self.feature_model.loadContentFromString(geo_string)
 #    def dumpToFile(self):
 #        print "dumping featuremodel"
 #        print self.feature_model

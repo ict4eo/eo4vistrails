@@ -24,29 +24,22 @@
 ### WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ###
 #############################################################################
-"""
-Created on Wed Feb 23 10:08:10 2011
-
-@author: dhohls
-
-Module forms part of the vistrails capabilties, used to add geojson data holding
-capacity to vistrails.
-
-This Module holds a geojson type that can be passed around between modules.
-
+"""This module holds a GeoJSON type that can be passed around between modules.
 """
 #History
 #Derek Hohls, 23 Feb 2011, Version 0.1.1
 
 from core.modules.vistrails_module import Module
+import geojson
+
 
 class GeoJSONModule(object):
     pass
 
-import geojson
 
 class GJFeature(GeoJSONModule, Module, geojson.Feature):
     """ Container class for the geojson.Feature class """
+
     def __init__(self):
         Module.__init__(self)
         geojson.Feature.__init__(self)

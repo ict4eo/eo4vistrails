@@ -23,26 +23,31 @@
 ## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ##
 ############################################################################
-"""
-This module provides string specialisations that allow modules to understand 
-what kind of data is being passed into a method as a string.
+"""This abstract module provides string specialisations that allow modules to
+understand what kind of data is being passed into a method as a string.
 """
 from core.modules import basic_modules
 from core.modules.source_configure import SourceConfigurationWidget
-GeoString = basic_modules.new_constant('GeoString', 
-                                                   staticmethod(str),
-                                                   None, 
-                                                   staticmethod(lambda x: type(x) == str), 
-                                                   None)
+GeoString = basic_modules.new_constant('GeoString',
+                                        staticmethod(str),
+                                        None,
+                                        staticmethod(lambda x: type(x) == str),
+                                        None)
 
 
 class GMLString(GeoString):
     pass
-    
+
+
 class GeoJSONString(GeoString):
     pass
-#TODO: this needs to be upgraded to 1.6.1 to take advantage of the ability to specify the  port which receives the output
+    #TODO:  this needs to be upgraded to 1.6.1 to take advantage of the ability
+    #       to specify the  port which receives the output
+
+
 class GeoStringConfigurationWidget(SourceConfigurationWidget):
+    """TODO Add doc string"""
+
     def __init__(self, module, controller, parent=None):
         SourceConfigurationWidget.__init__(self, module, controller, None,
                                            False, False, parent)

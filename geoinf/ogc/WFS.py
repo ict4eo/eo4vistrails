@@ -42,27 +42,28 @@ import init
 
 
 class WFS(OGC, Module):
+    """Override for base OGC service class.
     """
-    Override for base OGC service class
 
-    """
     def __init__(self):
         Module.__init__(self)
         OGC.__init__(self)
         self.webRequest._driver = 'WFS'
 
+
 class WFSCommonWidget(QtGui.QWidget):
-    """
-    WFS module allows connection to a web-based OGC (Open Geospatial Consortium)
+    """The WFS module allows connection to a web-based OGC (Open Geospatial Consortium)
     web feature service.
+
     Configuration allows the base URL for the service to be set and called.
     Choosing the appropriate combination of specific service type and other
     parameters, will cause the input port to be set with a specific POST call,
     once the configuration interface is closed.
+
     Running the WFS will cause the specific, parameterised WFS to be called
     and output from the request to be available via the output port(s).
-
     """
+
     def __init__(self, ogc_widget, spatial_widget, parent=None):
         """sets parameters for wcs request"""
         QtGui.QWidget.__init__(self, parent)
@@ -77,13 +78,11 @@ class WFSCommonWidget(QtGui.QWidget):
         self.connect(
             self.parent_widget,
             QtCore.SIGNAL('serviceActivated'),
-            self.loadRequests
-            )
+            self.loadRequests)
         self.connect(
             self.parent_widget,
             QtCore.SIGNAL('serviceDeactivated'),
-            self.removeRequests
-            )
+            self.removeRequests)
 
     def create_wfs_config_window(self):
         """TO DO - add docstring"""
@@ -138,35 +137,35 @@ class WFSCommonWidget(QtGui.QWidget):
         self.dcLayerId = QtGui.QLabel('__')
         self.detailsLayout.addWidget(self.dcLayerId, 0, 1)
         self.dcLayerDescription = QtGui.QLabel('__')
-        self.detailsLayout.addWidget(self.dcLayerDescription, 1,1)
+        self.detailsLayout.addWidget(self.dcLayerDescription, 1, 1)
 
         #Bounding box - Grid Envelope
         self.dcULX = QtGui.QLineEdit(' ')
         self.dcULX.setEnabled(False) #sets it not to be editable
-        self.detailsLayout.addWidget(self.dcULX, 3,1)
+        self.detailsLayout.addWidget(self.dcULX, 3, 1)
         self.dcLRX = QtGui.QLineEdit(' ')
         self.dcLRX.setEnabled(False)
-        self.detailsLayout.addWidget(self.dcLRX, 3,3)
+        self.detailsLayout.addWidget(self.dcLRX, 3, 3)
         self.dcULY = QtGui.QLineEdit(' ')
         self.dcULY.setEnabled(False)
-        self.detailsLayout.addWidget(self.dcULY, 4,1)
+        self.detailsLayout.addWidget(self.dcULY, 4, 1)
         self.dcLRY = QtGui.QLineEdit(' ')
         self.dcLRY.setEnabled(False)
-        self.detailsLayout.addWidget(self.dcLRY, 4,3)
+        self.detailsLayout.addWidget(self.dcLRY, 4, 3)
 
         #Bounding Box Spatial subset
         self.ssULX = QtGui.QLabel(' ')
         #self.ssULX.setEnabled(False) #sets it not to be editable
-        self.detailsLayout.addWidget(self.ssULX, 6,1)
+        self.detailsLayout.addWidget(self.ssULX, 6, 1)
         self.ssLRX = QtGui.QLabel(' ')
         #self.ssLRX.setEnabled(False)
-        self.detailsLayout.addWidget(self.ssLRX, 6,3)
+        self.detailsLayout.addWidget(self.ssLRX, 6, 3)
         self.ssULY = QtGui.QLabel(' ')
         #self.ssULY.setEnabled(False)
-        self.detailsLayout.addWidget(self.ssULY, 7,1)
+        self.detailsLayout.addWidget(self.ssULY, 7, 1)
         self.ssLRY = QtGui.QLabel(' ')
         #self.ssLRY.setEnabled(False)
-        self.detailsLayout.addWidget(self.ssLRY, 7,3)
+        self.detailsLayout.addWidget(self.ssLRY, 7, 3)
 
         self.dcSRS = QtGui.QLabel('__')
         self.detailsLayout.addWidget(self.dcSRS, 8, 1)
@@ -187,13 +186,11 @@ class WFSCommonWidget(QtGui.QWidget):
         self.dcRequestType.addItem('GetFeature')
         self.dcRequestType.addItem('DescribeFeatureType')
 
-        
         # local signals
         self.connect(
             self.requestLbx,
             QtCore.SIGNAL("itemClicked(QListWidgetItem*)"),
-            self.featureNameChanged
-            )
+            self.featureNameChanged)
 
         #for message box
         self.arrowCursor = QtGui.QCursor(QtCore.Qt.ArrowCursor)
@@ -201,29 +198,29 @@ class WFSCommonWidget(QtGui.QWidget):
     def getBoundingBoxStringFeature(self):
         """Return a comma-delimited string containing box co-ordinates.
 
-        Format: top-left X,Y  bottom-right X,Y
+        Result String Format::
+            top-left X, top-left Y  bottom-right X, bottom-right Y
         """
         bbox = self.spatial_widget.getBoundingBox()
         return str(self.dcULX.text()) + ',' + str(self.dcLRX.text()) + ','\
-            +  str(self.dcULY.text()) + ',' + str(self.dcLRY.text())
+            + str(self.dcULY.text()) + ',' + str(self.dcLRY.text())
 
     def getBoundingBoxFeature(self):
         """Return a tuple containing box co-ordinates for selected feature.
 
-        Format: top-left X,Y, bottom-right X,Y
+        Result Tuple Format:
+            (top-left X, top-left Y, bottom-right X, bottom-right Y)
         """
         return (
             self.dcULX.text(),
             self.dcULY.text(),
             self.dcLRX.text(),
-            self.dcLRY.text()
-            )
+            self.dcLRY.text())
 
     def removeRequests(self):
         """Remove all details when no WFS is selected."""
         self.clearRequests()
         self.requestLbx.clear()
-        #pass
 
     def clearRequests(self):
         """To reset the values in the fields"""
@@ -272,8 +269,7 @@ class WFSCommonWidget(QtGui.QWidget):
     def showWarning(self, message):
         """Show user a warning dialog."""
         self.setCursor(self.arrowCursor)
-        QtGui.QMessageBox.warning(self,"Error",message,QtGui.QMessageBox.Ok)
-
+        QtGui.QMessageBox.warning(self, "Error", message, QtGui.QMessageBox.Ok)
 
     def loadRequests(self):
         """ loadRequest() -> None
@@ -287,10 +283,11 @@ class WFSCommonWidget(QtGui.QWidget):
 
 class WFSConfigurationWidget(OgcConfigurationWidget):
     """makes use of code style from OgcConfigurationWidget"""
+
     def __init__(self, module, controller, parent=None):
         OgcConfigurationWidget.__init__(self, module, controller, parent)
         # pass in parent widget i.e. OgcCommonWidget class and SpatialWidget Class to read changed coords
-        self.wfs_config_widget = WFSCommonWidget(self.ogc_common_widget,  self.spatial_widget)
+        self.wfs_config_widget = WFSCommonWidget(self.ogc_common_widget, self.spatial_widget)
         # tabs
         self.tabs.insertTab(1, self.wfs_config_widget, "")
         self.tabs.setTabText(
@@ -299,9 +296,7 @@ class WFSConfigurationWidget(OgcConfigurationWidget):
                 "OgcConfigurationWidget",
                 "WFS Specific Metadata",
                 None,
-                QtGui.QApplication.UnicodeUTF8
-                )
-            )
+                QtGui.QApplication.UnicodeUTF8))
 
         self.tabs.setTabToolTip(
             self.tabs.indexOf(self.wfs_config_widget),
@@ -309,9 +304,7 @@ class WFSConfigurationWidget(OgcConfigurationWidget):
                 "OgcConfigurationWidget",
                 "Select WFS-specific parameters",
                 None,
-                QtGui.QApplication.UnicodeUTF8
-                    )
-                )
+                QtGui.QApplication.UnicodeUTF8))
         self.tabs.setCurrentIndex(0)
 
     def constructRequest(self):
@@ -329,7 +322,7 @@ class WFSConfigurationWidget(OgcConfigurationWidget):
         except:
             coord_system = None
         try:
-            formats =  self.wfs_config_widget.dcReqFormat.currentText()
+            formats = self.wfs_config_widget.dcReqFormat.currentText()
         except:
             formats = None
         try:
@@ -366,8 +359,7 @@ class WFSConfigurationWidget(OgcConfigurationWidget):
                     traceback.print_exc()
                     raise ModuleError(
                         self,
-                        'Unknown WFS bounding box type' + ': %s' % str(error)
-                        )
+                        'Unknown WFS bounding box type' + ': %s' % str(error))
                 #print "WFS:365 -return URL for GetFeature", wfs_url
                 wfs_url += "&bbox=" + bbox + \
                     "," + coord_system # should yield EPSG:nnnn
@@ -377,8 +369,7 @@ class WFSConfigurationWidget(OgcConfigurationWidget):
         else:
             raise ModuleError(
                 self,
-                'Unknown WFS request type' + ': %s' % str(rType)
-                )
+                'Unknown WFS request type' + ': %s' % str(rType))
 
         result['layername'] = selectedFeatureId
         return result

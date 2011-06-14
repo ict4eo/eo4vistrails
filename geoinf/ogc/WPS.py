@@ -237,7 +237,6 @@ class WPS(Module):
 
     def addInputsToPOST(self, postStringIn, processID):
         """Insert the input port data as part of the POST request.
-
         """
         if postStringIn:
             #   iterate through static & dynamic input ports and check for matching type
@@ -598,8 +597,11 @@ class WPS(Module):
         return writer
 
     def getFieldList(self, vlayer):
-        """Get the Llist of Fields
-        Return: QGsFieldMap"""
+        """Get the Llist of Fields.
+
+        Returns:
+            QGsFieldMap
+        """
         fProvider = vlayer.dataProvider()
         feat = QgsFeature()
         allAttrs = fProvider.attributeIndexes()
@@ -667,14 +669,16 @@ class WPSConfigurationWidget(PortConfigurationWidget):
                                      controller: VistrailController,
                                      parent: QWidget)
                                      -> UntupleConfigurationWidget
+
         Let StandardModuleConfigurationWidget constructor store the
         controller/module object from the builder and set up the
         configuration widget.
+
         After StandardModuleConfigurationWidget constructor, all of
         these will be available:
-        * self.module : the Module object into the pipeline
-        * self.module_descriptor: the descriptor for the type in the registry
-        * self.controller: the current vistrail controller
+         * `self.module` : the Module object into the pipeline
+         * `self.module_descriptor`: the descriptor for the type in the registry
+         * `self.controller`: the current vistrail controller
 
         """
         PortConfigurationWidget.__init__(self, module,
@@ -684,8 +688,7 @@ class WPSConfigurationWidget(PortConfigurationWidget):
 
     def create_config_window(self):
         """Create Qt elements for the configuration dialog
-        * hook buttons to methods
-
+         * hook buttons to methods
         """
         self.setWindowTitle("OGC WPS Configuration Widget")
         self.setWindowModality(Qt.WindowModal)
@@ -795,7 +798,9 @@ class WPSConfigurationWidget(PortConfigurationWidget):
 
     def connectServer(self, connection):
         """Add items to treeWidget
-        see qgswps.py:: createCapabilities Gui"""
+
+        See qgswps.py:: createCapabilities Gui
+        """
         connection = self.URLConnect.text()
         # pass version here
         version = self.launchversion.currentText()
@@ -824,9 +829,14 @@ class WPSConfigurationWidget(PortConfigurationWidget):
 
     def getServiceXML(self, name, request, identifier=None):
         """ Get server and connection details from Stored Server Connections
-        Param: String ConnectionName
-        Return: Array Server Information
+
+        Params:
+            String ConnectionName
+
+        Returns:
+            Array Server Information
             (http,www....,/cgi-bin/...,Post||Get,Service Version)
+
         """
         result = self.getServer(name)
         path = result["path"]

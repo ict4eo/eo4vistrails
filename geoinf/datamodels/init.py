@@ -24,16 +24,12 @@
 ### WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ###
 #############################################################################
+"""This module is the called by higher level inits to ensure that registration
+with VisTrails takes place
 """
-Created on Tue Dec 14 09:38:10 2010
-@author: tvzyl
+#Created on Tue Dec 14 09:38:10 2010
+#Author: tvzyl
 
-This module forms part of the rpyc vistrails capabilties, used to add multicore
-parallel and distributed processing to vistrails.
-
-This Module is the called by higher level inits to ensure that registration with
-vistrails takes place
-"""
 
 def initialize(*args, **keywords):
     # vistrails
@@ -60,9 +56,9 @@ def initialize(*args, **keywords):
 
     # Features
     reg.add_module(FeatureModel, namespace=mynamespace, abstract=True) #abstract
-    reg.add_module(FeatureImport, 
-                   configureWidgetType=FeatureImportConfigurationWidget, 
-                   namespace = "broken")
+    reg.add_module(FeatureImport,
+                   configureWidgetType=FeatureImportConfigurationWidget,
+                   namespace="broken")
 
     # QgsMapLayer
     reg.add_module(QgsLayer.QgsMapLayer, namespace=mynamespace, abstract=True)
@@ -78,7 +74,7 @@ def initialize(*args, **keywords):
     reg.add_module(QgsLayerWriter.QgsLayerWriter, namespace=mynamespace)
     reg.add_input_port(QgsLayerWriter.QgsLayerWriter, "value", QgsLayer.QgsVectorLayer)
     reg.add_input_port(QgsLayerWriter.QgsLayerWriter, 'file', File)
-    
+
     # misc.
     reg.add_module(GeoString, namespace=mynamespace, abstract=True)
     reg.add_module(GMLString, namespace=mynamespace, abstract=True)
@@ -86,20 +82,20 @@ def initialize(*args, **keywords):
 
     # MemFeatureModel
     reg.add_module(MemFeatureModel, namespace=mynamespace, abstract=True)
-    reg.add_input_port(MemFeatureModel, "source_file", String )
-    reg.add_input_port(MemFeatureModel, "dbconn", String )
-    reg.add_input_port(MemFeatureModel, "sql", String )
+    reg.add_input_port(MemFeatureModel, "source_file", String)
+    reg.add_input_port(MemFeatureModel, "dbconn", String)
+    reg.add_input_port(MemFeatureModel, "sql", String)
     reg.add_input_port(MemFeatureModel, "webrequest", WebRequest)
-    reg.add_input_port(MemFeatureModel, "gstring", GeoString )
+    reg.add_input_port(MemFeatureModel, "gstring", GeoString)
     reg.add_output_port(MemFeatureModel, "feature_dataset", MemFeatureModel)
 
     # FileFeatureModel
     reg.add_module(FileFeatureModel, name="OGR Transform", namespace=mynamespace)
-    reg.add_input_port(FileFeatureModel, "source_file", String )
-    reg.add_input_port(FileFeatureModel, "source_feature_dataset", MemFeatureModel )
+    reg.add_input_port(FileFeatureModel, "source_file", String)
+    reg.add_input_port(FileFeatureModel, "source_feature_dataset", MemFeatureModel)
     reg.add_input_port(FileFeatureModel, "webrequest", WebRequest)
-    reg.add_input_port(FileFeatureModel, "output_type", String )
+    reg.add_input_port(FileFeatureModel, "output_type", String)
 
     # RasterModel
     reg.add_module(RasterModel, namespace=mynamespace, abstract=True) #abstract
-    reg.add_module(RasterImport, configureWidgetType=RasterImportConfigurationWidget, namespace = mynamespace)
+    reg.add_module(RasterImport, configureWidgetType=RasterImportConfigurationWidget, namespace=mynamespace)

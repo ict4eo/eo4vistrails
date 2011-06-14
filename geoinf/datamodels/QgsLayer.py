@@ -48,10 +48,11 @@ qgis.core.QgsApplication.initQgis()
 class QgsMapLayer(ThreadSafeMixin, Module):
     """This module will create a QGIS layer from a file
     """
+
     def __init__(self):
         ThreadSafeMixin.__init__(self)
         Module.__init__(self)
-        
+
     def raiseError(self, msg, error=''):
         """Raise a VisTrails error."""
         import traceback
@@ -70,10 +71,11 @@ class QgsMapLayer(ThreadSafeMixin, Module):
         else:
             self.raiseError('All Map Layer Properties must be set')
 
+
 class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
     """Create a QGIS vector layer.
     """
-    SUPPORTED_DRIVERS = ['WFS','ogr', 'postgres']
+    SUPPORTED_DRIVERS = ['WFS', 'ogr', 'postgres']
 
     def __init__(self, uri=None, layername=None, driver=None):
         QgsMapLayer.__init__(self)
@@ -85,12 +87,12 @@ class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
         try:
             thefile = self.forceGetInputFromPort('file', None)
             dataReq = self.forceGetInputFromPort('dataRequest', None)
-            
+
             try:
                 isFILE = (thefile != None) and (thefile.name != '')
             except AttributeError:
                 isFILE = (thefile.name != '')
-                
+
             #Note this is case sensitive -> "WFS"
             isQGISSuported = isinstance(dataReq, DataRequest) and \
                             dataReq.get_driver() in self.SUPPORTED_DRIVERS
@@ -120,6 +122,7 @@ class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
             self.setResult('value', self)
         except Exception, e:
             self.raiseError('Cannot set output port: %s' % str(e))
+
 
 class QgsRasterLayer(QgsMapLayer, qgis.core.QgsRasterLayer):
     """Create a QGIS raster layer.

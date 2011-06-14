@@ -3,10 +3,10 @@
 ###
 ### Copyright (C) 2010 CSIR Meraka Institute. All rights reserved.
 ###
-### This full package extends VisTrails, providing GIS/Earth Observation 
-### ingestion, pre-processing, transformation, analytic and visualisation 
-### capabilities . Included is the abilty to run code transparently in 
-### OpenNebula cloud environments. There are various software 
+### This full package extends VisTrails, providing GIS/Earth Observation
+### ingestion, pre-processing, transformation, analytic and visualisation
+### capabilities . Included is the abilty to run code transparently in
+### OpenNebula cloud environments. There are various software
 ### dependencies, but all are FOSS.
 ###
 ### This file may be used under the terms of the GNU General Public
@@ -24,16 +24,9 @@
 ### WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ###
 #############################################################################
-"""
-Created on Tue Dec 14 09:38:10 2010
+"""This module is used to add threading ability to VisTrails.
 
-@author: tvzyl
-
-Module forms part of the threadsafe vistrails capabilties, used to add threading
-ability to vsitrails
-
-This Module is the core module holding annotations and mixins
-
+This is the core module holding annotations and mixins,
 """
 #History
 #Terence van Zyl, 15 Dec 2010, Version 1.0
@@ -45,21 +38,23 @@ from core.modules.vistrails_module import Module, NotCacheable, \
 
 global globalThreadLock
 globalThreadLock = RLock()
-    
+
+
 class ThreadSafeMixin(object):
-    
+    """TODO Write docstring."""
+
     def __init__(self):
         self.computeLock = RLock()
-    
-    """TODO. """
-    def globalThread(self, module):            
+
+    def globalThread(self, module):
+        """TODO Write docstring."""
         global globalThreadLock
         globalThreadLock.acquire()
         module.update()
         globalThreadLock.release()
-    
+
     def updateUpstream(self):
-        """ TODO. """
+        """TODO Write docstring."""
         threadList = []
         foundFirstModule = False
 
@@ -92,21 +87,21 @@ class ThreadSafeMixin(object):
                     self.removeInputConnector(iport, connector)
 
     def update(self):
-        """ update() -> None        
+        """ update() -> None
         Check if the module is up-to-date then update the
-        modules. Report to the logger if available
-        
-        """     
+        modules. Report to the logger if available.
+        """
         try:
-             global globalThreadLock
-             globalThreadLock.release()             
-             self.lockedUpdate()
-             globalThreadLock.acquire()
+            global globalThreadLock
+            globalThreadLock.release()
+            self.lockedUpdate()
+            globalThreadLock.acquire()
         except RuntimeError, re:
             self.lockedUpdate()
             pass
-    
+
     def lockedUpdate(self):
+        """TODO Write docstring."""
         print self, "get compute lock"
         self.logging.begin_update(self)
         with self.computeLock:
@@ -135,7 +130,7 @@ class ThreadSafeMixin(object):
                 raise ModuleError(self, 'Interrupted by user')
             except ModuleBreakpoint:
                 raise
-            except Exception, e: 
+            except Exception, e:
                 import traceback
                 traceback.print_exc()
                 raise ModuleError(self, 'Uncaught exception: "%s"' % str(e))
@@ -144,22 +139,30 @@ class ThreadSafeMixin(object):
             self.logging.signalSuccess(self)
         print self, "release compute lock"
 
+
 class Fork(ThreadSafeMixin, NotCacheable, Module):
-    """TODO:"""
+    """TODO Write docstring."""
+
     def __init__(self):
         ThreadSafeMixin.__init__(self)
         Module.__init__(self)
+
+    def test(self):
+        print "this is a test"
+
 
 class ThreadTestModule(ThreadSafeMixin, NotCacheable, Module):
     """This Test Module is to check that ThreadSafe is working and also provides
     a template for others to use ThreadSafe"""
+
     def __init__(self):
         ThreadSafeMixin.__init__(self)
         Module.__init__(self)
-    
+
     def compute(self):
         from time import ctime, sleep
-        print ctime()," ", currentThread().name, " Started ThreadSafe Module, Waiting 2 Seconds"
+        print ctime(), " ", currentThread().name, \
+            " Started ThreadSafe Module, Waiting 2 Seconds"
         sleep(2)
-        print ctime()," ", currentThread().name, " Stoped ThreadSafe Module"
-
+        print ctime(), " ", currentThread().name, \
+            " Stopped ThreadSafe Module"

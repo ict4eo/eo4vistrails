@@ -17,6 +17,7 @@ Test!
 .. automodule:: geoinf.datamodels.Test
    :members:
 
+
 Feature
 -------
 
@@ -46,6 +47,13 @@ Raster
 
 .. automodule:: geoinf.datamodels.Raster
    :members:
+
+TemporalVectorLayer
+-------------------
+
+.. automodule:: geoinf.datamodels.TemporalVectorLayer
+   :members:
+
 
 GeoInf: GRASS
 =============

@@ -1,14 +1,47 @@
+# -*- coding: utf-8 -*-
+############################################################################
+###
+### Copyright (C) 2010 CSIR Meraka Institute. All rights reserved.
+###
+### This full package extends VisTrails, providing GIS/Earth Observation
+### ingestion, pre-processing, transformation, analytic and visualisation
+### capabilities . Included is the abilty to run code transparently in
+### OpenNebula cloud environments. There are various software
+### dependencies, but all are FOSS.
+###
+### This file may be used under the terms of the GNU General Public
+### License version 2.0 as published by the Free Software Foundation
+### and appearing in the file LICENSE.GPL included in the packaging of
+### this file.  Please review the following to ensure GNU General Public
+### Licensing requirements will be met:
+### http://www.opensource.org/licenses/gpl-license.php
+###
+### If you are unsure which license is appropriate for your use (for
+### instance, you are interested in developing a commercial derivative
+### of VisTrails), please contact us at vistrails@sci.utah.edu.
+###
+### This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
+### WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+###
+#############################################################################
+"""TODO  Add documentation to this module.
+"""
+
 import core.modules
 import core.modules.module_registry
 from core.modules.vistrails_module import Module, ModuleError
 
 import numpy
 
+
 class ArrayModule(object):
+    """TODO Write docstring."""
     my_namespace = 'utils|array'
+
 
 class NDArray(Module, ArrayModule):
     """ Container class for the numpy.ndarray class """
+
     def __init__(self):
         Module.__init__(self)
         self.array = None
@@ -16,53 +49,54 @@ class NDArray(Module, ArrayModule):
         self.general_name = None
         self.domain = ''
         self.range = ''
-        
-    def get_shape(self):
-	return self.array.shape
 
-    # Array Operation 
+    def get_shape(self):
+        return self.array.shape
+
+    # Array Operation
     def reshape(self, shape):
-	self.array.shape = shape
-        
+        self.array.shape = shape
+
     # Array Access
     def get_reals(self):
-	return self.array.real
+        return self.array.real
 
     # Array Access
     def get_imaginary(self):
-	return self.array.imag
+        return self.array.imag
 
     # Array Access
     def get_max(self):
-	return self.array.max()
+        return self.array.max()
 
     # Array Access
     def get_mean(self, axis=None):
-	return self.array.mean(axis=axis)
+        return self.array.mean(axis=axis)
 
     # Array Access
     def get_min(self):
-	return self.array.min()
+        return self.array.min()
 
-    # Array Operation 
+    # Array Operation
     def cumulative_sum(self):
-	return self.array.cumsum()
+        return self.array.cumsum()
 
     # Array Access
     def get_arg_min(self):
-	return self.array.argmin()
+        return self.array.argmin()
 
     # Array Access
     def get_arg_max(self):
-	return self.array.argmax()
+        return self.array.argmax()
 
     # Array Access
     def get_diagonal(self):
-	return self.array.diagonal()
+        return self.array.diagonal()
 
     # Array Naming
     def get_name(self, row):
-        if self.names.has_key(row):
+        # was self.names.has_key(row) but that is now deprecated...
+        if row in self.names:
             return self.names[row]
         else:
             return None
@@ -70,13 +104,13 @@ class NDArray(Module, ArrayModule):
     # Array Naming
     def get_general_name(self):
         return self.general_name
-    
+
     # Array Naming
     def set_name(self, name, index=False):
         self.general_name = name
         for i in range(self.array.shape[0]):
             if index:
-                self.names[i] = name + " " + str(i+1)
+                self.names[i] = name + " " + str(i + 1)
             else:
                 self.names[i] = name + " " + str(i)
 
@@ -96,7 +130,7 @@ class NDArray(Module, ArrayModule):
     # Array Naming
     def get_range_name(self):
         return self.range
-    
+
     # Array Naming
     def set_domain_name(self, name):
         self.domain = name
@@ -112,126 +146,126 @@ class NDArray(Module, ArrayModule):
     # Array Naming
     def clear_range_name(self):
         self.range = ''
-        
-    # Array Operation 
+
+    # Array Operation
     def sort_array(self, axis=-1, kind='quicksort', order=None):
-	return self.array.argsort(axis, kind, order)
+        return self.array.argsort(axis, kind, order)
 
     # Array Access
     def get_array_as_type(self, t):
-	return self.array.astype(t)
+        return self.array.astype(t)
 
-    # Array Operation 
+    # Array Operation
     def swap_bytes(self, view=False):
-	return self.array.byteswap(view)
+        return self.array.byteswap(view)
 
     # Array Access
     def get_conjugate(self):
-	return self.array.conjugate().copy()
+        return self.array.conjugate().copy()
 
-    # Array Operation 
+    # Array Operation
     def cumulative_product(self):
-	return self.array.cumprod()
+        return self.array.cumprod()
 
     # Array Convert
     def dump_to_file(self, fn):
-	self.array.dump(fn)
+        self.array.dump(fn)
 
     # Array Convert
     def dump_to_string(self):
-	return self.array.dumps()
+        return self.array.dumps()
 
-    # Array Operation 
+    # Array Operation
     def fill_array(self, val=0.):
-	self.array.fill(val)
+        self.array.fill(val)
 
     # Array Access
     def get_flattened(self):
-	return self.array.flatten()
+        return self.array.flatten()
 
     # Array Access
     def get_field(self, dtype, offset):
-	return self.array.getfield(dtype, offset)
+        return self.array.getfield(dtype, offset)
 
     # Array Access
     def get_item(self):
-	return self.array.item()
+        return self.array.item()
 
     # Array Access
     def get_mem_size(self):
-	return self.array.nbytes
+        return self.array.nbytes
 
     # Array Access
     def get_num_dims(self):
-	return self.array.ndim
+        return self.array.ndim
 
     # Array Access
     def get_nonzero_indices(self):
-	return self.array.nonzero()
+        return self.array.nonzero()
 
-    # Array Operation 
+    # Array Operation
     def put(self, indices, values, mode):
-	self.array.put(indices, values, mode)
+        self.array.put(indices, values, mode)
 
-    # Array Operation 
+    # Array Operation
     def ravel(self):
-	return self.array.ravel()
+        return self.array.ravel()
 
-    # Array Operation 
+    # Array Operation
     def resize(self, newshape, refcheck=True, order=False):
-	return numpy.resize(self.array, newshape, refcheck=refcheck, order=order)
+        return numpy.resize(self.array, newshape, refcheck=refcheck, order=order)
 
-    # Array Operation 
+    # Array Operation
     def round(self, precision=0, out=None):
-	return self.array.round(precision, out)
+        return self.array.round(precision, out)
 
-    # Array Operation 
+    # Array Operation
     def set_field(self, val, dtype, offset):
-	self.array.set_field(val, dtype, offset)
+        self.array.set_field(val, dtype, offset)
 
     # Array Access
     def get_num_elements(self):
-	return self.array.size
+        return self.array.size
 
-    # Array Operation 
+    # Array Operation
     def squeeze(self):
-	return self.array.squeeze()
+        return self.array.squeeze()
 
-    # Array Operation 
+    # Array Operation
     def get_standard_deviation(self, axis=None, dtype=None, out=None):
-	return self.array.std(axis, dtype, out)
+        return self.array.std(axis, dtype, out)
 
-    # Array Operation 
+    # Array Operation
     def get_sum(self):
-	return self.array.sum()
+        return self.array.sum()
 
-    # Array Operation 
+    # Array Operation
     def swap_axes(self, axis1, axis2):
-	return self.array.swapaxes(axis1, axis2)
+        return self.array.swapaxes(axis1, axis2)
 
     # Array Convert
     def tofile(self, file, sep, format="%s"):
-	self.array.tofile(file, sep, format)
+        self.array.tofile(file, sep, format)
 
-    # Array Convert 
+    # Array Convert
     def tolist(self):
-	return self.array.tolist()
+        return self.array.tolist()
 
     # Array Convert
     def tostring(self, order='C'):
-	return self.array.tostring(order)
+        return self.array.tostring(order)
 
-    # Array Operation 
+    # Array Operation
     def get_trace(self, offset, axis1, axis2, dtype=None, out=None):
-	return self.array.trace(offset, axis1, axis2, dtype, out)
+        return self.array.trace(offset, axis1, axis2, dtype, out)
 
     # Array Access
     def get_transpose(self):
-	return self.array.transpose()
+        return self.array.transpose()
 
-    # Array Operation 
+    # Array Operation
     def get_variance(self, axis=None, dtype=None, out=None):
-	return self.array.var(axis, dtype, out)
+        return self.array.var(axis, dtype, out)
 
     # Helper function for assignment
     def get_array(self):
@@ -243,7 +277,7 @@ class NDArray(Module, ArrayModule):
 
     # Array Access
     def get_row_range(self, start, to):
-        return self.array[start:to+1,:]
+        return self.array[start:to+1, :]
 
     # Array Access
     def get_col_range(self, start, to):

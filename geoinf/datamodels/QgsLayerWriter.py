@@ -24,8 +24,7 @@
 ### WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ###
 #############################################################################
-"""This package provides GIS capabilities for eo4vistrails.
-This module provides a means for saving raster and vector data to file,
+"""This module provides a means for saving raster and vector data to file,
 in the format defined by QGIS.
 """
 # library
@@ -64,7 +63,7 @@ class QgsLayerWriter(Module):
             if isFILE:
                 thefilepath = thefile.name
                 #thefilename = QFileInfo(thefilepath).fileName()
-                                
+
                 self.write_vector_layer(thelayer, thefilepath, 'SHP') # QGIS 1.6 only handles shapefile
             else:
                 self.raiseError('Invalid output file')
@@ -83,7 +82,8 @@ class QgsLayerWriter(Module):
             if filetype in SUPPORTED:
                 if filetype == 'SHP':
                     crsDest = QgsCoordinateReferenceSystem(layer.srs())
-                    error = QgsVectorFileWriter.writeAsShapefile(layer, filename, encoding,  crsDest, False)
+                    error = QgsVectorFileWriter.writeAsShapefile(
+                        layer, filename, encoding, crsDest, False)
                     print error, layer, filename, encoding, crsDest
                 # IN FUTURE
                 #   add support for other vector types !!!
@@ -119,5 +119,6 @@ class QgsLayerWriter(Module):
             """
 
     def write_raster_layer(self, layer, filename, filetype=None, encoding=None):
-        """IN FUTURE Write a QGIS raster layer to disk
+        """TODO IN FUTURE Write a QGIS raster layer to disk
         """
+        pass
