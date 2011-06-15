@@ -1,0 +1,630 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>geoinf.ogc.SOS &mdash; EO4vistrails v1.0 documentation</title>
+    <link rel="stylesheet" href="../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="EO4vistrails v1.0 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">EO4vistrails v1.0 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for geoinf.ogc.SOS</h1><div class="highlight"><pre>
+<span class="c">###########################################################################</span>
+<span class="c">##</span>
+<span class="c">## Copyright (C) 2010 CSIR Meraka Institute. All rights reserved.</span>
+<span class="c">##</span>
+<span class="c">## eo4vistrails extends VisTrails, providing GIS/Earth Observation</span>
+<span class="c">## ingestion, pre-processing, transformation, analytic and visualisation</span>
+<span class="c">## capabilities . Included is the ability to run code transparently in</span>
+<span class="c">## OpenNebula cloud environments. There are various software</span>
+<span class="c">## dependencies, but all are FOSS.</span>
+<span class="c">##</span>
+<span class="c">## This file may be used under the terms of the GNU General Public</span>
+<span class="c">## License version 2.0 as published by the Free Software Foundation</span>
+<span class="c">## and appearing in the file LICENSE.GPL included in the packaging of</span>
+<span class="c">## this file.  Please review the following to ensure GNU General Public</span>
+<span class="c">## Licensing requirements will be met:</span>
+<span class="c">## http://www.opensource.org/licenses/gpl-license.php</span>
+<span class="c">##</span>
+<span class="c">## If you are unsure which license is appropriate for your use (for</span>
+<span class="c">## instance, you are interested in developing a commercial derivative</span>
+<span class="c">## of VisTrails), please contact us at vistrails@sci.utah.edu.</span>
+<span class="c">##</span>
+<span class="c">## This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE</span>
+<span class="c">## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.</span>
+<span class="c">##</span>
+<span class="c">############################################################################</span>
+<span class="sd">&quot;&quot;&quot;This module provides an OGC (Open Geospatial Consortium) Sensor Observation</span>
+<span class="sd">Service (SOS) client, making use of the owslib library.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c"># library</span>
+<span class="c"># third party</span>
+<span class="kn">from</span> <span class="nn">PyQt4</span> <span class="kn">import</span> <span class="n">QtCore</span><span class="p">,</span> <span class="n">QtGui</span>
+<span class="c"># vistrails</span>
+<span class="kn">from</span> <span class="nn">core.modules.vistrails_module</span> <span class="kn">import</span> <span class="n">Module</span><span class="p">,</span> <span class="n">new_module</span><span class="p">,</span> <span class="n">NotCacheable</span><span class="p">,</span> <span class="n">ModuleError</span>
+<span class="c"># eo4vistrails</span>
+<span class="kn">from</span> <span class="nn">packages.eo4vistrails.geoinf.datamodels.Feature</span> <span class="kn">import</span> <span class="n">FeatureModel</span>
+<span class="c"># local</span>
+<span class="kn">from</span> <span class="nn">OgcConfigurationWidget</span> <span class="kn">import</span> <span class="n">OgcConfigurationWidget</span>
+<span class="kn">from</span> <span class="nn">OgcService</span> <span class="kn">import</span> <span class="n">OGC</span>
+<span class="kn">import</span> <span class="nn">init</span>
+<span class="kn">import</span> <span class="nn">traceback</span>
+
+
+<div class="viewcode-block" id="SOS"><a class="viewcode-back" href="../../../geoinf.html#geoinf.ogc.SOS.SOS">[docs]</a><span class="k">class</span> <span class="nc">SOS</span><span class="p">(</span><span class="n">OGC</span><span class="p">,</span> <span class="n">FeatureModel</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Override for base OGC service class</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">OGC</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">FeatureModel</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">webRequest</span><span class="o">.</span><span class="n">_driver</span> <span class="o">=</span> <span class="s">&#39;SOS&#39;</span>
+
+</div>
+<div class="viewcode-block" id="SosCommonWidget"><a class="viewcode-back" href="../../../geoinf.html#geoinf.ogc.SOS.SosCommonWidget">[docs]</a><span class="k">class</span> <span class="nc">SosCommonWidget</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QWidget</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Enable SOS-specific parameters to be obtained, displayed and selected.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ogc_widget</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">QtGui</span><span class="o">.</span><span class="n">QWidget</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setObjectName</span><span class="p">(</span><span class="s">&quot;SosCommonWidget&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parent_widget</span> <span class="o">=</span> <span class="n">ogc_widget</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">contents</span> <span class="o">=</span> <span class="bp">None</span> <span class="c">#  only set in self.loadOfferings()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">create_config_window</span><span class="p">()</span>
+        <span class="c"># listen for signals emitted by OgcCommonWidget class</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parent_widget</span><span class="p">,</span>
+            <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s">&#39;serviceActivated&#39;</span><span class="p">),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">loadOfferings</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parent_widget</span><span class="p">,</span>
+            <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s">&#39;serviceDeactivated&#39;</span><span class="p">),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">removeOfferings</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SosCommonWidget.create_config_window"><a class="viewcode-back" href="../../../geoinf.html#geoinf.ogc.SOS.SosCommonWidget.create_config_window">[docs]</a>    <span class="k">def</span> <span class="nf">create_config_window</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create datacontainers and layout for displaying SOS-specific data.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setWindowTitle</span><span class="p">(</span><span class="s">&quot;SOS Configuration Widget&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setMinimumSize</span><span class="p">(</span><span class="mi">900</span><span class="p">,</span> <span class="mi">675</span><span class="p">)</span>
+        <span class="c"># text for combo boxes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">SPATIAL_OFFERING</span> <span class="o">=</span> <span class="s">&#39;Use Offering Bounding Box&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">SPATIAL_OWN</span> <span class="o">=</span> <span class="s">&#39;Use Own Bounding Box&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">TIME_OFFERING</span> <span class="o">=</span> <span class="s">&#39;Use Offering Time Period&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">TIME_OWN</span> <span class="o">=</span> <span class="s">&#39;Use Own Time Period&#39;</span>
+        <span class="c"># main layout</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mainLayout</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QHBoxLayout</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setLayout</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mainLayout</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">offeringsGroupBox</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QGroupBox</span><span class="p">(</span><span class="s">&quot;Offerings&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">offeringsLayout</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QVBoxLayout</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">offeringsGroupBox</span><span class="o">.</span><span class="n">setLayout</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">offeringsLayout</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mainLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">offeringsGroupBox</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">split</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QSplitter</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">Vertical</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mainLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">split</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsGroupBox</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QGroupBox</span><span class="p">(</span><span class="s">&quot;Offering Details&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mainLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detailsGroupBox</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QGridLayout</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsGroupBox</span><span class="o">.</span><span class="n">setLayout</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="p">)</span>
+        <span class="c"># offerings</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lbxOfferings</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QListWidget</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">offeringsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lbxOfferings</span><span class="p">)</span>
+
+        <span class="c"># Offering details layout</span>
+        <span class="c">#   labels</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39;Description&#39;</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39;Bounding Box&#39;</span><span class="p">),</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39;Time&#39;</span><span class="p">),</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39;Procedure&#39;</span><span class="p">),</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39;Response Format&#39;</span><span class="p">),</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39;Response Mode&#39;</span><span class="p">),</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39;Result Model&#39;</span><span class="p">),</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39;Observed Property&#39;</span><span class="p">),</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39;Feature of Interest&#39;</span><span class="p">),</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39;Time Limit?&#39;</span><span class="p">),</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39;Spatial Delimiter?&#39;</span><span class="p">),</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39;Request Type&#39;</span><span class="p">),</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+        <span class="c">#   data containers</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lblDescription</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39;-&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lblDescription</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">boundingGroupBox</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QGroupBox</span><span class="p">(</span><span class="s">&quot;&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">boundingLayout</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QVBoxLayout</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">boundingGroupBox</span><span class="o">.</span><span class="n">setLayout</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">boundingLayout</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">boundingGroupBox</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">minGroupBox</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QGroupBox</span><span class="p">(</span><span class="s">&quot;&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">minLayout</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QHBoxLayout</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">minGroupBox</span><span class="o">.</span><span class="n">setLayout</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">minLayout</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">boundingLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">minGroupBox</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">minLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39;Top Left X:&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lblTL_X</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39;-&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">minLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lblTL_X</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">minLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39;Top Left Y:&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lblTL_Y</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39;-&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">minLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lblTL_Y</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">maxGroupBox</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QGroupBox</span><span class="p">(</span><span class="s">&quot;&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">maxGroupBox</span><span class="o">.</span><span class="n">setFlat</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">maxLayout</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QHBoxLayout</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">maxGroupBox</span><span class="o">.</span><span class="n">setLayout</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">maxLayout</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">boundingLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">maxGroupBox</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">maxLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39;Bottom Right X:&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lblBR_X</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39;-&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">maxLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lblBR_X</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">maxLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39;Bottom Right Y:&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lblBR_Y</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39;-&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">maxLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lblBR_Y</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">srsGroupBox</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QGroupBox</span><span class="p">(</span><span class="s">&quot;&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">srsGroupBox</span><span class="o">.</span><span class="n">setFlat</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">srsLayout</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QHBoxLayout</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">srsGroupBox</span><span class="o">.</span><span class="n">setLayout</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">srsLayout</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">boundingLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">srsGroupBox</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">srsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39;SRS:&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lblSRS</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39;-&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">srsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lblSRS</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">boundingLayout</span><span class="o">.</span><span class="n">addStretch</span><span class="p">()</span>  <span class="c"># force items upwards -does not work??</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">timeGroupBox</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QGroupBox</span><span class="p">(</span><span class="s">&quot;&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timeGroupBox</span><span class="o">.</span><span class="n">setFlat</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timeLayout</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QVBoxLayout</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timeGroupBox</span><span class="o">.</span><span class="n">setLayout</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">timeLayout</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">timeGroupBox</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lblStartTime</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39;-&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timeLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lblStartTime</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timeLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39;to:&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lblEndTime</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39;-&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timeLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lblEndTime</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">cbProcedure</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QComboBox</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cbProcedure</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cbResponseFormat</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QComboBox</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cbResponseFormat</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cbResponseMode</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QComboBox</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cbResponseMode</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cbResultModel</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QComboBox</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cbResultModel</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cbObservedProperty</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QComboBox</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cbObservedProperty</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cbFOI</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QComboBox</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cbFOI</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">cbTime</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QComboBox</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cbTime</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cbTime</span><span class="o">.</span><span class="n">addItem</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cbTime</span><span class="o">.</span><span class="n">addItem</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">TIME_OFFERING</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cbTime</span><span class="o">.</span><span class="n">addItem</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">TIME_OWN</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">cbSpatial</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QComboBox</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cbSpatial</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cbSpatial</span><span class="o">.</span><span class="n">addItem</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cbSpatial</span><span class="o">.</span><span class="n">addItem</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">SPATIAL_OFFERING</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cbSpatial</span><span class="o">.</span><span class="n">addItem</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">SPATIAL_OWN</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">cbRequest</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QComboBox</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cbRequest</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cbRequest</span><span class="o">.</span><span class="n">addItem</span><span class="p">(</span><span class="s">&#39;GetFeatureOfInterest&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cbRequest</span><span class="o">.</span><span class="n">addItem</span><span class="p">(</span><span class="s">&#39;GetObservation&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cbRequest</span><span class="o">.</span><span class="n">addItem</span><span class="p">(</span><span class="s">&#39;DescribeSensor&#39;</span><span class="p">)</span>
+
+        <span class="c"># local signals</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lbxOfferings</span><span class="p">,</span>
+            <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s">&quot;itemClicked(QListWidgetItem*)&quot;</span><span class="p">),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">offeringsChanged</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="SosCommonWidget.getBoundingBoxOffering"><a class="viewcode-back" href="../../../geoinf.html#geoinf.ogc.SOS.SosCommonWidget.getBoundingBoxOffering">[docs]</a>    <span class="k">def</span> <span class="nf">getBoundingBoxOffering</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return a tuple containing box co-ordinates.</span>
+<span class="sd">        Format: top-left X, top-left Y, bottom-left X, bottom-left Y</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lblTL_X</span><span class="o">.</span><span class="n">text</span><span class="p">(),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lblTL_Y</span><span class="o">.</span><span class="n">text</span><span class="p">(),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lblBR_X</span><span class="o">.</span><span class="n">text</span><span class="p">(),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lblBR_Y</span><span class="o">.</span><span class="n">text</span><span class="p">())</span>
+</div>
+<div class="viewcode-block" id="SosCommonWidget.getTimeIntervalOffering"><a class="viewcode-back" href="../../../geoinf.html#geoinf.ogc.SOS.SosCommonWidget.getTimeIntervalOffering">[docs]</a>    <span class="k">def</span> <span class="nf">getTimeIntervalOffering</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return a tuple containing begin / end in universal time.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lblStartTime</span><span class="o">.</span><span class="n">text</span><span class="p">(),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lblEndTime</span><span class="o">.</span><span class="n">text</span><span class="p">(),)</span>
+</div>
+<div class="viewcode-block" id="SosCommonWidget.removeOfferings"><a class="viewcode-back" href="../../../geoinf.html#geoinf.ogc.SOS.SosCommonWidget.removeOfferings">[docs]</a>    <span class="k">def</span> <span class="nf">removeOfferings</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Remove all offering details when no SOS is selected.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clearOfferings</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lbxOfferings</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="SosCommonWidget.clearOfferings"><a class="viewcode-back" href="../../../geoinf.html#geoinf.ogc.SOS.SosCommonWidget.clearOfferings">[docs]</a>    <span class="k">def</span> <span class="nf">clearOfferings</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Reset all displayed offering values.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lblDescription</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="s">&#39;-&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lblTL_X</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="s">&#39;-&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lblTL_Y</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="s">&#39;-&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lblBR_X</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="s">&#39;-&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lblBR_Y</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="s">&#39;-&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lblSRS</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="s">&#39;-&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lblStartTime</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="s">&#39;-&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lblEndTime</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="s">&#39;-&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cbProcedure</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cbResponseFormat</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cbResponseMode</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cbResultModel</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cbObservedProperty</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cbFOI</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="c">#self.cbTime.clear()</span>
+        <span class="c">#self.cbSpatial.clear()</span>
+</div>
+<div class="viewcode-block" id="SosCommonWidget.offeringsChanged"><a class="viewcode-back" href="../../../geoinf.html#geoinf.ogc.SOS.SosCommonWidget.offeringsChanged">[docs]</a>    <span class="k">def</span> <span class="nf">offeringsChanged</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Update offering details containers when new offering selected.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clearOfferings</span><span class="p">()</span>
+        <span class="n">selected_offering</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lbxOfferings</span><span class="o">.</span><span class="n">selectedItems</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_widget</span><span class="o">.</span><span class="n">service</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_widget</span><span class="o">.</span><span class="n">service</span><span class="o">.</span><span class="n">service_valid</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">content</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">selected_offering</span> <span class="o">==</span> <span class="n">content</span><span class="o">.</span><span class="n">id</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">content</span><span class="o">.</span><span class="n">description</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">lblDescription</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="n">content</span><span class="o">.</span><span class="n">description</span><span class="p">)</span>
+                    <span class="k">elif</span> <span class="n">content</span><span class="o">.</span><span class="n">name</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">lblDescription</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="n">content</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">lblDescription</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="n">content</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+                    <span class="c"># update other offering details...</span>
+                    <span class="k">if</span> <span class="n">content</span><span class="o">.</span><span class="n">time</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">lblStartTime</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">content</span><span class="o">.</span><span class="n">time</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">lblEndTime</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">content</span><span class="o">.</span><span class="n">time</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+                    <span class="k">if</span> <span class="n">content</span><span class="o">.</span><span class="n">bounding_box</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">lblTL_X</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">content</span><span class="o">.</span><span class="n">bounding_box</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">lblTL_Y</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">content</span><span class="o">.</span><span class="n">bounding_box</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">lblBR_X</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">content</span><span class="o">.</span><span class="n">bounding_box</span><span class="p">[</span><span class="mi">2</span><span class="p">]))</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">lblBR_Y</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">content</span><span class="o">.</span><span class="n">bounding_box</span><span class="p">[</span><span class="mi">3</span><span class="p">]))</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">lblSRS</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">content</span><span class="o">.</span><span class="n">bounding_box</span><span class="p">[</span><span class="mi">4</span><span class="p">]))</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cbProcedure</span><span class="o">.</span><span class="n">addItem</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">content</span><span class="o">.</span><span class="n">procedure</span><span class="p">:</span>
+                        <span class="k">for</span> <span class="n">pr</span> <span class="ow">in</span> <span class="n">content</span><span class="o">.</span><span class="n">procedure</span><span class="p">:</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">cbProcedure</span><span class="o">.</span><span class="n">addItem</span><span class="p">(</span><span class="n">pr</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cbResponseFormat</span><span class="o">.</span><span class="n">addItem</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">content</span><span class="o">.</span><span class="n">response_format</span><span class="p">:</span>
+                        <span class="k">for</span> <span class="n">rf</span> <span class="ow">in</span> <span class="n">content</span><span class="o">.</span><span class="n">response_format</span><span class="p">:</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">cbResponseFormat</span><span class="o">.</span><span class="n">addItem</span><span class="p">(</span><span class="n">rf</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cbResponseMode</span><span class="o">.</span><span class="n">addItem</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">content</span><span class="o">.</span><span class="n">response_mode</span><span class="p">:</span>
+                        <span class="k">for</span> <span class="n">rm</span> <span class="ow">in</span> <span class="n">content</span><span class="o">.</span><span class="n">response_mode</span><span class="p">:</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">cbResponseMode</span><span class="o">.</span><span class="n">addItem</span><span class="p">(</span><span class="n">rm</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cbResultModel</span><span class="o">.</span><span class="n">addItem</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">content</span><span class="o">.</span><span class="n">result_model</span><span class="p">:</span>
+                        <span class="k">for</span> <span class="n">rd</span> <span class="ow">in</span> <span class="n">content</span><span class="o">.</span><span class="n">result_model</span><span class="p">:</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">cbResultModel</span><span class="o">.</span><span class="n">addItem</span><span class="p">(</span><span class="n">rd</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cbObservedProperty</span><span class="o">.</span><span class="n">addItem</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">content</span><span class="o">.</span><span class="n">observed_property</span><span class="p">:</span>
+                        <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">content</span><span class="o">.</span><span class="n">observed_property</span><span class="p">:</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">cbObservedProperty</span><span class="o">.</span><span class="n">addItem</span><span class="p">(</span><span class="n">op</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cbFOI</span><span class="o">.</span><span class="n">addItem</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">content</span><span class="o">.</span><span class="n">feature_of_interest</span><span class="p">:</span>
+                        <span class="k">for</span> <span class="n">foi</span> <span class="ow">in</span> <span class="n">content</span><span class="o">.</span><span class="n">feature_of_interest</span><span class="p">:</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">cbFOI</span><span class="o">.</span><span class="n">addItem</span><span class="p">(</span><span class="n">foi</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="SosCommonWidget.loadOfferings"><a class="viewcode-back" href="../../../geoinf.html#geoinf.ogc.SOS.SosCommonWidget.loadOfferings">[docs]</a>    <span class="k">def</span> <span class="nf">loadOfferings</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Load the offerings from the service metadata.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_widget</span><span class="o">.</span><span class="n">service</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_widget</span><span class="o">.</span><span class="n">service</span><span class="o">.</span><span class="n">service_valid</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">contents</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_widget</span><span class="o">.</span><span class="n">service</span><span class="o">.</span><span class="n">service</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="s">&#39;contents&#39;</span><span class="p">]</span>
+            <span class="c">#print &quot;SOS self.contents&quot;, self.contents</span>
+            <span class="k">for</span> <span class="n">content</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">:</span>
+                <span class="n">item</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QListWidgetItem</span><span class="p">(</span><span class="n">content</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">lbxOfferings</span><span class="o">.</span><span class="n">addItem</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+
+</div></div>
+<div class="viewcode-block" id="SOSConfigurationWidget"><a class="viewcode-back" href="../../../geoinf.html#geoinf.ogc.SOS.SOSConfigurationWidget">[docs]</a><span class="k">class</span> <span class="nc">SOSConfigurationWidget</span><span class="p">(</span><span class="n">OgcConfigurationWidget</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;makes use of code style from OgcConfigurationWidget&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">,</span> <span class="n">controller</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">OgcConfigurationWidget</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">,</span> <span class="n">controller</span><span class="p">,</span> <span class="n">parent</span><span class="p">)</span>
+        <span class="c">#self.parent_module = module</span>
+        <span class="c"># pass in parent widget i.e. OgcCommonWidget class</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">SosCommonWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ogc_common_widget</span><span class="p">)</span>
+        <span class="c"># move parent tab to first place</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tabs</span><span class="o">.</span><span class="n">insertTab</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">,</span> <span class="s">&quot;&quot;</span><span class="p">)</span>
+        <span class="c"># set SOS-specific tabs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tabs</span><span class="o">.</span><span class="n">setTabText</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tabs</span><span class="o">.</span><span class="n">indexOf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">),</span>
+            <span class="n">QtGui</span><span class="o">.</span><span class="n">QApplication</span><span class="o">.</span><span class="n">translate</span><span class="p">(</span>
+                <span class="s">&quot;OgcConfigurationWidget&quot;</span><span class="p">,</span>
+                <span class="s">&quot;SOS Specific Metadata&quot;</span><span class="p">,</span>
+                <span class="bp">None</span><span class="p">,</span>
+                <span class="n">QtGui</span><span class="o">.</span><span class="n">QApplication</span><span class="o">.</span><span class="n">UnicodeUTF8</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tabs</span><span class="o">.</span><span class="n">setTabToolTip</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tabs</span><span class="o">.</span><span class="n">indexOf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">),</span>
+            <span class="n">QtGui</span><span class="o">.</span><span class="n">QApplication</span><span class="o">.</span><span class="n">translate</span><span class="p">(</span>
+                <span class="s">&quot;OgcConfigurationWidget&quot;</span><span class="p">,</span>
+                <span class="s">&quot;Select SOS-specific parameters&quot;</span><span class="p">,</span>
+                <span class="bp">None</span><span class="p">,</span>
+                <span class="n">QtGui</span><span class="o">.</span><span class="n">QApplication</span><span class="o">.</span><span class="n">UnicodeUTF8</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tabs</span><span class="o">.</span><span class="n">setCurrentIndex</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SOSConfigurationWidget.constructRequest"><a class="viewcode-back" href="../../../geoinf.html#geoinf.ogc.SOS.SOSConfigurationWidget.constructRequest">[docs]</a>    <span class="k">def</span> <span class="nf">constructRequest</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return an XML-encoded request from configuration parameters</span>
+
+<span class="sd">        Overwrites method defined in OgcConfigurationWidget.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+        <span class="n">rType</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">cbRequest</span><span class="o">.</span><span class="n">currentText</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">procedure</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">cbProcedure</span><span class="o">.</span><span class="n">currentText</span><span class="p">()</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">procedure</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">format</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">cbResponseFormat</span><span class="o">.</span><span class="n">currentText</span><span class="p">()</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">format</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">mode</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">cbResponseMode</span><span class="o">.</span><span class="n">currentText</span><span class="p">()</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">mode</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">cbResultModel</span><span class="o">.</span><span class="n">currentText</span><span class="p">()</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">model</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">obs_prop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">cbObservedProperty</span><span class="o">.</span><span class="n">currentText</span><span class="p">()</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">obs_prop</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">foi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">cbFOI</span><span class="o">.</span><span class="n">currentText</span><span class="p">()</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">foi</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">offering</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">lbxOfferings</span><span class="o">.</span><span class="n">currentItem</span><span class="p">()</span><span class="o">.</span><span class="n">text</span><span class="p">()</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">offering</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">time_limit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">cbTime</span><span class="o">.</span><span class="n">currentText</span><span class="p">()</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">time_limit</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">spatial_limit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">cbSpatial</span><span class="o">.</span><span class="n">currentText</span><span class="p">()</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">spatial_limit</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="c"># primary parameters</span>
+        <span class="n">WARNING_MUST</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s"> must be chosen for a &quot;</span><span class="si">%s</span><span class="s">&quot; request.&#39;</span>
+        <span class="n">WARNING_NOT</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s"> must NOT be chosen for a &quot;</span><span class="si">%s</span><span class="s">&quot; request.&#39;</span>
+        <span class="n">WARNING_CHOICE</span> <span class="o">=</span> <span class="s">&#39;Either </span><span class="si">%s</span><span class="s"> or </span><span class="si">%s</span><span class="s"> must be chosen for a &quot;</span><span class="si">%s</span><span class="s">&quot; request.&#39;</span>
+        <span class="n">WARNING_ONLY_ONE</span> <span class="o">=</span> <span class="s">&#39;Cannot select both </span><span class="si">%s</span><span class="s"> and </span><span class="si">%s</span><span class="s"> for a &quot;</span><span class="si">%s</span><span class="s">&quot; request.&#39;</span>
+        <span class="c"># process by request type</span>
+        <span class="k">if</span> <span class="n">rType</span> <span class="o">==</span> <span class="s">&#39;DescribeSensor&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">procedure</span><span class="p">:</span>
+                <span class="n">data</span> <span class="o">+=</span> <span class="s">&#39;&lt;procedure&gt;&#39;</span> <span class="o">+</span> <span class="n">procedure</span> <span class="o">+</span> <span class="s">&#39;&lt;/procedure&gt;</span><span class="se">\n</span><span class="s">&#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">showWarning</span><span class="p">(</span><span class="n">WARNING_MUST</span> <span class="o">%</span> <span class="p">(</span><span class="s">&#39;Procedure&#39;</span><span class="p">,</span> <span class="n">rType</span><span class="p">))</span>
+                <span class="k">return</span> <span class="n">result</span>
+
+        <span class="k">elif</span> <span class="n">rType</span> <span class="o">==</span> <span class="s">&#39;GetFeatureOfInterest&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span><span class="p">(</span><span class="n">foi</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span><span class="p">(</span><span class="n">spatial_limit</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">showWarning</span><span class="p">(</span><span class="n">WARNING_CHOICE</span> <span class="o">%</span>
+                    <span class="p">(</span><span class="s">&#39;Spatial Limit&#39;</span><span class="p">,</span> <span class="s">&#39;Feature of Interest&#39;</span><span class="p">,</span> <span class="n">rType</span><span class="p">))</span>
+                <span class="k">return</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span>
+            <span class="k">if</span> <span class="n">spatial_limit</span> <span class="ow">and</span> <span class="n">foi</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">showWarning</span><span class="p">(</span><span class="n">WARNING_ONLY_ONE</span> <span class="o">%</span>
+                    <span class="p">(</span><span class="s">&#39;Spatial Limit&#39;</span><span class="p">,</span> <span class="s">&#39;Feature of Interest&#39;</span><span class="p">,</span> <span class="n">rType</span><span class="p">))</span>
+                <span class="k">return</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span>
+            <span class="k">if</span> <span class="n">foi</span><span class="p">:</span>
+                <span class="n">data</span> <span class="o">+=</span> <span class="s">&#39;&lt;FeatureOfInterestId&gt;&#39;</span> <span class="o">+</span> \
+                       <span class="n">foi</span> <span class="o">+</span> \
+                       <span class="s">&#39;&lt;/FeatureOfInterestId&gt;</span><span class="se">\n</span><span class="s">&#39;</span>
+            <span class="k">if</span> <span class="n">spatial_limit</span><span class="p">:</span>  <span class="c"># spatial parameters</span>
+                <span class="k">if</span> <span class="n">spatial_limit</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">SPATIAL_OWN</span><span class="p">:</span>
+                    <span class="c"># see SpatialTemporalConfigurationWidget</span>
+                    <span class="n">bbox</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getBoundingBox</span><span class="p">()</span>
+                <span class="k">elif</span> <span class="n">spatial_limit</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">SPATIAL_OFFERING</span><span class="p">:</span>
+                    <span class="c"># see SosCommonWidget (this module)</span>
+                    <span class="n">bbox</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">getBoundingBoxOffering</span><span class="p">()</span>
+                <span class="n">data</span> <span class="o">+=</span> <span class="s">&#39;&lt;location&gt;</span><span class="se">\n</span><span class="s"> &lt;ogc:BBOX&gt;</span><span class="se">\n</span><span class="s">&#39;</span> <span class="o">+</span> \
+                    <span class="s">&#39;  &lt;ogc:PropertyName&gt;urn:ogc:data:location&lt;/ogc:PropertyName&gt;</span><span class="se">\n</span><span class="s">&#39;</span> <span class="o">+</span> \
+                    <span class="s">&#39;  &lt;gml:Envelope srsName=&quot;&#39;</span> <span class="o">+</span> \
+                    <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">lblSRS</span><span class="o">.</span><span class="n">text</span><span class="p">()</span> <span class="o">+</span> <span class="s">&#39;&quot;&gt;</span><span class="se">\n</span><span class="s">&#39;</span> <span class="o">+</span> \
+                    <span class="s">&#39;   &lt;gml:lowerCorner&gt;&#39;</span> <span class="o">+</span> <span class="n">bbox</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="s">&#39; &#39;</span> <span class="o">+</span> <span class="n">bbox</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">+</span> \
+                    <span class="s">&#39;&lt;/gml:lowerCorner&gt;</span><span class="se">\n</span><span class="s">&#39;</span> <span class="o">+</span> \
+                    <span class="s">&#39;   &lt;gml:upperCorner&gt;&#39;</span> <span class="o">+</span> <span class="n">bbox</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="s">&#39; &#39;</span> <span class="o">+</span> <span class="n">bbox</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> \
+                    <span class="s">&#39;&lt;/gml:upperCorner&gt;</span><span class="se">\n</span><span class="s">&#39;</span> <span class="o">+</span> \
+                    <span class="s">&#39;  &lt;/gml:Envelope&gt;</span><span class="se">\n</span><span class="s">&#39;</span> <span class="o">+</span> <span class="s">&#39; &lt;/ogc:BBOX&gt;</span><span class="se">\n</span><span class="s">&lt;/location&gt;</span><span class="se">\n</span><span class="s">&#39;</span>
+
+        <span class="k">elif</span> <span class="n">rType</span> <span class="o">==</span> <span class="s">&#39;GetObservation&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">offering</span><span class="p">:</span>
+                <span class="n">data</span> <span class="o">+=</span> <span class="s">&#39;&lt;offering&gt;&#39;</span> <span class="o">+</span> <span class="n">offering</span> <span class="o">+</span> <span class="s">&#39;&lt;/offering&gt;</span><span class="se">\n</span><span class="s">&#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">showWarning</span><span class="p">(</span><span class="n">WARNING_MUST</span> <span class="o">%</span> <span class="p">(</span><span class="s">&#39;Offering&#39;</span><span class="p">,</span> <span class="n">rType</span><span class="p">))</span>
+                <span class="k">return</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span>
+            <span class="k">if</span> <span class="n">time_limit</span><span class="p">:</span>  <span class="c"># time params</span>
+                <span class="k">if</span> <span class="n">time_limit</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">TIME_OWN</span><span class="p">:</span>
+                    <span class="c"># see SpatialTemporalConfigurationWidget</span>
+                    <span class="n">timerange</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getTimeInterval</span><span class="p">()</span>
+                <span class="k">elif</span> <span class="n">time_limit</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">TIME_OFFERING</span><span class="p">:</span>
+                    <span class="c"># see SpatialTemporalConfigurationWidget</span>
+                    <span class="n">timerange</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">getTimeIntervalOffering</span><span class="p">()</span>
+                <span class="n">data</span> <span class="o">+=</span> <span class="s">&#39;&lt;eventTime&gt;</span><span class="se">\n</span><span class="s"> &lt;ogc:TM_During&gt;</span><span class="se">\n</span><span class="s">&#39;</span> <span class="o">+</span> \
+                    <span class="s">&#39;  &lt;ogc:PropertyName&gt;om:samplingTime&lt;/ogc:PropertyName&gt;&#39;</span> <span class="o">+</span> \
+                    <span class="s">&#39;  &lt;gml:TimePeriod&gt;</span><span class="se">\n</span><span class="s">&#39;</span> <span class="o">+</span> \
+                    <span class="s">&#39;   &lt;gml:beginPosition&gt;&#39;</span> <span class="o">+</span> <span class="n">timerange</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> \
+                    <span class="s">&#39;&lt;/gml:beginPosition&gt;</span><span class="se">\n</span><span class="s">&#39;</span> <span class="o">+</span> \
+                    <span class="s">&#39;   &lt;gml:endPosition&gt;&#39;</span> <span class="o">+</span> <span class="n">timerange</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> \
+                    <span class="s">&#39;&lt;/gml:endPosition&gt;</span><span class="se">\n</span><span class="s">&#39;</span> <span class="o">+</span> \
+                    <span class="s">&#39;  &lt;/gml:TimePeriod&gt;</span><span class="se">\n</span><span class="s"> &lt;/ogc:TM_During&gt;</span><span class="se">\n</span><span class="s">&lt;/eventTime&gt;</span><span class="se">\n</span><span class="s">&#39;</span>
+            <span class="k">if</span> <span class="n">procedure</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">mode</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">showWarning</span><span class="p">(</span><span class="n">WARNING_MUST</span> <span class="o">+</span> <span class="s">&#39;If a procedure is chosen&#39;</span>
+                                     <span class="o">%</span> <span class="p">(</span><span class="s">&#39;Response Mode&#39;</span><span class="p">,</span> <span class="n">rType</span><span class="p">))</span>
+                    <span class="k">return</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">data</span> <span class="o">+=</span> <span class="s">&#39;&lt;procedure&gt;&#39;</span> <span class="o">+</span> <span class="n">procedure</span> <span class="o">+</span> <span class="s">&#39;&lt;/procedure&gt;</span><span class="se">\n</span><span class="s">&#39;</span>
+            <span class="k">if</span> <span class="n">obs_prop</span><span class="p">:</span>
+                <span class="n">data</span> <span class="o">+=</span> <span class="s">&#39;&lt;observedProperty&gt;&#39;</span> <span class="o">+</span> <span class="n">obs_prop</span> <span class="o">+</span> <span class="s">&#39;&lt;/observedProperty&gt;</span><span class="se">\n</span><span class="s">&#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">showWarning</span><span class="p">(</span><span class="n">WARNING_MUST</span> <span class="o">%</span> <span class="p">(</span><span class="s">&#39;Observed Property&#39;</span><span class="p">,</span> <span class="n">rType</span><span class="p">))</span>
+                <span class="k">return</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span>
+            <span class="k">if</span> <span class="n">spatial_limit</span> <span class="ow">and</span> <span class="n">foi</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">showWarning</span><span class="p">(</span><span class="n">WARNING_ONLY_ONE</span> <span class="o">%</span>
+                    <span class="p">(</span><span class="s">&#39;Spatial Limit&#39;</span><span class="p">,</span> <span class="s">&#39;Feature of Interest&#39;</span><span class="p">,</span> <span class="n">rType</span><span class="p">))</span>
+                <span class="k">return</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span>
+            <span class="k">if</span> <span class="n">foi</span><span class="p">:</span>
+                <span class="n">data</span> <span class="o">+=</span> <span class="s">&#39;&lt;featureOfInterest&gt;&lt;ObjectID&gt;&#39;</span> <span class="o">+</span> \
+                        <span class="n">foi</span> <span class="o">+</span> \
+                        <span class="s">&#39;&lt;/ObjectID&gt;&lt;/featureOfInterest&gt;</span><span class="se">\n</span><span class="s">&#39;</span>
+            <span class="k">if</span> <span class="n">spatial_limit</span><span class="p">:</span>  <span class="c"># spatial parameters</span>
+                <span class="k">if</span> <span class="n">spatial_limit</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">SPATIAL_OWN</span><span class="p">:</span>
+                    <span class="c"># see SpatialTemporalConfigurationWidget</span>
+                    <span class="n">bbox</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getBoundingBox</span><span class="p">()</span>
+                <span class="k">elif</span> <span class="n">spatial_limit</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">SPATIAL_OFFERING</span><span class="p">:</span>
+                    <span class="c"># see SosCommonWidget (this module)</span>
+                    <span class="n">bbox</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">getBoundingBoxOffering</span><span class="p">()</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">()</span>
+                    <span class="k">raise</span> <span class="n">ModuleError</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="p">,</span>
+                        <span class="s">&#39;Unknown WFS bounding box type&#39;</span> <span class="o">+</span> <span class="s">&#39;: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">error</span><span class="p">))</span>
+                <span class="n">data</span> <span class="o">+=</span> <span class="s">&#39;&lt;featureOfInterest&gt;</span><span class="se">\n</span><span class="s"> &lt;ogc:BBOX&gt;</span><span class="se">\n</span><span class="s">&#39;</span> <span class="o">+</span> \
+                    <span class="s">&#39;  &lt;ogc:PropertyName&gt;urn:ogc:data:location&lt;/ogc:PropertyName&gt;</span><span class="se">\n</span><span class="s">&#39;</span> <span class="o">+</span> \
+                    <span class="s">&#39;  &lt;gml:Envelope srsName=&quot;&#39;</span> <span class="o">+</span> \
+                    <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">lblSRS</span><span class="o">.</span><span class="n">text</span><span class="p">()</span> <span class="o">+</span> <span class="s">&#39;&quot;&gt;</span><span class="se">\n</span><span class="s">&#39;</span> <span class="o">+</span> \
+                    <span class="s">&#39;   &lt;gml:lowerCorner&gt;&#39;</span> <span class="o">+</span> <span class="n">bbox</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="s">&#39; &#39;</span> <span class="o">+</span> <span class="n">bbox</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">+</span> \
+                    <span class="s">&#39;&lt;/gml:lowerCorner&gt;</span><span class="se">\n</span><span class="s">&#39;</span> <span class="o">+</span> \
+                    <span class="s">&#39;   &lt;gml:upperCorner&gt;&#39;</span> <span class="o">+</span> <span class="n">bbox</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="s">&#39; &#39;</span> <span class="o">+</span> <span class="n">bbox</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> \
+                    <span class="s">&#39;&lt;/gml:upperCorner&gt;</span><span class="se">\n</span><span class="s">&#39;</span> <span class="o">+</span> \
+                    <span class="s">&#39;  &lt;/gml:Envelope&gt;</span><span class="se">\n</span><span class="s">&#39;</span> <span class="o">+</span> <span class="s">&#39; &lt;/ogc:BBOX&gt;</span><span class="se">\n</span><span class="s">&lt;/featureOfInterest&gt;</span><span class="se">\n</span><span class="s">&#39;</span>
+            <span class="k">if</span> <span class="n">format</span><span class="p">:</span>
+                <span class="n">data</span> <span class="o">+=</span> <span class="s">&#39;&lt;responseFormat&gt;&#39;</span> <span class="o">+</span> <span class="n">format</span> <span class="o">+</span> <span class="s">&#39;&lt;/responseFormat&gt;</span><span class="se">\n</span><span class="s">&#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">showWarning</span><span class="p">(</span><span class="n">WARNING_MUST</span> <span class="o">%</span> <span class="p">(</span><span class="s">&#39;Response Format&#39;</span><span class="p">,</span> <span class="n">rType</span><span class="p">))</span>
+                <span class="k">return</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span>
+            <span class="k">if</span> <span class="n">model</span><span class="p">:</span>
+                <span class="n">data</span> <span class="o">+=</span> <span class="s">&#39;&lt;resultModel&gt;&#39;</span> <span class="o">+</span> <span class="n">model</span> <span class="o">+</span> <span class="s">&#39;&lt;/resultModel&gt;</span><span class="se">\n</span><span class="s">&#39;</span>
+            <span class="k">if</span> <span class="n">mode</span><span class="p">:</span>
+                <span class="n">data</span> <span class="o">+=</span> <span class="s">&#39;&lt;responseMode&gt;&#39;</span> <span class="o">+</span> <span class="n">mode</span> <span class="o">+</span> <span class="s">&#39;&lt;/responseMode&gt;</span><span class="se">\n</span><span class="s">&#39;</span>
+
+        <span class="c"># wrapper</span>
+        <span class="k">if</span> <span class="n">rType</span> <span class="o">==</span> <span class="s">&#39;DescribeSensor&#39;</span><span class="p">:</span>
+            <span class="n">header</span> <span class="o">=</span> \
+            <span class="sd">&quot;&quot;&quot;&lt;DescribeSensor service=&quot;SOS&quot; version=&quot;1.0.0&quot;</span>
+<span class="sd">            xmlns=&quot;http://www.opengis.net/sos/1.0&quot;</span>
+<span class="sd">            xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;</span>
+<span class="sd">            xsi:schemaLocation=&quot;http://www.opengis.net/sos/1.0</span>
+<span class="sd">            http://schemas.opengis.net/sos/1.0.0/sosDescribeSensor.xsd&quot;</span>
+<span class="sd">            outputFormat=&quot;text/xml;subtype=&amp;quot;sensorML/1.0.1&amp;quot;&quot;&gt;\n&quot;&quot;&quot;</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">header</span> <span class="o">+</span> <span class="n">data</span> <span class="o">+</span> <span class="s">&#39;&lt;/DescribeSensor&gt;&#39;</span>
+        <span class="k">elif</span> <span class="n">rType</span> <span class="o">==</span> <span class="s">&#39;GetFeatureOfInterest&#39;</span><span class="p">:</span>
+            <span class="n">header</span> <span class="o">=</span> \
+            <span class="sd">&quot;&quot;&quot;&lt;GetFeatureOfInterest service=&quot;SOS&quot; version=&quot;1.0.0&quot;</span>
+<span class="sd">            xmlns=&quot;http://www.opengis.net/sos/1.0&quot;</span>
+<span class="sd">            xmlns:ows=&quot;http://www.opengeospatial.net/ows&quot;</span>
+<span class="sd">            xmlns:gml=&quot;http://www.opengis.net/gml&quot;</span>
+<span class="sd">            xmlns:ogc=&quot;http://www.opengis.net/ogc&quot;</span>
+<span class="sd">            xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;</span>
+<span class="sd">            xsi:schemaLocation=&quot;http://www.opengis.net/sos/1.0</span>
+<span class="sd">            http://schemas.opengis.net/sos/1.0.0/sosGetFeatureOfInterest.xsd&quot;&gt;\n&quot;&quot;&quot;</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">header</span> <span class="o">+</span> <span class="n">data</span> <span class="o">+</span> <span class="s">&#39;&lt;/GetFeatureOfInterest&gt;</span><span class="se">\n</span><span class="s">&#39;</span>
+        <span class="k">elif</span> <span class="n">rType</span> <span class="o">==</span> <span class="s">&#39;GetObservation&#39;</span><span class="p">:</span>
+            <span class="n">header</span> <span class="o">=</span> \
+            <span class="sd">&quot;&quot;&quot;&lt;GetObservation service=&quot;SOS&quot; version=&quot;1.0.0&quot;</span>
+<span class="sd">            xmlns=&quot;http://www.opengis.net/sos/1.0&quot;</span>
+<span class="sd">            xmlns:ows=&quot;http://www.opengis.net/ows/1.1&quot;</span>
+<span class="sd">            xmlns:gml=&quot;http://www.opengis.net/gml&quot;</span>
+<span class="sd">            xmlns:ogc=&quot;http://www.opengis.net/ogc&quot;</span>
+<span class="sd">            xmlns:om=&quot;http://www.opengis.net/om/1.0&quot;</span>
+<span class="sd">            xmlns:ns=&quot;http://www.opengis.net/om/1.0&quot;</span>
+<span class="sd">            xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;</span>
+<span class="sd">            xsi:schemaLocation=&quot;http://www.opengis.net/sos/1.0</span>
+<span class="sd">            http://schemas.opengis.net/sos/1.0.0/sosGetObservation.xsd&quot;</span>
+<span class="sd">            srsName=&quot;%s&quot;&gt;\n&quot;&quot;&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">lblSRS</span><span class="o">.</span><span class="n">text</span><span class="p">()</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">header</span> <span class="o">+</span> <span class="n">data</span> <span class="o">+</span> <span class="s">&#39;&lt;/GetObservation&gt;</span><span class="se">\n</span><span class="s">&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ModuleError</span><span class="p">(</span>
+                <span class="bp">self</span><span class="p">,</span>
+                <span class="s">&#39;Unknown SOS request type&#39;</span> <span class="o">+</span> <span class="s">&#39;: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">rType</span><span class="p">))</span>
+        <span class="c"># xml header</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="s">&#39;&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;</span><span class="se">\n</span><span class="s">&#39;</span> <span class="o">+</span> <span class="n">data</span>
+        <span class="c">#print data  # show line breaks for testing !!!</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)</span>  <span class="c"># remove line breaks</span>
+        <span class="n">result</span><span class="p">[</span><span class="s">&#39;request_type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;POST&#39;</span>
+        <span class="n">result</span><span class="p">[</span><span class="s">&#39;data&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span>
+        <span class="k">return</span> <span class="n">result</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">EO4vistrails v1.0 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, Meraka Institute, CSIR.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.1.
+    </div>
+  </body>
+</html>

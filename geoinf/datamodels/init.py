@@ -69,6 +69,7 @@ def initialize(*args, **keywords):
     # QgsLayers
     reg.add_module(QgsLayer.QgsVectorLayer, name="Vector Layer", namespace=mynamespace)
     reg.add_module(QgsLayer.QgsRasterLayer, name="Raster Layer", namespace=mynamespace)
+    reg.add_module(QgsLayer.TemporalVectorLayer, name="Temporal Vector Layer", namespace=mynamespace)
 
     # QgsLayerWriter
     reg.add_module(QgsLayerWriter.QgsLayerWriter, namespace=mynamespace)

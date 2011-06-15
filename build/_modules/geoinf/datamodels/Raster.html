@@ -1,0 +1,283 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>geoinf.datamodels.Raster &mdash; EO4vistrails v1.0 documentation</title>
+    <link rel="stylesheet" href="../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="EO4vistrails v1.0 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">EO4vistrails v1.0 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for geoinf.datamodels.Raster</h1><div class="highlight"><pre>
+<span class="c">###########################################################################</span>
+<span class="c">##</span>
+<span class="c">## Copyright (C) 2010 CSIR Meraka Institute. All rights reserved.</span>
+<span class="c">##</span>
+<span class="c">## eo4vistrails extends VisTrails, providing GIS/Earth Observation </span>
+<span class="c">## ingestion, pre-processing, transformation, analytic and visualisation </span>
+<span class="c">## capabilities . Included is the abilty to run code transparently in </span>
+<span class="c">## OpenNebula cloud environments. There are various software </span>
+<span class="c">## dependencies, but all are FOSS.</span>
+<span class="c">##</span>
+<span class="c">## This file may be used under the terms of the GNU General Public</span>
+<span class="c">## License version 2.0 as published by the Free Software Foundation</span>
+<span class="c">## and appearing in the file LICENSE.GPL included in the packaging of</span>
+<span class="c">## this file.  Please review the following to ensure GNU General Public</span>
+<span class="c">## Licensing requirements will be met:</span>
+<span class="c">## http://www.opensource.org/licenses/gpl-license.php</span>
+<span class="c">##</span>
+<span class="c">## If you are unsure which license is appropriate for your use (for</span>
+<span class="c">## instance, you are interested in developing a commercial derivative</span>
+<span class="c">## of VisTrails), please contact us at vistrails@sci.utah.edu.</span>
+<span class="c">##</span>
+<span class="c">## This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE</span>
+<span class="c">## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.</span>
+<span class="c">##</span>
+<span class="c">############################################################################</span>
+<span class="sd">&quot;&quot;&quot;This module provides an generic Coverage/Raster data model via GDAL. </span>
+<span class="sd">All eo4vistrails modules dealing with raster data must extend this class.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">os.path</span>
+<span class="kn">import</span> <span class="nn">urllib</span>
+<span class="kn">import</span> <span class="nn">hashlib</span>
+<span class="kn">import</span> <span class="nn">core.modules.module_registry</span>
+<span class="kn">import</span> <span class="nn">core.system</span>
+<span class="kn">from</span> <span class="nn">core.modules.vistrails_module</span> <span class="kn">import</span> <span class="n">Module</span><span class="p">,</span> <span class="n">ModuleError</span>
+<span class="kn">from</span> <span class="nn">core.modules.basic_modules</span> <span class="kn">import</span> <span class="n">File</span>
+<span class="kn">import</span> <span class="nn">gui.application</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">osgeo</span> <span class="kn">import</span> <span class="n">gdal</span>
+<span class="k">except</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">gdal</span>
+
+<span class="k">class</span> <span class="nc">_GdalMemModel</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Used as both a storage mechanism for MemRasterModel instances</span>
+<span class="sd">    and as a general GDAL constructor, i.e. whether you want an</span>
+<span class="sd">    in-memory GDAL data provider or not, data will always be passed</span>
+<span class="sd">    into GDAL control via instances of _GdalMemModel</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">driver</span> <span class="o">=</span> <span class="n">gdal</span><span class="o">.</span><span class="n">GetDriverByName</span><span class="p">(</span><span class="s">&#39;MEM&#39;</span><span class="p">)</span>
+        <span class="c">#self.datasource = self.driver.CreateDataSource(&quot;working_ds&quot;)</span>
+
+    <span class="k">def</span> <span class="nf">loadContentFromFile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sourceDS</span><span class="p">,</span> <span class="n">getStatement</span><span class="o">=</span><span class="s">&quot;&quot;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Loads content off filesystem, e.g. from a geotiff</span>
+<span class="sd">        Expects datasets with one layer, so some arcane formats are out...</span>
+<span class="sd">        sourceDS is a path to a file.</span>
+<span class="sd">        {</span>
+<span class="sd">        geotiff</span>
+<span class="sd">        }</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">sourceDS</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">datasource</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">CreateCopy</span><span class="p">(</span><span class="s">&quot;working_ds&quot;</span><span class="p">,</span> <span class="n">gdal</span><span class="o">.</span><span class="n">Open</span><span class="p">(</span><span class="n">sourceDS</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="s">&quot;Path to GDAL dataset does not exist&quot;</span>
+
+
+    <span class="k">def</span> <span class="nf">loadContentFromURI</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">uri</span><span class="p">,</span> <span class="n">getStatement</span><span class="o">=</span><span class="s">&quot;&quot;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Loads content off web service, feed etc, like a WCS</span>
+<span class="sd">        </span>
+<span class="sd">        uri: string of the service endpoint</span>
+<span class="sd">        getStatement: a string of the xml of the request parameters</span>
+<span class="sd">        </span>
+<span class="sd">        These two variables allow creation of get/post requests and also allow us </span>
+<span class="sd">        to make GDAL sensibly deal with the inputs.</span>
+<span class="sd">        </span>
+<span class="sd">        For WCS, we expect a WCS GetCoverage request to be incoming.</span>
+<span class="sd">        GDAL, our ratser swiss army knife, expects to access a wcs from a </span>
+<span class="sd">        config file on the filesystem, that looks like:</span>
+<span class="sd">        &lt;WCS_GDAL&gt;</span>
+<span class="sd">            &lt;ServiceURL&gt;http://ict4eo.meraka.csir.co.za/geoserver/wcs?&lt;/ServiceURL&gt;</span>
+<span class="sd">            &lt;CoverageName&gt;nurc:Img_Sample&lt;/CoverageName&gt;</span>
+<span class="sd">        &lt;/WCS_GDAL&gt;</span>
+<span class="sd">        </span>
+<span class="sd">        and is called something like ict4eowcs.wcs</span>
+<span class="sd">        </span>
+<span class="sd">        GDAL needs RW access to this file, for it then rights the capabilities </span>
+<span class="sd">        to it for later reference</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c">#first, get a temporary file location that is writeable</span>
+        <span class="n">temp_filepath</span> <span class="o">=</span> <span class="n">core</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">default_dot_vistrails</span><span class="p">()</span> <span class="o">+</span> <span class="s">&quot;/eo4vistrails/gdal/&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">temp_filepath</span><span class="p">):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">temp_filepath</span><span class="p">)</span>
+            <span class="n">sourceDS</span> <span class="o">=</span> <span class="n">temp_filepath</span> <span class="o">+</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha1</span><span class="p">(</span><span class="n">urllib</span><span class="o">.</span><span class="n">quote_plus</span><span class="p">(</span><span class="n">uri</span><span class="o">+</span><span class="n">getStatement</span><span class="p">))</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span> <span class="o">+</span> <span class="s">&quot;.wcs&quot;</span>
+        <span class="c">#write wcs params to it</span>
+        <span class="n">rw</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">sourceDS</span><span class="p">,</span> <span class="s">&#39;w&#39;</span><span class="p">)</span>
+        <span class="n">gs_list</span> <span class="o">=</span> <span class="n">getStatement</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&quot;&amp;&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">gs_listitem</span> <span class="ow">in</span> <span class="n">gs_list</span><span class="p">:</span>
+            <span class="n">gskvp</span> <span class="o">=</span> <span class="n">gs_listitem</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&quot;=&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">gskvp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s">&quot;coverage&quot;</span><span class="p">:</span> <span class="n">coverage</span> <span class="o">=</span> <span class="n">gskvp</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="c">#ideally would handle cases beyond setting up a basic config - this is essentially a GetCapabilities checker - but it needs to handle the GetCoverage properly, since that is what it will receive...</span>
+        <span class="nb">str</span> <span class="o">=</span> <span class="s">&quot;&lt;WCS_GDAL&gt;&lt;ServiceURL&gt;</span><span class="si">%s</span><span class="s">&lt;/ServiceURL&gt;&lt;CoverageName&gt;</span><span class="si">%s</span><span class="s">&lt;/CoverageName&gt;&lt;/WCS_GDAL&gt;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">uri</span><span class="p">,</span>  <span class="n">coverage</span><span class="p">)</span>
+        <span class="n">rw</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">sourceDS</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">datasource</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">CreateCopy</span><span class="p">(</span><span class="s">&quot;working_ds&quot;</span><span class="p">,</span> <span class="n">gdal</span><span class="o">.</span><span class="n">Open</span><span class="p">(</span><span class="n">sourceDS</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="s">&quot;Path to GDAL dataset does not exist&quot;</span>       
+       
+
+        
+        <span class="k">def</span> <span class="nf">_guessOutputType</span><span class="p">(</span><span class="n">type_string</span><span class="p">):</span>
+            <span class="k">print</span> <span class="n">type_string</span>
+            <span class="k">if</span> <span class="n">type_string</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;;&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s">&quot;text/xml&quot;</span><span class="p">:</span>
+                <span class="c">#is gml, O&amp;M etc</span>
+                <span class="k">return</span> <span class="s">&quot;.xml&quot;</span>
+            <span class="k">if</span> <span class="n">type_string</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;;&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s">&quot;gml2&quot;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="s">&quot;.gml&quot;</span>
+        
+        <span class="k">def</span> <span class="nf">_viaCache</span><span class="p">():</span>
+            <span class="n">temp_filepath</span> <span class="o">=</span> <span class="n">core</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">default_dot_vistrails</span><span class="p">()</span> <span class="o">+</span> <span class="s">&quot;/eo4vistrails/gdal/&quot;</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">temp_filepath</span><span class="p">):</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">temp_filepath</span><span class="p">)</span>
+            <span class="n">temp_filename</span> <span class="o">=</span> <span class="n">temp_filepath</span> <span class="o">+</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha1</span><span class="p">(</span><span class="n">urllib</span><span class="o">.</span><span class="n">quote_plus</span><span class="p">(</span><span class="n">uri</span><span class="o">+</span><span class="n">getStatement</span><span class="p">))</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span> <span class="o">+</span> <span class="n">outputtype</span>
+            <span class="c">#core.system.touch(temp_filename)</span>
+            <span class="n">postdata</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">urlencode</span><span class="p">({</span><span class="s">&#39;request&#39;</span><span class="p">:</span> <span class="n">getStatement</span><span class="p">})</span>
+            <span class="k">print</span> <span class="n">postdata</span>
+            <span class="n">u</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">urlretrieve</span><span class="p">(</span><span class="n">url</span> <span class="o">=</span> <span class="n">uri</span><span class="p">,</span>  <span class="n">filename</span> <span class="o">=</span> <span class="n">temp_filename</span><span class="p">,</span>  <span class="n">data</span> <span class="o">=</span> <span class="n">postdata</span><span class="p">,)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">loadContentFromFile</span><span class="p">(</span><span class="n">temp_filename</span><span class="p">)</span>
+            
+        <span class="k">def</span> <span class="nf">_viaStream</span><span class="p">():</span>
+            <span class="k">pass</span>
+            
+        <span class="n">outputtype</span> <span class="o">=</span> <span class="n">_guessOutputType</span><span class="p">(</span><span class="n">fmt</span><span class="p">)</span>
+        <span class="c">#implement first a non-streaming version of this method, </span>
+        <span class="c">#i.e. fetches from uri, caches, reads from cache</span>
+        
+        <span class="n">_viaCache</span><span class="p">()</span>
+        
+    <span class="k">def</span> <span class="nf">dumpToFile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>  <span class="n">filesource</span><span class="p">,</span>  <span class="n">datasetType</span> <span class="o">=</span> <span class="s">&quot;GTiff&quot;</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">driver</span> <span class="o">=</span> <span class="n">gdal</span><span class="o">.</span><span class="n">GetDriverByName</span><span class="p">(</span><span class="n">datasetType</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">datasetType</span> <span class="o">==</span> <span class="s">&quot;CSV&quot;</span><span class="p">:</span>
+                <span class="n">ds</span> <span class="o">=</span> <span class="n">driver</span><span class="o">.</span><span class="n">CreateDataSource</span><span class="p">(</span> <span class="n">filesource</span><span class="p">,</span>  <span class="n">options</span><span class="o">=</span><span class="p">[</span><span class="s">&quot;GEOMETRY=AS_XY&quot;</span><span class="p">])</span>
+                <span class="n">ds</span><span class="o">.</span><span class="n">CopyLayer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datasource</span><span class="o">.</span><span class="n">GetLayer</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>  <span class="bp">self</span><span class="o">.</span><span class="n">datasource</span><span class="o">.</span><span class="n">GetLayer</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">GetName</span><span class="p">(),</span>  <span class="n">options</span><span class="o">=</span><span class="p">[</span><span class="s">&quot;GEOMETRY=AS_XY&quot;</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">ds</span> <span class="o">=</span> <span class="n">driver</span><span class="o">.</span><span class="n">CreateDataSource</span><span class="p">(</span> <span class="n">filesource</span><span class="p">)</span>
+                <span class="n">ds</span><span class="o">.</span><span class="n">CopyLayer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datasource</span><span class="o">.</span><span class="n">GetLayer</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>  <span class="bp">self</span><span class="o">.</span><span class="n">datasource</span><span class="o">.</span><span class="n">GetLayer</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">GetName</span><span class="p">())</span>
+            <span class="n">filename</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">GetName</span><span class="p">()</span>
+            <span class="n">ds</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="bp">False</span><span class="p">,</span>  <span class="s">&quot;&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">True</span><span class="p">,</span>  <span class="n">filename</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;connection resetting, memory deallocation&quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">datasource</span><span class="o">.</span><span class="n">ReleaseResultLayer</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">datasource</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+
+
+
+<div class="viewcode-block" id="RasterModel"><a class="viewcode-back" href="../../../geoinf.html#geoinf.datamodels.Raster.RasterModel">[docs]</a><span class="k">class</span> <span class="nc">RasterModel</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;TO DO - add docstring&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">Module</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="initialize"><a class="viewcode-back" href="../../../geoinf.html#geoinf.datamodels.Raster.initialize">[docs]</a><span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">keywords</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;sets everything up&quot;&quot;&quot;</span>
+    <span class="c"># We&#39;ll first create a local alias for the module_registry so that</span>
+    <span class="c"># we can refer to it in a shorter way.</span>
+    <span class="n">reg</span> <span class="o">=</span> <span class="n">core</span><span class="o">.</span><span class="n">modules</span><span class="o">.</span><span class="n">module_registry</span><span class="o">.</span><span class="n">get_module_registry</span><span class="p">()</span>
+    <span class="n">reg</span><span class="o">.</span><span class="n">add_module</span><span class="p">(</span><span class="n">RasterModel</span><span class="p">)</span>
+    <span class="c">#input ports</span>
+   
+    <span class="c">#reg.add_input_port(FeatureModel, &quot;service_version&quot;, (core.modules.basic_modules.String, &#39;Web Map Service version - default 1.1.1&#39;))   </span>
+    <span class="c">#output ports</span>
+    <span class="n">reg</span><span class="o">.</span><span class="n">add_output_port</span><span class="p">(</span>
+        <span class="n">RasterModel</span><span class="p">,</span>
+        <span class="s">&quot;GDALDataset&quot;</span><span class="p">,</span>
+        <span class="p">(</span><span class="n">gdal</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span> <span class="s">&#39;Raster data as GDAL&#39;</span><span class="p">)</span>
+    <span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">EO4vistrails v1.0 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, Meraka Institute, CSIR.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.1.
+    </div>
+  </body>
+</html>
