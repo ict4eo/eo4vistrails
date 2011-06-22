@@ -404,10 +404,10 @@ class PostGisCopyTo(NotCacheable, ThreadSafeMixin, Module):
             pgconn.close()
 
 
-class _SQLSourceConfigurationWidget(SourceConfigurationWidget):
-    """THIS CLASS IS NOT IN USE"""
+class SQLSourceConfigurationWidget(SourceConfigurationWidget):
+    """THIS CLASS IS NOT IN USE - BUT STILL REFERRED TO IN init.py"""
     pass
-    '''removed by tvz so as to allow for parameterisation of SQL queries'''
+    '''code removed by tvz to allow for parameterisation of SQL queries'''
 
     #def __init__(self, module, controller, parent=None):
     #    SourceConfigurationWidget.__init__(self, module, controller, None,

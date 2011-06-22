@@ -112,7 +112,14 @@ class SensorObservationService(object):
 
         # FilterCapabilities
         val = self._capabilities.find('{http://www.opengis.net/sos/1.0}Filter_Capabilities')
-        self.filters=filter.FilterCapabilities(val)
+        if val:
+            self.filters = filter.FilterCapabilities(val)
+        else:
+            val = self._capabilities.find('{http://www.opengis.net/sos/1.0}FilterCapabilities')
+            if val:
+                self.filters = filter.FilterCapabilities(val)
+            else:
+                self.filters = None
 
         #serviceContents metadata: our assumption is that services use a top-level
         #layer as a metadata organizer, nothing more.
@@ -128,8 +135,11 @@ class SensorObservationService(object):
         # Contents
         self.contents=[]
         elem_set = self._capabilities.find('{http://www.opengis.net/sos/1.0}Contents/{http://www.opengis.net/sos/1.0}ObservationOfferingList')
-        for elem in elem_set:
-            self.contents.append(ContentsMetadata(elem))
+        if elem_set:
+            for elem in elem_set:
+                if elem:
+                    #print  "owslib.sos.py:143", type(elem), "\n", elem
+                    self.contents.append(ContentsMetadata(elem))
         """
         print "**elem_set**", elem_set
         print "\n**contents**\n", self.contents
