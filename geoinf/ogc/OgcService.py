@@ -104,9 +104,11 @@ class OGC(NotCacheable):
         # layer port
         if self.url:
             random.seed()
-            self.layername = self.getInputFromPort(init.OGC_LAYERNAME_PORT) or \
-                self.webRequest.get_layername() or \
-                'ogc_layer' + str(random.randint(0,10000))
+            # conditional execution: only set layername if upstream connection
+            if init.OGC_LAYERNAME_PORT in self.inputPorts:
+                self.layername = self.getInputFromPort(init.OGC_LAYERNAME_PORT) or \
+                    self.webRequest.get_layername() or \
+                    'ogc_layer' + str(random.randint(0,10000))
             # conditional execution: only setResult if downstream connection
             if init.VECTOR_PORT in self.outputPorts:
                 qgsVectorLayer = QgsVectorLayer(self.url, self.layername, self.webRequest.get_driver())

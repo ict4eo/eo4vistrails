@@ -306,7 +306,7 @@ class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
                     'Unknown OgcConfigurationWidget request type' + ': %s' %
                         str(self.request_type))
             # see: gui.vistrails_controller.py
-            print "OgcConfigurationWidget:306/n", functions
+            #print "OgcConfigurationWidget:309/n", functions
             self.controller.update_ports_and_functions(
                 self.module.id, [], [], functions)
             SpatialTemporalConfigurationWidget.okTriggered(self)
