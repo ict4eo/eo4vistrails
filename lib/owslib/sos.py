@@ -27,6 +27,7 @@ import owslib.ows as ows
 from owslib import util
 import filter
 
+
 class ServiceException(Exception):
     pass
 
@@ -41,17 +42,15 @@ class SensorObservationService(object):
     Implements ISensorObservationService.
     """
 
-    def __getitem__(self,name):
-        ''' check contents dictionary to allow dict like access to service layers'''
+    def __getitem__(self, name):
+        ''' check contents dict to allow dict like access to service layers'''
         if name in self.__getattribute__('contents').keys():
             return self.__getattribute__('contents')[name]
         else:
-            raise KeyError, "No content named %s" % name
-
+            raise KeyError("No content named %s" % name)
 
     def __init__(self, url, version='1.0.0', xml=None,
-                username=None, password=None
-                ):
+                username=None, password=None):
         """Initialize."""
         self.url = url
         self.username = username
@@ -70,8 +69,7 @@ class SensorObservationService(object):
             opener = build_opener(auth_handler)
             self._open = opener.open
             reader = SOSCapabilitiesReader(
-                self.version, url=self.url, un=self.username, pw=self.password
-                )
+                self.version, url=self.url, un=self.username, pw=self.password)
             self._capabilities = reader.readString(self.url)
         else:
             reader = SOSCapabilitiesReader(self.version)
@@ -89,8 +87,7 @@ class SensorObservationService(object):
     def _getcapproperty(self):
         if not self._capabilities:
             reader = SOSCapabilitiesReader(
-                self.version, url=self.url, un=self.username, pw=self.password
-                )
+                self.version, url=self.url, un=self.username, pw=self.password)
             self._capabilities = ServiceMetadata(reader.read(self.url))
         return self._capabilities
     capabilities = property(_getcapproperty, None)
@@ -100,13 +97,13 @@ class SensorObservationService(object):
 
         # ServiceIdentification
         val = self._capabilities.find('{http://www.opengis.net/ows/1.1}ServiceIdentification')
-        self.identification=ows.ServiceIdentification(val)
+        self.identification = ows.ServiceIdentification(val)
         # ServiceProvider
         val = self._capabilities.find('{http://www.opengis.net/ows/1.1}ServiceProvider')
-        self.provider=ows.ServiceProvider(val)
+        self.provider = ows.ServiceProvider(val)
 
         # ServiceOperations metadata
-        self.operations=[]
+        self.operations = []
         for elem in self._capabilities.findall('{http://www.opengis.net/ows/1.1}OperationsMetadata/{http://www.opengis.net/ows/1.1}Operation'):
             self.operations.append(ows.OperationsMetadata(elem))
 
@@ -133,7 +130,7 @@ class SensorObservationService(object):
         #        self.contents[subcm.id]=subcm
 
         # Contents
-        self.contents=[]
+        self.contents = []
         elem_set = self._capabilities.find('{http://www.opengis.net/sos/1.0}Contents/{http://www.opengis.net/sos/1.0}ObservationOfferingList')
         if elem_set:
             for elem in elem_set:
@@ -155,9 +152,9 @@ class SensorObservationService(object):
 
     def items(self):
         '''supports dict-like items() access'''
-        items=[]
+        items = []
         for item in self.contents:
-            items.append((item,self.contents[item]))
+            items.append((item, self.contents[item]))
         return items
 
     def getcapabilities(self):
@@ -166,23 +163,21 @@ class SensorObservationService(object):
         NOTE: this is effectively redundant now"""
 
         reader = SOSCapabilitiesReader(
-            self.version, url=self.url, un=self.username, pw=self.password
-            )
+            self.version, url=self.url, un=self.username, pw=self.password)
         u = self._open(reader.capabilities_url(self.url))
        # check for service exceptions, and return
         if u.info().gettype() == 'application/vnd.ogc.se_xml':
             se_xml = u.read()
             se_tree = etree.fromstring(se_xml)
-            raise ServiceException, \
-                str(se_tree.find('ExceptionReport').text).strip()
+            raise ServiceException(
+                str(se_tree.find('ExceptionReport').text).strip())
         return u
 
     def getmap(self, layers=None, styles=None, srs=None, bbox=None,
                format=None, size=None, time=None, transparent=False,
                bgcolor='#FFFFFF',
                exceptions='application/vnd.ogc.se_xml',
-               method='Get'
-               ):
+               method='Get'):
         """Request and return an image from the SOS as a file-like object.
 
         Parameters
@@ -258,8 +253,8 @@ class SensorObservationService(object):
         if u.info()['Content-Type'] == 'application/vnd.ogc.se_xml':
             se_xml = u.read()
             se_tree = etree.fromstring(se_xml)
-            raise ServiceException, \
-                str(se_tree.find('ExceptionReport').text).strip()
+            raise ServiceException(
+                str(se_tree.find('ExceptionReport').text).strip())
         return u
 
     def getfeatureinfo(self):
@@ -270,27 +265,28 @@ class SensorObservationService(object):
         for item in self.operations:
             if item.name == name:
                 return item
-        raise KeyError, "No operation named %s" % name
+        raise KeyError("No operation named %s" % name)
 
     def getContentByName(self, name):
         """Return a named content item."""
         for item in self.contents:
             if item.name == name:
                 return item
-        raise KeyError, "No content named %s" % name
+        raise KeyError("No content named %s" % name)
 
     def getOperationByName(self, name):
         """Return a named content item."""
         for item in self.operations:
             if item.name == name:
                 return item
-        raise KeyError, "No operation named %s" % name
+        raise KeyError("No operation named %s" % name)
 
 
 # NB NOT "content" singular!!!
 class ContentsMetadata:
     """Initialize an SOS Contents metadata construct"""
-    def __init__(self,elem,namespace=ows.DEFAULT_OWS_NAMESPACE):
+
+    def __init__(self, elem, namespace=ows.DEFAULT_OWS_NAMESPACE):
 
         GML_NAMESPACE = 'http://www.opengis.net/gml'
         SOS_NAMESPACE = 'http://www.opengis.net/sos/1.0'
@@ -305,70 +301,72 @@ class ContentsMetadata:
         # time
         self.time = None
         time_ = elem.find(util.nspath('time', SOS_NAMESPACE)) #sos:
-        time_period = time_.find(util.nspath('TimePeriod', GML_NAMESPACE)) #gml
-        if time_period:
-            val = time_period.find(util.nspath('beginPosition', GML_NAMESPACE)) #gml:
-            begin = util.testXMLValue(val)
-            val = time_period.find(util.nspath('endPosition', GML_NAMESPACE)) #gml:
-            end  = util.testXMLValue(val)
-            self.time = (begin, end)
+        if time_:
+            time_period = time_.find(util.nspath('TimePeriod', GML_NAMESPACE))
+            if time_period:
+                val = time_period.find(util.nspath('beginPosition', GML_NAMESPACE))
+                begin = util.testXMLValue(val)
+                val = time_period.find(util.nspath('endPosition', GML_NAMESPACE))
+                end = util.testXMLValue(val)
+                self.time = (begin, end)
         # bbox
         self.bounding_box = None
         bound = elem.find(util.nspath('boundedBy', GML_NAMESPACE))
-        env  = bound.find(util.nspath('Envelope', GML_NAMESPACE)) #gml:
-        if env is not None:
-            try: #sometimes the SRS attribute is (wrongly) not provided
-                srs = env.attrib['srsName']
-            except KeyError:
-                srs = None
-            val = env.find(util.nspath('lowerCorner', GML_NAMESPACE)) #gml:
-            lower = util.testXMLValue(val)
-            val = env.find(util.nspath('upperCorner', GML_NAMESPACE)) #gml:
-            upper = util.testXMLValue(val)
-            if upper is not None and lower is not None:
-                self.bounding_box = (
-                    float(lower.split(' ')[0]), #minx
-                    float(lower.split(' ')[1]), #miny
-                    float(upper.split(' ')[0]), #maxx
-                    float(upper.split(' ')[1]), #maxy
-                    srs,
-                )
+        if bound:
+            env = bound.find(util.nspath('Envelope', GML_NAMESPACE))
+            if env is not None:
+                try: #sometimes the SRS attribute is (wrongly) not provided
+                    srs = env.attrib['srsName']
+                except KeyError:
+                    srs = None
+                val = env.find(util.nspath('lowerCorner', GML_NAMESPACE))
+                lower = util.testXMLValue(val)
+                val = env.find(util.nspath('upperCorner', GML_NAMESPACE))
+                upper = util.testXMLValue(val)
+                if upper is not None and lower is not None:
+                    self.bounding_box = (
+                        float(lower.split(' ')[0]), #minx
+                        float(lower.split(' ')[1]), #miny
+                        float(upper.split(' ')[0]), #maxx
+                        float(upper.split(' ')[1]), #maxy
+                        srs,)
         #response et al
         self.response_format = []
-        vals = elem.findall(util.nspath('responseFormat', SOS_NAMESPACE)) #sos:
+        vals = elem.findall(util.nspath('responseFormat', SOS_NAMESPACE))
         for v in vals:
             self.response_format.append(util.testXMLValue(v))
 
         self.result_model = []
-        vals = elem.findall(util.nspath('resultModel', SOS_NAMESPACE)) #sos:
+        vals = elem.findall(util.nspath('resultModel', SOS_NAMESPACE))
         for v in vals:
             self.result_model.append(util.testXMLValue(v))
 
         self.response_mode = []
-        vals = elem.findall(util.nspath('responseMode', SOS_NAMESPACE)) #sos:
+        vals = elem.findall(util.nspath('responseMode', SOS_NAMESPACE))
         for v in vals:
             self.response_mode.append(util.testXMLValue(v))
 
         self.procedure = []
-        procs = elem.findall(util.nspath('procedure', SOS_NAMESPACE)) #sos:
+        procs = elem.findall(util.nspath('procedure', SOS_NAMESPACE))
         if procs is not None:
             for proc in procs:
                 self.procedure.append(proc.attrib[util.nspath('href', XLINK_NAMESPACE)])
 
         self.observed_property = []
-        ops = elem.findall(util.nspath('observedProperty', SOS_NAMESPACE)) #sos:
+        ops = elem.findall(util.nspath('observedProperty', SOS_NAMESPACE))
         if ops is not None:
             for op in ops:
                 self.observed_property.append(op.attrib[util.nspath('href', XLINK_NAMESPACE)])
 
         self.feature_of_interest = []
-        fois = elem.findall(util.nspath('featureOfInterest', SOS_NAMESPACE)) #sos:
+        fois = elem.findall(util.nspath('featureOfInterest', SOS_NAMESPACE))
         if fois is not None:
             for foi in fois:
                 self.feature_of_interest.append(foi.attrib[util.nspath('href', XLINK_NAMESPACE)])
 
     #default namespace for elem_find is OWS common
     OWS_NAMESPACE = 'http://www.opengis.net/ows/1.1'
+
     def elem_find(elem, nss=(OWS_NAMESPACE, '')):
         """Wraps etree.find to search multiple namespaces
 
@@ -398,6 +396,7 @@ class ContentMetadata:
 
     Implements IContentMetadata.
     """
+
     def __init__(self, elem, parent=None):
         self.parent = parent
         if elem.tag != 'Layer':
@@ -408,22 +407,21 @@ class ContentMetadata:
                 setattr(self, key.lower(), val.text.strip())
             else:
                 setattr(self, key.lower(), None)
-                self.id=self.name #conform to new interface
+                self.id = self.name #conform to new interface
         # bboxes
         b = elem.find('BoundingBox')
         self.boundingBox = None
         if b is not None:
             try: #sometimes the SRS attribute is (wrongly) not provided
-                srs=b.attrib['SRS']
+                srs = b.attrib['SRS']
             except KeyError:
-                srs=None
+                srs = None
             self.boundingBox = (
                     float(b.attrib['minx']),
                     float(b.attrib['miny']),
                     float(b.attrib['maxx']),
                     float(b.attrib['maxy']),
-                    srs,
-            )
+                    srs,)
         elif self.parent:
             if hasattr(self.parent, 'boundingBox'):
                 self.boundingBox = self.parent.boundingBox
@@ -434,8 +432,7 @@ class ContentMetadata:
                 float(b.attrib['minx']),
                 float(b.attrib['miny']),
                 float(b.attrib['maxx']),
-                float(b.attrib['maxy']),
-            )
+                float(b.attrib['maxy']),)
         elif self.parent:
             self.boundingBoxWGS84 = self.parent.boundingBoxWGS84
         else:
@@ -456,7 +453,7 @@ class ContentMetadata:
             #raise ValueError('%s no SRS available!?' % (elem,))
             #Comment by D Lowe.
             #Do not raise ValueError as it is possible that a layer is purely a parent layer and does not have SRS specified. Instead set crsOptions to None
-            self.crsOptions=None
+            self.crsOptions = None
         # styles
         self.styles = {}
         for s in elem.findall('Style'):
@@ -464,7 +461,7 @@ class ContentMetadata:
             title = s.find('Title')
             if name is None or title is None:
                 raise ValueError('%s missing name or title' % (s,))
-            style = { 'title' : title.text }
+            style = {'title': title.text}
             # legend url
             legend = s.find('LegendURL/OnlineResource')
             if legend is not None:
@@ -475,10 +472,10 @@ class ContentMetadata:
         self.keywords = [f.text for f in elem.findall('KeywordList/Keyword')]
 
         # timepositions - times for which data is available.
-        self.timepositions=None
+        self.timepositions = None
         for extent in elem.findall('Extent'):
-            if extent.attrib.get("name").lower() =='time':
-                self.timepositions=extent.text.split(',')
+            if extent.attrib.get("name").lower() == 'time':
+                self.timepositions = extent.text.split(',')
                 break
 
         self.layers = []
@@ -558,7 +555,8 @@ class SOSError(Exception):
 
     def __init__(self, version, language, code, locator, text):
         """Initialize an SOS Error"""
-        self=ows.OWSExceptionReport("1.0.0", "en-US", "InvalidParameterValue", "request", "foo")
+        self = ows.OWSExceptionReport(
+            "1.0.0", "en-US", "InvalidParameterValue", "request", "foo")
 
     def toxml(self):
         """Serialize into SOS Exception Report XML

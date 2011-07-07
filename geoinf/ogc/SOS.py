@@ -298,6 +298,7 @@ class SosCommonWidget(QtGui.QWidget):
     def loadOfferings(self):
         """Load the offerings from the service metadata."""
         if self.parent_widget.service and self.parent_widget.service.service_valid:
+            self.removeOfferings()  # clear current data
             self.contents = self.parent_widget.service.service.__dict__['contents']
             #print "SOS self.contents", self.contents
             for content in self.contents:

@@ -49,10 +49,11 @@ DEFAULT_URL = ''
 
 class OgcCommonWidget(QtGui.QWidget):
     """TO DO - add docstring"""
+
     def __init__(self, module, parent=None):
         '''parses modules attributes to fetch parameters'''
         QtGui.QWidget.__init__(self, parent)
-        self.launchtype = module.name  #str(module).split("|")[1].split("'")[0][0:3].lower()  # class-dependant code!
+        self.launchtype = module.name
         #self.module = module
         self.setObjectName("OgcCommonWidget")
         self.parent_widget = module
@@ -86,16 +87,17 @@ class OgcCommonWidget(QtGui.QWidget):
 
         self.launchversion = QtGui.QComboBox()
         if self.launchtype == "sos":
-            self.launchversion.addItems(['1.0.0',])
+            self.launchversion.addItems(['1.0.0', ])
         elif self.launchtype == "wfs":
-            self.launchversion.addItems(['1.0.0','1.1.0'])
+            self.launchversion.addItems(['1.0.0', '1.1.0'])
         elif self.launchtype == "wcs":
-            self.launchversion.addItems(['1.0.0','1.1.0'])
+            self.launchversion.addItems(['1.0.0', '1.1.0'])
         else:
-            self.launchversion.addItems(['1.0.0',])
+            self.launchversion.addItems(['1.0.0', ])
 
         self.fetchButton = QtGui.QPushButton('&Fetch')
         self.fetchButton.setAutoDefault(False)
+        self.fetchButton.setToolTip('Load/reload service details')
 
         self.fetchUrlLayout.addWidget(self.label_OGC_url)
         self.fetchUrlLayout.addWidget(self.line_edit_OGC_url)
@@ -117,7 +119,7 @@ class OgcCommonWidget(QtGui.QWidget):
         self.serviceIDServiceTable = QtGui.QTableWidget()
         self.serviceIDServiceTable.setRowCount(7)
         self.serviceIDServiceTable.setColumnCount(1)
-        ogc_dummy = OgcService('','SOS','1.0.0') #placeholder; use to get row labels
+        ogc_dummy = OgcService('', 'SOS', '1.0.0') #placeholder; use to get row labels
 
         row_position = 0
         for item in ogc_dummy.service_id_key_set:
@@ -125,7 +127,7 @@ class OgcCommonWidget(QtGui.QWidget):
             qtwi = QtGui.QTableWidgetItem(service_id_list_item) # row label
             self.serviceIDServiceTable.setVerticalHeaderItem(row_position, qtwi)
             row_position = row_position + 1
-        self.serviceIDServiceTable.setHorizontalHeaderLabels (['', ])
+        self.serviceIDServiceTable.setHorizontalHeaderLabels(['', ])
         self.serviceIDServiceTable.setAutoScroll(True)
         self.serviceIDServiceTable.setWordWrap(True)
         self.serviceIDServiceTable.horizontalHeader().setStretchLastSection(True)
@@ -146,7 +148,7 @@ class OgcCommonWidget(QtGui.QWidget):
             qtwi = QtGui.QTableWidgetItem(provider_id_list_item)  # row label
             self.servicePublisherTable.setVerticalHeaderItem(row_position, qtwi)
             row_position = row_position + 1
-        self.servicePublisherTable.setHorizontalHeaderLabels (['',])
+        self.servicePublisherTable.setHorizontalHeaderLabels(['', ])
         self.servicePublisherTable.setAutoScroll(True)
         self.servicePublisherTable.setWordWrap(True)
         self.servicePublisherTable.horizontalHeader().setStretchLastSection(True)
@@ -159,28 +161,28 @@ class OgcCommonWidget(QtGui.QWidget):
         self.connect(
             self.fetchButton,
             QtCore.SIGNAL('clicked(bool)'),
-            self.fetchTriggered
-            )
+            self.fetchTriggered)
 
     def center(self):
         """TO DO - add docstring"""
         screen = QtGui.QDesktopWidget().screenGeometry()
         size = self.geometry()
-        self.move((screen.width()-size.width())/2, (screen.height()-size.height())/2)
+        self.move((screen.width() - size.width()) / 2,
+                  (screen.height() - size.height()) / 2)
 
     def fetchTriggered(self):
         """TO DO - add docstring"""
         if self.line_edit_OGC_url.text() != "":
             #print "lvct" + str(self.launchversion.currentText())
             self.setCursor(self.waitCursor)
+            #clear existing entries
             self.serviceIDServiceTable.clearContents()
             self.servicePublisherTable.clearContents()
-
+            # get service details
             self.service = OgcService(
                 self.line_edit_OGC_url.text(),
                 self.launchtype,
-                str(self.launchversion.currentText())
-                )
+                str(self.launchversion.currentText()))
             self.setCursor(self.arrowCursor)
             # populate metadata
             if self.service.service_valid:
@@ -188,11 +190,10 @@ class OgcCommonWidget(QtGui.QWidget):
                 row_count = 0
                 for item in self.service.service_id_key_set:
                     service_id_dict_item = item.keys()[0]
-                    if self.service.__dict__.has_key(service_id_dict_item):
+                    if service_id_dict_item in self.service.__dict__:
                         qtwi = QtGui.QTableWidgetItem(
-                            str(self.service.__dict__[service_id_dict_item])
-                            )
-                        self.serviceIDServiceTable.setItem (row_count, 0, qtwi)
+                            str(self.service.__dict__[service_id_dict_item]))
+                        self.serviceIDServiceTable.setItem(row_count, 0, qtwi)
                     row_count = row_count + 1
                 # provider metadata
                 # N.B. OGC WFS 1.0.0 does not have provider metadata in this form
@@ -203,11 +204,10 @@ class OgcCommonWidget(QtGui.QWidget):
                     row_count = 0
                     for item in self.service.provider_key_set:
                         provider_dict_item = item.keys()[0]
-                        if self.service.__dict__.has_key(provider_dict_item):
-                           qtwi = QtGui.QTableWidgetItem(
-                                str(self.service.__dict__[provider_dict_item])
-                                )
-                           self.servicePublisherTable.setItem (row_count, 0, qtwi)
+                        if provider_dict_item in self.service.__dict__:
+                            qtwi = QtGui.QTableWidgetItem(
+                                str(self.service.__dict__[provider_dict_item]))
+                            self.servicePublisherTable.setItem(row_count, 0, qtwi)
                         row_count = row_count + 1
                 # fire a "done" event: can be "listened for" in children
                 self.emit(QtCore.SIGNAL('serviceActivated'))
@@ -217,8 +217,7 @@ class OgcCommonWidget(QtGui.QWidget):
                 self.showWarning(
                     'Unable to activate service:\n \
 Please check configuration & network.\n'\
-                    +self.service.service_valid_error
-                    )
+                    + self.service.service_valid_error)
         else:
             # TODO - should not get here; maybe disable Fetch button until text entered?
             pass
@@ -226,11 +225,12 @@ Please check configuration & network.\n'\
     def showWarning(self, message):
         """Show user a warning dialog."""
         self.setCursor(self.arrowCursor)
-        QtGui.QMessageBox.warning(self,"Warning",message,QtGui.QMessageBox.Ok)
+        QtGui.QMessageBox.warning(self, "Warning", message, QtGui.QMessageBox.Ok)
 
 
 class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
     """TO DO - add docstring"""
+
     def __init__(self, module, controller, parent=None):
         SpatialTemporalConfigurationWidget.__init__(self, module, controller, parent)
         # will be used by children classes to access signals
@@ -243,18 +243,14 @@ class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
                 "OgcConfigurationWidget",
                 "Service Metadata",
                 None,
-                QtGui.QApplication.UnicodeUTF8
-                )
-            )
+                QtGui.QApplication.UnicodeUTF8))
         self.tabs.setTabToolTip(
             self.tabs.indexOf(self.ogc_common_widget),
             QtGui.QApplication.translate(
                 "OgcConfigurationWidget",
                 "Inspect basic service metadata for your chosen OGC service",
                 None,
-                QtGui.QApplication.UnicodeUTF8
-                )
-            )
+                QtGui.QApplication.UnicodeUTF8))
         # set other common properties
         self.waitCursor = QtGui.QCursor(QtCore.Qt.WaitCursor)
         self.arrowCursor = QtGui.QCursor(QtCore.Qt.ArrowCursor)
@@ -262,12 +258,12 @@ class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
     def showWarning(self, message):
         """Show user a warning dialog."""
         self.setCursor(self.arrowCursor)
-        QtGui.QMessageBox.warning(self,'Warning',message,QtGui.QMessageBox.Ok)
+        QtGui.QMessageBox.warning(self, 'Warning', message, QtGui.QMessageBox.Ok)
 
     def showError(self, message):
         """Show user an error dialog."""
         self.setCursor(self.arrowCursor)
-        QtGui.QMessageBox.critical(self, 'Error',message,QtGui.QMessageBox.Ok)
+        QtGui.QMessageBox.critical(self, 'Error', message, QtGui.QMessageBox.Ok)
 
     def okTriggered(self): # , checked=False in parent?
         """Extends method defined in SpatialTemporalConfigurationWidget."""
@@ -294,29 +290,25 @@ class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
         if self.data and self.request_type:
             functions = []
             functions.append(
-                (init.OGC_URL_PORT,[self.url]),
-                )
-            functions.append(
-                (init.OGC_LAYERNAME_PORT,[self.layername]),
-                )
+                (init.OGC_URL_PORT, [self.url]),)
+            if self.layername:
+                functions.append(
+                    (init.OGC_LAYERNAME_PORT, [self.layername]),)
             if self.request_type == 'GET':
                 functions.append(
-                    (init.OGC_GET_REQUEST_PORT,[self.data]),
-                    )
+                    (init.OGC_GET_REQUEST_PORT, [self.data]),)
             elif self.request_type == 'POST':
                 functions.append(
-                    (init.OGC_POST_DATA_PORT,[self.data]),
-                    )
+                    (init.OGC_POST_DATA_PORT, [self.data]),)
             else:
                 raise ModuleError(
                     self,
                     'Unknown OgcConfigurationWidget request type' + ': %s' %
-                        str(self.request_type)
-                )
+                        str(self.request_type))
             # see: gui.vistrails_controller.py
+            print "OgcConfigurationWidget:306/n", functions
             self.controller.update_ports_and_functions(
-                self.module.id, [], [], functions
-                )
+                self.module.id, [], [], functions)
             SpatialTemporalConfigurationWidget.okTriggered(self)
         else:
             self.showWarning('The service is not sufficiently specified')
