@@ -59,6 +59,7 @@ class WebRequest(DataRequest):
 
     def compute(self):
         """Execute the module to create the output"""
+        print "\nWebRequest:62\n"
         # separate URL
         try:
             self.url = self.getInputFromPort('urls')
@@ -74,7 +75,7 @@ class WebRequest(DataRequest):
             request = self.getInputFromPort('request')
             self.url = request.url
             self.data = request.data
-            print "\nWebRequest:77\n url:%s\n data: %s" % (self.url, self.data)
+            #print "\nWebRequest:78\n url:%s\n data: %s" % (self.url, self.data)
         except:
             pass
         # execute request IF required
@@ -97,6 +98,7 @@ class WebRequest(DataRequest):
         import os
         from urllib2 import URLError
         result = None
+        #print "\nWebRequest:101\n", self.url, self.requestType(), self.data
         if self.url:
             request_type = self.requestType()
             if request_type == 'GET':

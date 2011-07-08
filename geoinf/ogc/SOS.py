@@ -31,7 +31,8 @@ Service (SOS) client, making use of the owslib library.
 # third party
 from PyQt4 import QtCore, QtGui
 # vistrails
-from core.modules.vistrails_module import Module, new_module, NotCacheable, ModuleError
+from core.modules.vistrails_module import \
+    Module, new_module, NotCacheable, ModuleError
 # eo4vistrails
 from packages.eo4vistrails.geoinf.datamodels.Feature import FeatureModel
 # local
@@ -54,7 +55,7 @@ class SOS(OGC, FeatureModel):
 
 
 class SosCommonWidget(QtGui.QWidget):
-    """Enable SOS-specific parameters to be obtained, displayed and selected."""
+    """SOS-specific parameters can be obtained, displayed and selected."""
 
     def __init__(self, ogc_widget, parent=None):
         QtGui.QWidget.__init__(self, parent)
@@ -73,7 +74,7 @@ class SosCommonWidget(QtGui.QWidget):
             self.removeOfferings)
 
     def create_config_window(self):
-        """Create datacontainers and layout for displaying SOS-specific data."""
+        """Create datacontainers and layout for displaying SOS-related data."""
         self.setWindowTitle("SOS Configuration Widget")
         self.setMinimumSize(900, 675)
         # text for combo boxes
@@ -154,7 +155,7 @@ class SosCommonWidget(QtGui.QWidget):
         self.lblSRS = QtGui.QLabel('-')
         self.srsLayout.addWidget(self.lblSRS)
 
-        self.boundingLayout.addStretch()  # force items upwards -does not work??
+        self.boundingLayout.addStretch()  # force items upwards -doesnt work??
 
         self.timeGroupBox = QtGui.QGroupBox("")
         self.timeGroupBox.setFlat(True)
@@ -251,7 +252,8 @@ class SosCommonWidget(QtGui.QWidget):
         """Update offering details containers when new offering selected."""
         self.clearOfferings()
         selected_offering = self.lbxOfferings.selectedItems()[0].text()
-        if self.parent_widget.service and self.parent_widget.service.service_valid and self.contents:
+        if self.parent_widget.service and \
+            self.parent_widget.service.service_valid and self.contents:
             for content in self.contents:
                 if selected_offering == content.id:
                     if content.description:

@@ -32,12 +32,15 @@ import random
 # third-party
 from PyQt4 import QtCore, QtGui
 # vistrails
-from core.modules.vistrails_module import Module, new_module, NotCacheable, ModuleError
+from core.modules.vistrails_module import \
+    Module, new_module, NotCacheable, ModuleError
 # eo4vistrails
 from packages.eo4vistrails.geoinf.datamodels.Feature import FeatureModel
 from packages.eo4vistrails.geoinf.datamodels.Raster import RasterModel
-from packages.eo4vistrails.geoinf.datamodels.QgsLayer import QgsVectorLayer, QgsRasterLayer
-from packages.eo4vistrails.geoinf.ogc.OgcConfigurationWidget import OgcConfigurationWidget
+from packages.eo4vistrails.geoinf.datamodels.QgsLayer import \
+    QgsVectorLayer, QgsRasterLayer
+from packages.eo4vistrails.geoinf.ogc.OgcConfigurationWidget import \
+    OgcConfigurationWidget
 from packages.eo4vistrails.utils.WebRequest import WebRequest
 
 
@@ -83,38 +86,46 @@ class OGC(NotCacheable):
             self.url = self.getInputFromPort(init.OGC_URL_PORT)
         except:
             self.url = None
-        #print "OgcService:87\n url: %s, get: %s\n data: %s" % (self.url, self.get_request, self.post_data)
+        #print "OgcService:86\n url: %s\n get_req: %s\n post_data: %s" %\
+        #    (self.url, self.get_request, self.post_data)
 
-        # web request port
+        # assign to webRequest
+        if self.get_request:
+            self.webRequest.url = self.get_request
+            self.webRequest.data = None
+        if self.post_data and self.url:
+            self.webRequest.url = self.url
+            self.webRequest.data = self.post_data
+
+        # request port
         if init.WEB_REQUEST_PORT in self.outputPorts:
-            if self.get_request:
-                self.webRequest.url = self.get_request
-                self.webRequest.data = None
-            if self.post_data and self.url:
-                self.webRequest.url = self.url
-                self.webRequest.data = self.post_data
-            #print "webRequest",webRequest
             self.setResult(init.WEB_REQUEST_PORT, self.webRequest)
+        if init.URL_PORT in self.outputPorts:
+            self.setResult(init.URL_PORT, self.webRequest.url)
 
-        # text port
-        self.setResult(init.URL_PORT, self.webRequest.url)
-        if self.webRequest.data:
-            self.setResult(init.DATA_PORT, self.webRequest.data)
+        # data port (data could be text or a 'raw' image)
+        if init.DATA_PORT in self.outputPorts:
+            self.webRequest.runRequest()  # create the data stream
+            if self.webRequest.data:
+                self.setResult(init.DATA_PORT, self.webRequest.data)
 
         # layer port
         if self.url:
             random.seed()
             # conditional execution: only set layername if upstream connection
             if init.OGC_LAYERNAME_PORT in self.inputPorts:
-                self.layername = self.getInputFromPort(init.OGC_LAYERNAME_PORT) or \
+                self.layername = \
+                    self.getInputFromPort(init.OGC_LAYERNAME_PORT) or \
                     self.webRequest.get_layername() or \
-                    'ogc_layer' + str(random.randint(0,10000))
+                    'ogc_layer' + str(random.randint(0, 10000))
             # conditional execution: only setResult if downstream connection
             if init.VECTOR_PORT in self.outputPorts:
-                qgsVectorLayer = QgsVectorLayer(self.url, self.layername, self.webRequest.get_driver())
+                qgsVectorLayer = QgsVectorLayer(
+                    self.url, self.layername, self.webRequest.get_driver())
                 #print "qgsVectorLayer", qgsVectorLayer
                 self.setResult(init.VECTOR_PORT, qgsVectorLayer)
             if init.RASTER_PORT in self.outputPorts:
-                qgsRasterLayer = QgsRasterLayer(self.url, self.layername, self.webRequest.get_driver())
+                qgsRasterLayer = QgsRasterLayer(
+                    self.url, self.layername, self.webRequest.get_driver())
                 #print "qgsRasterLayer", qgsRasterLayer
                 self.setResult(init.RASTER_PORT, qgsRasterLayer)
