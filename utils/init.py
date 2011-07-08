@@ -14,6 +14,19 @@ def initialize(*args, **keywords):
     utils_namespace = "utils"
     utils_test_namespace = "utils|tests"
 
+    # ==========================================================================
+    # Abstract Modules - these MUST appear FIRST
+    # ==========================================================================
+
+    reg.add_module(Session,
+                   namespace=utils_namespace,
+                   abstract=True)
+
+    reg.add_module(DataRequest,
+                   namespace=utils_namespace,
+                   abstract=True)
+
+
     # LinuxComboBox
     LinuxDemoComboBox = basic_modules.new_constant('LinuxDemoComboBox',
                                                    staticmethod(eval),
@@ -87,14 +100,7 @@ def initialize(*args, **keywords):
 
     # ==========================================================================
     # Simple Modules without ports...
-
-    reg.add_module(Session,
-                   namespace=utils_namespace,
-                   abstract=True)
-
-    reg.add_module(DataRequest,
-                   namespace=utils_namespace,
-                   abstract=True)
+    # ==========================================================================
 
     reg.add_module(CsvWriter,
                    namespace=utils_namespace)
