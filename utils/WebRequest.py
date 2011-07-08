@@ -31,6 +31,7 @@ handle web request (e.g. for WFS, WCS or SOS) processing inside vistrails.
 from DataRequest import DataRequest
 from core.modules.vistrails_module import ModuleError
 
+
 class WebRequest(DataRequest):
     """This module will process a web-based request.
 
@@ -53,7 +54,7 @@ class WebRequest(DataRequest):
         if not self._layername:
             import random
             random.seed()
-            self._layername = 'web_layer' + str(random.randint(0,10000))
+            self._layername = 'web_layer' + str(random.randint(0, 10000))
         return self._layername
 
     def compute(self):
@@ -73,7 +74,7 @@ class WebRequest(DataRequest):
             request = self.getInputFromPort('request')
             self.url = request.url
             self.data = request.data
-            #print "\nWebRequest:74\n url:%s\n data: %s" % (self.url, self.data)
+            print "\nWebRequest:76\n url:%s\n data: %s" % (self.url, self.data)
         except:
             pass
         # execute request IF required
@@ -87,7 +88,7 @@ class WebRequest(DataRequest):
                 self.setResult('out', out)
             self.setResult('value', self)
         except Exception, e:
-            self.raiseError('Cannot set output port: %s' % str(e))
+            self.raiseError('Cannot set output port: %s' % str(e))  # DataRequest
 
     def runRequest(self):
         """Execute an HTTP POST request for a given URL and data"""
@@ -107,8 +108,7 @@ class WebRequest(DataRequest):
             else:
                 raise ModuleError(
                     self,
-                    'Unknown web request type: %s (should be GET or POST)' % str(request_type)
-                )
+                    'Unknown web request type: %s (should be GET or POST)' % str(request_type))
             #assumes this works inside a proxy ... otherwise, try:
             #os.environ["http_proxy"] = "http://myproxy.com:3128"
             try:
