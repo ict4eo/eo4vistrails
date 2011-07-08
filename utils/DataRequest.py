@@ -39,6 +39,7 @@ from core.modules.vistrails_module import Module, NotCacheable, ModuleError
 
 class DataRequest(NotCacheable, Module):
     """TO DO: Add doc string"""
+
     def __init__(self, uri=None, layername=None, driver=None):
         Module.__init__(self)
         self._uri = uri
@@ -72,6 +73,7 @@ class DataRequest(NotCacheable, Module):
 
 class PostGISRequest(DataRequest, QgsDataSourceURI):
     """TO DO: Add doc string"""
+
     def __init__(self):
         import random
         random.seed()
