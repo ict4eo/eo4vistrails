@@ -30,6 +30,8 @@ Service (SOS) client, making use of the owslib library.
 # library
 # third party
 from PyQt4 import QtCore, QtGui
+from qgis.core import *
+from qgis.gui import *
 # vistrails
 from core.modules.vistrails_module import \
     Module, new_module, NotCacheable, ModuleError
@@ -51,7 +53,7 @@ class SOS(OGC, FeatureModel):
     def __init__(self):
         OGC.__init__(self)
         FeatureModel.__init__(self)
-        self.webRequest._driver = 'SOS'
+        self.webRequest._driver = 'ogr'
 
 
 class SosCommonWidget(QtGui.QWidget):

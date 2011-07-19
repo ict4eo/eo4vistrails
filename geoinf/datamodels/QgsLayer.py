@@ -40,10 +40,6 @@ from packages.eo4vistrails.rpyc.RPyC import RPyCModule, RPyCSafeModule
 from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
 # local
 
-#export set PYTHONPATH=/usr/lib/python2.6
-qgis.core.QgsApplication.setPrefixPath("/usr", True)
-qgis.core.QgsApplication.initQgis()
-
 
 class QgsMapLayer(ThreadSafeMixin, Module):
     """This module will create a QGIS layer from a file
@@ -67,7 +63,8 @@ class QgsMapLayer(ThreadSafeMixin, Module):
             elif driver in QgsRasterLayer.SUPPORTED_DRIVERS:
                 return QgsRasterLayer(uri, layername, driver)
             else:
-                self.raiseError('Map Layer Driver %s not supported' % str(driver))
+                self.raiseError('Map Layer Driver %s not supported' %\
+                                str(driver))
         else:
             self.raiseError('All Map Layer Properties must be set')
 
@@ -75,12 +72,13 @@ class QgsMapLayer(ThreadSafeMixin, Module):
 class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
     """Create a QGIS vector layer.
     """
-    SUPPORTED_DRIVERS = ['WFS', 'ogr', 'postgres']
 
     def __init__(self, uri=None, layername=None, driver=None):
         QgsMapLayer.__init__(self)
+        #print "QgsLayer:78", uri, layername, driver
         if uri and layername and driver:
             qgis.core.QgsVectorLayer.__init__(self, uri, layername, driver)
+        self.SUPPORTED_DRIVERS = ['WFS', 'ogr', 'postgres']
 
     def compute(self):
         """Execute the module to create the output"""
@@ -127,12 +125,12 @@ class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
 class QgsRasterLayer(QgsMapLayer, qgis.core.QgsRasterLayer):
     """Create a QGIS raster layer.
     """
-    SUPPORTED_DRIVERS = ['WCS', 'gdl']
 
     def __init__(self, uri=None, layername=None, driver=None):
         QgsMapLayer.__init__(self)
         if uri and layername:
             qgis.core.QgsRasterLayer.__init__(self, uri, layername)
+        self.SUPPORTED_DRIVERS = ['WCS', 'gdl']
 
     def compute(self):
         """Execute the module to create the output"""

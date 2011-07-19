@@ -32,6 +32,12 @@ with VisTrails takes place
 
 
 def initialize(*args, **keywords):
+    """
+    Set everything up for vistrails; called from the top level initialize
+    """
+    import os
+    # third party
+    import qgis.core
     # vistrails
     from core.modules.module_registry import get_module_registry
     from core.modules.basic_modules import String, File
@@ -45,13 +51,19 @@ def initialize(*args, **keywords):
     from Feature import FeatureModel, FileFeatureModel, MemFeatureModel
     from Raster import RasterModel
     from GeoStrings import GMLString, GeoJSONString, GeoString
-    from TemporalVectorLayer import TemporalLayer, TemporalVectorLayer
+    from TemporalVectorLayer import TemporalVectorLayer
     import QgsLayer
     import QgsLayerWriter
 
-    """
-    sets everything up called from the top level initialize
-    """
+    # QGIS
+    # export set PYTHONPATH=/usr/lib/python2.6
+    # Environment variable QGISHOME must be set to the install directory
+    # before running this application
+    qgis_prefix = "/usr"  # os.getenv("QGISHOME")  # TO DO - add to install
+    qgis.core.QgsApplication.setPrefixPath(qgis_prefix, True)
+    qgis.core.QgsApplication.initQgis()
+
+    # Vistrails
     reg = get_module_registry()
     mynamespace = "data"
 

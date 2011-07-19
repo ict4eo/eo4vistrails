@@ -39,6 +39,8 @@ from packages.eo4vistrails.geoinf.datamodels.Feature import FeatureModel
 from packages.eo4vistrails.geoinf.datamodels.Raster import RasterModel
 from packages.eo4vistrails.geoinf.datamodels.QgsLayer import \
     QgsVectorLayer, QgsRasterLayer
+from packages.eo4vistrails.geoinf.datamodels.TemporalVectorLayer import \
+    TemporalVectorLayer
 from packages.eo4vistrails.geoinf.ogc.OgcConfigurationWidget import \
     OgcConfigurationWidget
 from packages.eo4vistrails.utils.WebRequest import WebRequest
@@ -86,10 +88,10 @@ class OGC(NotCacheable):
             self.url = self.getInputFromPort(init.OGC_URL_PORT)
         except:
             self.url = None
-        #print "OgcService:86\n url: %s\n get_req: %s\n post_data: %s" %\
+        #print "OgcService:89\n url: %s\n get_req: %s\n post_data: %s" %\
         #    (self.url, self.get_request, self.post_data)
 
-        # assign to webRequest
+        # assign initial values to webRequest
         if self.get_request:
             self.webRequest.url = self.get_request
             self.webRequest.data = None
@@ -105,7 +107,7 @@ class OGC(NotCacheable):
 
         # data port (data could be text or a 'raw' image)
         if init.DATA_PORT in self.outputPorts:
-            self.webRequest.runRequest()  # create the data stream
+            self.webRequest.data = self.webRequest.runRequest()  # create data
             if self.webRequest.data:
                 self.setResult(init.DATA_PORT, self.webRequest.data)
 
@@ -119,13 +121,19 @@ class OGC(NotCacheable):
                     self.webRequest.get_layername() or \
                     'ogc_layer' + str(random.randint(0, 10000))
             # conditional execution: only setResult if downstream connection
-            if init.VECTOR_PORT in self.outputPorts:
-                qgsVectorLayer = QgsVectorLayer(
-                    self.url, self.layername, self.webRequest.get_driver())
-                #print "qgsVectorLayer", qgsVectorLayer
-                self.setResult(init.VECTOR_PORT, qgsVectorLayer)
             if init.RASTER_PORT in self.outputPorts:
                 qgsRasterLayer = QgsRasterLayer(
                     self.url, self.layername, self.webRequest.get_driver())
                 #print "qgsRasterLayer", qgsRasterLayer
                 self.setResult(init.RASTER_PORT, qgsRasterLayer)
+            if init.VECTOR_PORT in self.outputPorts:
+                qgsVectorLayer = QgsVectorLayer(
+                    self.url, self.layername, self.webRequest.get_driver())
+                #print "qgsVectorLayer", qgsVectorLayer
+                self.setResult(init.VECTOR_PORT, qgsVectorLayer)
+            if init.TEMPORAL_VECTOR_PORT in self.outputPorts:
+                print "QgcService:134", self.url, self.layername, self.webRequest.get_driver()
+                temporalVectorLayer = TemporalVectorLayer(
+                    self.url, self.layername, self.webRequest.get_driver())
+                #print "TemporalVectorLayer", TemporalVectorLayer
+                self.setResult(init.TEMPORAL_VECTOR_PORT, temporalVectorLayer)

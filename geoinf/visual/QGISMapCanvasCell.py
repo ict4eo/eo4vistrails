@@ -51,6 +51,7 @@ import packages.eo4vistrails.geoinf.visual
 
 
 path_png_icon = packages.eo4vistrails.geoinf.visual.__path__[0]
+# TODO - move this elsewhere ... higher than local init.py
 QgsApplication.setPrefixPath("/usr", True)
 QgsApplication.initQgis()
 
@@ -58,6 +59,7 @@ QgsApplication.initQgis()
 class QGISMapCanvasCell(SpreadsheetCell): #(ThreadSafeMixin, SpreadsheetCell):
     """TO DO: Add doc string
     """
+
     def __init__(self):
         #ThreadSafeMixin.__init__(self)
         SpreadsheetCell.__init__(self)
@@ -67,10 +69,11 @@ class QGISMapCanvasCell(SpreadsheetCell): #(ThreadSafeMixin, SpreadsheetCell):
         if self.hasInputFromPort("baselayer"):
             self.base_layer = self.getInputFromPort("baselayer")
             if self.base_layer:
-                #print "base_layer id/type/srs :", self.base_layer.getLayerID(), \
-                #    self.type(base_layer), self.base_layer.srs()
+                #print "base_layer id/type/crs :", self.base_layer.getLayerID()
+                #    self.type(base_layer), self.base_layer.crs()
                 try:
-                    self.crsDest = QgsCoordinateReferenceSystem(self.base_layer.srs())
+                    self.crsDest = \
+                        QgsCoordinateReferenceSystem(self.base_layer.crs())
                 except:
                     self.crsDest = None
                 if self.hasInputFromPort("layer"):
@@ -80,9 +83,7 @@ class QGISMapCanvasCell(SpreadsheetCell): #(ThreadSafeMixin, SpreadsheetCell):
                 else:
                     self.layers = self.getInputFromPort("baselayer")
                 self.cellWidget = self.displayAndWait(QGISMapCanvasCellWidget,
-                                                      (self.layers, self.crsDest))
-                                                
-                
+                                                (self.layers, self.crsDest))
             else:
                 raise ModuleError(
                     self,
@@ -90,46 +91,51 @@ class QGISMapCanvasCell(SpreadsheetCell): #(ThreadSafeMixin, SpreadsheetCell):
         else:
             raise ModuleError(
                 self,
-                'The base layer port must be set')
+                'The base layer port must be set to valid map layer')
 
-class QGISMapCanvasCellWidget(QCellWidget, QMainWindow):
+
+class QGISMapCanvasCellWidget(QCellWidget):
     """TO DO: Add doc string
     """
 
     def __init__(self, parent=None):
         """TO DO: Add doc string"""
         QCellWidget.__init__(self, parent)
-        QMainWindow.__init__(self)
 
+        # set widgets layouts
+        self.mainLayout = QtGui.QHBoxLayout()
+        self.setLayout(self.mainLayout)
+
+        # create canvas
         self.canvas = QgsMapCanvas()
         self.canvas.setCanvasColor(QColor(200, 200, 255))
-        self.canvas.show()
-        self.tools = QMainWindow()
+        #self.mainLayout.addWidget(self.canvas)
 
+        # icons
         actionAddLayer = QAction(QIcon(path_png_icon + \
-                        "/mActionAddLayer.png"), "Add Layer", self.tools)
+                        "/mActionAddLayer.png"), "Add Layer", self)
         actionZoomIn = QAction(QIcon(path_png_icon + \
-                        "/mActionZoomIn.png"), "Zoom In", self.tools)
+                        "/mActionZoomIn.png"), "Zoom In", self)
         actionZoomOut = QAction(QIcon(path_png_icon + \
-                        "/mActionZoomOut.png"), "Zoom Out", self.tools)
+                        "/mActionZoomOut.png"), "Zoom Out", self)
         actionPan = QAction(QIcon(path_png_icon + \
-                        "/mActionPan.png"), "Pan", self.tools)
+                        "/mActionPan.png"), "Pan", self)
 
-        # toolbar
-        self.toolbar = self.tools.addToolBar("Canvas actions")
+        # create toolbar
+        self.toolbar = QToolBar() #"Canvas actions",
         self.toolbar.addAction(actionAddLayer)
         self.toolbar.addAction(actionZoomIn)
         self.toolbar.addAction(actionZoomOut)
         self.toolbar.addAction(actionPan)
 
-        # layer explorer pane
+        # create layer explorer pane
         self.explorer = QDockWidget("Layers")
         self.explorer.resize(60, 100)
-        self.explorerListWidget = QtGui.QListWidget()
-        self.explorerListWidget.setObjectName("listWidget")
-        self.explorer.setWidget(self.explorerListWidget)
+        #~self.explorerListWidget = QtGui.QListWidget()
+        #~self.explorerListWidget.setObjectName("listWidget")
+        #~self.explorer.setWidget(self.explorerListWidget)
 
-        # create the map tools
+        # create map tools
         self.toolPan = QgsMapToolPan(self.canvas,)
         self.toolPan.setAction(actionPan)
         self.toolZoomIn = QgsMapToolZoom(self.canvas, False) # false == in
@@ -137,22 +143,16 @@ class QGISMapCanvasCellWidget(QCellWidget, QMainWindow):
         self.toolZoomOut = QgsMapToolZoom(self.canvas, True) # true == out
         self.toolZoomOut.setAction(actionZoomOut)
 
-
-        # set widgets layouts
-        self.mainLayout = QtGui.QHBoxLayout()
-        self.setLayout(self.mainLayout)
-
-        self.label = QtGui.QLabel("")
-
         # layerList explorer
         self.GroupBoxLyrExplorer = QtGui.QGroupBox("")
         self.vboxLyrExplorer = QtGui.QVBoxLayout()
         self.GroupBoxLyrExplorer.setLayout(self.vboxLyrExplorer)
         self.mainLayout.addWidget(self.GroupBoxLyrExplorer)
+        self.label = QtGui.QLabel("")
         self.vboxLyrExplorer.addWidget(self.label)
         self.vboxLyrExplorer.addWidget(self.explorer)
 
-        # toolbar and canvas
+        # toolbar and canvas layout
         self.GroupBoxToolBarMapCanvas = QtGui.QGroupBox("")
         self.vboxToolBarMapCanvas = QtGui.QVBoxLayout()
         self.GroupBoxToolBarMapCanvas.setLayout(self.vboxToolBarMapCanvas)
@@ -166,9 +166,9 @@ class QGISMapCanvasCellWidget(QCellWidget, QMainWindow):
         self.connect(actionZoomOut, SIGNAL("activated()"), self.zoomOut)
         self.connect(actionPan, SIGNAL("activated()"), self.pan)
 
-        #global list to hold inputlayers list and later accessible for toggleLayer
-        self.mylist = []        
-        
+        #global list to hold inputlayers list -> accessible for toggleLayer
+        self.mylist = []
+
     def addLayer(self):
         """TO DO: Add doc string"""
         QtGui.QMessageBox.information(
@@ -206,12 +206,10 @@ class QGISMapCanvasCellWidget(QCellWidget, QMainWindow):
         myrender.setProjectionsEnabled(True)
         #print self.canvas.hasCrsTransformEnabled()
         if crsDest:
-            myrender.setDestinationSrs(crsDest)
+            myrender.setDestinationCrs(crsDest)
         # Add layers to canvas
         mapCanvasLayers = []
-        
         for layer in inputLayers:
-            
             if layer.isValid():
                 # Add layer to the registry (one registry for ALL maps ???)
                 QgsMapLayerRegistry.instance().addMapLayer(layer, True)
@@ -225,51 +223,41 @@ class QGISMapCanvasCellWidget(QCellWidget, QMainWindow):
                 self.canvas.setLayerSet(mapCanvasLayers)
                 self.canvas.refresh()
                 self.update()
-                
                 # populate mylist with inputLayers's items
                 self.mylist.append(layer)
-                    
-                       
         # Add widget for layer control to canvas
-        self.explorerListWidget.clear()
-        print "self.explorerListWidget count",self.explorerListWidget.count()
-        
+        #~self.explorerListWidget.clear()
+        #print "self.explorerListWidget count", self.explorerListWidget.count()
+
         # get layernames from inputLayers, and use them as labells in explorerListWidget
-        for lyr in inputLayers:    
+        for lyr in inputLayers:
             item = QtGui.QListWidgetItem()
             item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
             item.setCheckState(QtCore.Qt.Checked)
-            self.explorerListWidget.addItem(item)
+            #~self.explorerListWidget.addItem(item)
             self.widget = QtGui.QLabel(lyr.name())
-            self.explorerListWidget.setItemWidget(item, self.widget)
-        self.explorerListWidget.itemClicked.connect(self.on_listWidget_itemClicked)
-        
-        
+            #~self.explorerListWidget.setItemWidget(item, self.widget)
+        #~self.explorerListWidget.itemClicked.connect(self.on_listWidget_itemClicked)
+
     def on_listWidget_itemClicked(self, item):
         """TO DO: Add doc string"""
         if item.listWidget().itemWidget(item) != None:
             if item.checkState() == QtCore.Qt.Checked:
                 self.searchLayerIndex(item)
-                item.setCheckState(QtCore.Qt.Unchecked)                            
+                item.setCheckState(QtCore.Qt.Unchecked)
             else:
                 item.setCheckState(QtCore.Qt.Checked)
                 self.searchLayerIndex(item)
 
-
     def searchLayerIndex(self, item):
         """TO DO: Add doc string"""
-                
         selected_layer = item.listWidget().itemWidget(item).text()
-        
         for lyrIndx in self.mylist:
-            
-            # store the index of layer           
+            # store the index of layer
             indxValue = self.mylist.index(lyrIndx)
-                        
             if selected_layer == str(lyrIndx.name()):
                 self.toggleLayer(indxValue)
-        
-        
+
     def toggleLayer(self, lyrNr):
         """TO DO: Add doc string"""
         lyr = self.canvas.layer(lyrNr)
@@ -277,35 +265,35 @@ class QGISMapCanvasCellWidget(QCellWidget, QMainWindow):
             cTran = lyr.getTransparency()
             lyr.setTransparency(0 if cTran > 100 else 255)
             self.canvas.refresh()
-            
-    '''        
+
+    '''
     def getLayerNames(self):
-        
+
         """Return list of names of all layers in QgsMapLayerRegistry"""
         layermap = QgsMapLayerRegistry.instance().mapLayers()
-        
+
         layerlist = []
-        
+
         #if mapCanvasLayers == "all":
-            
+
         for name, layer in layermap.iteritems():
-            
+
             layerlist.append(layer.name())
-            
-            #layerlist.insert(0,layer.name()) 
-                
+
+            #layerlist.insert(0,layer.name())
+
         print "layers in QgsMapLayerRegistry in GetLayers Methods"
-        
+
         for lyr in layerlist:
-            
+
             x = layerlist.index(lyr)
-            
+
             print lyr , x
-                  
-                  
-                    
+
+
+
         else:
-            
+
             for name, layer in layermap.iteritems():
                 if layer.type() == QgsMapLayer.VectorLayer:
                     if layer.geometryType() in mapCanvasLayers:
@@ -313,6 +301,6 @@ class QGISMapCanvasCellWidget(QCellWidget, QMainWindow):
                 elif layer.type() == QgsMapLayer.RasterLayer:
                     if "Raster" in inputLayers:
                         layerlist.append(layer.name())
-                        
+
         return layerlist
     '''

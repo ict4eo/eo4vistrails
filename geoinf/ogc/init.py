@@ -6,8 +6,9 @@ OGC_URL_PORT = "OGC_URL"
 URL_PORT = "URL"
 DATA_PORT = "OGC_data"
 WEB_REQUEST_PORT = "web_request"
-VECTOR_PORT = "QgsVectorLayer"
 RASTER_PORT = "QgsRasterLayer"
+VECTOR_PORT = "QgsVectorLayer"
+TEMPORAL_VECTOR_PORT = "TemporalVectorLayer"
 MAP_LAYER_PORT = "QgsMapLayer"
 DATA_RESULT_PORT = "WPS_data"
 WPS_PROCESS_PORT = "WPS_process"
@@ -21,6 +22,8 @@ def initialize(*args, **keywords):
 
     from packages.eo4vistrails.geoinf.datamodels.QgsLayer import \
         QgsMapLayer, QgsVectorLayer, QgsRasterLayer
+    from packages.eo4vistrails.geoinf.datamodels.TemporalVectorLayer import \
+        TemporalVectorLayer
     from packages.eo4vistrails.geoinf.ogc.WPS import WPS, WPSConfigurationWidget
     from packages.eo4vistrails.geoinf.ogc.WFS import WFS, WFSConfigurationWidget
     from packages.eo4vistrails.geoinf.ogc.WCS import WCS, WCSConfigurationWidget
@@ -128,3 +131,7 @@ def initialize(*args, **keywords):
         SOS,
         WEB_REQUEST_PORT,
         WebRequest)#,True)
+    reg.add_output_port(
+        SOS,
+        TEMPORAL_VECTOR_PORT,
+        (TemporalVectorLayer, 'Temporal Vector Layer'))#,True)

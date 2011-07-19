@@ -25,7 +25,7 @@
 ###
 #############################################################################
 """This module provides a data structure for creating and storing vector data,
-as well as attribute data, in the format defined by QGIS, based on different
+as well as attribute data, based the format defined by QGIS, from different
 input data types.
 """
 # library
@@ -41,11 +41,7 @@ from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
 # local
 from QgsLayer import QgsVectorLayer
 
-#export set PYTHONPATH=/usr/lib/python2.6
-qgis.core.QgsApplication.setPrefixPath("/usr", True)
-qgis.core.QgsApplication.initQgis()
-
-
+'''
 class TemporalLayer(ThreadSafeMixin, Module):
     """Create a map layer from a data input stream.
 
@@ -69,24 +65,29 @@ class TemporalLayer(ThreadSafeMixin, Module):
             if driver in TemporalVectorLayer.SUPPORTED_DRIVERS:
                 return TemporalVectorLayer(uri, layername, driver)
             else:
-                self.raiseError('Map Layer Driver %s not supported' % str(driver))
+                self.raiseError('Map Layer Driver %s not supported' %\
+                                str(driver))
         else:
             self.raiseError('All Map Layer Properties must be set')
-
+'''
 
 class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
-    """Create a QGIS vector layer.
+    """Create an extended vector layer, based on QGIS vector layer
     """
-    SUPPORTED_DRIVERS = ['OM', 'HDF']
 
     def __init__(self, uri=None, layername=None, driver=None):
-        QgsMapLayer.__init__(self)
+        QgsVectorLayer.__init__(self)
         if uri and layername and driver:
+            print "TVL:82", uri, layername, driver
             qgis.core.QgsVectorLayer.__init__(self, uri, layername, driver)
+        self.SUPPORTED_DRIVERS += ['OM', 'HDF']  # add new supported types
+        print "TVL:84", uri, layername, driver
 
     def compute(self):
         """Execute the module to create the output"""
+        print "TVL:89"
         try:
+            print "TVL:90"
             thefile = self.forceGetInputFromPort('file', None)
             dataReq = self.forceGetInputFromPort('dataRequest', None)
 
@@ -99,6 +100,7 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
             isQGISSuported = isinstance(dataReq, DataRequest) and \
                             dataReq.get_driver() in self.SUPPORTED_DRIVERS
 
+            print "TVL:100", uri, layername, driver, isQGISSuported
             if isFILE:
                 thefilepath = thefile.name
                 thefilename = QFileInfo(thefilepath).fileName()

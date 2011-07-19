@@ -59,7 +59,6 @@ class WebRequest(DataRequest):
 
     def compute(self):
         """Execute the module to create the output"""
-        print "\nWebRequest:62\n"
         # separate URL
         try:
             self.url = self.getInputFromPort('urls')
@@ -75,7 +74,7 @@ class WebRequest(DataRequest):
             request = self.getInputFromPort('request')
             self.url = request.url
             self.data = request.data
-            #print "\nWebRequest:78\n url:%s\n data: %s" % (self.url, self.data)
+            #print "\nWebRequest:78\n url:%s\n data: %s" % (self.url,self.data)
         except:
             pass
         # execute request IF required
@@ -89,7 +88,7 @@ class WebRequest(DataRequest):
                 self.setResult('out', out)
             self.setResult('value', self)
         except Exception, e:
-            self.raiseError('Cannot set output port: %s' % str(e))  # DataRequest
+            self.raiseError('Cannot set output port: %s' % str(e))
 
     def runRequest(self):
         """Execute an HTTP POST request for a given URL and data"""
@@ -110,7 +109,8 @@ class WebRequest(DataRequest):
             else:
                 raise ModuleError(
                     self,
-                    'Unknown web request type: %s (should be GET or POST)' % str(request_type))
+                    'Unknown web request type: %s (should be GET or POST)' %\
+                        str(request_type))
             #assumes this works inside a proxy ... otherwise, try:
             #os.environ["http_proxy"] = "http://myproxy.com:3128"
             try:
@@ -119,9 +119,12 @@ class WebRequest(DataRequest):
                 result = response.read()
             except URLError, e:
                 if hasattr(e, 'reason'):
-                    self.raiseError('Failed to reach the server. Reason', e.reason)
+                    self.raiseError(
+                        'Failed to reach the server. Reason', e.reason)
                 elif hasattr(e, 'code'):
-                    self.raiseError('The server couldn\'t fulfill the request. Error code', e.code)
+                    self.raiseError(
+                        'The server couldn\'t fulfill the request. Error code',
+                        e.code)
             except Exception, e:
                 self.raiseError('Exception', e)
         else:

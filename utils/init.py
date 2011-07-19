@@ -26,6 +26,9 @@ def initialize(*args, **keywords):
                    namespace=utils_namespace,
                    abstract=True)
 
+    # ==========================================================================
+    # Standard Modules
+    # ==========================================================================
 
     # LinuxComboBox
     LinuxDemoComboBox = basic_modules.new_constant('LinuxDemoComboBox',
@@ -99,7 +102,7 @@ def initialize(*args, **keywords):
         basic_modules.Variant)
 
     # ==========================================================================
-    # Simple Modules without ports...
+    # Simple Modules - without ports
     # ==========================================================================
 
     reg.add_module(CsvWriter,
