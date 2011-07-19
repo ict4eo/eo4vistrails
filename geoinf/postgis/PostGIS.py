@@ -37,12 +37,16 @@ created SQL queries to be executed against the chosen database.
 import psycopg2
 from psycopg2 import ProgrammingError
 
+
+from PyQt4 import QtCore, QtGui
+
 from packages.eo4vistrails.geoinf.datamodels.QgsLayer import QgsVectorLayer
 from packages.eo4vistrails.utils.DataRequest import PostGISRequest
 from packages.eo4vistrails.rpyc.RPyC import RPyCModule, RPyCSafeModule
 from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
 from packages.eo4vistrails.utils.Array import NDArray
 from packages.eo4vistrails.utils.session import Session
+from packages.eo4vistrails.utils.synhigh import SyntaxHighlighter, SyntaxEditor
 
 from core.modules.vistrails_module import ModuleError, NotCacheable, Module
 from core.modules.source_configure import SourceConfigurationWidget
@@ -403,12 +407,11 @@ class PostGisCopyTo(NotCacheable, ThreadSafeMixin, Module):
             curs.close()
             pgconn.close()
 
+class SQLSyntaxEditor(SyntaxEditor):
+    def getSyntax(self):
+        return "SQL"
 
 class SQLSourceConfigurationWidget(SourceConfigurationWidget):
-    """THIS CLASS IS NOT IN USE - BUT STILL REFERRED TO IN init.py"""
-    pass
-    '''code removed by tvz to allow for parameterisation of SQL queries'''
-
-    #def __init__(self, module, controller, parent=None):
-    #    SourceConfigurationWidget.__init__(self, module, controller, None,
-    #                                       False, False, parent)
+    def __init__(self, module, controller, parent=None):
+        SourceConfigurationWidget.__init__(self, module, controller, 
+                                           SQLSyntaxEditor, True, True, parent)

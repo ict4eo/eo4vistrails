@@ -157,7 +157,7 @@ class QGISMapCanvasCellWidget(QCellWidget):
         self.vboxToolBarMapCanvas = QtGui.QVBoxLayout()
         self.GroupBoxToolBarMapCanvas.setLayout(self.vboxToolBarMapCanvas)
         self.mainLayout.addWidget(self.GroupBoxToolBarMapCanvas)
-        self.vboxToolBarMapCanvas.addWidget(self.toolbar)
+        #self.vboxToolBarMapCanvas.addWidget(self.toolbar)
         self.vboxToolBarMapCanvas.addWidget(self.canvas)
 
         # set signals

@@ -34,11 +34,8 @@ def initialize(*args, **keywords):
     """Called by higher level inits to ensure that regsitration with
     VisTrails takes place."""
     from core.modules.module_registry import get_module_registry
-    from core.modules import basic_modules
-    from core.vistrail.port import PortEndPoint
     import PySAL
 
-    from packages.NumSciPy.Array import NDArray
 
     reg = get_module_registry()
     mynamespace = "pysal"
@@ -64,3 +61,10 @@ def initialize(*args, **keywords):
 
     reg.add_module(Networkx.connected_components,
                    namespace=mynamespace)
+
+    import povray
+    mynamespace = "povray"
+    reg.add_module(povray.PovRayScript,
+                   name="povRay Script",
+                   namespace=mynamespace,
+                   configureWidgetType=povray.PovRaySourceConfigurationWidget)
