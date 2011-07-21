@@ -85,9 +85,8 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
 
     def compute(self):
         """Execute the module to create the output"""
-        print "TVL:89"
+        fileObj = None
         try:
-            print "TVL:90"
             thefile = self.forceGetInputFromPort('file', None)
             dataReq = self.forceGetInputFromPort('dataRequest', None)
 
@@ -100,7 +99,7 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
             isQGISSuported = isinstance(dataReq, DataRequest) and \
                             dataReq.get_driver() in self.SUPPORTED_DRIVERS
 
-            print "TVL:100", uri, layername, driver, isQGISSuported
+            print "TVL:100", isFILE, thefile, dataReq, isQGISSuported
             if isFILE:
                 thefilepath = thefile.name
                 thefilename = QFileInfo(thefilepath).fileName()
@@ -110,9 +109,14 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
                     thefilename,
                     "ogr")
             elif isQGISSuported:
+                print "TVL:113", dataReq.get_uri(), dataReq.get_layername(), dataReq.get_driver()
+                #this gives an error when used AttributeError: 'FilePool' object has no attribute 'create'
+                #fileObj = self.interpreter.filePool.create(suffix=".gml")
+                vlayer = dataReq.get_uri(),
+                vlayer = "/home/dhohls/Projects/Research/pressure.gml" # TEST ONLY
                 qgis.core.QgsVectorLayer.__init__(
                     self,
-                    dataReq.get_uri(),
+                    vlayer,
                     dataReq.get_layername(),
                     dataReq.get_driver())
             else:
@@ -124,5 +128,7 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
                     self.raiseError('No valid data request')
 
             self.setResult('value', self)
+            if fileObj:
+                self.setResult('value', fileObj)
         except Exception, e:
             self.raiseError('Cannot set output port: %s' % str(e))
