@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 ###########################################################################
 ##
 ## Copyright (C) 2010 CSIR Meraka Institute. All rights reserved.
@@ -111,6 +112,17 @@ class OGC(NotCacheable):
             if self.webRequest.data:
                 self.setResult(init.DATA_PORT, self.webRequest.data)
 
+        # file port (ogc text data)
+        # conditional execution: only setResult if downstream connection
+        if init.FILE_PORT in self.outputPorts:
+            self.webRequest.data = self.webRequest.runRequest()  # create data
+            if self.webRequest.data:
+                fileObj = self.interpreter.filePool.create_file(suffix=".gml")
+                _file = open(fileObj.name, "w")
+                _file.writelines(self.webRequest.data)
+                _file.close()
+                self.setResult(init.FILE_PORT, fileObj)
+
         # layer port
         if self.url:
             random.seed()
@@ -124,15 +136,17 @@ class OGC(NotCacheable):
             if init.RASTER_PORT in self.outputPorts:
                 qgsRasterLayer = QgsRasterLayer(
                     self.url, self.layername, self.webRequest.get_driver())
-                #print "qgsRasterLayer", qgsRasterLayer
+                #print "OgcService:136 - qgsRasterLayer", qgsRasterLayer
                 self.setResult(init.RASTER_PORT, qgsRasterLayer)
+            # conditional execution: only setResult if downstream connection
             if init.VECTOR_PORT in self.outputPorts:
                 qgsVectorLayer = QgsVectorLayer(
                     self.url, self.layername, self.webRequest.get_driver())
-                #print "qgsVectorLayer", qgsVectorLayer
+                #print "OgcService:141 -qgsVectorLayer", qgsVectorLayer
                 self.setResult(init.VECTOR_PORT, qgsVectorLayer)
+            # conditional execution: only setResult if downstream connection
             if init.TEMPORAL_VECTOR_PORT in self.outputPorts:
-                print "QgcService:134", self.url, self.layername, self.webRequest.get_driver()
+                #print "QgcService:144", self.url,self.webRequest.get_driver()
                 temporalVectorLayer = TemporalVectorLayer(
                     self.url, self.layername, self.webRequest.get_driver())
                 #print "TemporalVectorLayer", TemporalVectorLayer

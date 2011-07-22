@@ -5,6 +5,7 @@ OGC_REQUEST_PORT = "RequestURL"
 OGC_URL_PORT = "OGC_URL"
 URL_PORT = "URL"
 DATA_PORT = "OGC_data"
+FILE_PORT = "OGC_file"
 WEB_REQUEST_PORT = "web_request"
 RASTER_PORT = "QgsRasterLayer"
 VECTOR_PORT = "QgsVectorLayer"
@@ -126,7 +127,11 @@ def initialize(*args, **keywords):
     reg.add_output_port(
         SOS,
         DATA_PORT,
-        (core.modules.basic_modules.String, 'Data String'))#,True)
+        (core.modules.basic_modules.String, 'OGC Data String'))#,True)
+    reg.add_output_port(
+        SOS,
+        FILE_PORT,
+        (core.modules.basic_modules.File, 'OGC Data File'))#,True)
     reg.add_output_port(
         SOS,
         WEB_REQUEST_PORT,

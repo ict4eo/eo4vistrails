@@ -25,8 +25,8 @@
 ###
 #############################################################################
 """This module provides a data structure for creating and storing vector data,
-as well as attribute data, based the format defined by QGIS, from different
-input data types.
+as well as associated attribute data, based the format defined by QGIS, from
+different input data types.
 """
 # library
 # third party
@@ -71,6 +71,7 @@ class TemporalLayer(ThreadSafeMixin, Module):
             self.raiseError('All Map Layer Properties must be set')
 '''
 
+
 class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
     """Create an extended vector layer, based on QGIS vector layer
     """
@@ -78,10 +79,8 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
     def __init__(self, uri=None, layername=None, driver=None):
         QgsVectorLayer.__init__(self)
         if uri and layername and driver:
-            print "TVL:82", uri, layername, driver
             qgis.core.QgsVectorLayer.__init__(self, uri, layername, driver)
         self.SUPPORTED_DRIVERS += ['OM', 'HDF']  # add new supported types
-        print "TVL:84", uri, layername, driver
 
     def compute(self):
         """Execute the module to create the output"""
@@ -94,12 +93,9 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
                 isFILE = (thefile != None) and (thefile.name != '')
             except AttributeError:
                 isFILE = (thefile.name != '')
-
-            #Note this is case sensitive -> "WFS"
             isQGISSuported = isinstance(dataReq, DataRequest) and \
                             dataReq.get_driver() in self.SUPPORTED_DRIVERS
 
-            print "TVL:100", isFILE, thefile, dataReq, isQGISSuported
             if isFILE:
                 thefilepath = thefile.name
                 thefilename = QFileInfo(thefilepath).fileName()
@@ -109,14 +105,9 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
                     thefilename,
                     "ogr")
             elif isQGISSuported:
-                print "TVL:113", dataReq.get_uri(), dataReq.get_layername(), dataReq.get_driver()
-                #this gives an error when used AttributeError: 'FilePool' object has no attribute 'create'
-                #fileObj = self.interpreter.filePool.create(suffix=".gml")
-                vlayer = dataReq.get_uri(),
-                vlayer = "/home/dhohls/Projects/Research/pressure.gml" # TEST ONLY
                 qgis.core.QgsVectorLayer.__init__(
                     self,
-                    vlayer,
+                    dataReq.get_uri(),
                     dataReq.get_layername(),
                     dataReq.get_driver())
             else:
@@ -128,7 +119,5 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
                     self.raiseError('No valid data request')
 
             self.setResult('value', self)
-            if fileObj:
-                self.setResult('value', fileObj)
         except Exception, e:
             self.raiseError('Cannot set output port: %s' % str(e))
