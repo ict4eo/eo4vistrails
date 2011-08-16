@@ -25,8 +25,8 @@
 ###
 #############################################################################
 """This module provides a data structure for creating and storing vector data,
-as well as associated attribute data, based the format defined by QGIS, from
-different input data types.
+as well as associated attribute data (typically time-series data), based on the
+format defined by QGIS, from different input data types.
 """
 # library
 # third party
@@ -35,9 +35,10 @@ from PyQt4.QtCore import QFileInfo
 # vistrails
 from core.modules.vistrails_module import Module, ModuleError
 # eo4vistrails
+from packages.eo4vistrails.utils.Parser import Parser
 from packages.eo4vistrails.utils.DataRequest import DataRequest
-from packages.eo4vistrails.rpyc.RPyC import RPyCModule, RPyCSafeModule
 from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
+from packages.eo4vistrails.rpyc.RPyC import RPyCModule, RPyCSafeModule
 # local
 from QgsLayer import QgsVectorLayer
 
@@ -81,6 +82,7 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
         if uri and layername and driver:
             qgis.core.QgsVectorLayer.__init__(self, uri, layername, driver)
         self.SUPPORTED_DRIVERS += ['OM', 'HDF']  # add new supported types
+        self.time_series = {}
 
     def compute(self):
         """Execute the module to create the output"""
@@ -104,6 +106,8 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
                     thefilepath,
                     thefilename,
                     "ogr")
+                print "TVL:108", thefilepath
+                self.extract_time_series(thefilepath)
             elif isQGISSuported:
                 qgis.core.QgsVectorLayer.__init__(
                     self,
@@ -121,3 +125,23 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
             self.setResult('value', self)
         except Exception, e:
             self.raiseError('Cannot set output port: %s' % str(e))
+
+    def extract_time_series(self, thefile):
+        """Parse SOS GML file and extract time series data."""
+        parse = Parser(file=thefile, namespace="http://www.opengis.net/om/1.0")
+        print "TVL:132 - NS", parse.namespace, '\n        - XML', parse.xml
+        # if get
+        print "TVL:134 - ObservationCollection", parse.tag_value('ObservationCollection')
+        print "TVL:135 - ObservationCollection", \
+            parse.tag_value(
+                'boundedBy/Envelope/lowerCorner',
+                namespace=parse.get_ns('gml')) #path is split via '/'
+        om_result = parse.elem_tag(
+            'member/Observation/result',
+            namespace=parse.get_ns('om'))
+        print "TVL:139 - om:result", om_result
+        print "TVL:139 - swe:values", \
+            parse.elem_tag_value(
+                om_result,
+                'DataArray/values',
+                namespace=parse.get_ns('swe'))

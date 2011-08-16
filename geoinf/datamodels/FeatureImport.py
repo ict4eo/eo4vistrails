@@ -129,12 +129,19 @@ class FeatureImportCommonWidget(QtGui.QWidget):
         self.buttonLayout.addWidget(self.btnCancel)
         self.buttonLayout.addWidget(self.btnExecute)
 
-        self.connect(self.placesGroupBoxButton, QtCore.SIGNAL('clicked(bool)'), self.showDialog)
-        self.connect(self.btnExecute, QtCore.SIGNAL('clicked(bool)'), self.getShapeFileMetaData)
+        self.connect(
+            self.placesGroupBoxButton,
+            QtCore.SIGNAL('clicked(bool)'),
+            self.showDialog)
+        self.connect(
+            self.btnExecute,
+            QtCore.SIGNAL('clicked(bool)'),
+            self.getShapeFileMetaData)
 
     def showDialog(self):
         """TO DO - add docstring"""
-        filename = QtGui.QFileDialog.getOpenFileName(self, 'Open file', '/home')
+        filename = QtGui.QFileDialog.getOpenFileName(
+            self, 'Open file', '/home')
         self.placesGroupBox.setText(str(filename))
         fname = open(filename)
         data = fname.read()
@@ -164,20 +171,18 @@ class MetaDataBrowser:
 
     def get_metadata(self, filename):
         """
-        Returns a dictionary containing the meta data in
-        the given filename
+        Returns a dictionary containing the meta data in the given filename
         """
         # fix this to get path from self.placesGroupBox.text() text field
         # replace path with your local path to shapefile
         #get_metadata = FeatureImportCommonWidget(QtGui.QWidget)
-        #filename = self.placesGroupBox.text() #"/home/petrus/Desktop/GIS_data/Rivers/main_rivers.shp"
+        #filename = self.placesGroupBox.text()
 
         ds = self.driver.Open(filename)
         result = {'file': ds.name}
 
         for l in xrange(ds.GetLayerCount()):
             layer = ds.GetLayerByIndex(l)
-
             sr = layer.GetSpatialRef()
             proj4 = ''
             if sr:
@@ -198,19 +203,6 @@ class MetaDataBrowser:
         return result
 
 
-def initialize(*args, **keywords):
-    """sets everything up"""
-    # We'll first create a local alias for the module_registry so that
-    # we can refer to it in a shorter way.
-    reg = core.modules.module_registry.get_module_registry()
-    reg.add_module(FeatureImport)
-    #input ports
-
-    #reg.add_input_port(FeatureModel, "service_version", (core.modules.basic_modules.String, 'Web Map Service version - default 1.1.1'))
-    #output ports
-    reg.add_output_port(FeatureImport, "OGRDataset", (ogr.Dataset, 'Feature data in OGR Dataset'))
-
-
 class FeatureImportConfigurationWidget(OgcConfigurationWidget):
     """makes use of code style from OgcConfigurationWidget"""
 
@@ -220,6 +212,39 @@ class FeatureImportConfigurationWidget(OgcConfigurationWidget):
         self.wfs_config = FeatureImportCommonWidget(self.ogc_common_widget)
         # tabs
         self.tabs.insertTab(1, self.wfs_config, "")
-        self.tabs.setTabText(self.tabs.indexOf(self.wfs_config), QtGui.QApplication.translate("cConfigurationWidget", "FeatureImportCommonWidget", None, QtGui.QApplication.UnicodeUTF8))
-        self.tabs.setTabToolTip(self.tabs.indexOf(self.wfs_config), QtGui.QApplication.translate("cConfigurationWidget", "FeatureImportCommonWidget", None, QtGui.QApplication.UnicodeUTF8))
+        self.tabs.setTabText(
+            self.tabs.indexOf(self.wfs_config),
+            QtGui.QApplication.translate(
+                "cConfigurationWidget",
+                "FeatureImportCommonWidget",
+                None,
+                QtGui.QApplication.UnicodeUTF8))
+        self.tabs.setTabToolTip(
+            self.tabs.indexOf(self.wfs_config),
+            QtGui.QApplication.translate(
+                "cConfigurationWidget",
+                "FeatureImportCommonWidget",
+                None,
+                QtGui.QApplication.UnicodeUTF8))
         self.tabs.setCurrentIndex(0)
+
+
+def initialize(*args, **keywords):
+    """sets everything up"""
+    # First create a local alias for the module_registry so that
+    # we can refer to it in a shorter way.
+    reg = core.modules.module_registry.get_module_registry()
+    reg.add_module(FeatureImport)
+    #input ports
+    """#not in use
+    reg.add_input_port(
+        FeatureModel,
+        "service_version",
+        (core.modules.basic_modules.String,
+        'Web Map Service version - default 1.1.1'))
+    """
+    #output ports
+    reg.add_output_port(
+        FeatureImport,
+        'OGRDataset',
+        (ogr.Dataset, 'Feature data in OGR Dataset'))

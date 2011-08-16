@@ -31,27 +31,28 @@ Also included is the ability to run code transparently in
 OpenNebula cloud environments.
 """
 # Authors:
-    # Terence van Zyl
-    # Graeme McFerren
-    # Bheki C'wele
-    # Derek Hohls
-    # Petrus Shabangu
-    # Bolelang Sibolla
+    # Terence van Zyl (tvanzyl)
+    # Graeme McFerren (gmcferren)
+    # Bheki C'wele (bcwele)
+    # Derek Hohls (dhohls)
+    # Petrus Shabangu (pshabangu)
+    # Bolelang Sibolla (bsibolla)
 
 identifier = 'za.co.csir.eo4vistrails'
 name = 'eo4vistrails'
 version = '0.1.0'
-author_list = 'tvanzyl,bcwele,gmcferren,dhohls,pshabangu,bsibolla'
+author_list = 'tvanzyl,gmcferren,bcwele,dhohls,pshabangu,bsibolla'
 
 import sys
 import os.path
 from core.system import packages_directory
-sys.path = [os.path.join(packages_directory(),'eo4vistrails/lib')] + sys.path
+sys.path = [os.path.join(packages_directory(), 'eo4vistrails/lib')] + sys.path
+
 
 def package_requirements():
     import core.requirements
     if not core.requirements.python_module_exists('owslib'):
-        raise core.requirements.MissingRequirement('owslib')
+        raise core.requirements.MissingRequirement('owslib') #??? still true
     if not core.requirements.python_module_exists('qgis'):
         raise core.requirements.MissingRequirement('qgis')
     if not core.requirements.python_module_exists('psycopg2'):
@@ -69,8 +70,8 @@ def package_requirements():
 
 
 def package_dependencies():
-    return ['edu.utah.sci.vistrails.spreadsheet'
-	   ,'edu.utah.sci.vistrails.numpyscipy']
+    return ['edu.utah.sci.vistrails.spreadsheet',
+            'edu.utah.sci.vistrails.numpyscipy']
 #    import core.packagemanager
 #    manager = core.packagemanager.get_package_manager()
 #    if manager.has_package('edu.utah.sci.vistrails.spreadsheet'):

@@ -28,13 +28,13 @@
 
 This is the core module holding annotations and mixins,
 """
-#History
-#Terence van Zyl, 15 Dec 2010, Version 1.0
-
+# global
 import copy
 from threading import Thread, currentThread, RLock
+# vistrails
 from core.modules.vistrails_module import Module, NotCacheable, \
         InvalidOutput, ModuleError, ModuleErrors, ModuleBreakpoint
+
 
 global globalThreadLock
 globalThreadLock = RLock()
@@ -152,8 +152,8 @@ class Fork(ThreadSafeMixin, NotCacheable, Module):
 
 
 class ThreadTestModule(ThreadSafeMixin, NotCacheable, Module):
-    """This Test Module is to check that ThreadSafe is working and also provides
-    a template for others to use ThreadSafe"""
+    """This Test Module is to check that ThreadSafe is working and also
+    provides a template for others to use ThreadSafe"""
 
     def __init__(self):
         ThreadSafeMixin.__init__(self)

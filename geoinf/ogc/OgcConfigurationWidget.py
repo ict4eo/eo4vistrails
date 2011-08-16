@@ -314,12 +314,12 @@ class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
             self.showWarning('The service is not sufficiently specified')
 
     def constructRequest(self):
-        """Return a dictionary of results:
-            * request type (GET/POST)
-            * data (for a POST)
-            * full_url (for a GET)
-            * layer name (for WFS, WCS)
+        """Overwrite in a subclass to set the service specific parameters.
 
-        Overwrite in a subclass to set the service specific parameters.
+        Return a dictionary of results:
+          * request type (GET/POST)
+          * data (for a POST)
+          * full_url (for a GET)
+          * layer name (for WFS, WCS)
         """
         return {}
