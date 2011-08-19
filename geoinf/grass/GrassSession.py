@@ -26,9 +26,10 @@
 """This module provides a Session object for defining a connection to GRASS
 Defines a temporary GRASS location on either a local or cloud machine.
 Defines and maintains a list of the layers available.
-SEE:
-http://grass.osgeo.org/programming6/pythonlib.html
-http://grass.osgeo.org/wiki/GRASS_and_Python
+
+Also see:
+ * http://grass.osgeo.org/programming6/pythonlib.html
+ * http://grass.osgeo.org/wiki/GRASS_and_Python
 """
 #export GISBASE="/usr/local/grass-6.4.svn/"
 #export PATH="$PATH:$GISBASE/bin:$GISBASE/scripts"

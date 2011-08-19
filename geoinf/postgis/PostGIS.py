@@ -79,7 +79,8 @@ class PostGisSession(Session):
 
 @RPyCSafeModule()
 class PostGisNumpyReturningCursor(ThreadSafeMixin, RPyCModule):
-    """Returns data in the form of a eo4vistrails FeatureModel if user binds to self output port"""
+    """Returns data in the form of a eo4vistrails FeatureModel,
+    if user binds to self output port"""
     #multi inheritance of module subclasses is problematic
 
     def __init__(self):
@@ -413,5 +414,5 @@ class SQLSyntaxEditor(SyntaxEditor):
 
 class SQLSourceConfigurationWidget(SourceConfigurationWidget):
     def __init__(self, module, controller, parent=None):
-        SourceConfigurationWidget.__init__(self, module, controller, 
+        SourceConfigurationWidget.__init__(self, module, controller,
                                            SQLSyntaxEditor, True, True, parent)

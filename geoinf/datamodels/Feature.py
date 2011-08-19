@@ -84,7 +84,7 @@ class _OgrMemModel():
             conn.ReleaseResultSet(lyr)
             conn = None
         else:
-            raise ValueError, "Path to OGR dataset does not exist"
+            raise ValueError("Path to OGR dataset does not exist")
 
     def loadContentFromDB(self, connstr, getStatement):
         """Loads content off PostGIS or SpatialLite database.

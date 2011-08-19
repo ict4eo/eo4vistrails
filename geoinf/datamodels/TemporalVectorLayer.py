@@ -42,39 +42,15 @@ from packages.eo4vistrails.rpyc.RPyC import RPyCModule, RPyCSafeModule
 # local
 from QgsLayer import QgsVectorLayer
 
-'''
-class TemporalLayer(ThreadSafeMixin, Module):
-    """Create a map layer from a data input stream.
-
-    Data is assumed to be a format suitable for conversion to a vector layer;
-    for example, HDF or O&M formats.
-    """
-
-    def __init__(self):
-        ThreadSafeMixin.__init__(self)
-        Module.__init__(self)
-
-    def raiseError(self, msg, error=''):
-        """Raise a VisTrails error."""
-        import traceback
-        traceback.print_exc()
-        raise ModuleError(self, msg + ': %s' % str(error))
-
-    def mapLayerFactory(self, uri=None, layername=None, driver=None):
-        """Create a QGIS vector map layer based on driver."""
-        if uri and layername and driver:
-            if driver in TemporalVectorLayer.SUPPORTED_DRIVERS:
-                return TemporalVectorLayer(uri, layername, driver)
-            else:
-                self.raiseError('Map Layer Driver %s not supported' %\
-                                str(driver))
-        else:
-            self.raiseError('All Map Layer Properties must be set')
-'''
-
 
 class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
-    """Create an extended vector layer, based on QGIS vector layer
+    # TO DO - OMIT qgis.core.QgsVectorLayer
+    """Create an extended vector layer, based on QGIS vector layer.
+
+    Associated data is stored, and can be referenced, in a local file.
+
+    For example, in the case of a SOS, the data fetched from the server
+    will be stored in an O&M schema-based XML file (self.results_file)
     """
 
     def __init__(self, uri=None, layername=None, driver=None):
@@ -99,15 +75,15 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
                             dataReq.get_driver() in self.SUPPORTED_DRIVERS
 
             if isFILE:
-                thefilepath = thefile.name
-                thefilename = QFileInfo(thefilepath).fileName()
+                self.thefilepath = thefile.name
+                self.thefilename = QFileInfo(self.thefilepath).fileName()
                 qgis.core.QgsVectorLayer.__init__(
                     self,
-                    thefilepath,
-                    thefilename,
+                    self.thefilepath,
+                    self.thefilename,
                     "ogr")
-                print "TVL:108", thefilepath
-                self.extract_time_series(thefilepath)
+                print "TVL:84", self.thefilepath
+                self.results_file = self.thefilepath
             elif isQGISSuported:
                 qgis.core.QgsVectorLayer.__init__(
                     self,
@@ -125,23 +101,3 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
             self.setResult('value', self)
         except Exception, e:
             self.raiseError('Cannot set output port: %s' % str(e))
-
-    def extract_time_series(self, thefile):
-        """Parse SOS GML file and extract time series data."""
-        parse = Parser(file=thefile, namespace="http://www.opengis.net/om/1.0")
-        print "TVL:132 - NS", parse.namespace, '\n        - XML', parse.xml
-        # if get
-        print "TVL:134 - ObservationCollection", parse.tag_value('ObservationCollection')
-        print "TVL:135 - ObservationCollection", \
-            parse.tag_value(
-                'boundedBy/Envelope/lowerCorner',
-                namespace=parse.get_ns('gml')) #path is split via '/'
-        om_result = parse.elem_tag(
-            'member/Observation/result',
-            namespace=parse.get_ns('om'))
-        print "TVL:139 - om:result", om_result
-        print "TVL:139 - swe:values", \
-            parse.elem_tag_value(
-                om_result,
-                'DataArray/values',
-                namespace=parse.get_ns('swe'))
