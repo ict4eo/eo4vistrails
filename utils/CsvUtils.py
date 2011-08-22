@@ -37,15 +37,19 @@ from core.modules.vistrails_module import Module, ModuleError
 from packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
 from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
 
+
 @RPyCSafeModule()
-class ListDirContent(ThreadSafeMixin,  Module):
-    '''A utility for walking a directory to discover csv files with specified filenames
-    Returns a list of full filenames. Runs on RPyC nodes, and in such a case would
-    refer to that remote filesystem
-    '''
-    _input_ports  = [('directorypath', '(edu.utah.sci.vistrails.basic:String)'),
-                               ('file_extensions',  '(edu.utah.sci.vistrails.basic:List)')
-                               ]
+class ListDirContent(ThreadSafeMixin, Module):
+    """A utility for walking a directory to discover csv files with specified
+    filenames.
+
+    Returns:
+     *  A list of full filenames. On RPyC nodes, will refer to files on that
+        remote filesystem.
+    """
+
+    _input_ports = [('directorypath', '(edu.utah.sci.vistrails.basic:String)'),
+                    ('file_extensions', '(edu.utah.sci.vistrails.basic:List)')]
     _output_ports = [('csv_list', '(edu.utah.sci.vistrails.basic:List)')]
 
     def __init__(self):
@@ -63,7 +67,7 @@ class ListDirContent(ThreadSafeMixin,  Module):
             #while stack:
                 #directory = stack.pop()
             for filename in os.listdir(directory):
-                fullname = os.path.join(directory,  filename)
+                fullname = os.path.join(directory, filename)
                 files.append(fullname)
                     #if os.path.isdir(fullname) and not os.path.islink(fullname):
                     #    stack.append(fullname)
@@ -77,22 +81,30 @@ class ListDirContent(ThreadSafeMixin,  Module):
                 #likely a directory, ignore
                 pass
 
-        self.setResult('csv_list',  filename_list)
+        self.setResult('csv_list', filename_list)
+
 
 @RPyCSafeModule()
-class CsvReader(ThreadSafeMixin,  Module):
+class CsvReader(ThreadSafeMixin, Module):
+    """Simple csv file reader utility.
 
-    _input_ports  = [('fullfilename',  '(edu.utah.sci.vistrails.basic:String)'),
-                               ('column_header_list',  '(edu.utah.sci.vistrails.basic:List)'),
-                               ('known_delimiter',  '(edu.utah.sci.vistrails.basic:String)')
-                               ]
+    Requires:
+     *  TODO
+
+    Returns:
+     *  TODO
+    """
+
+    _input_ports = [('fullfilename', '(edu.utah.sci.vistrails.basic:String)'),
+                    ('column_header_list', '(edu.utah.sci.vistrails.basic:List)'),
+                    ('known_delimiter', '(edu.utah.sci.vistrails.basic:String)')]
     _output_ports = [('read_data_listoflists', '(edu.utah.sci.vistrails.basic:List)')]
 
     def __init__(self):
         ThreadSafeMixin.__init__(self)
         Module.__init__(self)
 
-    def compute (self) :
+    def compute(self):
         fn = self.getInputFromPort('fullfilename')
         chl = self.getInputFromPort('column_header_list')
         kd = self.getInputFromPort('known_delimiter')
@@ -106,38 +118,41 @@ class CsvReader(ThreadSafeMixin,  Module):
             try:
                 if len(chl) > 0:
                     list_of_lists.append(chl)
-                csvfile = csv.reader(open(fn, 'r'),  delimiter = kd)
+                csvfile = csv.reader(open(fn, 'r'), delimiter=kd)
                 for row in csvfile:
-                     list_of_lists.append(row)
+                    list_of_lists.append(row)
                 self.setResult('read_data_listoflists', list_of_lists)
             except Exception, ex:
                 print ex
             csvfile = None
 
 
-
-
 @RPyCSafeModule()
-class CsvWriter(ThreadSafeMixin,  Module):
-    '''Simple csv file writer utility, taking in a directory path where
-    the file will be written to,  a filename , a column headings list
-    (which can be an empty list) and a list of  lists containing the
-    rows of data to write to file. Returns the full pathname to the
-    file created if succesful. Runs on RPyC nodes, and in such a case
-    would refer to that remote filesystem'''
-    _input_ports  = [('directorypath', '(edu.utah.sci.vistrails.basic:String)'),
-                               ('filename',  '(edu.utah.sci.vistrails.basic:String)'),
-                               ('column_header_list',  '(edu.utah.sci.vistrails.basic:List)'),
-                               ('data_values_listoflists',  '(edu.utah.sci.vistrails.basic:List)')
-                               ]
+class CsvWriter(ThreadSafeMixin, Module):
+    """Simple csv file writer utility.
+
+    Requires:
+     *  a directory path to which the file will be written
+     *  a filename
+     *  a column headings list (which can be an empty)
+     *  a list of lists containing the rows of data to write to file
+
+    Returns:
+     *  a full pathname to the file created, if successful. On RPyC nodes,
+        will refer to files on that remote filesystem.
+    """
+
+    _input_ports = [('directorypath', '(edu.utah.sci.vistrails.basic:String)'),
+                    ('filename', '(edu.utah.sci.vistrails.basic:String)'),
+                    ('column_header_list', '(edu.utah.sci.vistrails.basic:List)'),
+                    ('data_values_listoflists', '(edu.utah.sci.vistrails.basic:List)')]
     _output_ports = [('created_file', '(edu.utah.sci.vistrails.basic:String)')]
 
     def __init__(self):
         ThreadSafeMixin.__init__(self)
         Module.__init__(self)
 
-
-    def compute (self) :
+    def compute(self):
         fn = self.getInputFromPort('filename')
         dp = self.getInputFromPort('directorypath')
         chl = self.getInputFromPort('column_header_list')
@@ -148,17 +163,16 @@ class CsvWriter(ThreadSafeMixin,  Module):
 
         newfile = os.path.join(dp, fn)
         try:
-            csvfile = csv.writer(open(newfile, 'w'),  delimiter=',',  quotechar="'")
-
+            csvfile = csv.writer(open(newfile, 'w'),
+                                 delimiter=',',
+                                 quotechar="'")
             if len(chl) > 0:
                 csvfile.writerow(chl)
             if len(dvll) > 0:
                 csvfile.writerows(dvll)
-
             self.setResult('created_file', newfile)
-
         except Exception, ex:
             print ex
-
             #raise an error
+
         csvfile = None #flush to disk

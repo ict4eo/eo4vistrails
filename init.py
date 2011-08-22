@@ -1,5 +1,5 @@
 
-#Brings in cloud modules
+#brings in cloud modules
 try:
     from rpyc import init as rpyc_init
 except:
@@ -10,7 +10,6 @@ try:
     from utils import init as utils_init
 except:
     import utils.init as utils_init
-
 
 #brings in PostGIS modules
 try:
@@ -36,11 +35,17 @@ try:
 except:
     import dataanalytics.init as dataanalytics_init
 
-# brings visual widgets
+# brings in visual widgets
 try:
     from geoinf.visual import init as visual_init
 except:
     import geoinf.visual.init as visual_init
+
+# brings in transformers
+try:
+    from transform import init as transform_init
+except:
+    import transform.init as transform_init
 
 
 def initialize(*args, **keywords):
@@ -55,9 +60,10 @@ def initialize(*args, **keywords):
 
     #NOTE! order does count
     rpyc_init.initialize(*args, **keywords)
-    utils_init.initialize(*args, **keywords)    
+    utils_init.initialize(*args, **keywords)
     datamodels_init.initialize(*args, **keywords)
     ogc_init.initialize(*args, **keywords)
     postgis_init.initialize(*args, **keywords)
     visual_init.initialize(*args, **keywords)
     dataanalytics_init.initialize(*args, **keywords)
+    transform_init.initialize(*args, **keywords)

@@ -41,56 +41,82 @@ from core.modules.vistrails_module import \
 # eo4vistrails
 from packages.eo4vistrails.utils.Parser import Parser
 # local
-import Transformer
+from Transformer import Transform
 
-CSV_OUT = "/tmp/sos.csv"  # need to use VisTrails temp file
+CSV_OUT = "/tmp/sos.csv"  # need to use a VisTrails temp file
+GML_NO_DATA = "noData"  # string used by GML to indicate missing data
 
+class SpatialTemporalTransformModule(Transform):
+    """Transform GML data associated with a Spatial Temporal Layer.
 
-class SpatialTemporalTransformModule(Transformer, Module):
-    """Transform GML data associated with a Spatial Temporal Layer"""
+    Parse the GML (XML format) file created by a OGC web service (for example,
+    a SOS) and create a CSV representation of the time-series data.
 
-    _input_ports  = [('QgsMapLayer', '(za.co.csir.eo4vistrails:QgsMapLayer:data)'), ]
+    Requires:
+     *  the filename containing the GML data
+
+    Returns:
+    A list of full filenames, containing CSV data.  Each 'member' node in
+    the GML file will cause a new CSV file to be created.
+
+    The data columns in each CSV file are:
+     *  Observation ID
+     *  Feature ID
+     *  Sample Point ID
+     *  Geometry
+     *  One or more columns with the phenomena/property data; typically with
+        a field name, followed by a time value.  Units (where available in
+        the neta data) are shown in brackets after the field name.
+    """
+
+    _input_ports = [('QgsMapLayer', '(za.co.csir.eo4vistrails:QgsMapLayer:data)'), ]
     # need a port that has an array of output choices ?
-    _output_ports = [('raster layer', '(za.co.csir.eo4vistrails:Raster Layer:data)'),
-                     ('filenames', '()')]
+    _output_ports = [('CSV_list', '(edu.utah.sci.vistrails.basic:List)')]
     # ('output file', '(edu.utah.sci.vistrails.basic:File)')
 
     def __init__(self):
-        Transformer.__init__(self)
-        Module.__init__(self)
+        Transform.__init__(self)
 
     def compute(self):
-        pass
         # get layer from input port
         layer = self.getInputFromPort('QgsMapLayer')
-        # get other params (from input port?) e.g. CSV options
-        # ???
-        # get file associated with layer
+        # get other parameters (from input ports?) e.g. CSV options
+        # TODO ???
+        # get GML file associated with layer
         gml_file = layer.results_file
-        # call get_csv
-        # filenames = self.get_csv(gml_file)
-        # attach result (list of filenames) to output port
-        # self.setResult("raster filename", filenames)
+        # call get_csv to process GML
+        filename_list = self.get_csv(gml_file, missing_value='9999') # 9999 TEST ONLY
+        # attach result (list of filenames) to the output port
+        self.setResult("CSV_list", filename_list)
 
-    def get_csv(SOS_XML_file, delimiter=',', header=True, missing_value=None,
-                quotechar='"'):
+    def get_csv(self, SOS_XML_file, delimiter=',', header=True,
+                missing_value=None, quotechar='"'):
         """Create one or more CSV files, containing time series data.
 
-        Return a tuple of filenames.
+        Requires:
+         *  a GML (XML-based) file
+         *  a delimiter character (added between each field)
+         *  a boolean header value [on/off]
+         *  a quote character; if None then the CSV file writer has the
+            QUOTE_MINIMAL flag
+         *  a string to be used in place of any missing data
+
+        Returns:
+         *  a tuple of filenames.
         """
-        results = extract_time_series(SOS_XML_file)  # get data and metadata
+        results = self.extract_time_series(SOS_XML_file)  # get data and metadata
         filenames = []
         for index, result in enumerate(results):
-            file_out = CSV_OUT
+            file_out = self.interpreter.filePool.create_file(suffix=".csv")
             # delete next 2 lines if using VT "temp" file
-            if index > 0:
-                file_out = file_out + '_' + str(index)
-            f_out = open(file_out, "w")
+            #if index > 0:
+            #    file_out = file_out + '_' + str(index)
+            #f_out = open(file_out.name, "w")
             if quotechar:
                 quoting = csv.QUOTE_NONNUMERIC
             else:
                 quoting = csv.QUOTE_MINIMAL
-            csv_writer = csv.writer(open(file_out, "w"),
+            csv_writer = csv.writer(open(file_out.name, "w"),
                                     delimiter=delimiter,
                                     quotechar=quotechar,
                                     quoting=quoting)
@@ -103,26 +129,31 @@ class SpatialTemporalTransformModule(Transformer, Module):
                     common.append(_field)
                 csv_writer.writerow(common)
             # write to file
-            for index, datum in enumerate(result['data']):
+            for datum in result['data']:
+                if missing_value:
+                    for item in datum:
+                        if GML_NO_DATA in item:
+                            item.replace(GML_NO_DATA, missing_value)
                 datum.insert(0, result['feature']['geometry'])
                 datum.insert(0, result['sampling_point']['id'])
                 datum.insert(0, result['feature']['id'])
                 datum.insert(0, result['observation']['id'])
                 csv_writer.writerow(datum)
             # track filename used
-            filenames.append(file_out)
+            filenames.append(file_out.name)
+        #print "TLT:144", filenames
         return filenames
 
-    def get_fields(thefile):
+    def get_fields(self, thefile):
         """Parse a SOS GML file and extract the field data."""
         doc = Parser(file=thefile, namespace="http://www.opengis.net/swe/1.0.1")
         om_result = doc.tag('member/Observation/result', doc.get_ns('om'))
         fields = doc.elem_tags(
             om_result,
             'DataArray/elementType/DataRecord/field')
-        return extract_field_data(doc, fields)
+        return self.extract_field_data(doc, fields)
 
-    def get_bounds(thefile):
+    def get_bounds(self, thefile):
         """Parse a SOS GML file and extract bounding box as a tuple."""
         doc = Parser(file=thefile, namespace="http://www.opengis.net/gml")
         try:
@@ -132,7 +163,7 @@ class SpatialTemporalTransformModule(Transformer, Module):
         except:
             return []
 
-    def extract_field_data(doc, fields):
+    def extract_field_data(self, doc, fields):
         """Return a data dictionary from a SOS XML field element."""
         field_list = []
         if fields:
@@ -151,7 +182,7 @@ class SpatialTemporalTransformModule(Transformer, Module):
                 field_list.append(field_set)
         return field_list
 
-    def extract_time_series(thefile):
+    def extract_time_series(self, thefile):
         """Parse a SOS GML file and extract time series and other meta data."""
         doc = Parser(file=thefile, namespace="http://www.opengis.net/swe/1.0.1")
         results = []
@@ -213,7 +244,7 @@ class SpatialTemporalTransformModule(Transformer, Module):
                 om_sampling_point = doc.elem_tag_nested(om_feature,
                                                       'SamplingPoint',
                                                       doc.get_ns('sa'))
-                print "125", om_sampling_point
+                #print "TLT:125", om_sampling_point
                 if om_sampling_point and len(om_sampling_point) == 1:
                     id = doc.elem_attr_value(om_feature, 'xlink:href')
                     if not id:
@@ -225,7 +256,7 @@ class SpatialTemporalTransformModule(Transformer, Module):
                 fields = doc.elem_tags(
                     om_obs_result,
                     'DataArray/elementType/DataRecord/field')
-                result['fields'] = extract_field_data(doc, fields)
+                result['fields'] = self.extract_field_data(doc, fields)
                 # data
                 textblock = doc.elem_tag(
                     om_obs_result,

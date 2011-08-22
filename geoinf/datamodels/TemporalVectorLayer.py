@@ -82,7 +82,7 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
                     self.thefilepath,
                     self.thefilename,
                     "ogr")
-                print "TVL:84", self.thefilepath
+                #print "TVL:84", self.thefilepath
                 self.results_file = self.thefilepath
             elif isQGISSuported:
                 qgis.core.QgsVectorLayer.__init__(

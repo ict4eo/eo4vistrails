@@ -32,7 +32,7 @@ from core.modules.vistrails_module import \
     Module, new_module, NotCacheable, ModuleError, ModuleErrors
 
 
-class TransformModule(Module):
+class Transform(Module):
     """Abstract module, providing common functionality to all transforms."""
 
     def __init__(self):
