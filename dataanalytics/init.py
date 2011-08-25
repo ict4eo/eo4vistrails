@@ -68,3 +68,6 @@ def initialize(*args, **keywords):
                    name="povRay Script",
                    namespace=mynamespace,
                    configureWidgetType=povray.PovRaySourceConfigurationWidget)
+    reg.add_module(povray.PovRayConfig,
+                   name="povRay Config",
+                   namespace=mynamespace)

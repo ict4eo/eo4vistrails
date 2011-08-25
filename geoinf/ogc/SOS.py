@@ -33,14 +33,12 @@ from PyQt4 import QtCore, QtGui
 from qgis.core import *
 from qgis.gui import *
 # vistrails
-from core.modules.vistrails_module import \
-    Module, new_module, NotCacheable, ModuleError
+from core.modules.vistrails_module import ModuleError
 # eo4vistrails
 from packages.eo4vistrails.geoinf.datamodels.Feature import FeatureModel
 # local
 from OgcConfigurationWidget import OgcConfigurationWidget
 from OgcService import OGC
-import init
 import traceback
 
 

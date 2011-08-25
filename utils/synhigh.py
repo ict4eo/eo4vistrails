@@ -27,10 +27,13 @@ or implied, of Mark Holmquist and Logan May.
 """
   
 from PyQt4 import QtGui, QtCore
+from core.modules.tuple_configuration import PortTable
 
 from core.modules.vistrails_module import ModuleError
+from core.modules.source_configure import SourceConfigurationWidget
 
-from gui.theme import CurrentTheme  
+from gui.theme import CurrentTheme
+import urllib
   
 def format(color, style='', bgcolor=''):
     """Return a QTextCharFormat with the given attributes.
@@ -48,21 +51,60 @@ def format(color, style='', bgcolor=''):
         _format.setBackground(_color)
   
     return _format
+
+class SyntaxSourceConfigurationWidget(SourceConfigurationWidget):
+
+    def __init__(self, module, controller, syntax, 
+                 parent=None, has_inputs=True, has_outputs=True, encode=True,
+                 input_port_specs=None, output_port_specs=None):
+        if input_port_specs:
+            self.input_port_specs = input_port_specs
+        else:
+            self.input_port_specs = module.input_port_specs
+        if output_port_specs:
+            self.output_port_specs = output_port_specs
+        else:
+            self.output_port_specs = module.output_port_specs
+            
+        SourceConfigurationWidget.__init__(self, module, controller, SyntaxEditor, 
+                                           parent=parent, has_inputs=has_inputs, has_outputs=has_outputs, 
+                                           encode=encode, portName='source')
+        
+        self.codeEditor.setSyntax(syntax)
+
+def createPortTable(self, has_inputs=True, has_outputs=True):
+        if has_inputs:
+            self.inputPortTable = PortTable(self)
+            labels = QtCore.QStringList() << "Input Port Name" << "Type"
+            self.inputPortTable.setHorizontalHeaderLabels(labels)
+            self.inputPortTable.initializePorts(self.input_port_specs)
+            self.layout().addWidget(self.inputPortTable)
+        if has_outputs:
+            self.outputPortTable = PortTable(self)
+            labels = QtCore.QStringList() << "Output Port Name" << "Type"
+            self.outputPortTable.setHorizontalHeaderLabels(labels)
+            self.outputPortTable.initializePorts(self.output_port_specs, True)
+            self.layout().addWidget(self.outputPortTable)
+        if has_inputs and has_outputs:
+            self.performPortConnection(self.connect)
+        if has_inputs:
+            self.inputPortTable.fixGeometry()
+        if has_outputs:
+            self.outputPortTable.fixGeometry()
   
 class SyntaxEditor(QtGui.QTextEdit):
-        
+    
     def __init__(self, parent=None):
         QtGui.QTextEdit.__init__(self, parent)
         self.setLineWrapMode(QtGui.QTextEdit.NoWrap)
         self.formatChanged(None)
         self.setCursorWidth(8)
-        self.highlighter = SyntaxHighlighter(self.document(), self.getSyntax())
         self.connect(self,
                      QtCore.SIGNAL('currentCharFormatChanged(QTextCharFormat)'),
                      self.formatChanged)
-
-    def getSyntax(self):        
-        raise ModuleError, (SyntaxEditor, "No Syntax Defined")
+        
+    def setSyntax(self, syntax):
+        self.highlighter = SyntaxHighlighter(self.document(), syntax)
 
     def formatChanged(self, f):
         self.setFont(CurrentTheme.PYTHON_SOURCE_EDITOR_FONT)
@@ -198,7 +240,8 @@ class SyntaxHighlighter (QtGui.QSyntaxHighlighter):
                     (r'"[^"\\]*(\\.[^"\\]*)*"', 0, self.styles['literal']), # Double-quote strings
                     (r"'[^'\\]*(\\.[^'\\]*)*'", 0, self.styles['literal']), # Single-quote strings
                     (r'\b\d+\b', 0, self.styles['literal']), # Numbers
-                    (r'\/\/[^\n]*', 0, self.styles['comment'])                    
+                    (r'\/\/[^\n]*', 0, self.styles['comment']),
+                    (r'\\\\[^\n]*', 0, self.styles['comment'])                 
             ]
   
 # C++ ______________________________________________________________________________________________________________________
@@ -217,7 +260,8 @@ class SyntaxHighlighter (QtGui.QSyntaxHighlighter):
                     (r'"[^"\\]*(\\.[^"\\]*)*"', 0, self.styles['literal']), # Double-quote strings
                     (r"'[^'\\]*(\\.[^'\\]*)*'", 0, self.styles['literal']), # Single-quote strings
                     (r'\b\d+\b', 0, self.styles['literal']), # Numbers
-                    (r'\/\/[^\n]*', 0, self.styles['comment'])
+                    (r'\/\/[^\n]*', 0, self.styles['comment']),
+                    (r'\\\\[^\n]*', 0, self.styles['comment'])
             ]
   
 # PYTHON ______________________________________________________________________________________________________________________

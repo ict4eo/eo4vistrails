@@ -46,7 +46,7 @@ from packages.eo4vistrails.rpyc.RPyC import RPyCModule, RPyCSafeModule
 from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
 from packages.eo4vistrails.utils.Array import NDArray
 from packages.eo4vistrails.utils.session import Session
-from packages.eo4vistrails.utils.synhigh import SyntaxHighlighter, SyntaxEditor
+from packages.eo4vistrails.utils.synhigh import SyntaxSourceConfigurationWidget
 
 from core.modules.vistrails_module import ModuleError, NotCacheable, Module
 from core.modules.source_configure import SourceConfigurationWidget
@@ -408,11 +408,7 @@ class PostGisCopyTo(NotCacheable, ThreadSafeMixin, Module):
             curs.close()
             pgconn.close()
 
-class SQLSyntaxEditor(SyntaxEditor):
-    def getSyntax(self):
-        return "SQL"
-
 class SQLSourceConfigurationWidget(SourceConfigurationWidget):
     def __init__(self, module, controller, parent=None):
-        SourceConfigurationWidget.__init__(self, module, controller,
-                                           SQLSyntaxEditor, True, True, parent)
+       SyntaxSourceConfigurationWidget.__init__(self, module, controller, 
+                                                 "SQL", parent)

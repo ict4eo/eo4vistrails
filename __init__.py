@@ -67,6 +67,8 @@ def package_requirements():
         raise core.requirements.MissingRequirement('rpyc')
     if not core.requirements.python_module_exists('osgeo'):
         raise core.requirements.MissingRequirement('osgeo')
+    if not core.requirements.python_module_exists('qtermwidget'):
+        raise core.requirements.MissingRequirement('qtermwidget')
 
 
 def package_dependencies():

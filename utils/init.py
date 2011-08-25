@@ -9,6 +9,8 @@ def initialize(*args, **keywords):
     from DataRequest import DataRequest, PostGISRequest
     from Array import NDArray
     from CsvUtils import CsvWriter, CsvReader, ListDirContent
+    from Random import Random
+    from Command import Command
 
     reg = get_module_registry()
     utils_namespace = "utils"
@@ -112,4 +114,10 @@ def initialize(*args, **keywords):
                    namespace=utils_namespace)
 
     reg.add_module(ListDirContent,
+                   namespace=utils_namespace)
+
+    reg.add_module(Random,
+                   namespace=utils_namespace)
+
+    reg.add_module(Command,
                    namespace=utils_namespace)

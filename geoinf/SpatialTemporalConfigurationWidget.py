@@ -33,7 +33,6 @@ from core.modules.module_registry import get_module_registry
 from core.utils import PortAlreadyExists
 from core.utils import VistrailsInternalError
 
-
 class SpatioTemporalConfigurationWidgetTabs(QtGui.QTabWidget):
     """Geoinf Configuration Tab Widgets
     are added via the addTab method of the QTabWidget
