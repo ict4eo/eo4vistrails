@@ -43,7 +43,6 @@ from packages.eo4vistrails.utils.Parser import Parser
 # local
 from Transformer import Transform
 
-CSV_OUT = "/tmp/sos.csv"  # need to use a VisTrails temp file
 GML_NO_DATA = "noData"  # string used by GML to indicate missing data
 
 class SpatialTemporalTransformModule(Transform):
