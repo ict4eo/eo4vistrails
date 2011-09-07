@@ -69,11 +69,16 @@ def getRemoteConnection(ip, port):
         connection.modules.sys.path_importer_cache['./tmp'] = None
 
     print "Uploading requirements to node...."
-    import packages.eo4vistrails.rpyc.tmp
+    import packages.eo4vistrails.rpyc.tmp    
     rpyc.classic.upload_package(connection, packages.eo4vistrails.rpyc.tmp, "./tmp")
+    #import init_for_library
+    #rpyc.classic.upload_module(connection, init_for_library, "./tmp")
+    refreshPackage(connection, "api", force=force)
     refreshPackage(connection, "core", force=force)
-    refreshPackage(connection, "gui", force=force)
     refreshPackage(connection, "db", force=force)
+    refreshPackage(connection, "gui", force=force)
+    refreshPackage(connection, "index", force=force)
+    refreshPackage(connection, "tests", force=force)
     print "Finished uploading vistrails requirements to node...."
 
     return connection
@@ -83,7 +88,8 @@ def getSubConnection():
     from rpyc.core.service import SlaveService
     from rpyc.utils import factory
     connection = factory.connect_subproc(["python", "-u",
-                                         rpyc.classic.SERVER_FILE,
+                                         "/usr/local/bin/rpyc_classic.py",
+                                         #rpyc.classic.SERVER_FILE,
                                          "-q", "-m", "stdio"],
                                          SlaveService,
                                          {'allow_all_attrs': True,
@@ -94,9 +100,10 @@ def getSubConnection():
     #make sure all packages are in the path
     print "Got a subProc"
     import core.system
-    import sys
-    connection.modules.sys.path.append(sys.path)
+    #import sys
+    #connection.modules.sys.path.extend(sys.path)
     connection.modules.sys.path.append(core.system.vistrails_root_directory())
+    #connection.modules.sys.path.append(core.system.packages_directory())
 
     return connection
 

@@ -181,15 +181,19 @@ class RPyCSafeMixin(object):
             #redirect StdIO back here so we can see what is going on
             import sys
             self.conn.modules.sys.stdout = sys.stdout
-
+            
+            #Just sum setup stuff to make sure vistrails is safe
+            #self.conn.execute('import core.requirements')
+            self.conn.execute('import init_for_library')
             #Make sure it knows its a remote node
             self.conn.execute('import packages.eo4vistrails.rpyc.Shared as Shared')
             self.conn.execute('Shared.isRemoteRPyCNode=True')
 
             #Instantiate Shadow Object
-            print self.__module__, self.__class__.__name__
-            self.conn.execute('from ' + self.__module__ + ' import ' + self.__class__.__name__)
-            shadow = self.conn.eval(self.__class__.__name__ + '()')
+            print 'from %s import %s'%(self.__module__, self.__class__.__name__)
+            print '%s'%self.conn.modules.sys.path
+            self.conn.execute('from %s import %s'%(self.__module__, self.__class__.__name__))
+            shadow = self.conn.eval('%s()'%(self.__class__.__name__))
 
             #Hook Up Shadow Objects Methods and Attributes
             #attributes
@@ -209,7 +213,10 @@ class RPyCSafeMixin(object):
             shadow.is_fold_module = self.is_fold_module
             shadow.computed = self.computed
             shadow.signature = self.signature
-
+            
+            self.conn.execute('import core.interpreter.default')
+            shadow.interpreter = self.conn.eval('core.interpreter.default.get_default_interpreter()')
+            
             print "Executing in the shadow class"
             #Call the Shadow Objects Compute
             shadow.compute()

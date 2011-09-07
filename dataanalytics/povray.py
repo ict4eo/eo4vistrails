@@ -33,12 +33,12 @@ from packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule, RPyCModule
 from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
 from packages.eo4vistrails.utils.synhigh import SyntaxSourceConfigurationWidget
 
-from core.modules.vistrails_module import ModuleError, NotCacheable, Module
+from core.modules.vistrails_module import ModuleError, Module
+print "a"
 from core.modules.basic_modules import File
-
+print "b"
 from subprocess import call
 from tempfile import mkstemp
-from os import fdopen, remove
 import urllib
 
 class PovRayConfig(Module):
@@ -112,7 +112,7 @@ class PovRayScript(ThreadSafeMixin, RPyCModule):
         
         povray_script = urllib.unquote(str(self.forceGetInputFromPort('source', '')))
         
-        #Get a temp file to write the script into
+        #Get a temp file to write the script into        
         povFileName = self.interpreter.filePool.create_file(suffix='.pov')
         #Write the script to the file
         povFile = open(povFileName.name, 'a+')
