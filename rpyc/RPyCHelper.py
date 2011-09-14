@@ -44,16 +44,16 @@ def getRemoteConnection(ip, port):
                         {'allow_all_attrs': True,
                          'instantiate_custom_exceptions': True,
                          'import_custom_exceptions': True})
-
+    
     print "Got a Remote Node"
     #Make sure all the right stuff is in place espcially dummy core and packages
     #on the remote node, no need for this if local as the machine is already set up
     print "Checking requirements on node..."
-
+    
     #make sure all packages are in the path
     if not "./tmp" in connection.modules.sys.path:
         connection.modules.sys.path.append('./tmp')
-
+    
     #Check version info
     force = False
     try:
@@ -69,7 +69,7 @@ def getRemoteConnection(ip, port):
         connection.modules.sys.path_importer_cache['./tmp'] = None
 
     print "Uploading requirements to node...."
-    import packages.eo4vistrails.rpyc.tmp    
+    import packages.eo4vistrails.rpyc.tmp
     rpyc.classic.upload_package(connection, packages.eo4vistrails.rpyc.tmp, "./tmp")
     #import init_for_library
     #rpyc.classic.upload_module(connection, init_for_library, "./tmp")
@@ -95,7 +95,7 @@ def getSubConnection():
                                          {'allow_all_attrs': True,
                                           'instantiate_custom_exceptions': True,
                                           'import_custom_exceptions': True})
-
+    
     #connection = rpyc.classic.connect_subproc()
     #make sure all packages are in the path
     print "Got a subProc"
@@ -104,7 +104,7 @@ def getSubConnection():
     #connection.modules.sys.path.extend(sys.path)
     connection.modules.sys.path.append(core.system.vistrails_root_directory())
     #connection.modules.sys.path.append(core.system.packages_directory())
-
+    
     return connection
 
 
@@ -120,11 +120,11 @@ class RPyCCode(ThreadSafeMixin, RPyCModule):
     might want to initialize per-object data. When implementing your
     own constructor, remember that it must not take any extra parameters.
     '''
-
+    
     def __init__(self):
         ThreadSafeMixin.__init__(self)
         RPyCModule.__init__(self)
-
+        
     def clear(self):
         print "clear"
         RPyCModule.clear(self)
