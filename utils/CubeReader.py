@@ -35,10 +35,10 @@ class CubeReaderHandle(ThreadSafeMixin, Module):
 
         if os.path.isfile(cubefile_path):
             self.cube = h5py.File(cubefile_path, 'r')
-            self.img_width = cube.attrs['WIDTH']
-            self.img_height = cube.attrs['HEIGHT']
-            self.time = cube['/TIME'][0]
-            self.data = cube[band]
+            self.img_width = self.cube.attrs['WIDTH']
+            self.img_height = self.cube.attrs['HEIGHT']
+            self.time = self.cube['/TIME'][0]
+            self.data = self.cube[band]
 
             self.setResult('CubeReaderHandle', self)
 
