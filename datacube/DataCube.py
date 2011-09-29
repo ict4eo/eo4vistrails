@@ -56,3 +56,35 @@ class CubeReader(ThreadSafeMixin, Module):
         cube = self.getInputFromPort('cubereader')
         offset = self.getInputFromPort('offset')
         self.setResult('timeseries', cube.data[offset])
+
+@RPyCSafeModule()
+class PostGISCubeReader(ThreadSafeMixin, Module):
+
+    _input_ports = [('cubereader', '(za.co.csir.eo4vistrails:CubeReaderHandle:datacube)'),
+                    ('offset', '(edu.utah.sci.vistrails.basic:Integer)')]
+    _output_ports = [('timeseries', '(edu.utah.sci.vistrails.basic:List)')]
+
+    def __init__(self):
+        ThreadSafeMixin.__init__(self)
+        Module.__init__(self)
+
+    def compute(self):
+        cube = self.getInputFromPort('cubereader')
+        offset = self.getInputFromPort('offset')
+        offset -= offset / 4801
+        self.setResult('timeseries', cube.data[offset])
+
+@RPyCSafeModule()
+class CubeDateConverter(ThreadSafeMixin, Module):
+
+    _input_ports = [('dates', '(edu.utah.sci.vistrails.basic:List)')]
+    _output_ports = [('dates_JDN', '(edu.utah.sci.vistrails.basic:List)')]
+
+    def __init__(self):
+        ThreadSafeMixin.__init__(self)
+        Module.__init__(self)
+
+    def compute(self):
+        dates = self.getInputFromPort('dates')
+        # TODO: Convert dates to JDN
+        self.setResult('dates_JDN', dates)
