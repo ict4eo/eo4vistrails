@@ -47,6 +47,11 @@ try:
 except:
     import transform.init as transform_init
 
+# brings in datacube
+try:
+    from datacube import init as datacube_init
+except:
+    import datacube.init as datacube_init
 
 def initialize(*args, **keywords):
     '''sets everything up'''
@@ -67,3 +72,4 @@ def initialize(*args, **keywords):
     visual_init.initialize(*args, **keywords)
     dataanalytics_init.initialize(*args, **keywords)
     transform_init.initialize(*args, **keywords)
+    datacube_init.initialize(*args, **keywords)

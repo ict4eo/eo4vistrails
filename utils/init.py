@@ -11,7 +11,6 @@ def initialize(*args, **keywords):
     from CsvUtils import CsvWriter, CsvReader, ListDirContent
     from Random import Random
     from Command import Command
-    from CubeReader import CubeReaderHandle, CubeReader
 
     reg = get_module_registry()
     utils_namespace = "utils"
@@ -121,10 +120,4 @@ def initialize(*args, **keywords):
                    namespace=utils_namespace)
 
     reg.add_module(Command,
-                   namespace=utils_namespace)
-
-    reg.add_module(CubeReaderHandle,
-                   namespace=utils_namespace)
-
-    reg.add_module(CubeReader,
                    namespace=utils_namespace)

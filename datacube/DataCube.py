@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 import h5py
 import os.path
 
@@ -22,7 +21,7 @@ class CubeReaderHandle(ThreadSafeMixin, Module):
 
     _input_ports = [('cubefile', '(edu.utah.sci.vistrails.basic:File)'),
                     ('band', '(edu.utah.sci.vistrails.basic:String)')]
-    _output_ports = [('CubeReaderHandle', '(za.co.csir.eo4vistrails:CubeReaderHandle:utils)')]
+    _output_ports = [('CubeReaderHandle', '(za.co.csir.eo4vistrails:CubeReaderHandle:datacube)')]
 
     def __init__(self):
         ThreadSafeMixin.__init__(self)
@@ -45,7 +44,7 @@ class CubeReaderHandle(ThreadSafeMixin, Module):
 @RPyCSafeModule()
 class CubeReader(ThreadSafeMixin, Module):
 
-    _input_ports = [('cubereader', '(za.co.csir.eo4vistrails:CubeReaderHandle:utils)'),
+    _input_ports = [('cubereader', '(za.co.csir.eo4vistrails:CubeReaderHandle:datacube)'),
                     ('offset', '(edu.utah.sci.vistrails.basic:Integer)')]
     _output_ports = [('timeseries', '(edu.utah.sci.vistrails.basic:List)')]
 
