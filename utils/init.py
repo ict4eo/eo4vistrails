@@ -11,6 +11,7 @@ def initialize(*args, **keywords):
     from CsvUtils import CsvWriter, CsvReader, ListDirContent
     from Random import Random
     from Command import Command
+    from DataTransformations import InputStream,  pgSQLMergeInsert
 
     reg = get_module_registry()
     utils_namespace = "utils"
@@ -120,4 +121,10 @@ def initialize(*args, **keywords):
                    namespace=utils_namespace)
 
     reg.add_module(Command,
+                   namespace=utils_namespace)
+
+    reg.add_module(InputStream,
+                   namespace=utils_namespace)
+                   
+    reg.add_module(pgSQLMergeInsert,
                    namespace=utils_namespace)
