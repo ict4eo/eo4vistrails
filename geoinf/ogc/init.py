@@ -45,7 +45,8 @@ def initialize(*args, **keywords):
     reg.add_input_port(
         WPS,
         OGC_REQUEST_PORT,
-        (core.modules.basic_modules.String, 'Configured Request'), optional=True)
+        (core.modules.basic_modules.String, 'Configured GET Request'),
+         optional=True)
     reg.add_input_port(
         WPS,
         OGC_POST_DATA_PORT,
@@ -68,6 +69,7 @@ def initialize(*args, **keywords):
         WFS,
         OGC_URL_PORT,
         (core.modules.basic_modules.String, 'Request URL'))#, True)
+
     reg.add_output_port(
         WFS,
         VECTOR_PORT,
@@ -98,6 +100,7 @@ def initialize(*args, **keywords):
         WCS,
         OGC_URL_PORT,
         (core.modules.basic_modules.String, 'Request URL'))#, True)
+
     reg.add_output_port(
         WCS,
         RASTER_PORT,
@@ -120,6 +123,7 @@ def initialize(*args, **keywords):
         SOS,
         OGC_URL_PORT,
         (core.modules.basic_modules.String, 'Request URL'))#, True)
+
     reg.add_output_port(
         SOS,
         URL_PORT,

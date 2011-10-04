@@ -18,6 +18,7 @@ from urllib import urlencode
 from urllib2 import urlopen
 from urllib2 import HTTPPasswordMgrWithDefaultRealm
 from urllib2 import HTTPBasicAuthHandler
+from urllib2 import ProxyHandler
 from urllib2 import build_opener
 from urllib2 import install_opener
 
@@ -26,6 +27,10 @@ from etree import etree
 import owslib.ows as ows
 from owslib import util
 import filter
+
+GML_NAMESPACE = 'http://www.opengis.net/gml'
+SOS_NAMESPACE = 'http://www.opengis.net/sos/1.0'
+XLINK_NAMESPACE = 'http://www.w3.org/1999/xlink'
 
 
 class ServiceException(Exception):
@@ -50,11 +55,13 @@ class SensorObservationService(object):
             raise KeyError("No content named %s" % name)
 
     def __init__(self, url, version='1.0.0', xml=None,
-                username=None, password=None):
+                username=None, password=None, timeout=None, ignore_proxy=False):
         """Initialize."""
         self.url = url
         self.username = username
         self.password = password
+        self.timeout = timeout
+        self.ignore_proxy = ignore_proxy
         self.version = version
         self._capabilities = None
         self._open = urlopen
@@ -69,17 +76,18 @@ class SensorObservationService(object):
             opener = build_opener(auth_handler)
             self._open = opener.open
             reader = SOSCapabilitiesReader(
-                self.version, url=self.url, un=self.username, pw=self.password)
+                self.version, url=self.url, un=self.username, pw=self.password,
+                to=self.timeout, px=self.ignore_proxy)
             self._capabilities = reader.readString(self.url)
         else:
-            reader = SOSCapabilitiesReader(self.version)
+            reader = SOSCapabilitiesReader(self.version, to=self.timeout,
+                                           px=self.ignore_proxy)
             if xml:
                 #read from stored xml
                 self._capabilities = reader.readString(xml)
             else:
                 #read from non-password protected server
-                self._capabilities = reader.read(self.url)
-
+                self._capabilities = reader.read(self.url, timeout=self.timeout)
 
         #build metadata objects
         self._buildMetadata()
@@ -136,7 +144,18 @@ class SensorObservationService(object):
             for elem in elem_set:
                 if elem:
                     #print  "owslib.sos.py:143", type(elem), "\n", elem
-                    self.contents.append(ContentsMetadata(elem))
+                    meta = ContentsMetadata(elem)
+                    # attempt to find defaults at ObservationOfferingList level
+                    if not meta.response_format:
+                        meta.response_format = self.get_sos_element_values(
+                            elem_set, 'responseFormat')
+                    if not meta.result_model:
+                        meta.result_model = self.get_sos_element_values(
+                            elem_set, 'resultModel')
+                    if not meta.response_mode:
+                        meta.response_mode = self.get_sos_element_values(
+                            elem_set, 'responseMode')
+                    self.contents.append(meta)
         """
         print "**elem_set**", elem_set
         print "\n**contents**\n", self.contents
@@ -149,6 +168,14 @@ class SensorObservationService(object):
 
         #exceptions
         self.exceptions = ['text/xml']
+
+    def get_sos_element_values(self, elem, ele_name):
+        result = []
+        vals = elem.findall(util.nspath(ele_name, SOS_NAMESPACE))
+        if vals is not None:
+            for v in vals:
+                result.append(util.testXMLValue(v))
+        return result
 
     def items(self):
         '''supports dict-like items() access'''
@@ -163,8 +190,9 @@ class SensorObservationService(object):
         NOTE: this is effectively redundant now"""
 
         reader = SOSCapabilitiesReader(
-            self.version, url=self.url, un=self.username, pw=self.password)
-        u = self._open(reader.capabilities_url(self.url))
+            self.version, url=self.url, un=self.username, pw=self.password,
+            to=self.timeout)
+        u = self._open(reader.capabilities_url(self.url), timeout=self.timeout)
        # check for service exceptions, and return
         if u.info().gettype() == 'application/vnd.ogc.se_xml':
             se_xml = u.read()
@@ -287,20 +315,16 @@ class ContentsMetadata:
     """Initialize an SOS Contents metadata construct"""
 
     def __init__(self, elem, namespace=ows.DEFAULT_OWS_NAMESPACE):
-
-        GML_NAMESPACE = 'http://www.opengis.net/gml'
-        SOS_NAMESPACE = 'http://www.opengis.net/sos/1.0'
-        XLINK_NAMESPACE = 'http://www.w3.org/1999/xlink'
-
+        self.elem = elem
         # id & name $& description
-        self.id = elem.attrib[util.nspath('id', GML_NAMESPACE)]  #'{http://www.opengis.net/gml}id']
-        val = elem.find(util.nspath('name', GML_NAMESPACE)) #gml:
+        self.id = elem.attrib[util.nspath('id', GML_NAMESPACE)]  # '{http://www.opengis.net/gml}id']
+        val = elem.find(util.nspath('name', GML_NAMESPACE))  # gml
         self.name = util.testXMLValue(val)
-        val = elem.find(util.nspath('description', GML_NAMESPACE)) #gml:
+        val = elem.find(util.nspath('description', GML_NAMESPACE))  # gml
         self.description = util.testXMLValue(val)
         # time
         self.time = None
-        time_ = elem.find(util.nspath('time', SOS_NAMESPACE)) #sos:
+        time_ = elem.find(util.nspath('time', SOS_NAMESPACE))  # sos
         if time_:
             time_period = time_.find(util.nspath('TimePeriod', GML_NAMESPACE))
             if time_period:
@@ -315,7 +339,7 @@ class ContentsMetadata:
         if bound:
             env = bound.find(util.nspath('Envelope', GML_NAMESPACE))
             if env is not None:
-                try: #sometimes the SRS attribute is (wrongly) not provided
+                try:  # sometimes the SRS attribute is (wrongly) not provided
                     srs = env.attrib['srsName']
                 except KeyError:
                     srs = None
@@ -325,26 +349,15 @@ class ContentsMetadata:
                 upper = util.testXMLValue(val)
                 if upper is not None and lower is not None:
                     self.bounding_box = (
-                        float(lower.split(' ')[0]), #minx
-                        float(lower.split(' ')[1]), #miny
-                        float(upper.split(' ')[0]), #maxx
-                        float(upper.split(' ')[1]), #maxy
+                        float(lower.split(' ')[0]),  # minx
+                        float(lower.split(' ')[1]),  # miny
+                        float(upper.split(' ')[0]),  # maxx
+                        float(upper.split(' ')[1]),  # maxy
                         srs,)
-        #response et al
-        self.response_format = []
-        vals = elem.findall(util.nspath('responseFormat', SOS_NAMESPACE))
-        for v in vals:
-            self.response_format.append(util.testXMLValue(v))
-
-        self.result_model = []
-        vals = elem.findall(util.nspath('resultModel', SOS_NAMESPACE))
-        for v in vals:
-            self.result_model.append(util.testXMLValue(v))
-
-        self.response_mode = []
-        vals = elem.findall(util.nspath('responseMode', SOS_NAMESPACE))
-        for v in vals:
-            self.response_mode.append(util.testXMLValue(v))
+        # other metadata...
+        self.response_format = self.get_sos_element_values('responseFormat')
+        self.result_model = self.get_sos_element_values('resultModel')
+        self.response_mode = self.get_sos_element_values('responseMode')
 
         self.procedure = []
         procs = elem.findall(util.nspath('procedure', SOS_NAMESPACE))
@@ -364,7 +377,7 @@ class ContentsMetadata:
             for foi in fois:
                 self.feature_of_interest.append(foi.attrib[util.nspath('href', XLINK_NAMESPACE)])
 
-    #default namespace for elem_find is OWS common
+    # default namespace for elem_find is OWS common
     OWS_NAMESPACE = 'http://www.opengis.net/ows/1.1'
 
     def elem_find(elem, nss=(OWS_NAMESPACE, '')):
@@ -389,6 +402,14 @@ class ContentsMetadata:
                 return val
         return none
 
+    def get_sos_element_values(self, ele_name):
+        result = []
+        vals = self.elem.findall(util.nspath(ele_name, SOS_NAMESPACE))
+        if vals is not None:
+            for v in vals:
+                result.append(util.testXMLValue(v))
+        return result
+
 
 class ContentMetadata:
     """
@@ -407,12 +428,12 @@ class ContentMetadata:
                 setattr(self, key.lower(), val.text.strip())
             else:
                 setattr(self, key.lower(), None)
-                self.id = self.name #conform to new interface
+                self.id = self.name  # conform to new interface
         # bboxes
         b = elem.find('BoundingBox')
         self.boundingBox = None
         if b is not None:
-            try: #sometimes the SRS attribute is (wrongly) not provided
+            try:  # sometimes the SRS attribute is (wrongly) not provided
                 srs = b.attrib['SRS']
             except KeyError:
                 srs = None
@@ -450,9 +471,11 @@ class ContentMetadata:
         elif self.parent:
             self.crsOptions = self.parent.crsOptions
         else:
-            #raise ValueError('%s no SRS available!?' % (elem,))
-            #Comment by D Lowe.
-            #Do not raise ValueError as it is possible that a layer is purely a parent layer and does not have SRS specified. Instead set crsOptions to None
+            # raise ValueError('%s no SRS available!?' % (elem,))
+            # Comment by D Lowe.
+            #   Do not raise ValueError as it is possible that a layer is
+            #   purely a parent layer and does not have SRS specified.
+            #   Instead set crsOptions to None
             self.crsOptions = None
         # styles
         self.styles = {}
@@ -490,14 +513,23 @@ class SOSCapabilitiesReader:
     """Read and parse capabilities document into a lxml.etree infoset
     """
 
-    def __init__(self, version='1.0.0', url=None, un=None, pw=None):
+    def __init__(self, version='1.0.0', url=None, un=None, pw=None, to=None,
+                 px=False):
         """Initialize"""
         self.version = version
         self._infoset = None
         self.url = url
         self.username = un
         self.password = pw
+        self.timeout = to
+        self.ignore_proxy = px
+
         self._open = urlopen
+        if self.ignore_proxy:
+            proxy_handler = ProxyHandler({})
+            opener = build_opener()
+            opener.add_handler(proxy_handler)
+            self._open = opener.open
 
         if self.username and self.password:
             # Provide login information in order to use the SOS server
@@ -528,7 +560,7 @@ class SOSCapabilitiesReader:
         urlqs = urlencode(tuple(qs))
         return service_url.split('?')[0] + '?' + urlqs
 
-    def read(self, service_url):
+    def read(self, service_url, timeout):
         """Get and parse a SOS capabilities document, returning an
         elementtree instance
 
@@ -536,7 +568,7 @@ class SOSCapabilitiesReader:
         version, and request parameters
         """
         request = self.capabilities_url(service_url)
-        u = self._open(request)
+        u = self._open(request, timeout=self.timeout)
         return etree.fromstring(u.read())
 
     def readString(self, st):

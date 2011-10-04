@@ -33,7 +33,8 @@ from PyQt4 import QtCore, QtGui
 from qgis.core import *
 from qgis.gui import *
 # vistrails
-from core.modules.vistrails_module import ModuleError
+from core.modules.vistrails_module import Module, ModuleError
+from core.modules.module_configure import StandardModuleConfigurationWidget
 # eo4vistrails
 from packages.eo4vistrails.geoinf.datamodels.Feature import FeatureModel
 # local
@@ -57,12 +58,14 @@ class SOS(OGC, FeatureModel):
 class SosCommonWidget(QtGui.QWidget):
     """SOS-specific parameters can be obtained, displayed and selected."""
 
-    def __init__(self, ogc_widget, parent=None):
+    def __init__(self, module, ogc_widget, parent=None):
         QtGui.QWidget.__init__(self, parent)
         self.setObjectName("SosCommonWidget")
+        self.module = module
         self.parent_widget = ogc_widget
-        self.contents = None #  only set in self.loadOfferings()
+        self.contents = None  # only set in self.loadOfferings()
         self.create_config_window()
+
         # listen for signals emitted by OgcCommonWidget class
         self.connect(
             self.parent_widget,
@@ -308,14 +311,32 @@ class SosCommonWidget(QtGui.QWidget):
                 self.lbxOfferings.addItem(item)
 
 
-class SOSConfigurationWidget(OgcConfigurationWidget):
+class SOSConfigurationWidget(OgcConfigurationWidget, StandardModuleConfigurationWidget):  #StandardModuleConfigurationWidget
     """makes use of code style from OgcConfigurationWidget"""
 
     def __init__(self, module, controller, parent=None):
+        StandardModuleConfigurationWidget.__init__(self, module,
+                                                   controller, parent)
+        # INHERIT PARENT MODULE???
         OgcConfigurationWidget.__init__(self, module, controller, parent)
-        #self.parent_module = module
         # pass in parent widget i.e. OgcCommonWidget class
-        self.config = SosCommonWidget(self.ogc_common_widget)
+        self.config = SosCommonWidget(self.module, self.ogc_common_widget)
+
+        """
+        print "SOS:324", type(self.module), self.module_descriptor, "\n", self.module
+        print "SOS:325", type(self.controller), self.controller
+        fn = self.module.functions
+        for f in fn:
+            print "SOS:327", type(f), f
+            in_ports = f.get_spec('input')  # port_type
+            print "SOS:330", type(in_ports), in_ports
+
+        # TO DO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # set parameter values based on port value
+        #self.config.line_edit_OGC_url = self.module.getInputFromPort(OGC_URL_PORT)
+        #self.config.OGC_request = module.getInputFromPort(OGC_POST_DATA_PORT)
+        """
+
         # move parent tab to first place
         self.tabs.insertTab(1, self.config, "")
         # set SOS-specific tabs

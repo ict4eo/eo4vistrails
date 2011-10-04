@@ -216,7 +216,8 @@ class OgcCommonWidget(QtGui.QWidget):
                 self.emit(QtCore.SIGNAL('serviceDeactivated'))
                 self.showWarning(
                     'Unable to activate service:\n \
-Please check configuration & network.\n'\
+Please check configuration & network\n \
+(including proxy settings).\n'\
                     + self.service.service_valid_error)
         else:
             # TODO - should not get here; maybe disable Fetch button until text entered?

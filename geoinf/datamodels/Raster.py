@@ -63,7 +63,8 @@ class _GdalMemModel():
         }
         """
         if os.path.exists(sourceDS):
-            self.datasource = self.driver.CreateCopy("working_ds", gdal.Open(sourceDS))
+            self.datasource = self.driver.CreateCopy("working_ds",
+                                                     gdal.Open(sourceDS))
         else:
             raise ValueError("Path to GDAL dataset does not exist")
 
@@ -97,7 +98,8 @@ class _GdalMemModel():
 
         """
         #first, get a temporary file location that is writeable
-        temp_filepath = core.system.default_dot_vistrails() + "/eo4vistrails/gdal/"
+        temp_filepath = core.system.default_dot_vistrails() + \
+                        "/eo4vistrails/gdal/"
         if not os.path.exists(temp_filepath):
             os.mkdir(temp_filepath)
             sourceDS = temp_filepath + hashlib.sha1(
@@ -109,11 +111,19 @@ class _GdalMemModel():
             gskvp = gs_listitem.split("=")
             if gskvp[0].lower() == "coverage":
                 coverage = gskvp[1]
-            #ideally would handle cases beyond setting up a basic config - this is essentially a GetCapabilities checker - but it needs to handle the GetCoverage properly, since that is what it will receive...
-        str = "<WCS_GDAL><ServiceURL>%s</ServiceURL><CoverageName>%s</CoverageName></WCS_GDAL>" % (uri, coverage)
+            """NB
+            Ideally would handle cases beyond setting up a basic config -
+            this is essentially a GetCapabilities checker - but it needs to
+            handle the GetCoverage properly, since that is what it will receive
+            """
+        str = """<WCS_GDAL>
+                    <ServiceURL>%s</ServiceURL>
+                    <CoverageName>%s</CoverageName>
+                </WCS_GDAL>""" % (uri, coverage)
         rw.close()
         if os.path.exists(sourceDS):
-            self.datasource = self.driver.CreateCopy("working_ds", gdal.Open(sourceDS))
+            self.datasource = self.driver.CreateCopy("working_ds",
+                                                     gdal.Open(sourceDS))
         else:
             raise ValueError("Path to GDAL dataset does not exist")
 
@@ -126,7 +136,8 @@ class _GdalMemModel():
                 return ".gml"
 
         def _viaCache():
-            temp_filepath = core.system.default_dot_vistrails() + "/eo4vistrails/gdal/"
+            temp_filepath = core.system.default_dot_vistrails() + \
+                            "/eo4vistrails/gdal/"
             if not os.path.exists(temp_filepath):
                 os.mkdir(temp_filepath)
             temp_filename = temp_filepath + hashlib.sha1(urllib.quote_plus(uri + getStatement)).hexdigest() + outputtype
@@ -188,10 +199,12 @@ def initialize(*args, **keywords):
     reg = core.modules.module_registry.get_module_registry()
     reg.add_module(RasterModel)
     #input ports
-
-    #reg.add_input_port(FeatureModel, "service_version", (core.modules.basic_modules.String, 'Web Map Service version - default 1.1.1'))
+    #"""
+    reg.add_input_port(FeatureModel,
+                       "service_version",
+                       (core.modules.basic_modules.String,
+                        'Web Map Service version - default 1.1.1'))
     #output ports
-    reg.add_output_port(
-        RasterModel,
-        "GDALDataset",
-        (gdal.Dataset, 'Raster data as GDAL'))
+    reg.add_output_port(RasterModel,
+                        "GDALDataset",
+                        (gdal.Dataset, 'Raster data as GDAL'))

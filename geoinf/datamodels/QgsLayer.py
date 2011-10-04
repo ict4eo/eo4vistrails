@@ -138,6 +138,9 @@ class QgsRasterLayer(QgsMapLayer, qgis.core.QgsRasterLayer):
             thefile = self.forceGetInputFromPort('file', None)
             dataReq = self.forceGetInputFromPort('dataRequest', None)
 
+            print "thefile", thefile
+            print "thefile", thefile.name
+
             isFILE = (thefile != None) and (thefile.name != '')
             isQGISSuported = isinstance(dataReq, DataRequest) and \
                             dataReq.get_driver() in self.SUPPORTED_DRIVERS

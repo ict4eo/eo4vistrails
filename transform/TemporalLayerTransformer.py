@@ -44,19 +44,13 @@ from packages.eo4vistrails.utils.Parser import Parser
 from Transformer import Transform
 
 GML_NO_DATA = "noData"  # string used by GML to indicate missing data
+CSV_NO_DATA = "9999"  # string used by CSV to indicate missing data
 
 class SpatialTemporalTransformModule(Transform):
     """Transform GML data associated with a Spatial Temporal Layer.
 
     Parse the GML (XML format) file created by a OGC web service (for example,
     a SOS) and create a CSV representation of the time-series data.
-
-    Requires:
-     *  the filename containing the GML data
-
-    Returns:
-    A list of full filenames, containing CSV data.  Each 'member' node in
-    the GML file will cause a new CSV file to be created.
 
     The data columns in each CSV file are:
      *  Observation ID
@@ -65,7 +59,15 @@ class SpatialTemporalTransformModule(Transform):
      *  Geometry
      *  One or more columns with the phenomena/property data; typically with
         a field name, followed by a time value.  Units (where available in
-        the neta data) are shown in brackets after the field name.
+        the meta data) are shown in brackets after the field name.
+
+    Requires:
+     *  the filename containing the GML data
+
+    Returns:
+     *  A list of fully-qualified filenames, containing CSV data.
+        Each 'member' node in the GML file will cause a new CSV file to have
+        been created.
     """
 
     _input_ports = [('QgsMapLayer', '(za.co.csir.eo4vistrails:QgsMapLayer:data)'), ]
@@ -84,7 +86,7 @@ class SpatialTemporalTransformModule(Transform):
         # get GML file associated with layer
         gml_file = layer.results_file
         # call get_csv to process GML
-        filename_list = self.get_csv(gml_file, missing_value='9999') # 9999 TEST ONLY
+        filename_list = self.get_csv(gml_file, missing_value=CSV_NO_DATA)
         # attach result (list of filenames) to the output port
         self.setResult("CSV_list", filename_list)
 

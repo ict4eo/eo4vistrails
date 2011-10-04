@@ -244,13 +244,20 @@ class TemporalWidget(QtGui.QWidget):
             QtCore.SLOT('display(int)')
         )
 
+    """TIME
+    QDateTime::toString ( const QString & format )
+    yyyy-MM-ddThh:mm:ss
+    or to UTC
+    oldTime = QDateTime::fromString("2010-03-01T07:29:20","yyyy-MM-ddThh:mm:ss").toUTC();
+    """
+
     def getTimeBegin(self):
         """ TO DO: calculate UTC time string from GUI widgets."""
         # dummy - example format
         return '2005-09-01T11:54:00'
 
     def getTimeEnd(self):
-        """ TO DO: calculate UTC time string from GUIS widgets."""
+        """ TO DO: calculate UTC time string from GUI widgets."""
         # dummy - example format
         return '2005-09-02T11:54:00'
 
@@ -259,8 +266,9 @@ class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
     """makes use of code style from TupleConfigurationWidget"""
     def __init__(self, module, controller, parent=None):
         StandardModuleConfigurationWidget.__init__(self, module, controller, parent)
+        #FOO = module.getInputFromPort(OGC_URL_PORT)  # TEST REMOVE !!!!!!!!!!!!
         # initialise the setup necessary for all geoinf widgets that follow
-        self.setWindowTitle('Configuration Parameters')
+        self.setWindowTitle('Geo Configuration Parameters')
         self.setToolTip("Setup service, spatial and temporal parameters for working with a geoinf module")
         self.createTabs()
         self.createButtons()

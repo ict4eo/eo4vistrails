@@ -57,6 +57,8 @@ class OgcService():
     #########
 
     def __init__(self, service_url, service_type, service_version):
+        DEFAULT_TIMEOUT = 30  # seconds
+        self.timeout = DEFAULT_TIMEOUT
         self.INVALID_OGC_TYPE_MESSAGE = \
             "Please provide an OGC Service Type: 'wfs', 'sos', or 'wcs'"
         #print "OgcService():__init__:\nservice_url, service_type, service_version\n", \
@@ -66,7 +68,7 @@ class OgcService():
             # check for service and request key-value pairs;
             # if not there, add (some services don't have a capabilities reflector),
             STRICT_OGC_CAPABILITIES = \
-                "Service=%s&Request=GetCapabilities" %  service_type
+                "Service=%s&Request=GetCapabilities" % service_type
             service_url_check = service_url.split("?")
             if len(service_url_check) == 1:
                 service_url = service_url + "?" + STRICT_OGC_CAPABILITIES
@@ -109,8 +111,11 @@ class OgcService():
             if service_type != "":
                 try:
                     if service_type.lower() == "sos":
+                        # NB as of 2011-09-27, only owslib sos module
+                        # has been upgraded to handle timeouts
                         self.service = sos.SensorObservationService(
-                            service_url, service_version)
+                            service_url, service_version,
+                            timeout=self.timeout)
                         self.service_valid = True
                     elif service_type.lower() == "wfs":
                         self.service = wfs.WebFeatureService(
@@ -122,20 +127,20 @@ class OgcService():
                         self.service_valid = True
                     else:
                         self.service_valid = False
-                        raise ValueError, self.INVALID_OGC_TYPE_MESSAGE
+                        raise ValueError(self.INVALID_OGC_TYPE_MESSAGE)
                 except Exception, e:
-                    traceback.print_exc() # e.g. HTTP Error 404: Not Found
+                    traceback.print_exc()  # e.g. HTTP Error 404: Not Found
                     self.service_valid = False
                     self.service_valid_error = str(e)
             else:
-                raise ValueError, self.INVALID_OGC_TYPE_MESSAGE
+                raise ValueError(self.INVALID_OGC_TYPE_MESSAGE)
         self.service_url = service_url
         self.ini_service_type = service_type.lower()
         self.ini_service_version = service_version
         if self.service_valid:
             # store metadata
             # this looks bizzare, but it is true...
-            if service_type.lower() == "wfs" and service_version =="1.0.0":
+            if service_type.lower() == "wfs" and service_version == "1.0.0":
                 self.setServiceIdentification(
                     self.service.__dict__['provider'].__dict__)
                 self.setProviderIdentification(
@@ -146,26 +151,26 @@ class OgcService():
                 self.setProviderIdentification(
                     self.service.__dict__['provider'].__dict__)
             else:
-                raise ValueError, self.INVALID_OGC_TYPE_MESSAGE
+                raise ValueError(self.INVALID_OGC_TYPE_MESSAGE)
 
     def setServiceIdentification(self, service_dict):
         """service identification metadata is structured differently
         for the different services - parse appropriately"""
 
         if self.ini_service_type == "sos":
-            if service_dict.has_key('service'):
-                self.service_type = service_dict['service'] # we know this, but rebuild anyway
-            if service_dict.has_key('version'):
-                self.service_version = service_dict['version']# we know this, but rebuild anyway
-            if service_dict.has_key('title'):
+            if 'service' in service_dict:
+                self.service_type = service_dict['service']  # we know this, but rebuild anyway
+            if 'version' in service_dict:
+                self.service_version = service_dict['version']  # we know this, but rebuild anyway
+            if 'title' in service_dict:
                 self.service_title = service_dict['title']
-            if service_dict.has_key('abstract'):
+            if 'abstract' in service_dict:
                 self.service_abstract = service_dict['abstract']
-            if service_dict.has_key('keywords'):
+            if 'keywords' in service_dict:
                 self.service_keywords = service_dict['keywords']
-            if service_dict.has_key('fees'):
+            if 'fees' in service_dict:
                 self.service_fees = service_dict['fees']
-            if service_dict.has_key('accessconstraints'):
+            if 'accessconstraints' in service_dict:
                 self.service_accessconstraints = service_dict['accessconstraints']
 
         elif self.ini_service_type == "wfs":
@@ -173,11 +178,11 @@ class OgcService():
                 # got to dive into the elements of _root key of service_dict
                 # (in this case the provider_dict)to get anything useful.
                 for elem in service_dict['_root'].__dict__['_children']:
-                    if elem.__dict__.has_key('tag') and elem.__dict__.has_key('text'):
+                    if 'tag' in elem.__dict__ and 'text' in elem.__dict__:
                         # we have a kvp, so process
                         tg = elem.__dict__['tag']
                         tx = elem.__dict__['text']
-                        try:# check for {http://www.opengis.net/wfs} prefix
+                        try:  # check for {http://www.opengis.net/wfs} prefix
                             tg = tg.split('}')[1].lower()
                         except:
                             pass
@@ -193,51 +198,52 @@ class OgcService():
                             self.service_fees = tx
                         if tg == "accessconstraints":
                             self.service_accessconstraints = tx
-                self.service_version =  '1.0.0' # will not find this dynamically
+                self.service_version = '1.0.0'  # will not find this dynamically
             elif self.ini_service_version == '1.1.0':
                 pass
             else:
-                raise NotImplementedError,  "OGC Service version %s not supported." % self.ini_service_version
+                raise NotImplementedError(
+                    "OGC Service version %s not supported." % \
+                    self.ini_service_version)
 
         elif self.ini_service_type == "wcs":
-
-            if service_dict.has_key('service'):
+            if 'service' in service_dict:
                 self.service_type = service_dict['service']
-            if service_dict.has_key('version'):
+            if 'version' in service_dict:
                 self.service_version = service_dict['version']
-            if service_dict.has_key('title'):
+            if 'title' in service_dict:
                 self.service_title = service_dict['title']
-            if service_dict.has_key('abstract'):
+            if 'abstract' in service_dict:
                 self.service_abstract = service_dict['abstract']
-            if service_dict.has_key('keywords'):
+            if 'keywords' in service_dict:
                 self.service_keywords = service_dict['keywords']
-            if service_dict.has_key('fees'):
+            if 'fees' in service_dict:
                 self.service_fees = service_dict['fees']
-            if service_dict.has_key('accessconstraints'):
+            if 'accessconstraints' in service_dict:
                 self.service_accessconstraints = service_dict['accessconstraints']
 
         else:
-            raise ValueError, self.INVALID_OGC_TYPE_MESSAGE
+            raise ValueError(self.INVALID_OGC_TYPE_MESSAGE)
 
     def setProviderIdentification(self, provider_dict):
         """provider metadata is structured differently
         for the different services - parse appropriately"""
         if self.ini_service_type == "sos":
-            if provider_dict.has_key('name'):
+            if 'name' in provider_dict:
                 self.provider_name = provider_dict['name']
-            if provider_dict.has_key('url'):
+            if 'url' in provider_dict:
                 self.provider_url = provider_dict['url']
-            if provider_dict.has_key('contact'):
+            if 'contact' in provider_dict:
                 if provider_dict['contact'].__dict__.has_key('name'):
                     self.provider_contact_name = provider_dict['contact'].__dict__['name']
                 if provider_dict['contact'].__dict__.has_key('position'):
                     self.provider_contact_position = provider_dict['contact'].__dict__['position']
                 if provider_dict['contact'].__dict__.has_key('role'):
-                    self.provider_contact_role =  provider_dict['contact'].__dict__['role']
+                    self.provider_contact_role = provider_dict['contact'].__dict__['role']
                 if provider_dict['contact'].__dict__.has_key('organization'):
                     self.provider_contact_organization = provider_dict['contact'].__dict__['organization']
                 if provider_dict['contact'].__dict__.has_key('address'):
-                    self.provider_contact_address =  provider_dict['contact'].__dict__['address']
+                    self.provider_contact_address = provider_dict['contact'].__dict__['address']
                 if provider_dict['contact'].__dict__.has_key('city'):
                     self.provider_contact_city = provider_dict['contact'].__dict__['city']
                 if provider_dict['contact'].__dict__.has_key('region'):
@@ -265,21 +271,21 @@ class OgcService():
 
         elif self.ini_service_type == "wcs":
             """Provider data  for wcs service - see self.provider_key_set in _init_"""
-            if provider_dict.has_key('name'):
+            if 'name' in provider_dict:
                 self.provider_name = provider_dict['name']
-            if provider_dict.has_key('url'):
+            if 'url' in provider_dict:
                 self.provider_url = provider_dict['url']
-            if provider_dict.has_key('contact'):
+            if 'contact' in provider_dict:
                 if provider_dict['contact'].__dict__.has_key('name'):
                     self.provider_contact_name = provider_dict['contact'].__dict__['name']
                 if provider_dict['contact'].__dict__.has_key('position'):
                     self.provider_contact_position = provider_dict['contact'].__dict__['position']
                 if provider_dict['contact'].__dict__.has_key('role'):
-                    self.provider_contact_role =  provider_dict['contact'].__dict__['role']
+                    self.provider_contact_role = provider_dict['contact'].__dict__['role']
                 if provider_dict['contact'].__dict__.has_key('organization'):
                     self.provider_contact_organization = provider_dict['contact'].__dict__['organization']
                 if provider_dict['contact'].__dict__.has_key('address'):
-                    self.provider_contact_address =  provider_dict['contact'].__dict__['address']
+                    self.provider_contact_address = provider_dict['contact'].__dict__['address']
                 if provider_dict['contact'].__dict__.has_key('city'):
                     self.provider_contact_city = provider_dict['contact'].__dict__['city']
                 if provider_dict['contact'].__dict__.has_key('region'):
@@ -302,4 +308,4 @@ class OgcService():
                     self.provider_contact_instructions = provider_dict['contact'].__dict__['instructions']
 
         else:
-            raise ValueError, self.INVALID_OGC_TYPE_MESSAGE
+            raise ValueError(self.INVALID_OGC_TYPE_MESSAGE)
