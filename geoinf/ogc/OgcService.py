@@ -71,6 +71,7 @@ class OGC(NotCacheable):
 
     def compute(self):
         """Execute the module to create the output"""
+
         # get input
         try:
             self.post_data = self.getInputFromPort(init.OGC_POST_DATA_PORT)
@@ -84,7 +85,7 @@ class OGC(NotCacheable):
             self.url = self.getInputFromPort(init.OGC_URL_PORT)
         except:
             self.url = None
-        #print "OgcService:89\n url: %s\n get_req: %s\n post_data: %s" %\
+        #print "OgcService:88\n url: %s\n get_req: %s\n post_data: %s" %\
         #    (self.url, self.get_request, self.post_data)
 
         # assign initial values to webRequest
@@ -131,7 +132,7 @@ class OGC(NotCacheable):
             if init.RASTER_PORT in self.outputPorts:
                 qgsRasterLayer = QgsRasterLayer(
                     self.url, self.layername, self.webRequest.get_driver())
-                #print "OgcService:136 - qgsRasterLayer", qgsRasterLayer
+                #print "OgcService:135 - qgsRasterLayer", qgsRasterLayer
                 self.setResult(init.RASTER_PORT, qgsRasterLayer)
             # conditional execution: only setResult if downstream connection
             if init.VECTOR_PORT in self.outputPorts:
@@ -141,8 +142,7 @@ class OGC(NotCacheable):
                 self.setResult(init.VECTOR_PORT, qgsVectorLayer)
             # conditional execution: only setResult if downstream connection
             if init.TEMPORAL_VECTOR_PORT in self.outputPorts:
-                #print "QgcService:144", self.url,self.webRequest.get_driver()
                 temporalVectorLayer = TemporalVectorLayer(
                     self.url, self.layername, self.webRequest.get_driver())
-                #print "TemporalVectorLayer", TemporalVectorLayer
+                #print "OgcService:147 - TemporalVectorLayer", TemporalVectorLayer
                 self.setResult(init.TEMPORAL_VECTOR_PORT, temporalVectorLayer)

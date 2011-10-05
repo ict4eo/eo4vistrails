@@ -284,7 +284,7 @@ class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
         self.layername = result.get('layername', None)
         if not self.data:
             self.data = self.full_url
-        #print "OgcConfigurationWidget.py:284", self.request_type, self.layername,'\nURL:',self.full_url,'\nDATA:',self.data
+        #print "OgcConfigurationWidget.py:287", self.request_type, self.layername,'\nURL:',self.full_url,'\nDATA:',self.data
 
         # must not set ports if nothing has been specified, or
         # if there was a problem constructing the request

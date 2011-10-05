@@ -466,8 +466,9 @@ class SOSConfigurationWidget(OgcConfigurationWidget, StandardModuleConfiguration
                     '  </gml:TimePeriod>\n </ogc:TM_During>\n</eventTime>\n'
             if procedure:
                 if not mode:
-                    self.showWarning(WARNING_MUST + 'If a procedure is chosen'
-                                     % ('Response Mode', rType))
+                    self.showWarning(WARNING_MUST %
+                                    ('If a procedure is chosen, Response Mode',
+                                     rType))
                     return None, None
                 else:
                     data += '<procedure>' + procedure + '</procedure>\n'

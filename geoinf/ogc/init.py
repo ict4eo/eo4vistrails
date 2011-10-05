@@ -1,3 +1,4 @@
+# These constants are used throughout the ogc module... DO NOT REMOVE!
 OGC_LAYERNAME_PORT = "LayerName"
 OGC_POST_DATA_PORT = "PostData"
 OGC_GET_REQUEST_PORT = "GetRequest"
@@ -60,87 +61,87 @@ def initialize(*args, **keywords):
     reg.add_input_port(
         WFS,
         OGC_LAYERNAME_PORT,
-        (core.modules.basic_modules.String, 'Layer Name'))#,False)
+        (core.modules.basic_modules.String, 'Layer Name'))  # ,False)
     reg.add_input_port(
         WFS,
         OGC_GET_REQUEST_PORT,
-        (core.modules.basic_modules.String, 'Configured GET Request'))#, True)
+        (core.modules.basic_modules.String, 'Configured GET Request'))  # , True)
     reg.add_input_port(
         WFS,
         OGC_URL_PORT,
-        (core.modules.basic_modules.String, 'Request URL'))#, True)
+        (core.modules.basic_modules.String, 'Request URL'))  # , True)
 
     reg.add_output_port(
         WFS,
         VECTOR_PORT,
-        (QgsVectorLayer, 'QGIS Vector Layer'))#,True)
+        (QgsVectorLayer, 'QGIS Vector Layer'))  # ,True)
     reg.add_output_port(
         WFS,
         URL_PORT,
-        (core.modules.basic_modules.String, 'URL String'))#,True)
+        (core.modules.basic_modules.String, 'URL String'))  # ,True)
     reg.add_output_port(
         WFS,
         WEB_REQUEST_PORT,
-        WebRequest)#,True)
+        WebRequest)  # ,True)
     reg.add_output_port(
         WFS,
         DATA_PORT,
-        (core.modules.basic_modules.String, 'Data Result'))#,True)
+        (core.modules.basic_modules.String, 'Data Result'))  # ,True)
 
     # WCS MODULE
     reg.add_input_port(
         WCS,
         OGC_LAYERNAME_PORT,
-        (core.modules.basic_modules.String, 'Layer Name'))#,False)
+        (core.modules.basic_modules.String, 'Layer Name'))  # ,False)
     reg.add_input_port(
         WCS,
         OGC_GET_REQUEST_PORT,
-        (core.modules.basic_modules.String, 'Configured GET Request'))#, True)
+        (core.modules.basic_modules.String, 'Configured GET Request'))  # , True)
     reg.add_input_port(
         WCS,
         OGC_URL_PORT,
-        (core.modules.basic_modules.String, 'Request URL'))#, True)
+        (core.modules.basic_modules.String, 'Request URL'))  # , True)
 
     reg.add_output_port(
         WCS,
         RASTER_PORT,
-        (QgsRasterLayer, 'QGIS Raster Layer'))#,True)
+        (QgsRasterLayer, 'QGIS Raster Layer'))  # ,True)
     reg.add_output_port(
         WCS,
         URL_PORT,
-        (core.modules.basic_modules.String, 'URL String'))#,True)
+        (core.modules.basic_modules.String, 'URL String'))  # ,True)
     reg.add_output_port(
         WCS,
         WEB_REQUEST_PORT,
-        WebRequest)#,True)
+        WebRequest)  # ,True)
 
     # SOS MODULE
     reg.add_input_port(
         SOS,
         OGC_POST_DATA_PORT,
-        (core.modules.basic_modules.String, 'POST Data'))#, True)
+        (core.modules.basic_modules.String, 'POST Data'))  # , True)
     reg.add_input_port(
         SOS,
         OGC_URL_PORT,
-        (core.modules.basic_modules.String, 'Request URL'))#, True)
+        (core.modules.basic_modules.String, 'Request URL'))  # , True)
 
     reg.add_output_port(
         SOS,
         URL_PORT,
-        (core.modules.basic_modules.String, 'URL String'))#,True)
+        (core.modules.basic_modules.String, 'URL String'))  # ,True)
     reg.add_output_port(
         SOS,
         DATA_PORT,
-        (core.modules.basic_modules.String, 'OGC Data String'))#,True)
+        (core.modules.basic_modules.String, 'OGC Data String'))  # ,True)
     reg.add_output_port(
         SOS,
         FILE_PORT,
-        (core.modules.basic_modules.File, 'OGC Data File'))#,True)
+        (core.modules.basic_modules.File, 'OGC Data File'))  # ,True)
     reg.add_output_port(
         SOS,
         WEB_REQUEST_PORT,
-        WebRequest)#,True)
+        WebRequest)  # ,True)
     reg.add_output_port(
         SOS,
         TEMPORAL_VECTOR_PORT,
-        (TemporalVectorLayer, 'Temporal Vector Layer'))#,True)
+        (TemporalVectorLayer, 'Temporal Vector Layer'))  # ,True)
