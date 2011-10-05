@@ -1,19 +1,46 @@
 # -*- coding: utf-8 -*-
-import h5py
+###########################################################################
+##
+## Copyright (C) 2010 CSIR Meraka Institute. All rights reserved.
+##
+## eo4vistrails extends VisTrails, providing GIS/Earth Observation
+## ingestion, pre-processing, transformation, analytic and visualisation
+## capabilities . Included is the ability to run code transparently in
+## OpenNebula cloud environments. There are various software
+## dependencies, but all are FOSS.
+##
+## This file may be used under the terms of the GNU General Public
+## License version 2.0 as published by the Free Software Foundation
+## and appearing in the file LICENSE.GPL included in the packaging of
+## this file.  Please review the following to ensure GNU General Public
+## Licensing requirements will be met:
+## http://www.opensource.org/licenses/gpl-license.php
+##
+## If you are unsure which license is appropriate for your use (for
+## instance, you are interested in developing a commercial derivative
+## of VisTrails), please contact us at vistrails@sci.utah.edu.
+##
+## This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
+## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+##
+############################################################################
 import os.path
-
+# third party
+import h5py
 # vistrails
 from core.modules.vistrails_module import Module, ModuleError
 # eo4vistrails
 from packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
 from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
 
+
 @RPyCSafeModule()
 class CubeReaderHandle(ThreadSafeMixin, Module):
     """HDF data cube initialisation."""
 
     _input_ports = [('cubefile', '(edu.utah.sci.vistrails.basic:File)')]
-    _output_ports = [('CubeReaderHandle', '(za.co.csir.eo4vistrails:CubeReaderHandle:datacube)')]
+    _output_ports = [('CubeReaderHandle',
+                      '(za.co.csir.eo4vistrails:CubeReaderHandle:datacube)')]
 
     def __init__(self):
         ThreadSafeMixin.__init__(self)
@@ -35,10 +62,13 @@ class CubeReaderHandle(ThreadSafeMixin, Module):
         if self.cubeInit():
             self.setResult('CubeReaderHandle', self)
 
+
 class ModisCubeReaderHandle(CubeReaderHandle):
     """MODIS HDF data cube initialisation.
 
-    Assumes that the cube contains a single band, initialises it and the time band."""
+    Assumes that the cube contains a single band, initialises both it
+    and the time band.
+    """
 
     _input_ports = [('cubefile', '(edu.utah.sci.vistrails.basic:File)'),
                     ('band', '(edu.utah.sci.vistrails.basic:String)')]
@@ -50,13 +80,17 @@ class ModisCubeReaderHandle(CubeReaderHandle):
             self.data = self.cube[self.band]
             self.setResult('CubeReaderHandle', self)
 
+
 @RPyCSafeModule()
 class CubeReader(ThreadSafeMixin, Module):
     """HDF data cube reader."""
 
-    _input_ports = [('cubereader', '(za.co.csir.eo4vistrails:CubeReaderHandle:datacube)'),
-                    ('band', '(edu.utah.sci.vistrails.basic:String)', {'optional': True}),
-                    ('offset', '(edu.utah.sci.vistrails.basic:Integer)'),]
+    _input_ports = [('cubereader',
+                     '(za.co.csir.eo4vistrails:CubeReaderHandle:datacube)'),
+                    ('band',
+                     '(edu.utah.sci.vistrails.basic:String)',
+                     {'optional': True}),
+                    ('offset', '(edu.utah.sci.vistrails.basic:Integer)'), ]
     _output_ports = [('timeseries', '(edu.utah.sci.vistrails.basic:List)')]
 
     def __init__(self):
@@ -74,11 +108,12 @@ class CubeReader(ThreadSafeMixin, Module):
             band = None
         offset = self.getInputFromPort('offset')
 
-        # Reassign band if it's provided and different from the cube's current band
+        # Reassign band if provided and different from the cube's current band
         if not band is None and band != '' and band != cube.band:
             cube.band = band
             cube.data = cube.cube[band]
         self.setResult('timeseries', self.getData(cube, offset))
+
 
 class PostGISCubeReader(CubeReader):
     """HDF data cube reader using PostGIS offsets."""
@@ -86,6 +121,7 @@ class PostGISCubeReader(CubeReader):
     def getData(self, cube, offset):
         offset -= offset / 4801
         return cube.data[offset]
+
 
 @RPyCSafeModule()
 class CubeDateConverter(ThreadSafeMixin, Module):
