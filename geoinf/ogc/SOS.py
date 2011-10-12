@@ -24,10 +24,11 @@
 ##
 ############################################################################
 """This module provides an OGC (Open Geospatial Consortium) Sensor Observation
-Service (SOS) client, making use of the owslib library.
+Service (SOS) client, making use of a local version of the owslib library.
 """
 
 # library
+import traceback
 # third party
 from PyQt4 import QtCore, QtGui
 from qgis.core import *
@@ -40,8 +41,8 @@ from packages.eo4vistrails.geoinf.datamodels.Feature import FeatureModel
 # local
 from OgcConfigurationWidget import OgcConfigurationWidget
 from OgcService import OGC
-import traceback
-
+#names of ports as constants
+from init import OGC_URL_PORT, OGC_POST_DATA_PORT, BOUNDS_PORT
 
 class SOS(OGC, FeatureModel):
     """
@@ -311,31 +312,29 @@ class SosCommonWidget(QtGui.QWidget):
                 self.lbxOfferings.addItem(item)
 
 
-class SOSConfigurationWidget(OgcConfigurationWidget, StandardModuleConfigurationWidget):  #StandardModuleConfigurationWidget
+class SOSConfigurationWidget(OgcConfigurationWidget, StandardModuleConfigurationWidget):
     """makes use of code style from OgcConfigurationWidget"""
 
     def __init__(self, module, controller, parent=None):
+        # inherit parent module > access Module methods in core/vistrail/module.py
         StandardModuleConfigurationWidget.__init__(self, module,
                                                    controller, parent)
-        # INHERIT PARENT MODULE???
         OgcConfigurationWidget.__init__(self, module, controller, parent)
         # pass in parent widget i.e. OgcCommonWidget class
         self.config = SosCommonWidget(self.module, self.ogc_common_widget)
+        #print "SOS:325", type(self.module), "\n", self.module
 
-        """
-        print "SOS:324", type(self.module), self.module_descriptor, "\n", self.module
-        print "SOS:325", type(self.controller), self.controller
-        fn = self.module.functions
-        for f in fn:
-            print "SOS:327", type(f), f
-            in_ports = f.get_spec('input')  # port_type
-            print "SOS:330", type(in_ports), in_ports
-
-        # TO DO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # set parameter values based on port value
-        #self.config.line_edit_OGC_url = self.module.getInputFromPort(OGC_URL_PORT)
-        #self.config.OGC_request = module.getInputFromPort(OGC_POST_DATA_PORT)
-        """
+        # map widgets to ports to enable storing of their settings
+        port_widget = {
+            OGC_URL_PORT: self.config.parent_widget.line_edit_OGC_url,
+            BOUNDS_PORT: self.config.lblTL_X
+        }
+        # get and set corresponding port value for a configuration widget
+        #  "functions" are VisTrails internal representation of ports at design time
+        for function in self.module.functions:
+            if function.name in port_widget:
+                print "SOS:336", function.name, function.params[0].strValue
+                port_widget[function.name].setText(function.params[0].strValue)
 
         # move parent tab to first place
         self.tabs.insertTab(1, self.config, "")
@@ -557,8 +556,9 @@ class SOSConfigurationWidget(OgcConfigurationWidget, StandardModuleConfiguration
                 'Unknown SOS request type' + ': %s' % str(rType))
         # xml header
         data = '<?xml version="1.0" encoding="UTF-8"?>\n' + data
-        #print data  # show line breaks for testing !!!
+        #print "SOS:560 - data:\n", data  # show line breaks for testing !!!
         data = data.replace('\n', '')  # remove line breaks
         result['request_type'] = 'POST'
         result['data'] = data
+        result['bounds'] = "10"
         return result

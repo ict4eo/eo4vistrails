@@ -28,7 +28,7 @@ OGC (Open Geospatial Consortium) Web Service Metadata which is common to the
 various services (via owslib).
 
 Requirements:
-    owslib 0.3.2 or higher
+    owslib 0.3.4
 
 NOTE:
     As at 2010-11-09, you will need to patch version 0.3.4b for owslib sos.py:
@@ -39,6 +39,7 @@ NOTE:
 """
 
 import traceback
+from urllib2 import URLError
 try:
         from owslib import wfs as wfs
         from owslib import wcs as wcs
@@ -56,13 +57,12 @@ class OgcService():
     ## also wfs will never load a 1.1.0 instance, but it should be loaded as wfs200
     #########
 
-    def __init__(self, service_url, service_type, service_version):
-        DEFAULT_TIMEOUT = 30  # seconds
-        self.timeout = DEFAULT_TIMEOUT
+    def __init__(self, service_url, service_type, service_version, timeout=60):
         self.INVALID_OGC_TYPE_MESSAGE = \
             "Please provide an OGC Service Type: 'wfs', 'sos', or 'wcs'"
         #print "OgcService():__init__:\nservice_url, service_type, service_version\n", \
             #service_url, '#', service_type, '#', service_version
+        self.timeout = timeout  # seconds
         if service_url:
             service_url = str(service_url)
             # check for service and request key-value pairs;
@@ -113,9 +113,14 @@ class OgcService():
                     if service_type.lower() == "sos":
                         # NB as of 2011-09-27, only owslib sos module
                         # has been upgraded to handle timeouts
-                        self.service = sos.SensorObservationService(
-                            service_url, service_version,
-                            timeout=self.timeout)
+                        try:
+                            self.service = sos.SensorObservationService(
+                                service_url, service_version,
+                                timeout=self.timeout)
+                        except URLError:
+                            self.service = sos.SensorObservationService(
+                                service_url, service_version,
+                                timeout=self.timeout, ignore_proxy=True)
                         self.service_valid = True
                     elif service_type.lower() == "wfs":
                         self.service = wfs.WebFeatureService(

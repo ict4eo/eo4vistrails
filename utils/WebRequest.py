@@ -28,8 +28,16 @@
 handle web request (e.g. for WFS, WCS or SOS) processing inside vistrails.
 """
 
-from DataRequest import DataRequest
+# library
+import os
+import socket
+import urllib
+import urllib2
+# third party
+# vistrails
 from core.modules.vistrails_module import ModuleError
+# local
+from DataRequest import DataRequest
 
 
 class WebRequest(DataRequest):
@@ -39,11 +47,13 @@ class WebRequest(DataRequest):
     * With the 'data' port set as well, the module will execute a POST request.
     """
 
-    def __init__(self, url=None, data=None, runTheRequest=False):
+    def __init__(self, url=None, data=None, runTheRequest=False, timeout=600):
         DataRequest.__init__(self)
         self.url = url
         self.data = data
         self.runTheRequest = runTheRequest
+        self.timeout = timeout
+        socket.setdefaulttimeout(timeout)  # timeout for ALL urllib2 requests
 
     def get_uri(self):
         """Overwrite method in DataRequest"""
@@ -92,41 +102,45 @@ class WebRequest(DataRequest):
 
     def runRequest(self):
         """Execute an HTTP POST request for a given URL and data"""
-        import urllib
-        import urllib2
-        import os
-        from urllib2 import URLError
         result = None
-        #print "\nWebRequest:101\n", self.url, self.requestType(), self.data
+        #print "\nWebRequest:106\n", self.url, self.requestType(), self.data
         if self.url:
             request_type = self.requestType()
             if request_type == 'GET':
                 req = urllib2.Request(self.url)
             elif request_type == 'POST':
                 user_agent = 'Mozilla/4.0 (compatible; MSIE 5.5; Windows NT)'
-                headers = {'User-Agent': user_agent}
+                headers = {'User-Agent': user_agent,
+                           'Content-Type':'application/xml'}
                 req = urllib2.Request(self.url, self.data, headers)
             else:
                 raise ModuleError(
                     self,
                     'Unknown web request type: %s (should be GET or POST)' %\
                         str(request_type))
-            #assumes this works inside a proxy ... otherwise, try:
-            #os.environ["http_proxy"] = "http://myproxy.com:3128"
+
+            response = None
             try:
-                urllib2.urlopen(req)
                 response = urllib2.urlopen(req)
+            except:
+                try:
+                    #print "WebRequest:127 - ignoring proxy..."
+                    proxy_support = urllib2.ProxyHandler({})  # disables proxy
+                    opener = urllib2.build_opener(proxy_support)
+                    urllib2.install_opener(opener)
+                    response = urllib2.urlopen(req)
+                except urllib2.URLError, e:
+                    if hasattr(e, 'reason'):
+                        self.raiseError(
+                            'Failed to reach the server. Reason', e.reason)
+                    elif hasattr(e, 'code'):
+                        self.raiseError(
+                            'The server couldn\'t fulfill the request. Error code',
+                            e.code)
+                except Exception, e:
+                    self.raiseError('Exception', e)
+            if response:
                 result = response.read()
-            except URLError, e:
-                if hasattr(e, 'reason'):
-                    self.raiseError(
-                        'Failed to reach the server. Reason', e.reason)
-                elif hasattr(e, 'code'):
-                    self.raiseError(
-                        'The server couldn\'t fulfill the request. Error code',
-                        e.code)
-            except Exception, e:
-                self.raiseError('Exception', e)
         else:
             pass  # ignore and do nothing ...
         return result

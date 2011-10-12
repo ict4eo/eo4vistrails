@@ -163,23 +163,24 @@ class TemporalWidget(QtGui.QWidget):
         self.tFramesLayout.addWidget(QtGui.QLabel('End date'), 1, 0)
 
         #setting the start date-time widget and addding it to the window
-        self.myTime = QtGui.QDateTimeEdit(self)
-        self.tFramesLayout.addWidget(self.myTime, 0, 1)
+        self.myTimeStart = QtGui.QDateTimeEdit(self)
+        self.tFramesLayout.addWidget(self.myTimeStart, 0, 1)
         cal1 = QtGui.QCalendarWidget()
-        self.myTime.setCalendarWidget(cal1)
-        self.myTime.setCalendarPopup(True)
+        self.myTimeStart.setCalendarWidget(cal1)
+        self.myTimeStart.setCalendarPopup(True)
 
         #setting the end date-time widget and addding it to the window
-        self.myTime = QtGui.QDateTimeEdit(self)
-        self.tFramesLayout.addWidget(self.myTime, 1, 1)
+        self.myTimeEnd = QtGui.QDateTimeEdit(self)
+        self.tFramesLayout.addWidget(self.myTimeEnd, 1, 1)
         cal2 = QtGui.QCalendarWidget()
-        self.myTime.setCalendarWidget(cal2)
-        self.myTime.setCalendarPopup(True)
+        self.myTimeEnd.setCalendarWidget(cal2)
+        self.myTimeEnd.setCalendarPopup(True)
 
         # need to set time format validation functionality
         endDateTime = QtCore.QDateTime()
         myDateTime = endDateTime.currentDateTime()
-        self.myTime.setDateTime(myDateTime)
+        self.myTimeStart.setDateTime(myDateTime)
+        self.myTimeEnd.setDateTime(myDateTime)
 
         """Code that enables the Slider widget on out temporal tab. this enables
         the user to set the interval for required data """
@@ -214,9 +215,9 @@ class TemporalWidget(QtGui.QWidget):
         self.tIntervalLayout.addWidget(self.hourSlider, 4, 1)
         self.tIntervalLayout.addWidget(self.hourLcd, 4, 2)
         # LCD related
-        self.hourLcd.setDigitCount (2)
+        self.hourLcd.setDigitCount(2)
         # Slider related
-        self.hourSlider.setRange (0, 23)
+        self.hourSlider.setRange(0, 23)
         # connecting the signal and slot of the slider and lcd
         self.connect(
             self.hourSlider,
@@ -233,9 +234,9 @@ class TemporalWidget(QtGui.QWidget):
         self.tIntervalLayout.addWidget(self.minuteSlider, 5, 1)
         self.tIntervalLayout.addWidget(self.minuteLcd, 5, 2)
         # LCD related
-        self.minuteLcd.setDigitCount (2)
+        self.minuteLcd.setDigitCount(2)
         # Slider related
-        self.minuteSlider.setRange (0, 59)
+        self.minuteSlider.setRange(0, 59)
         # connecting the signal and slot of the slider and lcd
         self.connect(
             self.minuteSlider,
@@ -254,12 +255,18 @@ class TemporalWidget(QtGui.QWidget):
     def getTimeBegin(self):
         """ TO DO: calculate UTC time string from GUI widgets."""
         # dummy - example format
-        return '2005-09-01T11:54:00'
+        """
+        foo = self.myTimeStart.value()
+        print foo
+        bar = QDateTime.fromString(self.myTimeStart, "yyyy-MM-ddThh:mm:ss")
+        print bar
+        """
+        return '2005-09-01T00:00:00'
 
     def getTimeEnd(self):
         """ TO DO: calculate UTC time string from GUI widgets."""
         # dummy - example format
-        return '2005-09-02T11:54:00'
+        return '2005-09-30T23:59:00'
 
 
 class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
@@ -364,12 +371,12 @@ class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
         """
         return QtCore.QSize(800, 600)
 
-    def okTriggered(self, checked=False):
+    def okTriggered(self, checked=False, functions=None):
         """ okTriggered(checked: bool) -> None
         Overwrite in a subclass to set configuration on the module ports
 
         """
-        print "OK Triggered in SpatialTemporalConfigurationWidget"
+        #print "OK Triggered in SpatialTemporalConfigurationWidget"
         #self.emit(QtCore.SIGNAL('doneConfigure')) # not needed
         self.close()
 

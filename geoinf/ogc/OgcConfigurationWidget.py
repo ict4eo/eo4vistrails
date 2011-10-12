@@ -41,7 +41,7 @@ from Common import OgcService
 import init
 
 
-DEFAULT_URL_SOS = 'http://giv-sos.uni-muenster.de:8080/52nSOSv3/sos'
+DEFAULT_URL_SOS = 'http://ict4eo.meraka.csir.co.za/sadcosos/sos.py'  # 'http://giv-sos.uni-muenster.de:8080/52nSOSv3/sos'
 DEFAULT_URL_WFS = 'http://ict4eo.meraka.csir.co.za:8080/geoserver/wfs'
 DEFAULT_URL_WCS = 'http://afis.meraka.org.za/geoserver/wcs'
 DEFAULT_URL = ''
@@ -278,6 +278,7 @@ class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
 
         # constructRequest() method must be fully defined in sub-class
         result = self.constructRequest()
+        #print "OgcConfigurationWidget:281", type(result), result
         self.request_type = result.get('request_type', None)
         self.data = result.get('data', None)
         self.full_url = result.get('full_url', None)
@@ -285,6 +286,9 @@ class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
         if not self.data:
             self.data = self.full_url
         #print "OgcConfigurationWidget.py:287", self.request_type, self.layername,'\nURL:',self.full_url,'\nDATA:',self.data
+
+        #SOS-specific
+        self.bounds = result.get('bounds', None)
 
         # must not set ports if nothing has been specified, or
         # if there was a problem constructing the request
@@ -301,6 +305,9 @@ class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
             elif self.request_type == 'POST':
                 functions.append(
                     (init.OGC_POST_DATA_PORT, [self.data]),)
+            if self.bounds:
+                functions.append(
+                    (init.BOUNDS_PORT, [self.bounds]),)
             else:
                 raise ModuleError(
                     self,

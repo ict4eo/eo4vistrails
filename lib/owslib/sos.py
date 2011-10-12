@@ -21,7 +21,7 @@ from urllib2 import HTTPBasicAuthHandler
 from urllib2 import ProxyHandler
 from urllib2 import build_opener
 from urllib2 import install_opener
-
+from urllib2 import URLError
 from etree import etree
 
 import owslib.ows as ows
@@ -64,7 +64,14 @@ class SensorObservationService(object):
         self.ignore_proxy = ignore_proxy
         self.version = version
         self._capabilities = None
+
         self._open = urlopen
+        if self.ignore_proxy:
+            #print "sos:70 - ignoring proxy..."
+            proxy_support = ProxyHandler({})  # disables proxy
+            opener = build_opener(proxy_support)
+            install_opener(opener)
+            self._open = opener.open
 
         if self.username and self.password:
             # Provide login information in order to use the SOS server
@@ -98,6 +105,7 @@ class SensorObservationService(object):
                 self.version, url=self.url, un=self.username, pw=self.password)
             self._capabilities = ServiceMetadata(reader.read(self.url))
         return self._capabilities
+
     capabilities = property(_getcapproperty, None)
 
     def _buildMetadata(self):
@@ -515,7 +523,15 @@ class SOSCapabilitiesReader:
 
     def __init__(self, version='1.0.0', url=None, un=None, pw=None, to=None,
                  px=False):
-        """Initialize"""
+        """Initialize
+
+        Parameters:
+         *  url:  URL
+         *  un: username
+         *  pw: password
+         *  to: timeout (j seconds)
+         *  px: ignore_proxy
+        """
         self.version = version
         self._infoset = None
         self.url = url
@@ -526,9 +542,10 @@ class SOSCapabilitiesReader:
 
         self._open = urlopen
         if self.ignore_proxy:
-            proxy_handler = ProxyHandler({})
-            opener = build_opener()
-            opener.add_handler(proxy_handler)
+            #print "sos:548 - ignoring proxy..."
+            proxy_support = ProxyHandler({})  # disables proxy
+            opener = build_opener(proxy_support)
+            install_opener(opener)
             self._open = opener.open
 
         if self.username and self.password:
