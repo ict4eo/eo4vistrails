@@ -408,7 +408,7 @@ class PostGisCopyTo(NotCacheable, ThreadSafeMixin, Module):
             curs.close()
             pgconn.close()
 
-class SQLSourceConfigurationWidget(SourceConfigurationWidget):
+class SQLSourceConfigurationWidget(SyntaxSourceConfigurationWidget):
     def __init__(self, module, controller, parent=None):
        SyntaxSourceConfigurationWidget.__init__(self, module, controller, 
-                                                 "SQL", parent)
+                                                 "SQL", parent=parent)

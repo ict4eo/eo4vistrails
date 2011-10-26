@@ -27,13 +27,72 @@ or implied, of Mark Holmquist and Logan May.
 """
   
 from PyQt4 import QtGui, QtCore
-from core.modules.tuple_configuration import PortTable
 
 from core.modules.vistrails_module import ModuleError
 from core.modules.source_configure import SourceConfigurationWidget
+from core.modules.tuple_configuration import PortTable, PortTableItemDelegate
+from core.modules.module_registry import get_module_registry
 
 from gui.theme import CurrentTheme
 import urllib
+
+"""Here we replace nthe current port tables with our new modified versions that 
+allow us to set which input ports are vaialble"""
+class SynPortTable(PortTable):
+    def __init__(self, parent=None, displayedComboItems=None):
+        QtGui.QTableWidget.__init__(self,1,2,parent)
+        self.horizontalHeader().setResizeMode(QtGui.QHeaderView.Interactive)
+        self.horizontalHeader().setMovable(False)
+        self.horizontalHeader().setStretchLastSection(True)
+        self.setSelectionMode(QtGui.QAbstractItemView.NoSelection)
+        self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        # The following lines have been changed so that
+        # we can specify which ports should be listed
+        self.delegate = SynPortTableItemDelegate(self)
+        self.delegate.setDisplayedComboItems(displayedComboItems)
+        ########################################################
+        self.setItemDelegate(self.delegate)
+        self.setFrameStyle(QtGui.QFrame.NoFrame)
+        self.connect(self.model(),
+                     QtCore.SIGNAL('dataChanged(QModelIndex,QModelIndex)'),
+                     self.handleDataChanged)
+    
+class SynPortTableItemDelegate(PortTableItemDelegate):
+
+    def setDisplayedComboItems(self, displayedComboItems):
+        self.displayedComboItems = displayedComboItems
+
+    def createEditor(self, parent, option, index):        
+        if self.displayedComboItems:
+            registry = get_module_registry()
+            if index.column()==1: #Port type
+                combo = QtGui.QComboBox(parent)
+                combo.setEditable(False)
+                # FIXME just use descriptors here!!
+                for _, pkg in sorted(registry.packages.iteritems()):
+                    for _, descriptor in sorted(pkg.descriptors.iteritems()):
+                        if self.displayedComboItems.has_key(descriptor.name):
+                            combo.addItem("%s (%s)" % (descriptor.name, 
+                                                       descriptor.identifier),
+                                          QtCore.QVariant(descriptor.sigstring))
+                return combo
+            else:
+                return QtGui.QItemDelegate.createEditor(self, parent, option, index)
+        else:
+            registry = get_module_registry()
+            if index.column()==1: #Port type
+                combo = QtGui.QComboBox(parent)
+                combo.setEditable(False)
+                # FIXME just use descriptors here!!
+                for _, pkg in sorted(registry.packages.iteritems()):
+                    for _, descriptor in sorted(pkg.descriptors.iteritems()):                    
+                        combo.addItem("%s (%s)" % (descriptor.name, 
+                                                   descriptor.identifier),
+                                      QtCore.QVariant(descriptor.sigstring))
+                return combo
+            else:
+                return QtGui.QItemDelegate.createEditor(self, parent, option, index)
+
   
 def format(color, style='', bgcolor=''):
     """Return a QTextCharFormat with the given attributes.
@@ -56,7 +115,10 @@ class SyntaxSourceConfigurationWidget(SourceConfigurationWidget):
 
     def __init__(self, module, controller, syntax, 
                  parent=None, has_inputs=True, has_outputs=True, encode=True,
-                 input_port_specs=None, output_port_specs=None):
+                 input_port_specs=None, output_port_specs=None, displayedComboItems=None):
+        
+        self.displayedComboItems = displayedComboItems
+        #print module.input_port_specs
         if input_port_specs:
             self.input_port_specs = input_port_specs
         else:
@@ -72,15 +134,15 @@ class SyntaxSourceConfigurationWidget(SourceConfigurationWidget):
         
         self.codeEditor.setSyntax(syntax)
 
-def createPortTable(self, has_inputs=True, has_outputs=True):
+    def createPortTable(self, has_inputs=True, has_outputs=True):
         if has_inputs:
-            self.inputPortTable = PortTable(self)
+            self.inputPortTable = SynPortTable(self, self.displayedComboItems)
             labels = QtCore.QStringList() << "Input Port Name" << "Type"
             self.inputPortTable.setHorizontalHeaderLabels(labels)
             self.inputPortTable.initializePorts(self.input_port_specs)
             self.layout().addWidget(self.inputPortTable)
         if has_outputs:
-            self.outputPortTable = PortTable(self)
+            self.outputPortTable = SynPortTable(self, self.displayedComboItems)
             labels = QtCore.QStringList() << "Output Port Name" << "Type"
             self.outputPortTable.setHorizontalHeaderLabels(labels)
             self.outputPortTable.initializePorts(self.output_port_specs, True)

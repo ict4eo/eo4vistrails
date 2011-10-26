@@ -28,14 +28,13 @@
 """
 #History
 #Created by Terence van Zyl
-
-from packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule, RPyCModule
-from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
+from packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
 from packages.eo4vistrails.utils.synhigh import SyntaxSourceConfigurationWidget
 
 from core.modules.vistrails_module import ModuleError, NotCacheable, Module
 from core.modules.basic_modules import File
 
+from script import Script
 
 from subprocess import call
 from tempfile import mkstemp
@@ -43,58 +42,76 @@ from os import fdopen, remove
 import urllib
 
 @RPyCSafeModule()
-class OctaveScript(ThreadSafeMixin, RPyCModule):
+class OctaveScript(Script):
     """
-       Executes a PovRay Script and returns a link to a temp file which is the output
+       Executes a Octave Script 
+       Writes output to output files and reads input from inout files
     """
-    _input_ports = [('+W', '(edu.utah.sci.vistrails.basic:Integer)'),
-                    ('+H', '(edu.utah.sci.vistrails.basic:Integer)'),
-                    ('+A', '(edu.utah.sci.vistrails.basic:Float)'),
-                    ('+L', '(edu.utah.sci.vistrails.basic:Directory)'),
-                    ('source', '(edu.utah.sci.vistrails.basic:String)')
+    _input_ports = [
+                   # ('inputDataFiles', '(edu.utah.sci.vistrails.basic:File)')
+                   #,('inputNumpyArray', '(edu.utah.sci.vistrails.numpyscipy:Numpy Array:numpy|array)')
                    ]
 
-    _output_ports = [('+O', '(edu.utah.sci.vistrails.basic:File)'),
+    _output_ports = [
                      ('self', '(edu.utah.sci.vistrails.basic:Module)')
                     ]
 
     def __init__(self):
-        Module.__init__(self)
-        ThreadSafeMixin.__init__(self)
+        Script.__init__(self)
 
     def compute(self):
-        """Will need to fetch a PostGisSession object on its input port
+        """Will need to fetch a object on its input port
         Overrides supers method"""
-        W = self.getInputFromPort('+W')
-        H = self.getInputFromPort('+H')
-        A = self.getInputFromPort('+A')
-        L = self.getInputFromPort('+L').name
+        import scipy.io
+        import numpy
+        from packages.NumSciPy.Array import NDArray
         
-        povray_script = urllib.unquote(str(self.forceGetInputFromPort('source', '')))
-        
-        #Get a temp file to write the script into
-        povFileDescript, povFileName = mkstemp(suffix='.pov',text=True)
-        #Write the script to the file
-        povFile = fdopen(povFileDescript, 'w')
-        povFile.write(povray_script)
-        povFile.close()
+        octave_script = urllib.unquote(str(self.forceGetInputFromPort('source', '')))
 
-        #Get a temp file to write the output into
-        povFileDescript, O = mkstemp(suffix='.png')
+        inputDict = dict([(k, self.getInputFromPort(k))
+                          for k in self.inputPorts])
+
+        for k in inputDict.iterkeys():
+            if type(inputDict[k]) == NDArray:
+                inputDict[k] = inputDict[k].get_array()
+                    
+        matInFileName = self.interpreter.filePool.create_file(suffix='.mat')
+        scipy.io.savemat(matInFileName.name, inputDict)
+        octave_preScript = "load %s"%matInFileName.name        
+        
+        matOutFileName = self.interpreter.filePool.create_file(suffix='.mat')
+        octave_postScript = "save -v7 %s"%matOutFileName.name
+        
+        self.write_script_to_file(octave_script, preScript=octave_preScript, postScript=octave_postScript, suffix='.m')
         
         #Execute the command
-        args = ["povray", "+I%s"%povFileName, "+W%s"%W, "+H%s"%H, "+A%s"%A, "+L%s"%L,"+O%s"%O, "-D"]
+        args = ["octave", self.scriptFileName]
         a = call(args)
-        remove(povFileName)
         
         if a == 0:
-            f = File()
-            f.set_results(O)
-            self.setResult('+O', f)
+            scriptResult = scipy.io.loadmat(matOutFileName.name, chars_as_strings=True, squeeze_me=True, struct_as_record=True)        
+            outputDict = dict([(k, None)
+                               for k in self.outputPorts])
+            for k in outputDict.iterkeys():
+                if scriptResult.has_key(k) and scriptResult[k] != None:
+                    if type(scriptResult[k]) == numpy.ndarray:
+                        outArray = NDArray()
+                        outArray.set_array(scriptResult[k])
+                        self.setResult(k, outArray)
+                    else:
+                        self.setResult(k, scriptResult[k])
         else:
             raise ModuleError, (OctaveScript, "Could not execute PovRay Script")
 
 class OctaveSourceConfigurationWidget(SyntaxSourceConfigurationWidget):
     def __init__(self, module, controller, parent=None):
-        SyntaxSourceConfigurationWidget.__init__(self, module, controller, 
-                                                 "Octave", parent)
+        displayedComboItems = {'String':True,
+                               'Float':True,
+                               'Integer':True,
+                               'Boolean':True,
+                               'Numpy Array':True}
+                               #'File':True}
+    
+        SyntaxSourceConfigurationWidget.__init__(self, module, controller, "octave", 
+                                                 parent=parent,
+                                                 displayedComboItems = displayedComboItems)

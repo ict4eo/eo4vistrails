@@ -29,14 +29,13 @@
 #History
 #Created by Terence van Zyl
 
-from packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule, RPyCModule
-from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
+from packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
 from packages.eo4vistrails.utils.synhigh import SyntaxSourceConfigurationWidget
 
+from script import Script
+
 from core.modules.vistrails_module import ModuleError, Module
-print "a"
 from core.modules.basic_modules import File
-print "b"
 from subprocess import call
 from tempfile import mkstemp
 import urllib
@@ -82,9 +81,8 @@ class PovRayConfig(Module):
         
         self.setResult('PovRay Args string', args)
 
-
 @RPyCSafeModule()
-class PovRayScript(ThreadSafeMixin, RPyCModule):
+class PovRayScript(Script):
     """
        Executes a PovRay Script and returns a link to a temp file which is the output
     """
@@ -101,8 +99,7 @@ class PovRayScript(ThreadSafeMixin, RPyCModule):
     formatExtLookup = {'C':'.tga','N':'.png','P':'.ppm','S':'.bmp','T':'.tga'}
 
     def __init__(self):
-        RPyCModule.__init__(self)
-        ThreadSafeMixin.__init__(self)
+        Script.__init__(self)
 
     def compute(self):
         """Will need to fetch a PostGisSession object on its input port
@@ -112,12 +109,7 @@ class PovRayScript(ThreadSafeMixin, RPyCModule):
         
         povray_script = urllib.unquote(str(self.forceGetInputFromPort('source', '')))
         
-        #Get a temp file to write the script into        
-        povFileName = self.interpreter.filePool.create_file(suffix='.pov')
-        #Write the script to the file
-        povFile = open(povFileName.name, 'a+')
-        povFile.write(povray_script)
-        povFile.close()
+        self.write_script_to_file(povray_script, suffix='.pov')
 
         #Get a temp file to write the script into
         iniFileName = self.interpreter.filePool.create_file(suffix='.ini')
@@ -154,7 +146,7 @@ class PovRayScript(ThreadSafeMixin, RPyCModule):
             povFileDescript, O = mkstemp(suffix=self.formatExtLookup[F])
         
         #Execute the command
-        args = "povray %s +I%s %s +O%s -D"%(iniFileName.name, povFileName.name, args, O)
+        args = "povray %s +I%s %s +O%s -D"%(iniFileName.name, self.scriptFileName, args, O)
         print args
         a = call(args, shell=True)
         
@@ -168,6 +160,17 @@ class PovRayScript(ThreadSafeMixin, RPyCModule):
 
 class PovRaySourceConfigurationWidget(SyntaxSourceConfigurationWidget):
     def __init__(self, module, controller, parent=None):
+        #from core.vistrail.port_spec import PortSpec
+        #input_port_specs = [PortSpec.from_sigstring('(edu.utah.sci.vistrails.basic:String)'),                                                                   
+        #                    PortSpec.from_sigstring('(edu.utah.sci.vistrails.basic:Float)'),
+        #                    PortSpec.from_sigstring('(edu.utah.sci.vistrails.basic:Integer)')]
         
+        displayedComboItems = {'String':True,
+                               'Float':True,
+                               'Integer':True,
+                               'Boolean':True}
+    
         SyntaxSourceConfigurationWidget.__init__(self, module, controller, "PovRay", 
-                                                 parent=parent, has_outputs=False)
+                                                 parent=parent, has_outputs=False,
+                                                 displayedComboItems = displayedComboItems)
+                                                 #input_port_specs=input_port_specs)

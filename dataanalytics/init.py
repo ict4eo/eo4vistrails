@@ -62,6 +62,13 @@ def initialize(*args, **keywords):
     reg.add_module(Networkx.connected_components,
                    namespace=mynamespace)
 
+    import script
+    mynamespace = "utils"
+    reg.add_module(script.Script,
+                   name="Script",
+                   namespace=mynamespace,
+                   abstract=True)
+    
     import povray
     mynamespace = "povray"
     reg.add_module(povray.PovRayScript,
@@ -71,3 +78,11 @@ def initialize(*args, **keywords):
     reg.add_module(povray.PovRayConfig,
                    name="povRay Config",
                    namespace=mynamespace)
+
+    import octave
+    mynamespace = "octave"
+    reg.add_module(octave.OctaveScript,
+                   name="Octave Script",
+                   namespace=mynamespace,
+                   configureWidgetType=octave.OctaveSourceConfigurationWidget)
+
