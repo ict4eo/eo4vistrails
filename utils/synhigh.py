@@ -25,6 +25,10 @@ The views and conclusions contained in the software and documentation are those 
 authors and should not be interpreted as representing official policies, either expressed
 or implied, of Mark Holmquist and Logan May.
 """
+
+"""
+Modified By Terence van Zyl
+"""
   
 from PyQt4 import QtGui, QtCore
 
@@ -37,7 +41,7 @@ from gui.theme import CurrentTheme
 import urllib
 
 """Here we replace nthe current port tables with our new modified versions that 
-allow us to set which input ports are vaialble"""
+allow us to set which input ports are vialble"""
 class SynPortTable(PortTable):
     def __init__(self, parent=None, displayedComboItems=None):
         QtGui.QTableWidget.__init__(self,1,2,parent)

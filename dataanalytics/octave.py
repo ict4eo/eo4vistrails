@@ -74,7 +74,7 @@ class OctaveScript(Script):
                           for k in self.inputPorts])
         
         # remove the script from the list
-        del(inputdict['source'])
+        del(inputDict['source'])
         
         #check that if any are NDArrays we get the numpy array out        
         for k in inputDict.iterkeys():
@@ -108,16 +108,29 @@ class OctaveScript(Script):
             scriptResult = scipy.io.loadmat(matOutFileName.name, chars_as_strings=True, squeeze_me=True, struct_as_record=True)        
             outputDict = dict([(k, None)
                                for k in self.outputPorts])
+            del(outputDict['self'])
+
             for k in outputDict.iterkeys():
-                if scriptResult.has_key(k) and scriptResult[k] != None:
-                    if type(scriptResult[k]) == numpy.ndarray:
+                if scriptResult.has_key(k) and scriptResult[k] != None:                    
+                    if self.getPortType(k) == NDArray:
                         outArray = NDArray()
                         outArray.set_array(scriptResult[k])
                         self.setResult(k, outArray)
                     else:
-                        self.setResult(k, scriptResult[k])
+                        if scriptResult[k].ndim == 0:
+                            self.setResult(k, scriptResult[k].item())
+                        else:
+                            self.setResult(k, scriptResult[k][0])
         else:
             raise ModuleError, (OctaveScript, "Could not execute PovRay Script")
+
+    def getPortType(self, portName, portType="output"):
+        for i in self.moduleInfo['pipeline'].module_list:
+            if i.id == self.moduleInfo['moduleId']:
+                for j in i.port_specs:
+                    if i.port_specs[j].type == portType and i.port_specs[j].name == portName:
+                        return i.port_specs[j].signature[0][0]
+
 
 class OctaveSourceConfigurationWidget(SyntaxSourceConfigurationWidget):
     def __init__(self, module, controller, parent=None):
