@@ -85,4 +85,12 @@ def initialize(*args, **keywords):
                    name="Octave Script",
                    namespace=mynamespace,
                    configureWidgetType=octave.OctaveSourceConfigurationWidget)
+ 
+  import rpy2
+    mynamespace = "r"
+    reg.add_module(r.RScript,
+                   name="R Script",
+                   namespace=mynamespace,
+                   configureWidgetType=r.RSourceConfigurationWidget)
+
 
