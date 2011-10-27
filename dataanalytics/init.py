@@ -88,7 +88,7 @@ def initialize(*args, **keywords):
  
     import rpy2
     mynamespace = "rpy2"
-    reg.add_module(r.RScript,
+    reg.add_module(rpy2.RScript,
                    name="R Script",
                    namespace=mynamespace,
                    configureWidgetType=rpy2.RSourceConfigurationWidget)
