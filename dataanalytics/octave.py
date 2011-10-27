@@ -66,29 +66,45 @@ class OctaveScript(Script):
         import numpy
         from packages.NumSciPy.Array import NDArray
         
+        # Lets get the script fromn theinput port named source
         octave_script = urllib.unquote(str(self.forceGetInputFromPort('source', '')))
-
+        
+        #Lets get the list of input ports so we can get there values
         inputDict = dict([(k, self.getInputFromPort(k))
                           for k in self.inputPorts])
-
+        
+        # remove the script from the list
+        del(inputdict['source'])
+        
+        #check that if any are NDArrays we get the numpy array out        
         for k in inputDict.iterkeys():
             if type(inputDict[k]) == NDArray:
                 inputDict[k] = inputDict[k].get_array()
-                    
-        matInFileName = self.interpreter.filePool.create_file(suffix='.mat')
-        scipy.io.savemat(matInFileName.name, inputDict)
-        octave_preScript = "load %s"%matInFileName.name        
         
+        #Get a temp file to place the matclab data in
+        matInFileName = self.interpreter.filePool.create_file(suffix='.mat')
+        
+        #save the current python values for the scripts inputs to a matlab file
+        scipy.io.savemat(matInFileName.name, inputDict)
+        #run the following at the begining of the octave script
+        #this loads the file with all the input values into octave
+        octave_preScript = "load %s"%matInFileName.name    
+        
+        #create a temp file for the returned results
         matOutFileName = self.interpreter.filePool.create_file(suffix='.mat')
+        #run the following at the end of the octave script
+        #this writes out the results of running begining the script
         octave_postScript = "save -v7 %s"%matOutFileName.name
         
+        #write the script out
         self.write_script_to_file(octave_script, preScript=octave_preScript, postScript=octave_postScript, suffix='.m')
         
-        #Execute the command
+        #Execute the script
         args = ["octave", self.scriptFileName]
         a = call(args)
         
         if a == 0:
+            #load the results of the script running back into the python input variables
             scriptResult = scipy.io.loadmat(matOutFileName.name, chars_as_strings=True, squeeze_me=True, struct_as_record=True)        
             outputDict = dict([(k, None)
                                for k in self.outputPorts])
