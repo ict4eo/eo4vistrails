@@ -266,9 +266,9 @@ class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
         self.setCursor(self.arrowCursor)
         QtGui.QMessageBox.critical(self, 'Error', message, QtGui.QMessageBox.Ok)
 
-    def okTriggered(self): # , checked=False in parent?
+    def okTriggered(self, checked=False, functions=[]): # ,checked=False, functions=[] in parent?
         """Extends method defined in SpatialTemporalConfigurationWidget."""
-        #print "=== OK Triggered in OgcConfigurationWidget (line 265) ==="
+        #print OK Triggered in OgcConfigurationWidget (line 271)"
         full_url = self.ogc_common_widget.line_edit_OGC_url.text()
         if '?' in full_url:
             parts = full_url.split('?')
@@ -287,13 +287,9 @@ class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
             self.data = self.full_url
         #print "OgcConfigurationWidget.py:287", self.request_type, self.layername,'\nURL:',self.full_url,'\nDATA:',self.data
 
-        #SOS-specific
-        self.bounds = result.get('bounds', None)
-
         # must not set ports if nothing has been specified, or
         # if there was a problem constructing the request
         if self.data and self.request_type:
-            functions = []
             functions.append(
                 (init.OGC_URL_PORT, [self.url]),)
             if self.layername:
@@ -305,9 +301,6 @@ class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
             elif self.request_type == 'POST':
                 functions.append(
                     (init.OGC_POST_DATA_PORT, [self.data]),)
-            if self.bounds:
-                functions.append(
-                    (init.BOUNDS_PORT, [self.bounds]),)
             else:
                 raise ModuleError(
                     self,
@@ -317,7 +310,7 @@ class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
             #print "OgcConfigurationWidget:309/n", functions
             self.controller.update_ports_and_functions(
                 self.module.id, [], [], functions)
-            SpatialTemporalConfigurationWidget.okTriggered(self)
+            SpatialTemporalConfigurationWidget.okTriggered(self, functions)
         else:
             self.showWarning('The service is not sufficiently specified')
 

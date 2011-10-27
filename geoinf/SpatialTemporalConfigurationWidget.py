@@ -371,15 +371,6 @@ class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
         """
         return QtCore.QSize(800, 600)
 
-    def okTriggered(self, checked=False, functions=None):
-        """ okTriggered(checked: bool) -> None
-        Overwrite in a subclass to set configuration on the module ports
-
-        """
-        #print "OK Triggered in SpatialTemporalConfigurationWidget"
-        #self.emit(QtCore.SIGNAL('doneConfigure')) # not needed
-        self.close()
-
     def getTimeInterval(self):
         """Return a tuple containing begin / end in universal time.
 
@@ -405,3 +396,11 @@ class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
         """Return a comma-delimited string containing box co-ordinates."""
         bbox = self.getBoundingBox()
         return str(bbox[0])+','+str(bbox[1])+','+str(bbox[2])+','+str(bbox[3])
+
+    def okTriggered(self, checked=False, functions=[]):
+        """ okTriggered(checked: bool, functions: array) -> None
+        Extend in a subclass to set configuration on the module ports
+
+        """
+        #print "OK Triggered in SpatialTemporalConfigurationWidget (line 405)"
+        self.close()

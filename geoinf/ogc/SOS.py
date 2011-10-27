@@ -42,7 +42,8 @@ from packages.eo4vistrails.geoinf.datamodels.Feature import FeatureModel
 from OgcConfigurationWidget import OgcConfigurationWidget
 from OgcService import OGC
 #names of ports as constants
-from init import OGC_URL_PORT, OGC_POST_DATA_PORT, BOUNDS_PORT
+import init
+
 
 class SOS(OGC, FeatureModel):
     """
@@ -326,8 +327,8 @@ class SOSConfigurationWidget(OgcConfigurationWidget, StandardModuleConfiguration
 
         # map widgets to ports to enable storing of their settings
         port_widget = {
-            OGC_URL_PORT: self.config.parent_widget.line_edit_OGC_url,
-            BOUNDS_PORT: self.config.lblTL_X
+            init.OGC_URL_PORT: self.config.parent_widget.line_edit_OGC_url,
+            init.BOUNDS_PORT: self.config.lblTL_X
         }
         # get and set corresponding port value for a configuration widget
         #  "functions" are VisTrails internal representation of ports at design time
@@ -560,5 +561,14 @@ class SOSConfigurationWidget(OgcConfigurationWidget, StandardModuleConfiguration
         data = data.replace('\n', '')  # remove line breaks
         result['request_type'] = 'POST'
         result['data'] = data
-        result['bounds'] = "10"
+        #result['bounds'] = "10" TEST
         return result
+
+    def okTriggered(self): # ,checked=False, functions=None in parent?
+        """Extends method defined in SpatialTemporalConfigurationWidget."""
+        #print "=== OK Triggered in SOSConfigurationWidget (line 569)"
+        self.bounds = "10"  #result.get('bounds', None)
+        if self.bounds:
+            functions.append(
+                (init.BOUNDS_PORT, [self.bounds]),)
+        OGCConfigurationWidget.okTriggered(self, functions)
