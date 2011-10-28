@@ -94,11 +94,11 @@ def initialize(*args, **keywords):
                    configureWidgetType=rstats.RSourceConfigurationWidget)
 
  
-'''    import rpy2
-    mynamespace = "rpy2"
-    reg.add_module(rpy2.RScript,
+    import r   
+    mynamespace = "r"
+    reg.add_module(r.RScript,
                    name="R Script",
                    namespace=mynamespace,
-                   configureWidgetType=rpy2.RSourceConfigurationWidget)
+                   configureWidgetType=r.RSourceConfigurationWidget)
 
 '''
