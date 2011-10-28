@@ -122,7 +122,7 @@ class OctaveScript(Script):
                         else:
                             self.setResult(k, scriptResult[k][0])
         else:
-            raise ModuleError, (OctaveScript, "Could not execute PovRay Script")
+            raise ModuleError, (OctaveScript, "Could not execute Octave Script")
 
     def getPortType(self, portName, portType="output"):
         for i in self.moduleInfo['pipeline'].module_list:
