@@ -89,9 +89,9 @@ def initialize(*args, **keywords):
     import rstats
     mynamespace = "r"
     reg.add_module(rstats.RScript,
-                   name="R Script",
-                   namespace=mynamespace,
-                   configureWidgetType=rstats.RSourceConfigurationWidget)
+                 name="R Script",
+                 namespace=mynamespace,
+                 configureWidgetType=rstats.RSourceConfigurationWidget)
 
  
     import r   
@@ -101,4 +101,3 @@ def initialize(*args, **keywords):
                    namespace=mynamespace,
                    configureWidgetType=r.RSourceConfigurationWidget)
 
-'''
