@@ -14,12 +14,10 @@ from script import Script
 
 from subprocess import call
 import urllib
-import rpy2
-import rpy2.robjects as robjects
 import pickle
 
 @RPyCSafeModule()
-class RScript(Script):
+class RScriptExec(Script):
     """
        Executes an R Script 
        Writes output to output files and reads input from inout files
