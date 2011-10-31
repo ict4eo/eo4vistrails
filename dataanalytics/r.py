@@ -42,12 +42,14 @@ class RScriptExec(Script):
         from packages.NumSciPy.Array import NDArray
         
         # Lets get the script from the input port named source
+        scriptFile = self.forceGetInputFromPort('source', '')
         r_script = urllib.unquote(str(self.forceGetInputFromPort('source', '')))
         
         #Lets get the list of input ports so we can get there values
         inputDict = dict([(k, self.getInputFromPort(k))
                           for k in self.inputPorts])
-        
+       
+             
         # remove the script from the list
         del(inputDict['source'])
         
@@ -62,7 +64,8 @@ class RScriptExec(Script):
         
         
         
-        args = ["Rscript", self.scriptFileName]
+        #args = ["Rscript", self.scriptFileName]
+        args = ["Rscript", scriptFile]
         a = call(args)#Execute the script
         
         
@@ -76,7 +79,7 @@ class RScriptExec(Script):
             f.close()
             
         else:
-            raise ModuleError, (RScript, "Could not execute Scriptbro")
+            raise ModuleError, (RScriptExec, "Could not execute Script)
 #Dropdown of available datatypes
 class RSourceConfigurationWidget(SyntaxSourceConfigurationWidget):
     def __init__(self, module, controller, parent=None):
