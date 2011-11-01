@@ -72,7 +72,7 @@ class PostGisSession(Session):
         self.user = self.forceGetInputFromPort('postgisUser', 'default')
         self.pwd = self.forceGetInputFromPort('postgisPassword', 'default')
         self.database = self.forceGetInputFromPort('postgisDatabase', 'default')
-        self.connectstr = "host=" + self.host + " dbname=" + self.database + \
+        self.connectstr = "host=" + self.host + " port=" + self.port + " dbname=" + self.database + \
                           " user=" + self.user + " password=" + self.pwd
         self.setResult("PostGisSession", self)
 
