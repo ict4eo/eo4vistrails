@@ -33,9 +33,8 @@ from core.modules.vistrails_module import Module, ModuleError
 from packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
 from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
 
-
-@RPyCSafeModule()
-class CubeReaderHandle(ThreadSafeMixin, Module):
+#@RPyCSafeModule()
+class CubeReaderHandle(Module):
     """HDF data cube initialisation."""
 
     _input_ports = [('cubefile', '(edu.utah.sci.vistrails.basic:File)')]
@@ -43,7 +42,7 @@ class CubeReaderHandle(ThreadSafeMixin, Module):
                       '(za.co.csir.eo4vistrails:CubeReaderHandle:datacube)')]
 
     def __init__(self):
-        ThreadSafeMixin.__init__(self)
+        #ThreadSafeMixin.__init__(self)
         Module.__init__(self)
 
     def cubeInit(self):
@@ -72,6 +71,8 @@ class ModisCubeReaderHandle(CubeReaderHandle):
 
     _input_ports = [('cubefile', '(edu.utah.sci.vistrails.basic:File)'),
                     ('band', '(edu.utah.sci.vistrails.basic:String)')]
+    _output_ports = [('CubeReaderHandle', '(za.co.csir.eo4vistrails:CubeReaderHandle:datacube)'),
+                     ('timeBand', '(edu.utah.sci.vistrails.basic:List)')]
 
     def compute(self):
         if self.cubeInit():
@@ -79,10 +80,10 @@ class ModisCubeReaderHandle(CubeReaderHandle):
             self.time = self.cube['/TIME'][0]
             self.data = self.cube[self.band]
             self.setResult('CubeReaderHandle', self)
+            self.setResult('timeBand', self.time)
 
-
-@RPyCSafeModule()
-class CubeReader(ThreadSafeMixin, Module):
+#@RPyCSafeModule()
+class CubeReader(Module):
     """HDF data cube reader."""
 
     _input_ports = [('cubereader',
@@ -94,7 +95,7 @@ class CubeReader(ThreadSafeMixin, Module):
     _output_ports = [('timeseries', '(edu.utah.sci.vistrails.basic:List)')]
 
     def __init__(self):
-        ThreadSafeMixin.__init__(self)
+        #ThreadSafeMixin.__init__(self)
         Module.__init__(self)
 
     def getData(self, cube, offset):
@@ -118,20 +119,31 @@ class CubeReader(ThreadSafeMixin, Module):
 class PostGISCubeReader(CubeReader):
     """HDF data cube reader using PostGIS offsets."""
 
+    _input_ports = [('cubereader', '(za.co.csir.eo4vistrails:CubeReaderHandle:datacube)'),
+                    ('band', '(edu.utah.sci.vistrails.basic:String)', {'optional': True}),
+                    ('offset', '(edu.utah.sci.vistrails.basic:Integer)'),
+                    ('generate_ids', '(edu.utah.sci.vistrails.basic:Boolean)', {'optional': True})]
+    _output_ports = [('timeseries', '(edu.utah.sci.vistrails.basic:List)'),
+                     ('id_list', '(edu.utah.sci.vistrails.basic:List)')]
+
     def getData(self, cube, offset):
+        pgOffset = offset
         offset -= offset / 4801
-        return cube.data[offset]
+        timeseries = cube.data[offset]
+        if bool(self.getInputFromPort('generate_ids')):
+            id_list = [pgOffset for x in range(len(timeseries))]
+            self.setResult('id_list', id_list)
+        return timeseries
 
-
-@RPyCSafeModule()
-class CubeDateConverter(ThreadSafeMixin, Module):
+#@RPyCSafeModule()
+class CubeDateConverter(Module):
     """Converts dates from a data cube to JDN (Julian Day Number) dates."""
 
     _input_ports = [('dates', '(edu.utah.sci.vistrails.basic:List)')]
     _output_ports = [('dates_JDN', '(edu.utah.sci.vistrails.basic:List)')]
 
     def __init__(self):
-        ThreadSafeMixin.__init__(self)
+        #ThreadSafeMixin.__init__(self)
         Module.__init__(self)
 
     def compute(self):
