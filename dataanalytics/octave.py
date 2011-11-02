@@ -28,36 +28,42 @@
 """
 #History
 #Created by Terence van Zyl
-from packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
 from packages.eo4vistrails.utils.synhigh import SyntaxSourceConfigurationWidget
 
-from core.modules.vistrails_module import ModuleError, NotCacheable, Module
-from core.modules.basic_modules import File
-
-from script import Script
+from core.modules.vistrails_module import ModuleError, Module
 
 from subprocess import call
 from tempfile import mkstemp
-from os import fdopen, remove
+from os import fdopen
 import urllib
 
-@RPyCSafeModule()
-class OctaveScript(Script):
+class OctaveScript(Module):
     """
        Executes a Octave Script 
        Writes output to output files and reads input from inout files
     """
-    _input_ports = [
-                   # ('inputDataFiles', '(edu.utah.sci.vistrails.basic:File)')
-                   #,('inputNumpyArray', '(edu.utah.sci.vistrails.numpyscipy:Numpy Array:numpy|array)')
-                   ]
+    _input_ports = [('source', '(edu.utah.sci.vistrails.basic:String)')]
 
     _output_ports = [
                      ('self', '(edu.utah.sci.vistrails.basic:Module)')
                     ]
 
     def __init__(self):
-        Script.__init__(self)
+        Module.__init__(self)
+
+    def write_script_to_file(self, script, preScript=None, postScript=None, suffix='.e4v'):
+        #Get a temp file to write the script into
+        self.scriptFileDescript, self.scriptFileName = mkstemp(suffix=suffix, text=True)
+        #Write the script to the file
+        scriptFile = fdopen(self.scriptFileDescript, 'w')
+        if preScript:
+            scriptFile.write(preScript)
+            scriptFile.write("\n")
+        scriptFile.write(script)        
+        if postScript:
+            scriptFile.write("\n")
+            scriptFile.write(postScript)
+        scriptFile.close()
 
     def compute(self):
         """Will need to fetch a object on its input port
@@ -75,6 +81,8 @@ class OctaveScript(Script):
         
         # remove the script from the list
         del(inputDict['source'])
+        if inputDict.has_key('rpycnode'):
+            del(inputDict['rpycnode'])
         
         #check that if any are NDArrays we get the numpy array out        
         for k in inputDict.iterkeys():

@@ -7,8 +7,6 @@ Created on Wed Oct 26 12:00:49 2011
 from packages.eo4vistrails.rpyc.RPyC import RPyCModule
 from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
 
-from core.modules.vistrails_module import Module
-
 from tempfile import mkstemp
 from os import fdopen
 
@@ -20,7 +18,7 @@ class Script(ThreadSafeMixin, RPyCModule):
     _input_ports = [('source', '(edu.utah.sci.vistrails.basic:String)')]
 
     def __init__(self):
-        Module.__init__(self)
+        RPyCModule.__init__(self)
         ThreadSafeMixin.__init__(self)
 
     def write_script_to_file(self, script, preScript=None, postScript=None, suffix='.e4v'):

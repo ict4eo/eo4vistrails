@@ -10,8 +10,6 @@ Created on Fri Oct 28 09:55:33 2011
 from packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
 from packages.eo4vistrails.utils.synhigh import SyntaxSourceConfigurationWidget
 
-from core.modules.vistrails_module import ModuleError
-
 from script import Script
 
 import urllib
@@ -52,10 +50,12 @@ class RScript(Script):
         
         # remove the script from the list
         del(inputDict['source'])
+        if inputDict.has_key('rpycnode'):
+            del(inputDict['rpycnode'])
         
         #check that if any are NDArrays we get the numpy array out
         for k in inputDict.iterkeys():
-            if type(inputDict[k]) == NDArray:
+            if type(inputDict[k]) == NDArray or str(type(inputDict[k])) == "<netref class 'packages.NumSciPy.Array.NDArray'>":
                 inputDict[k] = inputDict[k].get_array()
             robjects.globalenv[k] = inputDict[k]
 
@@ -67,9 +67,10 @@ class RScript(Script):
                            for k in self.outputPorts])
         del(outputDict['self'])
 
-        for k in outputDict.iterkeys():
-            if k in robjects.globalenv.keys() and robjects.globalenv[k] != None:
-                if self.getPortType(k) == NDArray:
+        for k in outputDict.iterkeys():            
+            if k in robjects.globalenv.keys() and robjects.globalenv[k] != None:                
+                if str(self.getPortType(k)) == str(NDArray):
+                    print k, robjects.globalenv[k]
                     outArray = NDArray()
                     outArray.set_array(numpy.array(robjects.globalenv[k]))
                     self.setResult(k, outArray)

@@ -34,7 +34,7 @@ import Shared
 #Node must have rpyc installed so not a problem
 import rpyc
 #node has dummy versions of these so not a problem
-from core.modules.vistrails_module import Module, NotCacheable
+from core.modules.vistrails_module import Module
 
 
 def refreshPackage(connection, packageName, checkVersion=False, force=False):
@@ -161,7 +161,7 @@ class RPyCSafeMixin(object):
                 #TODO: remove once finishing dev should just work of version numbers
                 #Upload any vistrails packages that may be required
                 for packageName in self._requiredVisPackages:
-                    refreshPackage(connection, packageName, checkVersion=True, force=False)
+                    refreshPackage(connection, packageName, checkVersion=True, force=True)
 
                 print "Finished uploading module requirements to node...."
 

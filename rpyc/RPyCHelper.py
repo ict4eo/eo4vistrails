@@ -79,6 +79,8 @@ def getRemoteConnection(ip, port):
     refreshPackage(connection, "gui", force=force)
     refreshPackage(connection, "index", force=force)
     refreshPackage(connection, "tests", force=force)
+    #added to make sure we have everything on the first load.
+    refreshPackage(connection, "packages", force=force)
     print "Finished uploading vistrails requirements to node...."
 
     return connection
