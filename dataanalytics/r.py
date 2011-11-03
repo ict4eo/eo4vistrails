@@ -11,7 +11,6 @@ from core.modules.vistrails_module import ModuleError, NotCacheable, Module
 from core.modules.basic_modules import File
 
 from script import Script
-
 from subprocess import call
 import urllib
 import pickle
@@ -19,17 +18,14 @@ import pickle
 @RPyCSafeModule()
 class RScriptExec(Script):
     """
-       Executes an R Script 
-       Writes output to output files and reads input from inout files
+       Executes an R Script passed as arg or runs R code on the fly 
+      
     """
     _input_ports = [
-                   # ('inputDataFiles', '(edu.utah.sci.vistrails.basic:File)')
-                   #,('inputNumpyArray', '(edu.utah.sci.vistrails.numpyscipy:Numpy Array:numpy|array)')
-                   ]
+    #('inputRFile', '(edu.utah.sci.vistrails.basic:String)')
+    ]
 
-    _output_ports = [
-                     ('self', '(edu.utah.sci.vistrails.basic:Module)')
-                    ]
+    _output_ports = [('self', '(edu.utah.sci.vistrails.basic:Module)')]
 
     def __init__(self):
         Script.__init__(self)
@@ -40,15 +36,12 @@ class RScriptExec(Script):
         import scipy.io
         import numpy
         from packages.NumSciPy.Array import NDArray
-        
-        # Lets get the script from the input port named source
-        scriptFile = self.getInputFromPort("source")
+
         r_script = urllib.unquote(str(self.forceGetInputFromPort('source', '')))
         
         #Lets get the list of input ports so we can get there values
         inputDict = dict([(k, self.getInputFromPort(k))
-                          for k in self.inputPorts])
-       
+                          for k in self.inputPorts])       
              
         # remove the script from the list
         del(inputDict['source'])
@@ -56,21 +49,18 @@ class RScriptExec(Script):
         #check that if any are NDArrays we get the numpy array out        
         for k in inputDict.iterkeys():
             if type(inputDict[k]) == NDArray:
-                inputDict[k] = inputDict[k].get_array()      
-
+                inputDict[k] = inputDict[k].get_array()
         
         #write the script out
-        self.write_script_to_file(r_script, preScript="", postScript="", suffix='.R')
+        self.write_script_to_file(r_script, preScript="", postScript="", suffix='.R')    
         
         
-        
-        #args = ["Rscript", self.scriptFileName]
-        args = ["Rscript", scriptFile]
-        a = call(args)#Execute the script
-        
+        args = ["Rscript", self.scriptFileName]
+        #args = ["Rscript", directScript]
+        a = call(args)#Execute the script        
         
         if a == 0:
-            f=open('/home/mmtsetfwa/RScripts/workfile.txt', 'wb')                  
+            f=open('workfile.txt', 'wb')                  
             outputDict = dict([(k, None)
                                for k in self.outputPorts])
             #pickle.dump(outputDict,f)\

@@ -100,4 +100,12 @@ def initialize(*args, **keywords):
                    name="R Script Exec",
                    namespace=mynamespace,
                    configureWidgetType=r.RSourceConfigurationWidget)
+                   
+    import rpy2Stats
+    mynamespace="r"
+    reg.add_module(rpy2Stats.Rpy2Script,
+                   name="Rpy2 Script",
+                   namespace=mynamespace,
+                   configureWidgetType=r.RSourceConfigurationWidget)
+    
 
