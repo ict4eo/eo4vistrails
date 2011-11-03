@@ -107,7 +107,7 @@ class Rpy2Script(Script):
                 else:
                     self.setResult(k, robjects.globalenv[k][0])
         #except:
-        #    raise ModuleError, (RScript, "Could not execute R Script")
+        #    raise ModuleError, (Rpy2Script, "Could not execute R Script")
 
         
 
@@ -126,8 +126,10 @@ class RSourceConfigurationWidget(SyntaxSourceConfigurationWidget):
                                'Integer':True,
                                'Boolean':True,
                                'Numpy Array':True,
+                               'List':True,
+                               'Dictionary':True,                               
                                'File':True}
     
-        SyntaxSourceConfigurationWidget.__init__(self, module, controller, "r", 
+        SyntaxSourceConfigurationWidget.__init__(self, module, controller, "Rpy2Script", 
                                                  parent=parent,
                                                  displayedComboItems = displayedComboItems)
