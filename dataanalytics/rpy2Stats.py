@@ -32,15 +32,17 @@ def rPyConversion(data):
             
     elif (isinstance(data,robjects.vectors.FloatVector) or isinstance(data,robjects.vectors.IntVector) or
         isinstance(data,robjects.vectors.BoolVector)  or isinstance(data,robjects.vectors.ComplexVector)) and (len(data)>1):
-           return numpy.array(data)
+         return numpy.array(data)
             
     elif (isinstance(data,robjects.vectors.FloatVector) or isinstance(data,robjects.vectors.IntVector) or
         isinstance(data,robjects.vectors.BoolVector)  or isinstance(data,robjects.vectors.ComplexVector)) and (len(data)==1):
-           return data[0]
+         return data[0]
     elif isinstance(data,rpy2.robjects.vectors.Vector):
-           return numpy.array(data)
+        return numpy.array(data)
     elif isinstance(data,rpy2.robjects.vectors.DataFrame):
-           return data  
+        return data
+    elif isinstance(data,rpy2.rinterface.RNULLType):
+        return None
         
         
 
