@@ -50,7 +50,7 @@ def initialize(*args, **keywords):
     # local
     from Feature import FeatureModel, FileFeatureModel, MemFeatureModel
     from Raster import RasterModel
-    from GeoStrings import GMLString, GeoJSONString, GeoString
+    from GeoStrings import GMLString, GeoJSONString, GeoString,  WKTString, GeoStringConstantWidget
     from TemporalVectorLayer import TemporalVectorLayer
     import QgsLayer
     import QgsLayerWriter
@@ -91,9 +91,10 @@ def initialize(*args, **keywords):
 
     # misc.
     reg.add_module(GeoString, namespace=mynamespace, abstract=True)
-    reg.add_module(GMLString, namespace=mynamespace, abstract=True)
-    reg.add_module(GeoJSONString, namespace=mynamespace, abstract=True)
-
+    reg.add_module(GMLString, configureWidgetType= GeoStringConstantWidget, namespace=mynamespace)
+    reg.add_module(GeoJSONString,configureWidgetType= GeoStringConstantWidget, namespace=mynamespace)
+    reg.add_module(WKTString, configureWidgetType= GeoStringConstantWidget, namespace=mynamespace)
+    
     # MemFeatureModel
     reg.add_module(MemFeatureModel, namespace=mynamespace, abstract=True)
     reg.add_input_port(MemFeatureModel, "source_file", String)

@@ -53,6 +53,11 @@ try:
 except:
     import datacube.init as datacube_init
 
+try:
+    from geoinf.helpers import init as helpers_init
+except:
+    import geoinf.helpers.init as helpers_init
+
 def initialize(*args, **keywords):
     '''sets everything up'''
     # VisTrails cannot currently automatically detect your derived
@@ -73,3 +78,4 @@ def initialize(*args, **keywords):
     dataanalytics_init.initialize(*args, **keywords)
     transform_init.initialize(*args, **keywords)
     datacube_init.initialize(*args, **keywords)
+    helpers_init.initialize(*args, **keywords)

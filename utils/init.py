@@ -13,6 +13,7 @@ def initialize(*args, **keywords):
     from Command import Command
     from DataTransformations import InputStream,  pgSQLMergeInsert
 
+
     reg = get_module_registry()
     utils_namespace = "utils"
     utils_test_namespace = "utils|tests"
@@ -28,6 +29,8 @@ def initialize(*args, **keywords):
     reg.add_module(DataRequest,
                    namespace=utils_namespace,
                    abstract=True)
+
+
 
     # ==========================================================================
     # Standard Modules
@@ -103,6 +106,9 @@ def initialize(*args, **keywords):
         WebRequest,
         'out',
         basic_modules.Variant)
+
+
+
 
     # ==========================================================================
     # Simple Modules - without ports
