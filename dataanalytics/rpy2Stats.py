@@ -18,29 +18,29 @@ from packages.NumSciPy.Array import NDArray
 import rpy2.robjects as robjects
 import rpy2.robjects.numpy2ri
 rpy2.robjects.numpy2ri.activate()
-r=robjects.r
-
-
-#Converting R output to a Python Type.
+r=robjects.r 
+        
+ #Converting R output to a Python Type.
 def rPyConversion(data):    
     if isinstance(data,rpy2.robjects.vectors.ListVector):
-        pyDict = {}        
-        for name,value in zip([i for i in rpy2.robjects.r.names(data)],[i for i in data]):
-            if len(value) == 1: pyDict[name] = value[0]
-            else: pyDict[name] = [i for i in value]
-        return pyDict
+       pyDict = {}        
+       for name,value in zip([i for i in rpy2.robjects.r.names(data)],[i for i in data]):
+           if len(value) == 1: 
+               pyDict[name] = value[0]
+           else: pyDict[name] = [i for i in value]
+       return pyDict
             
-    if (isinstance(data,robjects.vectors.FloatVector) or isinstance(data,robjects.vectors.IntVector) or
-    isinstance(data,robjects.vectors.BoolVector)  or isinstance(data,robjects.vectors.ComplexVector)) and (len(data)>1):
-        return numpy.array(data)
     elif (isinstance(data,robjects.vectors.FloatVector) or isinstance(data,robjects.vectors.IntVector) or
-    isinstance(data,robjects.vectors.BoolVector)  or isinstance(data,robjects.vectors.ComplexVector)) and (len(data)==1):
-        return data[0]
+        isinstance(data,robjects.vectors.BoolVector)  or isinstance(data,robjects.vectors.ComplexVector)) and (len(data)>1):
+           return numpy.array(data)
+            
+    elif (isinstance(data,robjects.vectors.FloatVector) or isinstance(data,robjects.vectors.IntVector) or
+        isinstance(data,robjects.vectors.BoolVector)  or isinstance(data,robjects.vectors.ComplexVector)) and (len(data)==1):
+           return data[0]
     elif isinstance(data,rpy2.robjects.vectors.Vector):
-        return numpy.array(data)
-        
-        
-  
+           return numpy.array(data)
+    elif isinstance(data,rpy2.robjects.vectors.DataFrame):
+           return data  
         
         
 
@@ -59,7 +59,8 @@ class Rpy2Script(Script):
                     ]
 
     def __init__(self):
-        Script.__init__(self)
+        Script.__init__(self)       
+
         
     def compute(self):
         # Lets get the script fromn theinput port named source
