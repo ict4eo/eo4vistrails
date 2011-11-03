@@ -81,12 +81,13 @@ class Rpy2Script(Script):
         #Execute the script
         resultVar=r(r_script)
         x=type(resultVar)
+        #testing purposes
         f=open('/home/mmtsetfwa/RScripts/rpy2Results.txt', 'w')
         f.write(str(x))        
         f.close()
         
         mylist=rPyConversion(resultVar)
-        
+        #testing purposes
         if mylist !=None:           
             #test writing converted result to file
             f2=open('/home/mmtsetfwa/RScripts/testType.txt', 'w')

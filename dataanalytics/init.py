@@ -106,6 +106,6 @@ def initialize(*args, **keywords):
     reg.add_module(rpy2Stats.Rpy2Script,
                    name="Rpy2 Script",
                    namespace=mynamespace,
-                   configureWidgetType=r.RSourceConfigurationWidget)
+                   configureWidgetType=rpy2Stats.RSourceConfigurationWidget)
     
 
