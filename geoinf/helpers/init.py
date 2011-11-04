@@ -31,7 +31,7 @@ def initialize(*args, **keywords):
         FeatureOfInterestDefiner, 
         "WKTGeometry", 
         WKTString)    
-
+  
 #    reg.add_input_port(
 #        FeatureOfInterestDefiner, 
 #        "QgsGeometry", 
@@ -49,7 +49,7 @@ def initialize(*args, **keywords):
     reg.add_output_port(
         AreaOfInterestDefiner,
         "AreaOfInterest",
-        (GeoJSONString, 'Area as GeoJSON snippet'))
+        (WKTString, 'Area as WKT snippet'))
 
     reg.add_module(LineOfInterestDefiner, 
                    configureWidgetType=FeatureOfInterestDefinerConfigurationWidget, 
@@ -58,7 +58,7 @@ def initialize(*args, **keywords):
     reg.add_output_port(
         LineOfInterestDefiner,
         "LineOfInterest",
-        (GeoJSONString, 'Line as GeoJSON snippet'))
+        (WKTString, 'Line as WKT snippet'))
         
 
     reg.add_module(PointOfInterestDefiner, 
@@ -68,4 +68,4 @@ def initialize(*args, **keywords):
     reg.add_output_port(
         PointOfInterestDefiner,
         "PointOfInterest",
-        (GeoJSONString, 'Point as GeoJSON snippet'))
+        (WKTString, 'Point as WKT snippet'))

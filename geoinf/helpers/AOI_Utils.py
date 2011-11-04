@@ -157,7 +157,7 @@ class FeatureOfInterestDefinerConfigurationWidget(StandardModuleConfigurationWid
         self.crsGroupBox = QtGui.QGroupBox("Define Projection or Coordinate Reference System")
         self.crsLayout = QtGui.QHBoxLayout()
         self.crsProj4Label = QtGui.QLabel('SRS Proj4: ')
-        self.crsTextAsProj4 = QtGui.QLineEdit('+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs')
+        self.crsTextAsProj4 = QtGui.QLineEdit('4326')
         self.crsChooseButton = QtGui.QPushButton('&Choose SRS')
         self.crsChooseButton.setAutoDefault(False)
         self.crsChooseButton.setToolTip('Choose a Spatial Reference System or Projection')
@@ -418,7 +418,11 @@ class FeatureOfInterestDefinerConfigurationWidget(StandardModuleConfigurationWid
         print info.completeBaseName()
         # create layer
         layer = QgsVectorLayer(info.filePath(), info.completeBaseName(),  "ogr")
-    
+
+        
+
+            
+            
         if not layer.isValid():
             print "invalid layer"
             return
@@ -431,7 +435,7 @@ class FeatureOfInterestDefinerConfigurationWidget(StandardModuleConfigurationWid
     
         # set the map canvas layer set
         cl = QgsMapCanvasLayer(layer)
-        self.mapCanvasLayers.insert(0, cl)
+        self.mapCanvasLayers.insert(len(self.mapCanvasLayers) -2, cl)
         #layers = [cl]
         self.canvas.setLayerSet(self.mapCanvasLayers)
         print "added Layer"
@@ -447,7 +451,34 @@ class FeatureOfInterestDefinerConfigurationWidget(StandardModuleConfigurationWid
             layer = QgsVectorLayer("Linestring", "Line of Interest",  "memory")
         if foi_type== 'pointofinterestdefiner':
             layer = QgsVectorLayer("Point", "Point of Interest",  "memory")
-            
+        
+        if foi_type== 'areaofinterestdefiner':
+            sym = QgsSymbol(QGis.Polygon)
+            sym.setColor(Qt.black)
+            sym.setFillColor(Qt.green)
+            sym.setFillStyle(Qt.Dense6Pattern)
+            sym.setLineWidth(0.5)      
+            sr = QgsSingleSymbolRenderer(QGis.Polygon)
+        if foi_type== 'lineofinterestdefiner':
+            sym = QgsSymbol(QGis.Line)
+            sym.setColor(Qt.black)
+            sym.setFillColor(Qt.green)
+            sym.setFillStyle(Qt.SolidPattern)
+            sym.setLineWidth(0.5)       
+            sr = QgsSingleSymbolRenderer(QGis.Line)
+        if foi_type== 'pointofinterestdefiner':
+            sym = QgsSymbol(QGis.Point)    
+            sym.setColor(Qt.black)
+            sym.setFillColor(Qt.green)
+            sym.setFillStyle(Qt.SolidPattern)
+            sym.setLineWidth(0.3)
+            sym.setPointSize(4)
+            sym.setNamedPointSymbol("hard:triangle")
+            sr = QgsSingleSymbolRenderer(QGis.Point)
+
+
+        sr.addSymbol(sym)
+        layer.setRenderer(sr)            
         if not layer.isValid():
             print "invalid layer"
             return
@@ -467,13 +498,22 @@ class FeatureOfInterestDefinerConfigurationWidget(StandardModuleConfigurationWid
         self.canvas.setLayerSet(self.mapCanvasLayers)
         print "added Layer"
         
-    def addGeomToMemoryLayer(self,  the_geom):
+    def addGeomToMemoryLayer(self,  the_geom,  origin = 0,  delete_when_done = False):
         foi_type = self.foi_type.lower() 
         print "got foi_type"
         if self.mem_layer_obj.featureCount() >0:
-            self.mem_layer_obj.deleteFeature(0)
-            self.mem_layer_obj.commitChanges()
-            self.mem_layer_obj.triggerRepaint()
+            if origin == 1:# is added by identify operation
+                pass
+            else:
+                print self.mem_layer_obj.featureCount()
+                print "there exists a feature, kill it!"
+                self.mem_layer_obj.select()
+                print "Feature count selcted for deletion:"
+                print self.mem_layer_obj.selectedFeatureCount()
+                self.mem_layer_obj.deleteSelectedFeatures()
+                #self.mem_layer_obj.deleteFeature(0)
+                self.mem_layer_obj.commitChanges()
+                self.mem_layer_obj.triggerRepaint()
 
         ml_dp = self.mem_layer_obj.dataProvider()
         print "got DP"
@@ -486,6 +526,7 @@ class FeatureOfInterestDefinerConfigurationWidget(StandardModuleConfigurationWid
         fet.addAttribute(0, uuid_gid)
         print "set attr "
         ml_dp.addFeatures([fet])
+        self.mem_layer_obj.commitChanges()
         print "added layers"
         #self.mem_layer_obj.updateFeatureAttributes(fet)
         #self.mem_layer_obj.updateFeatureGeometry(fet)
@@ -494,6 +535,7 @@ class FeatureOfInterestDefinerConfigurationWidget(StandardModuleConfigurationWid
         #self.mem_layer_obj.drawFeature(fet)
         self.mem_layer_obj.triggerRepaint()
         print "trp"
+        return fet.id()
 
         
     def zoomIn(self):
@@ -515,49 +557,38 @@ class FeatureOfInterestDefinerConfigurationWidget(StandardModuleConfigurationWid
         
     def gotFeatureForIdentification(self, pos):
         """ show dialog with road information """
-        print pos.asPolygon()
-        self.addGeomToMemoryLayer(QgsGeometry().fromWkt(QString(("POLYGON((%s))" % pos.asPolygon()))))
-        #so, we have a rectangle, lets use it to select
-        self.mem_layer_obj.select([0], pos, True,  True)
-        sf = self.mem_layer_obj.selectedFeaturesIds()
-        print sf
+        
+        #pos is a rectangle
+        self.mem_layer_obj.select()
+        ftr = QgsFeature ()
+        ftr_ids = []
+        while self.mem_layer_obj.nextFeature(ftr):
+            if ftr.geometry().intersects(pos):
+                ftr_ids.append(ftr.id())
+        self.chosenFOIGeoms = []
         self.info = QgsMessageViewer()
-        if sf <> []:
+        if ftr_ids  <> []:
             f = QgsFeature()
-            self.mem_layer_obj.dataProvider().featureAtId(sf[0], f,  True, [0])
-            ftrData = f.attributeMap().toString()
+            foi_type = self.foi_type.lower() 
+            if foi_type== 'areaofinterestdefiner':
+                ftrData = "You have selected the following feature(s) for use as an Area of Interest:\n\n"
+            if foi_type== 'lineofinterestdefiner':
+                ftrData = "You have selected the following feature(s) for use as a Line of Interest:\n\n"
+            if foi_type== 'pointofinterestdefiner':
+                ftrData = "You have selected the following feature(s) for use as a Point of Interest:\n\n"
+            for fid in ftr_ids:
+            
+                self.mem_layer_obj.dataProvider().featureAtId(fid, f,  True)
+                
+                ftrData += f.attributeMap()[0].toString()
+                ftrData += "\n_____________________________\n"
+                self.chosenFOIGeoms.append(f.geometry())
+                id_fid = self.addGeomToMemoryLayer(f.geometry())
             self.info.setMessageAsPlainText(ftrData)
         else:
             self.info.setMessageAsPlainText("no data to show")
         self.info.show()    
         return
-        #return
-        #pt = QgsPoint(pos)
-        
-        
-        
-        
-#        sr = QgsSnappingResult()
-#        swc =  self.mem_layer_obj.snapWithContext(pt, 0.001,  sr, SnapToVertexAndSegment)
-#        #(self.result, point, vertexIndex, fid, geom)
-#        self.info = QgsMessageViewer()
-#        if sr. == False:
-#            self.info.setMessageAsPlainText("No Feature Found")
-#            self.info.showMessage()
-#            return
-#            #self.info.setMessageAsPlainText
-#            #fi = self.mem_layer_obj.roadInfo(fid)
-        f = QgsFeature()
-        self.mem_layer_obj.getDataProvider().getFeatureAtId(fid, f, True, [7])
-        ftrData = f.attributeMap().toString()
-        #txt = "ID: %d\nName: %s\nLevel: %d\nOne way: %d\nMax speed: %d km/h\nDistance: %.0f m" % \(fid, roadName, ri.road_level, ri.one_way, ri.max_speed, ri.dist)
-        self.info.setMessageAsPlainText(ftrData)
-
-        
-#        if self.dialogRoadInfo:
-#            self.dialogRoadInfo.closeEvent(None)
-#        self.dialogRoadInfo = RoadInfoDialog(self, pos)
-        self.info.show()    
         
     def makeAOI(self):
         pass
@@ -570,9 +601,22 @@ class FeatureOfInterestDefinerConfigurationWidget(StandardModuleConfigurationWid
      
     def okTriggered(self):
         the_fet = QgsFeature()
-        self.mem_layer_obj.featureAtId(0, the_fet)
-        the_geom = the_fet.geometry().exportToWkt()
-        print the_geom
+        the_geoms = []
+        print self.mem_layer_obj.featureCount()
+        self.mem_layer_obj.select()
+        while self.mem_layer_obj.nextFeature(the_fet):
+            #self.mem_layer_obj.featureAtId(0, the_fet)
+            
+            the_geoms.append(str(the_fet.geometry().exportToWkt()))
+        print the_geoms
+        wktstr = WKTString()
+        print wktstr
+
+        wktstr.setValue(the_geoms[0])
+        
+        self.controller.update_ports_and_functions(
+                self.module.id, [], [], [("WKTGeometry", the_geoms), ("SRS",[self.crsTextAsProj4.text()])])
+        self.close()
         #self.controller.update_ports_and_functions(self.module.id, [], [], functions)
 
         
@@ -592,8 +636,31 @@ class FeatureOfInterestDefiner(Module):
     '''
     
     def __init__(self):
-        pass
+        Module.__init__(self)
+        if self.hasInputFromPort("WKTGeometry"):
+            self.wkt = self.getInputFromPort("WKTGeometry")
+        self.srs = self.getInputFromPort("SRS")   
         
+    def checkGeom(self,  expected_type):
+        '''checks the geom to see if it can be instantiated as the expected type - enum of {'point','line','polygon'}'''
+        testGeom = QgsGeometry().fromWkt(self.wkt)    
+        if expected_type == 'point':
+            if testGeom.type() == 0:
+                return True
+            else:
+                return False
+        if expected_type == 'line':
+            if testGeom.type() == 1:
+                return True
+            else:
+                return False
+        if expected_type == 'polygon':
+            if testGeom.type() == 2:
+                return True
+            else:
+                return False
+
+
     def compute(self):
         '''implemented by subclasses'''
         pass
@@ -612,11 +679,13 @@ class AreaOfInterestDefiner(FeatureOfInterestDefiner):
     
     def __init__(self):
         FeatureOfInterestDefiner.__init__(self)
-        
+   
     def compute(self):
         ''''''
-        pass    
-
+        if self.checkGeom("polygon") :
+            self.setResult('AreaOfInterest', self.wkt) 
+        else:
+            raise ModuleError(self, "Incorrect Geometry Type provided - expected Polygon")
 class LineOfInterestDefiner(FeatureOfInterestDefiner):
     '''
     
@@ -633,7 +702,10 @@ class LineOfInterestDefiner(FeatureOfInterestDefiner):
         
     def compute(self):
         ''''''
-        pass    
+        if self.checkGeom("line") :
+            self.setResult('LineOfInterest', self.wkt) 
+        else:
+           raise ModuleError(self, "Incorrect Geometry Type provided - expected Line")    
         
 class PointOfInterestDefiner(FeatureOfInterestDefiner):
     '''
@@ -648,10 +720,13 @@ class PointOfInterestDefiner(FeatureOfInterestDefiner):
     
     def __init__(self):
         FeatureOfInterestDefiner.__init__(self)
-        
+
     def compute(self):
         ''''''
-        pass    
+        if self.checkGeom("line") :
+            self.setResult('PointOfInterest', self.wkt) 
+        else:
+           raise ModuleError(self, "Incorrect Geometry Type provided - expected Point")  
 
 
 

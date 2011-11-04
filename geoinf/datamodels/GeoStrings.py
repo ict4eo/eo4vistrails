@@ -162,7 +162,7 @@ GMLString = basic_modules.new_constant('GMLString',
                                         GeoStringConstantWidget)
 WKTString = basic_modules.new_constant('WKTString',
                                         staticmethod(str),
-                                        None,
+                                        "",
                                         staticmethod(lambda x: type(x) == str),
                                         GeoStringConstantWidget)
 GeoJSONString = basic_modules.new_constant('GeoJSONString',
