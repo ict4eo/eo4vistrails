@@ -69,20 +69,26 @@ def initialize(*args, **keywords):
 
     # Features
     reg.add_module(FeatureModel, namespace=mynamespace, abstract=True) #abstract
-    reg.add_module(FeatureImport,
-                   configureWidgetType=FeatureImportConfigurationWidget,
-                   namespace="broken")
+    #reg.add_module(FeatureImport,
+    #               configureWidgetType=FeatureImportConfigurationWidget,
+    #               namespace="broken")
+
+    # EPSG Code Constant
+    reg.add_module(QgsLayer.EPSGCode, namespace=mynamespace)
 
     # QgsMapLayer
     reg.add_module(QgsLayer.QgsMapLayer, namespace=mynamespace, abstract=True)
     reg.add_input_port(QgsLayer.QgsMapLayer, 'file', File)
     reg.add_input_port(QgsLayer.QgsMapLayer, 'dataRequest', DataRequest)
-    reg.add_output_port(QgsLayer.QgsMapLayer, "value", QgsLayer.QgsMapLayer)
+    #reg.add_output_port(QgsLayer.QgsMapLayer, "value", QgsLayer.QgsMapLayer)
 
     # QgsLayers
     reg.add_module(QgsLayer.QgsVectorLayer, name="Vector Layer", namespace=mynamespace)
+    reg.add_output_port(QgsLayer.QgsVectorLayer, "value", QgsLayer.QgsVectorLayer)
     reg.add_module(QgsLayer.QgsRasterLayer, name="Raster Layer", namespace=mynamespace)
+    reg.add_output_port(QgsLayer.QgsRasterLayer, "value", QgsLayer.QgsRasterLayer)
     reg.add_module(TemporalVectorLayer, name="Temporal Vector Layer", namespace=mynamespace)
+    reg.add_output_port(TemporalVectorLayer, "value", TemporalVectorLayer)
 
     # QgsLayerWriter
     reg.add_module(QgsLayerWriter.QgsLayerWriter, namespace=mynamespace)

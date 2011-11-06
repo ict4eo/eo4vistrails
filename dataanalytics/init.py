@@ -36,7 +36,6 @@ def initialize(*args, **keywords):
     from core.modules.module_registry import get_module_registry
     import PySAL
 
-
     reg = get_module_registry()
     mynamespace = "pysal"
 
@@ -48,9 +47,13 @@ def initialize(*args, **keywords):
     mynamespace = "rasterlang"
 
     #Add Rasterlang
-    reg.add_module(Rasterlang.layerAsArray, namespace=mynamespace)
-    reg.add_module(Rasterlang.writeGeoTiff, namespace=mynamespace)
-    reg.add_module(Rasterlang.arrayAsLayer, namespace=mynamespace)
+    reg.add_module(Rasterlang.GDALFormatComboBox, namespace=mynamespace, abstract=True)
+    #reg.add_module(Rasterlang.layerAsArray, namespace=mynamespace)
+    reg.add_module(Rasterlang.SaveArrayToRaster, name="Save Array To Raster", namespace=mynamespace)
+    #reg.add_module(Rasterlang.arrayAsLayer, namespace=mynamespace)
+    reg.add_module(Rasterlang.RasterLang, name = "RasterLang", 
+                   configureWidgetType=Rasterlang.RasterSourceConfigurationWidget,
+                   namespace=mynamespace)
 
     import Networkx
     mynamespace = "networkx"
@@ -93,7 +96,6 @@ def initialize(*args, **keywords):
                    namespace=mynamespace,
                    configureWidgetType=rstats.RSourceConfigurationWidget)
 
- 
     import r   
     mynamespace = "r"
     reg.add_module(r.RScriptExec,

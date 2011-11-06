@@ -9,21 +9,18 @@ Created on Fri Oct 28 09:55:33 2011
 #Created by Terence van Zyl
 from packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
 from packages.eo4vistrails.utils.synhigh import SyntaxSourceConfigurationWidget
+from packages.eo4vistrails.utils.ModuleHelperMixin import ModuleHelperMixin
 
 from script import Script
 
 import urllib
 
 @RPyCSafeModule()
-class RScript(Script):
+class RScript(Script, ModuleHelperMixin):
     """
        Executes a Octave Script 
        Writes output to output files and reads input from inout files
     """
-    _input_ports = [
-                   # ('inputDataFiles', '(edu.utah.sci.vistrails.basic:File)')
-                   #,('inputNumpyArray', '(edu.utah.sci.vistrails.numpyscipy:Numpy Array:numpy|array)')
-                   ]
 
     _output_ports = [
                      ('self', '(edu.utah.sci.vistrails.basic:Module)')
@@ -63,11 +60,10 @@ class RScript(Script):
         #Execute the script
         robjects.r(r_script)
     
-        outputDict = dict([(k, None)
-                           for k in self.outputPorts])
+        outputDict = dict([(k, None) for k in self.outputPorts])
         del(outputDict['self'])
 
-        for k in outputDict.iterkeys():            
+        for k in outputDict.iterkeys():
             if k in robjects.globalenv.keys() and robjects.globalenv[k] != None:                
                 if str(self.getPortType(k)) == str(NDArray):
                     print k, robjects.globalenv[k]

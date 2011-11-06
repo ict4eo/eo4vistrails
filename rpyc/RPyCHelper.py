@@ -30,10 +30,11 @@ It also has the rpyc remote code that is used for ???.
 #History
 #Terence van Zyl, 15 Dec 2010, Version 1.0
 
-from core.modules.vistrails_module import ModuleError, NotCacheable
+from core.modules.vistrails_module import ModuleError, NotCacheable, Module
 from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
 from RPyC import RPyCModule, refreshPackage
 from packages.eo4vistrails.utils.DropDownListWidget import ComboBoxWidget
+from packages.eo4vistrails.utils.ModuleHelperMixin import ModuleHelperMixin
 from core.modules import basic_modules
 import rpyc
 
@@ -109,27 +110,24 @@ def getSubConnection():
     
     return connection
 
-
-class RPyCCode(ThreadSafeMixin, RPyCModule):
+class RPyCCode(ThreadSafeMixin, Module, ModuleHelperMixin):
     """
     This module that executes an arbitrary piece of Python code remotely.
     """
     #TODO: If you want a PythonSource execution to fail, call fail(error_message).
     #TODO: If you want a PythonSource execution to be cached, call cache_this().
 
-    '''
-    This constructor is strictly unnecessary. However, some modules
-    might want to initialize per-object data. When implementing your
-    own constructor, remember that it must not take any extra parameters.
-    '''
+    _input_ports = [('rpycnode', '(za.co.csir.eo4vistrails:RpyC Node:rpyc)')]    
     
     def __init__(self):
         ThreadSafeMixin.__init__(self)
-        RPyCModule.__init__(self)
+        Module.__init__(self)
+        self.preCodeString = None
+        self.postCodeString = None
         
     def clear(self):
         print "clear"
-        RPyCModule.clear(self)
+        Module.clear(self)
         if self.conn:
             try:
                 self.conn.proc.terminate()
@@ -144,28 +142,26 @@ class RPyCCode(ThreadSafeMixin, RPyCModule):
             except:
                 pass
 
-    def run_code_orig(self, code_str, use_input=False, use_output=False):
-        """run_code runs a piece of code as a VisTrails module.
-        use_input and use_output control whether to use the inputport
-        and output port dictionary as local variables inside the
-        execution."""
-        import core.packagemanager
-
+    
+    def run_code_common(self, locals_, execute, code_str, use_input, use_output, pre_code_string, post_code_string):
+        import core.packagemanager        
+        
         def fail(msg):
             raise ModuleError(self, msg)
 
         def cache_this():
             self.is_cacheable = lambda *args, **kwargs: True
-
-        locals_ = locals()
+        
         if use_input:
-            inputDict = dict([(k, self.getInputFromPort(k))
-                              for k in self.inputPorts])
-            locals_.update(inputDict)
+            inputDict = None
+            self.setInputResults(locals_, inputDict)
+        
+        outputDict = None
         if use_output:
-            outputDict = dict([(k, None)
-                               for k in self.outputPorts])
+            outputDict = dict([(k, None) for k in self.outputPorts])
+            del outputDict['self']
             locals_.update(outputDict)
+            
         _m = core.packagemanager.get_package_manager()
         from core.modules.module_registry import get_module_registry
         reg = get_module_registry()
@@ -174,64 +170,73 @@ class RPyCCode(ThreadSafeMixin, RPyCModule):
                         'cache_this': cache_this,
                         'registry': reg,
                         'self': self})
-        del locals_['source']
-        print "Starting executing in main thread"
-        exec code_str in locals_, locals_
+
+        if pre_code_string:
+            execute(pre_code_string)
+        execute(code_str)
+        if post_code_string:
+            execute(post_code_string)
+        
         if use_output:
-            for k in outputDict.iterkeys():
-                if locals_[k] != None:
-                    self.setResult(k, locals_[k])
+            self.setOutputResults(locals_, outputDict)
+
+    def setInputResults(self, locals_, inputDict):
+        from packages.NumSciPy.Array import NDArray
+        
+        inputDict = dict([(k, self.getInputFromPort(k)) for k in self.inputPorts])
+        del inputDict['source']
+        if inputDict.has_key('rpycnode'):
+            del inputDict['rpycnode']
+
+        #check that if any are NDArrays we get the numpy array out        
+        for k in inputDict.iterkeys():
+            if type(inputDict[k]) == NDArray or str(type(inputDict[k])) == "<netref class 'packages.NumSciPy.Array.NDArray'>":
+                inputDict[k] = inputDict[k].get_array()
+        locals_.update(inputDict)
+    
+    def setOutputResults(self, locals_, outputDict):
+        from packages.NumSciPy.Array import NDArray
+        
+        for k in outputDict.iterkeys():
+            try:
+                if locals_.has_key(k) and locals_[k] != None:
+                    if self.getPortType(k) == NDArray or str(type(outputDict[k])) == "<netref class 'packages.NumSciPy.Array.NDArray'>":
+                        outArray = NDArray()
+                        outArray.set_array(locals_[k])
+                        self.setResult(k, outArray)
+                    else:
+                        self.setResult(k, locals_[k])
+            except AttributeError:
+                self.setResult(k, locals_[k])
+
+
+    def run_code_orig(self, code_str, use_input, use_output, pre_code_string, post_code_string):
+        """run_code runs a piece of code as a VisTrails module.
+        use_input and use_output control whether to use the inputport
+        and output port dictionary as local variables inside the
+        execution."""
+
+        locals_ = locals()
+        def execute(s):
+            exec s in locals_
+
+        print "Starting executing in main thread"
+        self.run_code_common(locals_, execute, code_str, use_input, use_output, pre_code_string, post_code_string)
         print "Finished executing in main thread"
 
-    def run_code(self, code_str, conn, use_input=False, use_output=False):
+    def run_code(self, code_str, conn, use_input, use_output, pre_code_string, post_code_string):
         """
         Runs a piece of code as a VisTrails module.
 
         Use_input and use_output control whether to use the input port
         and output port dictionary as local variables inside the execution.
         """
-        if code_str == '':
-            return
-
-        def fail(msg):
-            raise ModuleError(self, msg)
-
-        def cache_this():
-            self.is_cacheable = lambda *args, **kwargs: True
-
-        #TODO: changed to demo that this is in the cloud!!!!
         import sys
         conn.modules.sys.stdout = sys.stdout
 
-        if use_input:
-            inputDict = dict([(k, self.getInputFromPort(k)) for k in self.inputPorts])
-            conn.namespace.update(inputDict)
-
-        if use_output:
-            outputDict = dict([(k, self.get_output(k)) for k in self.outputPorts])
-            conn.namespace.update(outputDict)
-
-        from core import packagemanager
-        _m = packagemanager.get_package_manager()
-        from core.modules.module_registry import get_module_registry
-        reg = get_module_registry()
-        conn.namespace.update({'fail': fail,
-                               'package_manager': _m,
-                               'cache_this': cache_this,
-                               'registry': reg,
-                               'self': self})
-
-        del conn.namespace['source']
-
-        conn.execute(code_str)
-
-        if use_output:
-            for k in outputDict.iterkeys():
-                try:
-                    if conn.namespace[k] != None:
-                        self.setResult(k, conn.namespace[k])
-                except AttributeError:
-                    self.setResult(k, conn.namespace[k])
+        print "Starting executing in other thread"
+        self.run_code_common(conn.namespace, conn.execute, code_str, use_input, use_output, pre_code_string, post_code_string)
+        print "Finished executing in other thread"
 
     def compute(self):
         """
@@ -239,19 +244,18 @@ class RPyCCode(ThreadSafeMixin, RPyCModule):
         """
         self.conn = None
         if self.hasInputFromPort('rpycnode'):
-            v = self.getInputFromPort('rpycnode')
-            print v
-
             (isRemote, self.conn) = self.inputPorts['rpycnode'][0].obj.getSharedConnection()
 
         from core.modules import basic_modules
-        s = basic_modules.urllib.unquote(
-            str(self.forceGetInputFromPort('source', '')))
+        s = basic_modules.urllib.unquote(str(self.forceGetInputFromPort('source', '')))
 
+        if s == '':
+            return
+                    
         if self.conn:
-            self.run_code(s, self.conn, use_input=True, use_output=True)
+            self.run_code(s, self.conn, True, True, self.preCodeString, self.postCodeString)
         else:
-            self.run_code_orig(s, use_input=True, use_output=True)
+            self.run_code_orig(s, True, True, self.preCodeString, self.postCodeString)
 
 
 class RPyC_C_Code(RPyCCode):

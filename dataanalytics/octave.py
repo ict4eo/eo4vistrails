@@ -29,7 +29,7 @@
 #History
 #Created by Terence van Zyl
 from packages.eo4vistrails.utils.synhigh import SyntaxSourceConfigurationWidget
-
+from packages.eo4vistrails.utils.ModuleHelperMixin import ModuleHelperMixin
 from core.modules.vistrails_module import ModuleError, Module
 
 from subprocess import call
@@ -37,7 +37,7 @@ from tempfile import mkstemp
 from os import fdopen
 import urllib
 
-class OctaveScript(Module):
+class OctaveScript(Module, ModuleHelperMixin):
     """
        Executes a Octave Script 
        Writes output to output files and reads input from inout files
@@ -80,9 +80,9 @@ class OctaveScript(Module):
                           for k in self.inputPorts])
         
         # remove the script from the list
-        del(inputDict['source'])
+        del inputDict['source']
         if inputDict.has_key('rpycnode'):
-            del(inputDict['rpycnode'])
+            del inputDict['rpycnode']
         
         #check that if any are NDArrays we get the numpy array out        
         for k in inputDict.iterkeys():
@@ -132,12 +132,6 @@ class OctaveScript(Module):
         else:
             raise ModuleError, (OctaveScript, "Could not execute Octave Script")
 
-    def getPortType(self, portName, portType="output"):
-        for i in self.moduleInfo['pipeline'].module_list:
-            if i.id == self.moduleInfo['moduleId']:
-                for j in i.port_specs:
-                    if i.port_specs[j].type == portType and i.port_specs[j].name == portName:
-                        return i.port_specs[j].signature[0][0]
 
 
 class OctaveSourceConfigurationWidget(SyntaxSourceConfigurationWidget):

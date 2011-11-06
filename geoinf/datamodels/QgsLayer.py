@@ -36,15 +36,31 @@ from PyQt4.QtCore import QFileInfo
 from core.modules.vistrails_module import Module, ModuleError
 # eo4vistrails
 from packages.eo4vistrails.utils.DataRequest import DataRequest
-from packages.eo4vistrails.rpyc.RPyC import RPyCModule, RPyCSafeModule
 from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
+from packages.eo4vistrails.utils.DropDownListWidget import ComboBoxWidget
 # local
+from core.modules import basic_modules
 
+class EPSGComboBoxWidget(ComboBoxWidget):
+    """TODO: Add docstring
+    """
+    default = ('4326', 4326)
+
+    def getKeyValues(self):
+        return {'3867':3786, '4326': 4326}
+
+EPSGCode = basic_modules.new_constant('EPSG Code',
+                                      staticmethod(eval),
+                                      4326,
+                                      staticmethod(lambda x: type(x) == int),
+                                      EPSGComboBoxWidget)
 
 class QgsMapLayer(ThreadSafeMixin, Module):
     """This module will create a QGIS layer from a file
     """
-
+    
+    #_input_ports = [('EPSG Code', '(za.co.csir.eo4vistrails:EPSG Code:data)')] 
+    
     def __init__(self):
         ThreadSafeMixin.__init__(self)
         Module.__init__(self)
@@ -85,7 +101,8 @@ class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
         try:
             thefile = self.forceGetInputFromPort('file', None)
             dataReq = self.forceGetInputFromPort('dataRequest', None)
-
+            theProj = self.forceGetInputFromPort('EPSG Code', None)
+            
             try:
                 isFILE = (thefile != None) and (thefile.name != '')
             except AttributeError:
@@ -103,12 +120,16 @@ class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
                     thefilepath,
                     thefilename,
                     "ogr")
+                if theProj:
+                    self.setCrs(qgis.core.QgsCoordinateReferenceSystem(theProj))
             elif isQGISSuported:
                 qgis.core.QgsVectorLayer.__init__(
                     self,
                     dataReq.get_uri(),
                     dataReq.get_layername(),
                     dataReq.get_driver())
+                if theProj:
+                    self.setCrs(qgis.core.QgsCoordinateReferenceSystem(theProj))
             else:
                 if dataReq:
                     self.raiseError('Vector Layer Driver %s not supported' %
@@ -137,9 +158,11 @@ class QgsRasterLayer(QgsMapLayer, qgis.core.QgsRasterLayer):
         try:
             thefile = self.forceGetInputFromPort('file', None)
             dataReq = self.forceGetInputFromPort('dataRequest', None)
+            theProj = self.forceGetInputFromPort('EPSG Code', None)
 
             print "thefile", thefile
             print "thefile", thefile.name
+            print "projection", theProj
 
             isFILE = (thefile != None) and (thefile.name != '')
             isQGISSuported = isinstance(dataReq, DataRequest) and \
@@ -152,11 +175,15 @@ class QgsRasterLayer(QgsMapLayer, qgis.core.QgsRasterLayer):
                     self,
                     thefilepath,
                     thefilename)
+                if theProj:
+                    self.setCrs(qgis.core.QgsCoordinateReferenceSystem(theProj))
             elif isQGISSuported:
                 qgis.core.QgsRasterLayer.__init__(
                     self,
                     dataReq.get_uri(),
                     dataReq.get_layername())
+                if theProj:
+                    self.setCrs(qgis.core.QgsCoordinateReferenceSystem(theProj))
             else:
                 self.raiseError('Raster Layer Driver %s not supported' %
                                 str(dataReq.get_driver()))

@@ -119,14 +119,19 @@ def layerAsArray(layer):
     array = gd.ReadAsArray()
     return array
 
+def writeHFA(arrayData, extent, path):
+    writeImage(arrayData, extent, path, format='HFA')
+
 def writeGeoTiff(arrayData, extent, path):
+    writeImage(arrayData, extent, path)
+    
+def writeImage(arrayData, extent, path, format='GTiff'):
     """
     write the given array data to the file 'path' with the given extent.
     
     if arrayData shape is of length 3, then we have multibands (nbad,rows,cols), otherwise one band
     """
     
-    format = "GTiff"
     driver = gdal.GetDriverByName( format )
     metadata = driver.GetMetadata()
     if metadata.has_key(gdal.DCAP_CREATE) \
