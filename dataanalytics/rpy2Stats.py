@@ -75,9 +75,7 @@ class Rpy2Script(Script):
             f2=open('/home/mmtsetfwa/RScripts/testType.txt', 'w')
             f2.write(str(mylist))
             f2.write(str(type(mylist)))
-            #f2.close()
-            
-         
+            #f2.close()  
         
         outputDict = dict([(k, None)
                            for k in self.outputPorts])
@@ -86,17 +84,17 @@ class Rpy2Script(Script):
         for k in outputDict.iterkeys():
                self.setResult(k, robjects.globalenv[k]) 
                f2.write(str(self.getPortType(k)))
-               if (isinstance(mylist,dict)) and (self.getPortType(k)=='core.modules.vistrails_module.Dictionary'):
-                   self.SetResult(k,mylist)
-               elif (isinstance(mylist,numpy.ndarray)) and (self.getPortType(k)=='packages.eo4vistrails.utils.Array.NDArray'):
-                   self.SetResult(k,mylist)
+               if isinstance(mylist,dict) and str(self.getPortType(k))=="<class 'core.modules.vistrails_module.Dictionary'>":
+                   self.setResult(k,mylist)
+               elif isinstance(mylist,numpy.ndarray) and str(self.getPortType(k)=="<class 'packages.eo4vistrails.utils.Array.NDArray'>"):
+                   self.setResult(k,mylist)
                elif k in robjects.globalenv.keys() and robjects.globalenv[k] != None:
                    if self.getPortType(k) == NDArray:
                         outArray = NDArray()
                         outArray.set_array(numpy.array(robjects.globalenv[k]))
                         self.setResult(k, outArray)                   
                elif self.getPortType(k)==type(mylist):
-                   self.SetResult(k,mylist)                   
+                   self.setResult(k,mylist)                   
                else:
                     self.setResult(k, robjects.globalenv[k])      
        # outputDict.update({'myDict':mylist})
