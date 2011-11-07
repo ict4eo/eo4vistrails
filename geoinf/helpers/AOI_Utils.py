@@ -637,9 +637,7 @@ class FeatureOfInterestDefiner(Module):
     
     def __init__(self):
         Module.__init__(self)
-        if self.hasInputFromPort("WKTGeometry"):
-            self.wkt = self.getInputFromPort("WKTGeometry")
-        self.srs = self.getInputFromPort("SRS")   
+
         
     def checkGeom(self,  expected_type):
         '''checks the geom to see if it can be instantiated as the expected type - enum of {'point','line','polygon'}'''
@@ -682,6 +680,11 @@ class AreaOfInterestDefiner(FeatureOfInterestDefiner):
    
     def compute(self):
         ''''''
+        if self.hasInputFromPort("WKTGeometry"):
+            print "gotwkt"
+            self.wkt = self.getInputFromPort("WKTGeometry")
+        if self.hasInputFromPort("SRS"):
+            self.srs = self.getInputFromPort("SRS")   
         if self.checkGeom("polygon") :
             self.setResult('AreaOfInterest', self.wkt) 
         else:
