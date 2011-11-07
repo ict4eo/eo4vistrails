@@ -110,13 +110,14 @@ def getSubConnection():
     
     return connection
 
-class RPyCCode(ThreadSafeMixin, Module, ModuleHelperMixin):
+class RPyCCode(ThreadSafeMixin, NotCacheable, Module, ModuleHelperMixin):
     """
     This module that executes an arbitrary piece of Python code remotely.
+    TODO: This code is not threadsafe. Terence needs to fix it
     """
     #TODO: If you want a PythonSource execution to fail, call fail(error_message).
-    #TODO: If you want a PythonSource execution to be cached, call cache_this().
-
+    #TODO: If you want a PythonSource execution to be cached, call cache_this().    
+    
     _input_ports = [('rpycnode', '(za.co.csir.eo4vistrails:RpyC Node:rpyc)')]    
     
     def __init__(self):

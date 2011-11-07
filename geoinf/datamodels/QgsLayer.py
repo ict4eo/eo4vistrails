@@ -40,6 +40,7 @@ from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
 from packages.eo4vistrails.utils.DropDownListWidget import ComboBoxWidget
 # local
 from core.modules import basic_modules
+from threading import Thread, currentThread, RLock
 
 class EPSGComboBoxWidget(ComboBoxWidget):
     """TODO: Add docstring
@@ -55,8 +56,14 @@ EPSGCode = basic_modules.new_constant('EPSG Code',
                                       staticmethod(lambda x: type(x) == int),
                                       EPSGComboBoxWidget)
 
+global globalQgsLock
+globalQgsLock = RLock()
+
 class QgsMapLayer(ThreadSafeMixin, Module):
-    """This module will create a QGIS layer from a file
+#class QgsMapLayer(Module):
+    """
+    This module will create a QGIS layer from a file
+    IT is not threadsafe and has race conditions on the qgis drivers
     """
     
     #_input_ports = [('EPSG Code', '(za.co.csir.eo4vistrails:EPSG Code:data)')] 
@@ -90,14 +97,15 @@ class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
     """
 
     def __init__(self, uri=None, layername=None, driver=None):
-        QgsMapLayer.__init__(self)
-        #print "QgsLayer:78", uri, layername, driver
+        QgsMapLayer.__init__(self)        
         if uri and layername and driver:
             qgis.core.QgsVectorLayer.__init__(self, uri, layername, driver)
         self.SUPPORTED_DRIVERS = ['WFS', 'ogr', 'postgres']
 
     def compute(self):
         """Execute the module to create the output"""
+        global globalQgsLock
+
         try:
             thefile = self.forceGetInputFromPort('file', None)
             dataReq = self.forceGetInputFromPort('dataRequest', None)
@@ -115,19 +123,31 @@ class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
             if isFILE:
                 thefilepath = thefile.name
                 thefilename = QFileInfo(thefilepath).fileName()
+
+                globalQgsLock.acquire()
+                
                 qgis.core.QgsVectorLayer.__init__(
                     self,
                     thefilepath,
                     thefilename,
                     "ogr")
+
+                globalQgsLock.release()
+                
                 if theProj:
                     self.setCrs(qgis.core.QgsCoordinateReferenceSystem(theProj))
             elif isQGISSuported:
+
+                globalQgsLock.acquire()
+
                 qgis.core.QgsVectorLayer.__init__(
                     self,
                     dataReq.get_uri(),
                     dataReq.get_layername(),
                     dataReq.get_driver())
+
+                globalQgsLock.release()
+
                 if theProj:
                     self.setCrs(qgis.core.QgsCoordinateReferenceSystem(theProj))
             else:
@@ -142,7 +162,6 @@ class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
         except Exception, e:
             self.raiseError('Cannot set output port: %s' % str(e))
 
-
 class QgsRasterLayer(QgsMapLayer, qgis.core.QgsRasterLayer):
     """Create a QGIS raster layer.
     """
@@ -154,6 +173,9 @@ class QgsRasterLayer(QgsMapLayer, qgis.core.QgsRasterLayer):
         self.SUPPORTED_DRIVERS = ['WCS', 'gdl']
 
     def compute(self):
+
+        global globalQgsLock
+
         """Execute the module to create the output"""
         try:
             thefile = self.forceGetInputFromPort('file', None)
@@ -161,7 +183,7 @@ class QgsRasterLayer(QgsMapLayer, qgis.core.QgsRasterLayer):
             theProj = self.forceGetInputFromPort('EPSG Code', None)
 
             print "thefile", thefile
-            print "thefile", thefile.name
+            print "thefile name", thefile.name
             print "projection", theProj
 
             isFILE = (thefile != None) and (thefile.name != '')
@@ -171,17 +193,29 @@ class QgsRasterLayer(QgsMapLayer, qgis.core.QgsRasterLayer):
             if isFILE:
                 thefilepath = thefile.name
                 thefilename = QFileInfo(thefilepath).fileName()
+
+                globalQgsLock.acquire()
+
                 qgis.core.QgsRasterLayer.__init__(
                     self,
                     thefilepath,
                     thefilename)
+
+                globalQgsLock.release()
+
                 if theProj:
                     self.setCrs(qgis.core.QgsCoordinateReferenceSystem(theProj))
             elif isQGISSuported:
+
+                globalQgsLock.acquire()
+
                 qgis.core.QgsRasterLayer.__init__(
                     self,
                     dataReq.get_uri(),
                     dataReq.get_layername())
+
+                globalQgsLock.release()
+
                 if theProj:
                     self.setCrs(qgis.core.QgsCoordinateReferenceSystem(theProj))
             else:
