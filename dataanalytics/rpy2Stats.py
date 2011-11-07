@@ -5,9 +5,8 @@ Created on Tue Nov  1 11:23:35 2011
 @author: mmtsetfwa
 """
 
-#from packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
 from packages.eo4vistrails.utils.synhigh import SyntaxSourceConfigurationWidget
-
+import core.modules
 from core.modules.vistrails_module import ModuleError
 
 from script import Script
@@ -21,38 +20,11 @@ try:
     rpy2.robjects.numpy2ri.activate()
 except:
     pass
-r=robjects.r 
-        
- #Converting R output to a Python Type.
-def rPyConversion(data):    
-    if isinstance(data,rpy2.robjects.vectors.ListVector):
-       pyDict = {}        
-       for name,value in zip([i for i in rpy2.robjects.r.names(data)],[i for i in data]):
-           if len(value) == 1: 
-               pyDict[name] = value[0]
-           else: pyDict[name] = [i for i in value]
-       return pyDict
-            
-    elif (isinstance(data,robjects.vectors.FloatVector) or isinstance(data,robjects.vectors.IntVector) or
-        isinstance(data,robjects.vectors.BoolVector)  or isinstance(data,robjects.vectors.ComplexVector)) and (len(data)>1):
-         return numpy.array(data)
-            
-    elif (isinstance(data,robjects.vectors.FloatVector) or isinstance(data,robjects.vectors.IntVector) or
-        isinstance(data,robjects.vectors.BoolVector)  or isinstance(data,robjects.vectors.ComplexVector)) and (len(data)==1):
-         return data[0]
-    elif isinstance(data,rpy2.robjects.vectors.Vector):
-        return numpy.array(data)
-    elif isinstance(data,rpy2.robjects.vectors.DataFrame):
-        return data
-    elif isinstance(data,rpy2.rinterface.RNULLType):
-        return None
-        
-        
+r=robjects.r         
 
-#@RPyCSafeModule()
 class Rpy2Script(Script):
     """
-       Run R using rpy2 interface
+       Run R scripts using rpy2 interface
     """
     _input_ports = [
                    # ('inputDataFiles', '(edu.utah.sci.vistrails.basic:File)')
@@ -61,6 +33,7 @@ class Rpy2Script(Script):
 
     _output_ports = [
                      ('self', '(edu.utah.sci.vistrails.basic:Module)')
+                     #('myDict', '(edu.utah.sci.vistrails.basic:Dictionary)')
                     ]
 
     def __init__(self):
@@ -85,37 +58,52 @@ class Rpy2Script(Script):
             robjects.globalenv[k] = inputDict[k]
 
         #Execute the script
-        resultVar=r(r_script)
-        x=type(resultVar)
-        #testing purposes
+        try:
+            resultVar=r(r_script)
+        except:
+            raise ModuleError, (Rpy2Script, "Could not execute R Script")
+         #testing purposes
+        x=type(resultVar)       
         f=open('/home/mmtsetfwa/RScripts/rpy2Results.txt', 'w')
         f.write(str(x))        
         f.close()
-        
-        mylist=rPyConversion(resultVar)
+        #Converting R result to Python type
+        mylist=self.rPyConversion(resultVar)
         #testing purposes
         if mylist !=None:           
             #test writing converted result to file
             f2=open('/home/mmtsetfwa/RScripts/testType.txt', 'w')
             f2.write(str(mylist))
-            f2.close()
+            f2.write(str(type(mylist)))
+            #f2.close()
             
+         
         
         outputDict = dict([(k, None)
                            for k in self.outputPorts])
         del(outputDict['self'])
 
         for k in outputDict.iterkeys():
-            if k in robjects.globalenv.keys() and robjects.globalenv[k] != None:
-                if self.getPortType(k) == NDArray:
-                    outArray = NDArray()
-                    outArray.set_array(numpy.array(robjects.globalenv[k]))
-                    self.setResult(k, outArray)
-                else:
-                    self.setResult(k, robjects.globalenv[k][0])
-        #except:
-        #    raise ModuleError, (Rpy2Script, "Could not execute R Script")
-
+               self.setResult(k, robjects.globalenv[k]) 
+               f2.write(str(self.getPortType(k)))
+               if (isinstance(mylist,dict)) and (self.getPortType(k)=='core.modules.vistrails_module.Dictionary'):
+                   self.SetResult(k,mylist)
+               elif (isinstance(mylist,numpy.ndarray)) and (self.getPortType(k)=='packages.eo4vistrails.utils.Array.NDArray'):
+                   self.SetResult(k,mylist)
+               elif k in robjects.globalenv.keys() and robjects.globalenv[k] != None:
+                   if self.getPortType(k) == NDArray:
+                        outArray = NDArray()
+                        outArray.set_array(numpy.array(robjects.globalenv[k]))
+                        self.setResult(k, outArray)                   
+               elif self.getPortType(k)==type(mylist):
+                   self.SetResult(k,mylist)                   
+               else:
+                    self.setResult(k, robjects.globalenv[k])      
+       # outputDict.update({'myDict':mylist})
+        f2.close()
+        f3 = open('/home/mmtsetfwa/RScripts/saveMyDict.txt','w')
+        f3.write(str(outputDict))
+        f3.close()
         
 
     def getPortType(self, portName, portType="output"):
@@ -124,7 +112,32 @@ class Rpy2Script(Script):
                 for j in i.port_specs:
                     if i.port_specs[j].type == portType and i.port_specs[j].name == portName:
                         return i.port_specs[j].signature[0][0]
-
+    
+    
+    #Converting R result to a Python Type.
+    def rPyConversion(self,data):
+        try:
+            if isinstance(data,rpy2.robjects.vectors.ListVector):
+               pyDict = {}        
+               for name,value in zip([i for i in rpy2.robjects.r.names(data)],[i for i in data]):
+                   if len(value) == 1: 
+                       pyDict[name] = value[0]
+                   else: pyDict[name] = [i for i in value]
+               return pyDict            
+            elif (isinstance(data,robjects.vectors.FloatVector) or isinstance(data,robjects.vectors.IntVector) or
+                isinstance(data,robjects.vectors.BoolVector)  or isinstance(data,robjects.vectors.ComplexVector)) and (len(data)>1):
+               return numpy.array(data)            
+            elif (isinstance(data,robjects.vectors.FloatVector) or isinstance(data,robjects.vectors.IntVector) or
+                isinstance(data,robjects.vectors.BoolVector)  or isinstance(data,robjects.vectors.ComplexVector)) and (len(data)==1):
+               return data[0]
+            elif isinstance(data,rpy2.robjects.vectors.Vector):
+               return numpy.array(data)
+            elif isinstance(data,rpy2.robjects.vectors.DataFrame):
+               return data
+            elif isinstance(data,rpy2.rinterface.RNULLType):
+               return None
+        except:
+            raise ModuleError, (Rpy2Script, "Could not convert R type to Python type")
 
 class RSourceConfigurationWidget(SyntaxSourceConfigurationWidget):
     def __init__(self, module, controller, parent=None):
