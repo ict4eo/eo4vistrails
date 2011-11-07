@@ -142,7 +142,6 @@ class RPyCCode(ThreadSafeMixin, NotCacheable, Module, ModuleHelperMixin):
                 self.conn.close()
             except:
                 pass
-
     
     def run_code_common(self, locals_, execute, code_str, use_input, use_output, pre_code_string, post_code_string):
         import core.packagemanager        
