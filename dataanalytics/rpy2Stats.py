@@ -17,7 +17,10 @@ import numpy
 from packages.NumSciPy.Array import NDArray
 import rpy2.robjects as robjects
 import rpy2.robjects.numpy2ri
-rpy2.robjects.numpy2ri.activate()
+try:
+    rpy2.robjects.numpy2ri.activate()
+except:
+    pass
 r=robjects.r 
         
  #Converting R output to a Python Type.
