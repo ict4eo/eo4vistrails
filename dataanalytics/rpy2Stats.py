@@ -80,6 +80,8 @@ class Rpy2Script(Script):
                    self.setResult(k,rResult)
                elif isinstance(rResult,float) and str(self.getPortType(k))=="<class 'core.modules.vistrails_module.Integer'>":
                    self.setResult(k,rResult)
+               elif isinstance(rResult,float) and str(self.getPortType(k))=="<class 'core.modules.vistrails_module.Float'>":
+                   self.setResult(k,rResult)
                elif isinstance(rResult,bool) and str(self.getPortType(k))=="<class 'core.modules.vistrails_module.Boolean'>":
                    self.setResult(k,rResult)                                 
                elif self.getPortType(k)==type(rResult):
