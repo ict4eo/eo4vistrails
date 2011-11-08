@@ -225,6 +225,64 @@ class QGISMapCanvasCellWidget(QCellWidget):
                 self.update()
                 # populate mylist with inputLayers's items
                 self.mylist.append(layer)
+                # test if the layer is a raster from a local file (not a wms)
+                if layer.type() == layer.RasterLayer and ( not layer.usesProvider() ):
+                    # Test if the raster is single band greyscale
+                    if layer.drawingStyle() in allowedGreyStyles:
+                        #Everything looks fine so set stretch and exit
+                        #For greyscale layers there is only ever one band
+                        band = layer.bandNumber( layer.grayBandName() ) # base 1 counting in gdal
+                        extentMin = 0.0
+                        extentMax = 0.0
+                        generateLookupTableFlag = False
+                        # compute the min and max for the current extent
+                        extentMin, extentMax = layer.computeMinimumMaximumEstimates( band )
+                        # set the layer min value for this band
+                        layer.setMinimumValue( band, extentMin, generateLookupTableFlag )
+                        # set the layer max value for this band
+                        layer.setMaximumValue( band, extentMax, generateLookupTableFlag )
+                        # ensure that stddev is set to zero
+                        layer.setStandardDeviations( 0.0 )
+                        # let the layer know that the min max are user defined
+                        layer.setUserDefinedGrayMinimumMaximum( True )
+                        # ensure any cached render data for this layer is cleared
+                        layer.setCacheImage( None )
+                        # make sure the layer is redrawn
+                        layer.triggerRepaint()
+                        
+                    if layer.drawingStyle() in allowedRgbStyles:
+                        #Everything looks fine so set stretch and exit
+                        redBand = layer.bandNumber( layer.redBandName() )
+                        greenBand = layer.bandNumber( layer.greenBandName() )
+                        blueBand = layer.bandNumber( layer.blueBandName() )
+                        extentRedMin = 0.0
+                        extentRedMax = 0.0
+                        extentGreenMin = 0.0
+                        extentGreenMax = 0.0
+                        extentBlueMin = 0.0
+                        extentBlueMax = 0.0
+                        generateLookupTableFlag = False
+                        # compute the min and max for the current extent
+                        extentRedMin, extentRedMax = layer.computeMinimumMaximumEstimates( redBand )
+                        extentGreenMin, extentGreenMax = layer.computeMinimumMaximumEstimates( greenBand )
+                        extentBlueMin, extentBlueMax = layer.computeMinimumMaximumEstimates( blueBand )
+                        # set the layer min max value for the red band
+                        layer.setMinimumValue( redBand, extentRedMin, generateLookupTableFlag )
+                        layer.setMaximumValue( redBand, extentRedMax, generateLookupTableFlag )
+                        # set the layer min max value for the red band
+                        layer.setMinimumValue( greenBand, extentGreenMin, generateLookupTableFlag )
+                        layer.setMaximumValue( greenBand, extentGreenMax, generateLookupTableFlag )
+                        # set the layer min max value for the red band
+                        layer.setMinimumValue( blueBand, extentBlueMin, generateLookupTableFlag )
+                        layer.setMaximumValue( blueBand, extentBlueMax, generateLookupTableFlag )
+                        # ensure that stddev is set to zero
+                        layer.setStandardDeviations( 0.0 )
+                        # let the layer know that the min max are user defined
+                        layer.setUserDefinedRGBMinimumMaximum( True )
+                        # ensure any cached render data for this layer is cleared
+                        layer.setCacheImage( None )
+                        # make sure the layer is redrawn
+                        layer.triggerRepaint()
         # Add widget for layer control to canvas
         #~self.explorerListWidget.clear()
         #print "self.explorerListWidget count", self.explorerListWidget.count()
