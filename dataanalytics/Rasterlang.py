@@ -192,6 +192,9 @@ class SaveArrayToRaster(RasterlangModule, RPyCModule):
                      ('output file', '(edu.utah.sci.vistrails.basic:File)'),
                      ('format', '(za.co.csir.eo4vistrails:GDAL Format:rasterlang)')]
 
+    _output_ports  = [ ('output file path', '(edu.utah.sci.vistrails.basic:File)')]
+
+
     def __init__(self):
         RPyCModule.__init__(self)
         RasterlangModule.__init__(self)
@@ -201,8 +204,12 @@ class SaveArrayToRaster(RasterlangModule, RPyCModule):
         ndarray = self.getInputFromPort('numpy array')
         prototype = self.getInputFromPort('prototype')
         outformat = self.getInputFromPort('format')
+        
+        print "protoype nodata", prototype.noDataValue()
 
         gdalnumeric.SaveArray(ndarray.get_array(), outfile.name, format=outformat, prototype=str(prototype.source()))
+        
+        self.setResult('output file path', outfile)
         #e = layer.extent()
         #extent = [e.xMinimum(),e.yMinimum(),e.xMaximum(),e.yMaximum()]
 #        writeImage(ndarray.get_array(), extent, outfile.name, format='HFA' )

@@ -56,11 +56,11 @@ EPSGCode = basic_modules.new_constant('EPSG Code',
                                       staticmethod(lambda x: type(x) == int),
                                       EPSGComboBoxWidget)
 
-global globalQgsLock
-globalQgsLock = RLock()
+#global globalQgsLock
+#globalQgsLock = RLock()
 
-class QgsMapLayer(ThreadSafeMixin, Module):
-#class QgsMapLayer(Module):
+#class QgsMapLayer(ThreadSafeMixin, Module):
+class QgsMapLayer(Module):
     """
     This module will create a QGIS layer from a file
     IT is not threadsafe and has race conditions on the qgis drivers
@@ -69,7 +69,7 @@ class QgsMapLayer(ThreadSafeMixin, Module):
     #_input_ports = [('EPSG Code', '(za.co.csir.eo4vistrails:EPSG Code:data)')] 
     
     def __init__(self):
-        ThreadSafeMixin.__init__(self)
+        #ThreadSafeMixin.__init__(self)
         Module.__init__(self)
 
     def raiseError(self, msg, error=''):
@@ -104,7 +104,7 @@ class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
 
     def compute(self):
         """Execute the module to create the output"""
-        global globalQgsLock
+        #global globalQgsLock
 
         try:
             thefile = self.forceGetInputFromPort('file', None)
@@ -124,7 +124,7 @@ class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
                 thefilepath = thefile.name
                 thefilename = QFileInfo(thefilepath).fileName()
 
-                globalQgsLock.acquire()
+                #globalQgsLock.acquire()
                 
                 qgis.core.QgsVectorLayer.__init__(
                     self,
@@ -132,13 +132,13 @@ class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
                     thefilename,
                     "ogr")
 
-                globalQgsLock.release()
+                #globalQgsLock.release()
                 
                 if theProj:
                     self.setCrs(qgis.core.QgsCoordinateReferenceSystem(theProj))
             elif isQGISSuported:
 
-                globalQgsLock.acquire()
+                #globalQgsLock.acquire()
 
                 qgis.core.QgsVectorLayer.__init__(
                     self,
@@ -146,7 +146,7 @@ class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
                     dataReq.get_layername(),
                     dataReq.get_driver())
 
-                globalQgsLock.release()
+                #globalQgsLock.release()
 
                 if theProj:
                     self.setCrs(qgis.core.QgsCoordinateReferenceSystem(theProj))
@@ -194,27 +194,27 @@ class QgsRasterLayer(QgsMapLayer, qgis.core.QgsRasterLayer):
                 thefilepath = thefile.name
                 thefilename = QFileInfo(thefilepath).fileName()
 
-                globalQgsLock.acquire()
+                #globalQgsLock.acquire()
 
                 qgis.core.QgsRasterLayer.__init__(
                     self,
                     thefilepath,
                     thefilename)
 
-                globalQgsLock.release()
+                #globalQgsLock.release()
 
                 if theProj:
                     self.setCrs(qgis.core.QgsCoordinateReferenceSystem(theProj))
             elif isQGISSuported:
 
-                globalQgsLock.acquire()
+                #globalQgsLock.acquire()
 
                 qgis.core.QgsRasterLayer.__init__(
                     self,
                     dataReq.get_uri(),
                     dataReq.get_layername())
 
-                globalQgsLock.release()
+                #globalQgsLock.release()
 
                 if theProj:
                     self.setCrs(qgis.core.QgsCoordinateReferenceSystem(theProj))

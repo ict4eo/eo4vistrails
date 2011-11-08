@@ -108,7 +108,7 @@ class QGISMapCanvasCellWidget(QCellWidget):
 
         # create canvas
         self.canvas = QgsMapCanvas()
-        self.canvas.setCanvasColor(QColor(200, 200, 255))
+        self.canvas.setCanvasColor(QColor(240, 255, 180))
         #self.mainLayout.addWidget(self.canvas)
 
         # icons
