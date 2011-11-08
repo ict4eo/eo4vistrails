@@ -62,7 +62,7 @@ class Rpy2Script(Script):
             raise ModuleError, (Rpy2Script, "Could not execute R Script")
                 
         #Converting R result to Python type
-        mylist=self.rPyConversion(resultVar)
+        rResult=self.rPyConversion(resultVar)
         
         
         outputDict = dict([(k, None)
@@ -70,20 +70,20 @@ class Rpy2Script(Script):
         del(outputDict['self'])
         #assigning converted R result to output port
         for k in outputDict.iterkeys():             
-               if isinstance(mylist,dict) and str(self.getPortType(k))=="<class 'core.modules.vistrails_module.Dictionary'>":
-                   self.setResult(k,mylist)
-               elif isinstance(mylist,numpy.ndarray) and str(self.getPortType(k)=="<class 'packages.eo4vistrails.utils.Array.NDArray'>"):
-                   self.setResult(k,mylist)
-               elif isinstance(mylist,numpy.ndarray) and str(self.getPortType(k)=="<class 'core.modules.vistrails_module.String'>"):
-                   self.setResult(k,mylist)
-               elif isinstance(mylist,str) and str(self.getPortType(k)=="<class 'core.modules.vistrails_module.String'>"):
-                   self.setResult(k,mylist)
-               elif isinstance(mylist,float) and str(self.getPortType(k)=="<class 'core.modules.vistrails_module.Integer'>"):
-                   self.setResult(k,mylist)
-               elif isinstance(mylist,bool) and str(self.getPortType(k)=="<class 'core.modules.vistrails_module.Boolean'>"):
-                   self.setResult(k,mylist)                                 
-               elif self.getPortType(k)==type(mylist):
-                   self.setResult(k,mylist)                   
+               if isinstance(rResult,dict) and str(self.getPortType(k))=="<class 'core.modules.vistrails_module.Dictionary'>":
+                   self.setResult(k,rResult)
+               elif isinstance(rResult,numpy.ndarray) and str(self.getPortType(k))=="<class 'packages.eo4vistrails.utils.Array.NDArray'>":
+                   self.setResult(k,rResult)
+               elif isinstance(rResult,numpy.ndarray) and str(self.getPortType(k))=="<class 'core.modules.vistrails_module.String'>":
+                   self.setResult(k,rResult)
+               elif isinstance(rResult,str) and str(self.getPortType(k))=="<class 'core.modules.vistrails_module.String'>":
+                   self.setResult(k,rResult)
+               elif isinstance(rResult,float) and str(self.getPortType(k))=="<class 'core.modules.vistrails_module.Integer'>":
+                   self.setResult(k,rResult)
+               elif isinstance(rResult,bool) and str(self.getPortType(k))=="<class 'core.modules.vistrails_module.Boolean'>":
+                   self.setResult(k,rResult)                                 
+               elif self.getPortType(k)==type(rResult):
+                   self.setResult(k,rResult)                   
 #               else:
 #                    self.setResult(k, robjects.globalenv[k])      
       
