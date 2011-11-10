@@ -51,45 +51,61 @@ class Rpy2Script(Script):
         
         #check that if any are NDArrays we get the numpy array out
         for k in inputDict.iterkeys():
-            if type(inputDict[k]) == NDArray:
-                inputDict[k] = inputDict[k].get_array()
-            robjects.globalenv[k] = inputDict[k]
+           if type(inputDict[k]) == NDArray:
+               inputDict[k] = inputDict[k].get_array()                   
+           elif type(inputDict[k]) == dict:
+               tempDict = robjects.DataFrame(inputDict[k])
+               #tempDicttoR=robjects.r('x<-tempDict')
+               tempDicttoPy=self.rPyConversion(tempDict)
+               inputDict[k]= tempDicttoPy                   
+           elif type(inputDict[k]) == list:             
+                myListArr=numpy.array(inputDict[k])
+                inputDict[k]=myListArr
+           robjects.globalenv[k] = inputDict[k]
+                      
+                        
 
         #Execute the script
         try:
             resultVar=r(r_script)
         except:
-            raise ModuleError, (Rpy2Script, "Could not execute R Script")
-                
+            raise ModuleError, (Rpy2Script, "Could not execute R Script")    
         #Converting R result to Python type
         rResult=self.rPyConversion(resultVar)
         
+
+        #Converting R result to Python type
+        mylist=self.rPyConversion(resultVar)
+        #testing purposes
+       
         
         outputDict = dict([(k, None)
                            for k in self.outputPorts])
         del(outputDict['self'])
         #assigning converted R result to output port
-        for k in outputDict.iterkeys():             
-               if isinstance(rResult,dict) and str(self.getPortType(k))=="<class 'core.modules.vistrails_module.Dictionary'>":
-                   self.setResult(k,rResult)
-               elif isinstance(rResult,numpy.ndarray) and str(self.getPortType(k))=="<class 'packages.eo4vistrails.utils.Array.NDArray'>":
-                   self.setResult(k,rResult)
-               elif isinstance(rResult,numpy.ndarray) and str(self.getPortType(k))=="<class 'core.modules.vistrails_module.String'>":
-                   self.setResult(k,rResult)
-               elif isinstance(rResult,str) and str(self.getPortType(k))=="<class 'core.modules.vistrails_module.String'>":
-                   self.setResult(k,rResult)
-               elif isinstance(rResult,float) and str(self.getPortType(k))=="<class 'core.modules.vistrails_module.Integer'>":
-                   self.setResult(k,rResult)
-               elif isinstance(rResult,float) and str(self.getPortType(k))=="<class 'core.modules.vistrails_module.Float'>":
-                   self.setResult(k,rResult)
-               elif isinstance(rResult,bool) and str(self.getPortType(k))=="<class 'core.modules.vistrails_module.Boolean'>":
-                   self.setResult(k,rResult)                                 
-               elif self.getPortType(k)==type(rResult):
-                   self.setResult(k,rResult)                   
-#               else:
-#                    self.setResult(k, robjects.globalenv[k])      
-      
+        for k in outputDict.iterkeys():            
+           if k in robjects.globalenv.keys() and robjects.globalenv[k] != None:                             
+                   if str(self.getPortType(k))=="<class 'core.modules.vistrails_module.Dictionary'>":
+                       self.setResult(k,robjects.globalenv[k][0])
+                   elif str(self.getPortType(k))=="<class 'packages.eo4vistrails.utils.Array.NDArray'>":
+                       self.setResult(k,robjects.globalenv[k][0]) 
+                   elif str(self.getPortType(k))=="<class 'core.modules.vistrails_module.String'>":
+                       self.setResult(k,robjects.globalenv[k][0])
+                   elif str(self.getPortType(k))=="<class 'core.modules.vistrails_module.Integer'>":
+                       self.setResult(k,robjects.globalenv[k][0])
+                   elif str(self.getPortType(k))=="<class 'core.modules.vistrails_module.Float'>":
+                       self.setResult(k,robjects.globalenv[k][0])
+                   elif str(self.getPortType(k))=="<class 'core.modules.vistrails_module.Boolean'>":
+                       self.setResult(k,robjects.globalenv[k][0])
+                   elif str(self.getPortType(k))=="<class 'core.modules.vistrails_module.List'>":
+                       self.setResult(k,numpy.array(robjects.globalenv[k]))                                 
+                   elif self.getPortType(k)==type(rResult):
+                       self.setResult(k,rResult)                   
+#                   else:
+#                       self.setResult(k, robjects.globalenv[k])  
+                       
         
+
 
     def getPortType(self, portName, portType="output"):
         for i in self.moduleInfo['pipeline'].module_list:
@@ -102,6 +118,8 @@ class Rpy2Script(Script):
     #Converting R result to a Python Type.
     def rPyConversion(self,data):
         try:
+#            if type(data)==rpy2.robjects.vectors.ListVector:
+#                return numpy.array(data)            
             if isinstance(data,rpy2.robjects.vectors.ListVector):
                pyDict = {}        
                for name,value in zip([i for i in rpy2.robjects.r.names(data)],[i for i in data]):
@@ -121,6 +139,8 @@ class Rpy2Script(Script):
                return data
             elif isinstance(data,rpy2.rinterface.RNULLType):
                return None
+            elif isinstance(data,rpy2.robjects.vectors.Array):
+               return numpy.array(data)               
             elif data=="":
                return None
         except:
@@ -134,8 +154,8 @@ class RSourceConfigurationWidget(SyntaxSourceConfigurationWidget):
                                'Boolean':True,
                                'Numpy Array':True,
                                'List':True,
-                               'Dictionary':True,                               
-                               'File':True}
+                               'Dictionary':True}            
+                              
     
         SyntaxSourceConfigurationWidget.__init__(self, module, controller, "Rpy2Script", 
                                                  parent=parent,
