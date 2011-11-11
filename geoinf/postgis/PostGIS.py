@@ -138,7 +138,7 @@ class PostGisNumpyReturningCursor(ThreadSafeMixin, RPyCModule):
             curs.close()
             pgconn.close()
 
-
+import re
 @RPyCSafeModule()
 class PostGisFeatureReturningCursor(ThreadSafeMixin, RPyCModule):
     """Returns data in the form of a eo4vistrails FeatureModel
@@ -161,16 +161,32 @@ class PostGisFeatureReturningCursor(ThreadSafeMixin, RPyCModule):
                 if k not in ['source', 'PostGisSessionObject', 'rpycnode', 'self']:
                     value = self.getInputFromPort(k)
                     sql_input = sql_input.replace(k, value.__str__())
+            
+            sql_input = sql_input.split(';', 1)[0]
+            sql_input = re.sub(r'--.*\n*', '', sql_input)
+            
+            result  = re.split(r'(?i) where ', re.split(r'(?i)from ', sql_input, 1)[1], 1)
+            
+            if len(result) > 1:
+                sql_table, sql_where = result
+            else:
+                sql_table = result[0]
+                sql_where = ''
+            
+            sql_table = sql_table.strip()
+            sql_where = sql_where.strip()
+                        
             postGISRequest = PostGISRequest()
             postGISRequest.setConnection(pgsession.host,
                               pgsession.port,
                               pgsession.database,
                               pgsession.user,
                               pgsession.pwd)
-            postGISRequest.setDataSource('',      #schema must be blank
-                              '(' + sql_input + ')',
+                                          
+            postGISRequest.setDataSource('public',      #schema must be blank
+                              sql_table,
                               'the_geom',         #TODO: assuming the_geom, this must be looked up
-                              '',                 #where clause must be blank
+                              sql_where,          #where clause must be blank
                               'gid')              #TODO: assuming gid, this must be looked up
             #select * from ba_modis_giglio limit 10000
             #TODO: make sure that the user can select a layer name or we generate a random one
@@ -178,6 +194,7 @@ class PostGisFeatureReturningCursor(ThreadSafeMixin, RPyCModule):
                 postGISRequest.get_uri(),
                 postGISRequest.get_layername(),
                 postGISRequest.get_driver())
+            
             self.setResult('PostGISRequest', postGISRequest)
             self.setResult('QgsVectorLayer', qgsVectorLayer)
 

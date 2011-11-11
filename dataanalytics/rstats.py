@@ -89,6 +89,7 @@ class RSourceConfigurationWidget(SyntaxSourceConfigurationWidget):
                                'Float':True,
                                'Integer':True,
                                'Boolean':True,
+                               'Dictionary':True,
                                'Numpy Array':True}
                                #'File':True}
     

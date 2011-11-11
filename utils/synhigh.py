@@ -190,6 +190,8 @@ class SyntaxHighlighter (QtGui.QSyntaxHighlighter):
   
     def __init__(self, document, language):
         QtGui.QSyntaxHighlighter.__init__(self, document)
+        
+        self.caseSensitivity = QtCore.Qt.CaseSensitive
   
         self.styles = {
             'keyword': format('red'),
@@ -227,6 +229,7 @@ class SyntaxHighlighter (QtGui.QSyntaxHighlighter):
                     (r'\b\d+\b', 0, self.styles['literal']), # Numbers
                     (r'--[^\n]*', 0, self.styles['comment'])
             ]
+            self.caseSensitivity = QtCore.Qt.CaseInsensitive
 
 # PovRay ______________________________________________________________________________________________________________________
         if language == "PovRay":
@@ -426,8 +429,8 @@ class SyntaxHighlighter (QtGui.QSyntaxHighlighter):
                     (r'\t', 0, self.styles['wstab'])
             ]
   
-        self.rules = [(QtCore.QRegExp(pattern), index, formatz) for (pattern, index, formatz) in rules]
-  
+        self.rules = [(QtCore.QRegExp(pattern, self.caseSensitivity), index, formatz) for (pattern, index, formatz) in rules]
+    
     def highlightBlock(self, text):
         # Do other syntax formatting
         for expression, nth, format in self.rules:
