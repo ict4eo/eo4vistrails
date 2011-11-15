@@ -34,7 +34,7 @@ Also see:
 #export GISBASE="/usr/local/grass-6.4.svn/"
 #export PATH="$PATH:$GISBASE/bin:$GISBASE/scripts"
 #export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$GISBASE/lib"
-## for parallel session management, we use process ID (PID) as lock file number:
+## for parallel session management, we use process ID (PID) as lock file number
 #export GIS_LOCK=$$
 ## path to GRASS settings file
 #export GISRC="$HOME/.grassrc6"
@@ -47,7 +47,7 @@ from packages.eo4vistrails.geoinf.SpatialTemporalConfigurationWidget import \
 class GrassSession(Session):
     """TO DO - add docstring"""
     def __init__(self):
-        self.layers={'vector':[],  'raster':[]}
+        self.layers = {'vector': [], 'raster': []}
 
     def compute(self):
         pass
@@ -66,7 +66,7 @@ class GrassSession(Session):
         requires a string for the layername and a string, one of{'v', 'r'}
         to denote the type"""
         if layername.lower() == 'v':
-           return tuple(self.layers['vector'])
+            return tuple(self.layers['vector'])
         if layername.lower() == 'r':
             return tuple(self.layers['raster'])
 
@@ -79,6 +79,7 @@ class GrassSessionConfigurationWidget(SpatialTemporalConfigurationWidget):
     """TO DO - add docstring"""
     def compute(self):
         pass
+
 
 def initialize(*args, **keywords):
     """sets everything up"""

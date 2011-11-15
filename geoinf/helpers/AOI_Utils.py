@@ -50,19 +50,20 @@ import packages.eo4vistrails.geoinf.visual
 QgsApplication.setPrefixPath("/usr", True)
 QgsApplication.initQgis()
 
+
 class SRSChooserDialog(QDialog):
     '''inspired by http://code.google.com/p/qspatialite/source/browse/trunk/dialogSRS.py?spec=svn45&r=45'''
     def __init__(self, title):
         QDialog.__init__(self)
-        self.setWindowTitle( title )
+        self.setWindowTitle(title)
         layout = QVBoxLayout()
         self.selector = QgsProjectionSelector(self)
         buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Close)
-        
+
         layout.addWidget(self.selector)
         layout.addWidget(buttonBox)
         self.setLayout(layout)
-        
+
         self.connect(buttonBox, SIGNAL("accepted()"), self.accept)
         self.connect(buttonBox, SIGNAL("rejected()"), self.reject)
 
@@ -80,61 +81,57 @@ class SRSChooserDialog(QDialog):
             return self.proj4string()
 
         return QString()
-      
-      
-      
-
-
-
 
 
 class GetFeatureInfoTool(QgsMapTool):
+    """TODO  Add documentation to this class.
+    """
     def __init__(self, canvas, callback, button=None):
         QgsMapTool.__init__(self, canvas)
         self.callback = callback
         self.button = button
 
-        
     def canvasPressEvent(self, e):
         if e.button() == QtCore.Qt.LeftButton:
             self.pos = self.toMapCoordinates(e.pos())
-            
+
             llOffsetPointX = e.pos().x() - 1
             llOffsetPointY = e.pos().y() - 1
             urOffsetPointX = e.pos().x() + 1
             urOffsetPointY = e.pos().y() + 1
-            
-            self.llOffsetPoint = self.toMapCoordinates(QPoint(llOffsetPointX,  llOffsetPointY) )
-            self.urOffsetPoint = self.toMapCoordinates(QPoint(urOffsetPointX,  urOffsetPointY) )
 
-            
+            self.llOffsetPoint = self.toMapCoordinates(QPoint(llOffsetPointX, llOffsetPointY))
+            self.urOffsetPoint = self.toMapCoordinates(QPoint(urOffsetPointX, urOffsetPointY))
+
     def canvasReleaseEvent(self, e):
         if e.button() == QtCore.Qt.LeftButton:
-            self.rect = QgsRectangle(self.llOffsetPoint,  self.urOffsetPoint)
+            self.rect = QgsRectangle(self.llOffsetPoint, self.urOffsetPoint)
             self.callback(self.rect)
-    
+
     def activate(self):
         if self.button:
             self.button.setChecked(True)
         QgsMapTool.activate(self)
 
-	def deactivate(self):
-		if self.button:
-			self.button.setChecked(False)
-		QgsMapTool.deactivate(self)
+    def deactivate(self):
+        if self.button:
+            self.button.setChecked(False)
+        QgsMapTool.deactivate(self)
 
-    def rbcircle(rb,center,edgePoint,N):
+    def rbcircle(rb, center, edgePoint, N):
         r = sqrt(center.sqrDist(edgePoint))
-        rb.reset( True )
-        for itheta in range(N+1):
-            theta = itheta*(2.0 * pi/N)
-            # You see that only the QgsRubberband geometry is modified
-            rb.addPoint(QgsPoint(center.x()+r*cos(theta),center.y()+r*sin(theta)))
+        rb.reset(True)
+        for itheta in range(N + 1):
+            theta = itheta * (2.0 * pi / N)
+            # Only the QgsRubberband geometry is modified
+            rb.addPoint(QgsPoint(center.x() + r * cos(theta),
+                                 center.y() + r * sin(theta)))
         return
 
+
 class FeatureOfInterestDefinerConfigurationWidget(StandardModuleConfigurationWidget):
-    '''A widget to configure the  FeatureOfInterestDefiner Module '''
-    
+    """A widget to configure the  FeatureOfInterestDefiner Module."""
+
     def __init__(self, module, controller, parent=None):
         StandardModuleConfigurationWidget.__init__(self, module, controller, parent)
         self.foi_type = module.name
@@ -144,15 +141,15 @@ class FeatureOfInterestDefinerConfigurationWidget(StandardModuleConfigurationWid
         self.path_png_icon = packages.eo4vistrails.geoinf.visual.__path__[0]
         self.path_bkgimg = packages.eo4vistrails.geoinf.visual.__path__[0]
         self.create_config_window()
-        
+
     def create_config_window(self):
         """TO DO - add docstring"""
         self.setWindowTitle(self.foi_type)
-        self.setMinimumSize(800,850)
+        self.setMinimumSize(800, 850)
         self.center()
         self.mainLayout = QtGui.QVBoxLayout()
         self.setLayout(self.mainLayout)
-        
+
         #set up Group Box for organising CRS of FOI
         self.crsGroupBox = QtGui.QGroupBox("Define Projection or Coordinate Reference System")
         self.crsLayout = QtGui.QHBoxLayout()
@@ -166,28 +163,26 @@ class FeatureOfInterestDefinerConfigurationWidget(StandardModuleConfigurationWid
         self.crsLayout.addWidget(self.crsTextAsProj4)
         self.crsLayout.addWidget(self.crsChooseButton)
 
-        self.crsGroupBox.setLayout(self.crsLayout)        
-        
+        self.crsGroupBox.setLayout(self.crsLayout)
 
-        
         #set up Group Box for getting coords of Bounding Box
         self.bbGroupBox = QtGui.QGroupBox("Define Area of Interest via a Bounding Box in units of SRS")
         self.bbLayout = QtGui.QHBoxLayout()
-        
+
         self.bbMinXLabel = QtGui.QLabel('MinX/Left: ')
         self.bbMinYLabel = QtGui.QLabel('MinY/Bottom: ')
         self.bbMaxXLabel = QtGui.QLabel('MaxX/Right: ')
         self.bbMaxYLabel = QtGui.QLabel('MaxY/Top: ')
-        
+
         self.bbMinXText = QtGui.QLineEdit('15')
         self.bbMinYText = QtGui.QLineEdit('-35')
         self.bbMaxXText = QtGui.QLineEdit('35')
-        self.bbMaxYText = QtGui.QLineEdit('-20')   
-     
+        self.bbMaxYText = QtGui.QLineEdit('-20')
+
         self.bbToMapButton = QtGui.QPushButton('&To Map')
         self.bbToMapButton.setAutoDefault(False)
         self.bbToMapButton.setToolTip('Show Bounding Box on Map')
-   
+
         self.bbLayout.addWidget(self.bbMinXLabel)
         self.bbLayout.addWidget(self.bbMinXText)
         self.bbLayout.addWidget(self.bbMinYLabel)
@@ -195,31 +190,27 @@ class FeatureOfInterestDefinerConfigurationWidget(StandardModuleConfigurationWid
         self.bbLayout.addWidget(self.bbMaxXLabel)
         self.bbLayout.addWidget(self.bbMaxXText)
         self.bbLayout.addWidget(self.bbMaxYLabel)
-        self.bbLayout.addWidget(self.bbMaxYText)        
+        self.bbLayout.addWidget(self.bbMaxYText)
         self.bbLayout.addWidget(self.bbToMapButton)
-     
+
         self.bbGroupBox.setLayout(self.bbLayout)
-
-
-
 
         #set up Group Box for getting text representation of a geometry
         self.asTxtGroupBox = QtGui.QGroupBox("Define Area of Interest via a WKT string in units of SRS")
         self.asTxtLayout = QtGui.QVBoxLayout()
-        
+
         self.asTxtLabel = QtGui.QLabel('WKT String: ')
         self.asTxtText = QtGui.QTextEdit('')
         self.asTxtToMapButton = QtGui.QPushButton('&To Map')
         self.asTxtToMapButton.setAutoDefault(False)
-        self.asTxtToMapButton.setToolTip('Show Bounding Box on Map')        
+        self.asTxtToMapButton.setToolTip('Show Bounding Box on Map')
 
         self.asTxtLayout.addWidget(self.asTxtLabel)
-        self.asTxtLayout.addWidget(self.asTxtText)        
+        self.asTxtLayout.addWidget(self.asTxtText)
         self.asTxtLayout.addWidget(self.asTxtToMapButton)
 
         self.asTxtGroupBox.setLayout(self.asTxtLayout)
 
-        
         #set up Group Box for Map
         self.MapGroupBox = QtGui.QGroupBox("Map Viewer")
         self.MapLayout = QtGui.QHBoxLayout()
@@ -245,7 +236,7 @@ class FeatureOfInterestDefinerConfigurationWidget(StandardModuleConfigurationWid
                         "/mActionIdentify.png"), "Feature Information", self)
 
         # create toolbar
-        self.toolbar = QToolBar() #"Canvas actions",
+        self.toolbar = QToolBar()  # "Canvas actions"
         self.toolbar.addAction(actionAddLayer)
         self.toolbar.addAction(actionZoomIn)
         self.toolbar.addAction(actionZoomOut)
@@ -262,9 +253,9 @@ class FeatureOfInterestDefinerConfigurationWidget(StandardModuleConfigurationWid
         # create map tools
         self.toolPan = QgsMapToolPan(self.canvas,)
         self.toolPan.setAction(actionPan)
-        self.toolZoomIn = QgsMapToolZoom(self.canvas, False) # false == in
+        self.toolZoomIn = QgsMapToolZoom(self.canvas, False)  # false == in
         self.toolZoomIn.setAction(actionZoomIn)
-        self.toolZoomOut = QgsMapToolZoom(self.canvas, True) # true == out
+        self.toolZoomOut = QgsMapToolZoom(self.canvas, True)  # true == out
         self.toolZoomOut.setAction(actionZoomOut)
         self.toolAOI = QgsMapTool(self.canvas)
         self.toolIdentify = GetFeatureInfoTool(self.canvas, self.gotFeatureForIdentification)
@@ -288,10 +279,9 @@ class FeatureOfInterestDefinerConfigurationWidget(StandardModuleConfigurationWid
         self.vboxToolBarMapCanvas.addWidget(self.toolbar)
         self.vboxToolBarMapCanvas.addWidget(self.canvas)
 
-
         #global list to hold inputlayers list -> accessible for toggleLayer
         self.mylist = []
-        
+
         #finalise/cancel buttons
         self.finishGroupBox = QtGui.QGroupBox("Finish")
         self.buttonLayout = QtGui.QHBoxLayout()
@@ -312,24 +302,23 @@ class FeatureOfInterestDefinerConfigurationWidget(StandardModuleConfigurationWid
         self.connect(self.cancelButton,
                      QtCore.SIGNAL('clicked(bool)'),
                      self.close)
-        
+
         self.mainLayout.addWidget(self.crsGroupBox)
         self.mainLayout.addWidget(self.bbGroupBox)
         self.mainLayout.addWidget(self.asTxtGroupBox)
         self.mainLayout.addWidget(self.MapGroupBox)
         self.mainLayout.addWidget(self.finishGroupBox)
 
-
         # set signals
-        self.connect(self.crsChooseButton, QtCore.SIGNAL('clicked(bool)'), self.getSRS)  
-        self.connect(self.bbToMapButton, QtCore.SIGNAL('clicked(bool)'), self.bbToMapBB)  
-        self.connect(self.asTxtToMapButton, QtCore.SIGNAL('clicked(bool)'), self.bbToMapTxt) 
+        self.connect(self.crsChooseButton, QtCore.SIGNAL('clicked(bool)'), self.getSRS)
+        self.connect(self.bbToMapButton, QtCore.SIGNAL('clicked(bool)'), self.bbToMapBB)
+        self.connect(self.asTxtToMapButton, QtCore.SIGNAL('clicked(bool)'), self.bbToMapTxt)
         self.connect(actionAddLayer, SIGNAL("activated()"), self.addLayer)
         self.connect(actionZoomIn, SIGNAL("activated()"), self.zoomIn)
         self.connect(actionZoomOut, SIGNAL("activated()"), self.zoomOut)
         self.connect(actionPan, SIGNAL("activated()"), self.pan)
         self.connect(actionIdentify, QtCore.SIGNAL("triggered()"), self.identifyFeature)
-        
+
         #load a backdrop layer
         self.mapCanvasLayers = []
         fname = self.path_bkgimg + '/bluemarblemerged.img'
@@ -345,16 +334,12 @@ class FeatureOfInterestDefinerConfigurationWidget(StandardModuleConfigurationWid
         self.canvas.freeze(False)
         self.canvas.setLayerSet(self.mapCanvasLayers)
         self.canvas.refresh()
-        
+
         #now, add a container layer for our text based/ digitised or selected geoms
         self.addMemoryLayer()
-        
-        
+
         #self.update()
-        
-        
-        
-        
+
     def center(self):
         """TO DO - add docstring"""
         screen = QtGui.QDesktopWidget().screenGeometry()
@@ -367,13 +352,14 @@ class FeatureOfInterestDefinerConfigurationWidget(StandardModuleConfigurationWid
         srsdlg = SRSChooserDialog("Choose SRS")
         if srsdlg.exec_():
             self.crsTextAsProj4.setText(srsdlg.getProjection())
-            
+
     def bbToMapBB(self):
         self.bbToMap(fullWkt=False)
+
     def bbToMapTxt(self):
-        self.bbToMap(fullWkt=True)        
-        
-    def bbToMap(self,  fullWkt = False):
+        self.bbToMap(fullWkt=True)
+
+    def bbToMap(self, fullWkt=False):
         '''takes bounding box coords and puts them on the map'''
         #if self.foi_type == "AreaOfInterestDefiner":
         if not fullWkt:
@@ -381,24 +367,25 @@ class FeatureOfInterestDefinerConfigurationWidget(StandardModuleConfigurationWid
             iy = self.bbMinYText.text()
             ax = self.bbMaxXText.text()
             ay = self.bbMaxYText.text()
-        
-            wkt = "POLYGON((%s %s, %s %s, %s %s, %s %s, %s %s))" % (ix,  iy,  ix,  ay,  ax,  ay,  ax,  iy,  ix,  iy)
+
+            wkt = "POLYGON((%s %s, %s %s, %s %s, %s %s, %s %s))" % \
+                  (ix,  iy,  ix,  ay,  ax,  ay,  ax,  iy,  ix,  iy)
         else:
             wkt = self.asTxtText.toPlainText()
         try:
             errnum = 0
             geom = QgsGeometry().fromWkt(wkt)
             print "gotGeom"
-            if self.foi_type == "AreaOfInterestDefiner" and geom.type() <> 2:
+            if self.foi_type == "AreaOfInterestDefiner" and geom.type() != 2:
                 errnum = 1
-            elif self.foi_type == "LineOfInterestDefiner" and geom.type() <> 1:
+            elif self.foi_type == "LineOfInterestDefiner" and geom.type() != 1:
                 errnum = 1
-            elif self.foi_type == "PointOfInterestDefiner" and geom.type() <> 0:
+            elif self.foi_type == "PointOfInterestDefiner" and geom.type() != 0:
                 errnum = 1
             else:
                 print "attempting to add geometry to mem layer"
                 self.addGeomToMemoryLayer(geom)
-                
+
             if errnum == 1:
                 raise ModuleError(self, "Incorrect Geometry Type chosen")
         except:
@@ -406,12 +393,15 @@ class FeatureOfInterestDefinerConfigurationWidget(StandardModuleConfigurationWid
         #else:
             #print "Cannot create a Bounding box feature on a line or point layer"
         #add to map
-        
+
     #map tool functions
     def addLayer(self):
         """TO DO: Add doc string"""
-        fileName = QFileDialog.getOpenFileName(parent=None, caption="Select Vector Overlay Layer",filter = "Vector Files (*.shp *.geojson *.gml)")
-        
+        fileName = QFileDialog.getOpenFileName(
+            parent=None,
+            caption="Select Vector Overlay Layer",
+            filter="Vector Files (*.shp *.geojson *.gml)")
+
         print fileName
         info = QtCore.QFileInfo(fileName)
         print info.filePath()
@@ -419,55 +409,49 @@ class FeatureOfInterestDefinerConfigurationWidget(StandardModuleConfigurationWid
         # create layer
         layer = QgsVectorLayer(info.filePath(), info.completeBaseName(),  "ogr")
 
-        
-
-            
-            
         if not layer.isValid():
             print "invalid layer"
             return
-        
+
         # add layer to the registry
         QgsMapLayerRegistry.instance().addMapLayer(layer)
-    
+
         # set extent to the extent of our layer
         #self.canvas.setExtent(layer.extent())
-    
+
         # set the map canvas layer set
         cl = QgsMapCanvasLayer(layer)
-        self.mapCanvasLayers.insert(len(self.mapCanvasLayers) -2, cl)
+        self.mapCanvasLayers.insert(len(self.mapCanvasLayers) - 2, cl)
         #layers = [cl]
         self.canvas.setLayerSet(self.mapCanvasLayers)
         print "added Layer"
 
-
-        
     def addMemoryLayer(self):
         '''adds a layer to contain the feature defined by a bounding box, wkt, digitised poly|line|point or selection from other layer'''
-        foi_type = self.foi_type.lower() 
-        if foi_type== 'areaofinterestdefiner':
+        foi_type = self.foi_type.lower()
+        if foi_type == 'areaofinterestdefiner':
             layer = QgsVectorLayer("Polygon", "Area of Interest",  "memory")
-        if foi_type== 'lineofinterestdefiner':
+        if foi_type == 'lineofinterestdefiner':
             layer = QgsVectorLayer("Linestring", "Line of Interest",  "memory")
-        if foi_type== 'pointofinterestdefiner':
+        if foi_type == 'pointofinterestdefiner':
             layer = QgsVectorLayer("Point", "Point of Interest",  "memory")
-        
-        if foi_type== 'areaofinterestdefiner':
+
+        if foi_type == 'areaofinterestdefiner':
             sym = QgsSymbol(QGis.Polygon)
             sym.setColor(Qt.black)
             sym.setFillColor(Qt.green)
             sym.setFillStyle(Qt.Dense6Pattern)
-            sym.setLineWidth(0.5)      
+            sym.setLineWidth(0.5)
             sr = QgsSingleSymbolRenderer(QGis.Polygon)
-        if foi_type== 'lineofinterestdefiner':
+        if foi_type == 'lineofinterestdefiner':
             sym = QgsSymbol(QGis.Line)
             sym.setColor(Qt.black)
             sym.setFillColor(Qt.green)
             sym.setFillStyle(Qt.SolidPattern)
-            sym.setLineWidth(0.5)       
+            sym.setLineWidth(0.5)
             sr = QgsSingleSymbolRenderer(QGis.Line)
-        if foi_type== 'pointofinterestdefiner':
-            sym = QgsSymbol(QGis.Point)    
+        if foi_type == 'pointofinterestdefiner':
+            sym = QgsSymbol(QGis.Point)
             sym.setColor(Qt.black)
             sym.setFillColor(Qt.green)
             sym.setFillStyle(Qt.SolidPattern)
@@ -476,33 +460,31 @@ class FeatureOfInterestDefinerConfigurationWidget(StandardModuleConfigurationWid
             sym.setNamedPointSymbol("hard:triangle")
             sr = QgsSingleSymbolRenderer(QGis.Point)
 
-
         sr.addSymbol(sym)
-        layer.setRenderer(sr)            
+        layer.setRenderer(sr)
         if not layer.isValid():
             print "invalid layer"
             return
         ml_dp = layer.dataProvider()
-        ml_dp.addAttributes( [ QgsField("gid", QVariant.String) ] )        
+        ml_dp.addAttributes([QgsField("gid", QVariant.String)])
         # add layer to the registry
         self.mem_layer_obj = QgsMapLayerRegistry.instance().addMapLayer(layer)
 
-    
         # set extent to the extent of our layer
         #self.canvas.setExtent(layer.extent())
-    
+
         # set the map canvas layer set
         cl = QgsMapCanvasLayer(layer)
         self.mapCanvasLayers.insert(0, cl)
         #layers = [cl]
         self.canvas.setLayerSet(self.mapCanvasLayers)
         print "added Layer"
-        
-    def addGeomToMemoryLayer(self,  the_geom,  origin = 0,  delete_when_done = False):
-        foi_type = self.foi_type.lower() 
+
+    def addGeomToMemoryLayer(self, the_geom, origin=0, delete_when_done=False):
+        foi_type = self.foi_type.lower()
         print "got foi_type"
-        if self.mem_layer_obj.featureCount() >0:
-            if origin == 1:# is added by identify operation
+        if self.mem_layer_obj.featureCount() > 0:
+            if origin == 1:  # is added by identify operation
                 pass
             else:
                 print self.mem_layer_obj.featureCount()
@@ -519,7 +501,7 @@ class FeatureOfInterestDefinerConfigurationWidget(StandardModuleConfigurationWid
         print "got DP"
         uuid_gid = QUuid().createUuid().toString()
         print "got uuid"
-        fet=QgsFeature()
+        fet = QgsFeature()
         print "got feature with id"
         fet.setGeometry(the_geom)
         print "set geometry"
@@ -537,7 +519,6 @@ class FeatureOfInterestDefinerConfigurationWidget(StandardModuleConfigurationWid
         print "trp"
         return fet.id()
 
-        
     def zoomIn(self):
         """TO DO: Add doc string"""
         self.canvas.setMapTool(self.toolZoomIn)
@@ -549,37 +530,37 @@ class FeatureOfInterestDefinerConfigurationWidget(StandardModuleConfigurationWid
     def pan(self):
         """TO DO: Add doc string"""
         self.canvas.setMapTool(self.toolPan)
-        
+
     def identifyFeature(self):
         '''getFeatureInfo functionality'''
         self.canvas.setMapTool(self.toolIdentify)
         #print "GFI not yet implemented"
-        
+
     def gotFeatureForIdentification(self, pos):
         """ show dialog with road information """
-        
+
         #pos is a rectangle
         self.mem_layer_obj.select()
-        ftr = QgsFeature ()
+        ftr = QgsFeature()
         ftr_ids = []
         while self.mem_layer_obj.nextFeature(ftr):
             if ftr.geometry().intersects(pos):
                 ftr_ids.append(ftr.id())
         self.chosenFOIGeoms = []
         self.info = QgsMessageViewer()
-        if ftr_ids  <> []:
+        if ftr_ids != []:
             f = QgsFeature()
-            foi_type = self.foi_type.lower() 
-            if foi_type== 'areaofinterestdefiner':
+            foi_type = self.foi_type.lower()
+            if foi_type == 'areaofinterestdefiner':
                 ftrData = "You have selected the following feature(s) for use as an Area of Interest:\n\n"
-            if foi_type== 'lineofinterestdefiner':
+            if foi_type == 'lineofinterestdefiner':
                 ftrData = "You have selected the following feature(s) for use as a Line of Interest:\n\n"
-            if foi_type== 'pointofinterestdefiner':
+            if foi_type == 'pointofinterestdefiner':
                 ftrData = "You have selected the following feature(s) for use as a Point of Interest:\n\n"
             for fid in ftr_ids:
-            
+
                 self.mem_layer_obj.dataProvider().featureAtId(fid, f,  True)
-                
+
                 ftrData += f.attributeMap()[0].toString()
                 ftrData += "\n_____________________________\n"
                 self.chosenFOIGeoms.append(f.geometry())
@@ -587,18 +568,18 @@ class FeatureOfInterestDefinerConfigurationWidget(StandardModuleConfigurationWid
             self.info.setMessageAsPlainText(ftrData)
         else:
             self.info.setMessageAsPlainText("no data to show")
-        self.info.show()    
+        self.info.show()
         return
-        
+
     def makeAOI(self):
         pass
-        
+
     def makeLOI(self):
         pass
-        
+
     def makePOI(self):
         pass
-     
+
     def okTriggered(self):
         the_fet = QgsFeature()
         the_geoms = []
@@ -606,42 +587,41 @@ class FeatureOfInterestDefinerConfigurationWidget(StandardModuleConfigurationWid
         self.mem_layer_obj.select()
         while self.mem_layer_obj.nextFeature(the_fet):
             #self.mem_layer_obj.featureAtId(0, the_fet)
-            
+
             the_geoms.append(str(the_fet.geometry().exportToWkt()))
         print the_geoms
         wktstr = WKTString()
         print wktstr
 
         wktstr.setValue(the_geoms[0])
-        
+
         self.controller.update_ports_and_functions(
-                self.module.id, [], [], [("WKTGeometry", the_geoms), ("SRS",[self.crsTextAsProj4.text()])])
+                self.module.id, [], [], [("WKTGeometry", the_geoms),
+                    ("SRS", [self.crsTextAsProj4.text()])])
         self.close()
         #self.controller.update_ports_and_functions(self.module.id, [], [], functions)
 
-        
-        
+
 class FeatureOfInterestDefiner(Module):
-    '''
-    a utility to extract a Feature of Interest expressed as a GeoJSON snippet 
-    - e.g. use case: an Area-Of-Interest to be used as a cookie cutter 
-    in subsetting or zonal statistics gathering
+    '''A utility to extract a Feature of Interest expressed as a GeoJSON snippet
+    - e.g. use case: an Area-Of-Interest to be used as a cookie cutter
+           in subsetting or zonal statistics gathering
     - e.g. use case: defining a Line-Of-Interest transect for use in longitudanal analyses
     - e.g. use case: defining a Point-Of-Interest for time-series extraction at a point
-    
+
     uses a QGIS Map layer to define a feature that is outputted as the AOI
     - can take a user defined polygon
     - can take a user defined string, e.g. WKT or GeoJSON
     - can take a vector layer, from which a feature must be chosen
     '''
-    
+
     def __init__(self):
         Module.__init__(self)
 
-        
     def checkGeom(self,  expected_type):
-        '''checks the geom to see if it can be instantiated as the expected type - enum of {'point','line','polygon'}'''
-        testGeom = QgsGeometry().fromWkt(self.wkt)    
+        '''Check the geom to see if it can be instantiated as the expected type
+            - enum of {'point','line','polygon'}'''
+        testGeom = QgsGeometry().fromWkt(self.wkt)
         if expected_type == 'point':
             if testGeom.type() == 0:
                 return True
@@ -658,78 +638,77 @@ class FeatureOfInterestDefiner(Module):
             else:
                 return False
 
-
     def compute(self):
         '''implemented by subclasses'''
         pass
-        
+
+
 class AreaOfInterestDefiner(FeatureOfInterestDefiner):
     '''
-    
-    use case: an Area-Of-Interest to be used as a cookie cutter 
+
+    use case: an Area-Of-Interest to be used as a cookie cutter
     in subsetting or zonal statistics gathering
-        
+
     uses a QGIS Map layer to define a feature that is outputted as the AOI
     - can take a user defined polygon
     - can take a user defined string, e.g. WKT or GeoJSON
     - can take a vector layer, from which a feature must be chosen
     '''
-    
+
     def __init__(self):
         FeatureOfInterestDefiner.__init__(self)
-   
+
     def compute(self):
         ''''''
         if self.hasInputFromPort("WKTGeometry"):
             print "gotwkt"
             self.wkt = self.getInputFromPort("WKTGeometry")
         if self.hasInputFromPort("SRS"):
-            self.srs = self.getInputFromPort("SRS")   
-        if self.checkGeom("polygon") :
-            self.setResult('AreaOfInterest', self.wkt) 
+            self.srs = self.getInputFromPort("SRS")
+        if self.checkGeom("polygon"):
+            self.setResult('AreaOfInterest', self.wkt)
         else:
             raise ModuleError(self, "Incorrect Geometry Type provided - expected Polygon")
+
+
 class LineOfInterestDefiner(FeatureOfInterestDefiner):
-    '''
-    
-    use case: defining a Line-Of-Interest transect for use in longitudanal analyses
-        
+    '''Define a Line-Of-Interest transect for use in longitudinal analyses
+
     uses a QGIS Map layer to define a feature that is outputted as the AOI
     - can take a user defined polygon
     - can take a user defined string, e.g. WKT or GeoJSON
     - can take a vector layer, from which a feature must be chosen
     '''
-    
-    def __init__(self):
-        FeatureOfInterestDefiner.__init__(self)
-        
-    def compute(self):
-        ''''''
-        if self.checkGeom("line") :
-            self.setResult('LineOfInterest', self.wkt) 
-        else:
-           raise ModuleError(self, "Incorrect Geometry Type provided - expected Line")    
-        
-class PointOfInterestDefiner(FeatureOfInterestDefiner):
-    '''
-    
-    use case: defining a Point-Of-Interest for time-series extraction at a point
-        
-    uses a QGIS Map layer to define a feature that is outputted as the AOI
-    - can take a user defined polygon
-    - can take a user defined string, e.g. WKT or GeoJSON
-    - can take a vector layer, from which a feature must be chosen
-    '''
-    
+
     def __init__(self):
         FeatureOfInterestDefiner.__init__(self)
 
     def compute(self):
         ''''''
-        if self.checkGeom("line") :
-            self.setResult('PointOfInterest', self.wkt) 
+        if self.checkGeom("line"):
+            self.setResult('LineOfInterest', self.wkt)
         else:
-           raise ModuleError(self, "Incorrect Geometry Type provided - expected Point")  
+            raise ModuleError(self, "Incorrect Geometry Type provided - expected Line")
+
+
+class PointOfInterestDefiner(FeatureOfInterestDefiner):
+    '''Define a Point-Of-Interest for time-series extraction at a point
+
+    uses a QGIS Map layer to define a feature that is outputted as the AOI
+    - can take a user defined polygon
+    - can take a user defined string, e.g. WKT or GeoJSON
+    - can take a vector layer, from which a feature must be chosen
+    '''
+
+    def __init__(self):
+        FeatureOfInterestDefiner.__init__(self)
+
+    def compute(self):
+        ''''''
+        if self.checkGeom("line"):
+            self.setResult('PointOfInterest', self.wkt)
+        else:
+            raise ModuleError(self, "Incorrect Geometry Type provided - expected Point")
 
 
 
@@ -745,8 +724,8 @@ class PointOfInterestDefiner(FeatureOfInterestDefiner):
 #    #input ports
 #    ##can you have a module with no input ports?
 #    reg.add_input_port(
-#        FeatureOfInterestDefiner, 
-#        "Base Layer", 
+#        FeatureOfInterestDefiner,
+#        "Base Layer",
 #        (QgsRasterLayer,  'Base Layer for adding context')
 #                       )
 #    #output ports
@@ -764,9 +743,9 @@ class PointOfInterestDefiner(FeatureOfInterestDefiner):
 #        LineOfInterestDefiner,
 #        "LineOfInterest",
 #        (GeoJSONString, 'Line as GeoJSON snippet'))
-#        
+#
 #    reg.add_output_port(
 #        PointOfInterestDefiner,
 #        "PointOfInterest",
 #        (GeoJSONString, 'Point as GeoJSON snippet'))
-#    
+#
