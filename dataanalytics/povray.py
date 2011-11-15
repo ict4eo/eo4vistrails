@@ -26,23 +26,24 @@
 #############################################################################
 """This module holds a rpycnode type that can be passed around between modules.
 """
-#History
-#Created by Terence van Zyl
-
-from packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
-from packages.eo4vistrails.utils.synhigh import SyntaxSourceConfigurationWidget
-
+# library
 from script import Script
-
-from core.modules.vistrails_module import ModuleError, Module
-from core.modules.basic_modules import File
 from subprocess import call
 from tempfile import mkstemp
 import urllib
+# third-party
+
+# vistrails
+from core.modules.vistrails_module import ModuleError, Module
+from core.modules.basic_modules import File
+# eo4vistrails
+from packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
+from packages.eo4vistrails.utils.synhigh import SyntaxSourceConfigurationWidget
+
 
 class PovRayConfig(Module):
     """
-       Executes a PovRay Script and returns a link to a temp file which is the output
+       Executes a PovRay Script and returns a link to an output temp file.
     """
     _input_ports = [('+W', '(edu.utah.sci.vistrails.basic:Integer)'),
                     ('+H', '(edu.utah.sci.vistrails.basic:Integer)'),
@@ -51,14 +52,14 @@ class PovRayConfig(Module):
                     ('+R', '(edu.utah.sci.vistrails.basic:Integer)'),
                     ('+J', '(edu.utah.sci.vistrails.basic:Float)'),
                     ('+L', '(edu.utah.sci.vistrails.basic:Directory)'),
-                    ('+F', '(edu.utah.sci.vistrails.basic:String)')
-                   ]
+                    ('+F', '(edu.utah.sci.vistrails.basic:String)')]
 
-    _output_ports = [('PovRay Args string', '(edu.utah.sci.vistrails.basic:String)'),
-                     ('self', '(edu.utah.sci.vistrails.basic:Module)')
-                    ]
+    _output_ports = [('PovRay Args string',
+                      '(edu.utah.sci.vistrails.basic:String)'),
+                     ('self', '(edu.utah.sci.vistrails.basic:Module)')]
 
-    formatExtLookup = {'C':'.tga','N':'.png','P':'.ppm','S':'.bmp','T':'.tga'}
+    formatExtLookup = {'C': '.tga', 'N': '.png', 'P': '.ppm', 'S': '.bmp',
+                       'T': '.tga'}
 
     def __init__(self):
         Module.__init__(self)
@@ -73,30 +74,31 @@ class PovRayConfig(Module):
         R = self.getInputFromPort('+R')
         J = self.getInputFromPort('+J')
         L = self.getInputFromPort('+L').name
-        F = self.forceGetInputFromPort('+F','N')
-        
+        F = self.forceGetInputFromPort('+F', 'N')
+
         #Execute the command
-        args = "+W%s +H%s +A%s +L%s +F%s +AM%s +R%s +J%s"%(W, H, A, L, F, AM, R, J)
+        args = "+W%s +H%s +A%s +L%s +F%s +AM%s +R%s +J%s" % \
+                (W, H, A, L, F, AM, R, J)
         print args
-        
+
         self.setResult('PovRay Args string', args)
+
 
 @RPyCSafeModule()
 class PovRayScript(Script):
     """
-       Executes a PovRay Script and returns a link to a temp file which is the output
+       Executes a PovRay Script and returns a link to an output temp file.
     """
     _input_ports = [('PovRay Args string', '(edu.utah.sci.vistrails.basic:String)'),
                     ('source', '(edu.utah.sci.vistrails.basic:String)'),
-                    ('Output Directory', '(edu.utah.sci.vistrails.basic:Directory)')
-                   ]
+                    ('Output Directory', '(edu.utah.sci.vistrails.basic:Directory)')]
 
     _output_ports = [('+O', '(edu.utah.sci.vistrails.basic:File)'),
                      ('%s', '(edu.utah.sci.vistrails.basic:String)'),
-                     ('self', '(edu.utah.sci.vistrails.basic:Module)')
-                    ]
+                     ('self', '(edu.utah.sci.vistrails.basic:Module)')]
 
-    formatExtLookup = {'C':'.tga','N':'.png','P':'.ppm','S':'.bmp','T':'.tga'}
+    formatExtLookup = {'C': '.tga', 'N': '.png', 'P': '.ppm', 'S': '.bmp',
+                       'T': '.tga'}
 
     def __init__(self):
         Script.__init__(self)
@@ -104,11 +106,11 @@ class PovRayScript(Script):
     def compute(self):
         """Will need to fetch a PostGisSession object on its input port
         Overrides supers method"""
-        args = self.forceGetInputFromPort('PovRay Args string','')
+        args = self.forceGetInputFromPort('PovRay Args string', '')
         directory = self.forceGetInputFromPort('Directory', None)
-        
+
         povray_script = urllib.unquote(str(self.forceGetInputFromPort('source', '')))
-        
+
         self.write_script_to_file(povray_script, suffix='.pov')
 
         #Get a temp file to write the script into
@@ -119,11 +121,11 @@ class PovRayScript(Script):
             portFound = False
             for _inputPort in self._input_ports:
                 if inputPort == _inputPort[0]:
-                    portFound = True          
+                    portFound = True
             if not portFound:
                 val = self.forceGetInputFromPort(inputPort, None)
                 if val:
-                    iniFile.write('Declare=%s=%s\n'%(inputPort,val))
+                    iniFile.write('Declare=%s=%s\n' % (inputPort, val))
         iniFile.close()
 
         #Get a temp file to write the output into
@@ -133,44 +135,46 @@ class PovRayScript(Script):
             start = start + 2
             end = args.find(' ', start)
             if end < start:
-                F  = args[start:]
+                F = args[start:]
             else:
                 F = args[start:end]
         else:
             #no format given use defaults
             F = 'N'
-        
+
         if directory:
             povFileDescript, O = mkstemp(suffix=self.formatExtLookup[F], dir=directory)
         else:
             povFileDescript, O = mkstemp(suffix=self.formatExtLookup[F])
-        
+
         #Execute the command
-        args = "povray %s +I%s %s +O%s -D"%(iniFileName.name, self.scriptFileName, args, O)
+        args = "povray %s +I%s %s +O%s -D" % \
+                (iniFileName.name, self.scriptFileName, args, O)
         print args
         a = call(args, shell=True)
-        
+
         #check if the file exists that should indicate sucsess
-        if a == 0:            
+        if a == 0:
             f = File()
             f.set_results(O)
             self.setResult('+O', f)
         else:
-            raise ModuleError, (PovRayScript, "Could not execute PovRay Script")
+            raise ModuleError(PovRayScript, "Could not execute PovRay Script")
+
 
 class PovRaySourceConfigurationWidget(SyntaxSourceConfigurationWidget):
     def __init__(self, module, controller, parent=None):
         #from core.vistrail.port_spec import PortSpec
-        #input_port_specs = [PortSpec.from_sigstring('(edu.utah.sci.vistrails.basic:String)'),                                                                   
+        #input_port_specs = [PortSpec.from_sigstring('(edu.utah.sci.vistrails.basic:String)'),
         #                    PortSpec.from_sigstring('(edu.utah.sci.vistrails.basic:Float)'),
         #                    PortSpec.from_sigstring('(edu.utah.sci.vistrails.basic:Integer)')]
-        
-        displayedComboItems = {'String':True,
-                               'Float':True,
-                               'Integer':True,
-                               'Boolean':True}
-    
-        SyntaxSourceConfigurationWidget.__init__(self, module, controller, "PovRay", 
+
+        displayedComboItems = {'String': True,
+                               'Float': True,
+                               'Integer': True,
+                               'Boolean': True}
+
+        SyntaxSourceConfigurationWidget.__init__(self, module, controller, "PovRay",
                                                  parent=parent, has_outputs=False,
-                                                 displayedComboItems = displayedComboItems)
+                                                 displayedComboItems=displayedComboItems)
                                                  #input_port_specs=input_port_specs)

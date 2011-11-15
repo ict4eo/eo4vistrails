@@ -24,6 +24,9 @@
 ## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ##
 ############################################################################
+"""This module ???
+"""
+# library
 import os.path
 # third party
 import h5py
@@ -32,6 +35,7 @@ from core.modules.vistrails_module import Module, ModuleError
 # eo4vistrails
 from packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
 from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
+
 
 #@RPyCSafeModule()
 class CubeReaderHandle(Module):
@@ -81,6 +85,7 @@ class ModisCubeReaderHandle(CubeReaderHandle):
             self.data = self.cube[self.band]
             self.setResult('CubeReaderHandle', self)
             self.setResult('timeBand', self.time)
+
 
 #@RPyCSafeModule()
 class CubeReader(Module):
@@ -134,6 +139,7 @@ class PostGISCubeReader(CubeReader):
             id_list = [pgOffset for x in range(len(timeseries))]
             self.setResult('id_list', id_list)
         return timeseries
+
 
 #@RPyCSafeModule()
 class CubeDateConverter(Module):

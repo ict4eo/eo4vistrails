@@ -26,11 +26,13 @@
 #############################################################################
 """This module holds a rpycnode type that can be passed around between modules.
 """
-#History
-#Terence van Zyl, 10 Feb 2011, Version 0.1
+# library
 
-from core.modules.vistrails_module import Module
+# third-party
 import pysal
+# vistrails
+from core.modules.vistrails_module import Module
+# eo4vistrails
 
 
 class PySALModule(object):
@@ -48,4 +50,4 @@ class W(PySALModule, Module, pysal.W):
     def compute(self):
         self.setResult("value", self)
 
-    _input_ports  = [('shape file', '(edu.utah.sci.vistrails.basic:File)')]
+    _input_ports = [('shape file', '(edu.utah.sci.vistrails.basic:File)')]
