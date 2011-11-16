@@ -28,18 +28,22 @@
 This module is *not* a SQL Builder - it assumes you know SQL and, in particular,
 spatial SQL as provided by PostGIS.
 
-This module provides a session i.e. a postgis connection, and allows manually-
+This module provides a session i.e. a PostGIS connection, and allows manually-
 created SQL queries to be executed against the chosen database.
 """
 
 # library
+import re
+import urllib
 # third party
 import psycopg2
 from psycopg2 import ProgrammingError
-
-
 from PyQt4 import QtCore, QtGui
-
+# vistrails
+from core.modules.vistrails_module import ModuleError, NotCacheable, Module
+from core.modules.source_configure import SourceConfigurationWidget
+from core.system import touch
+# eo4vistrails
 from packages.eo4vistrails.geoinf.datamodels.QgsLayer import QgsVectorLayer
 from packages.eo4vistrails.utils.DataRequest import PostGISRequest
 from packages.eo4vistrails.rpyc.RPyC import RPyCModule, RPyCSafeModule
@@ -47,12 +51,6 @@ from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
 from packages.eo4vistrails.utils.Array import NDArray
 from packages.eo4vistrails.utils.session import Session
 from packages.eo4vistrails.utils.synhigh import SyntaxSourceConfigurationWidget
-
-from core.modules.vistrails_module import ModuleError, NotCacheable, Module
-from core.modules.source_configure import SourceConfigurationWidget
-from core.system import touch
-
-import urllib
 
 
 class PostGisSession(Session):
@@ -130,15 +128,15 @@ class PostGisNumpyReturningCursor(ThreadSafeMixin, RPyCModule):
                     out.set_array(npRecArray)
                 self.setResult('nummpyArray', out)
             else:
-                raise ModuleError, (PostGisNumpyReturningCursor, "no records returned")
+                raise ModuleError(PostGisNumpyReturningCursor, "no records returned")
         except Exception as ex:
             #print "PostGIS:130 ", ex
-            raise ModuleError, (PostGisNumpyReturningCursor, "Could not execute SQL Statement")
+            raise ModuleError(PostGisNumpyReturningCursor, "Could not execute SQL Statement")
         finally:
             curs.close()
             pgconn.close()
 
-import re
+
 @RPyCSafeModule()
 class PostGisFeatureReturningCursor(ThreadSafeMixin, RPyCModule):
     """Returns data in the form of a eo4vistrails FeatureModel
@@ -161,46 +159,46 @@ class PostGisFeatureReturningCursor(ThreadSafeMixin, RPyCModule):
                 if k not in ['source', 'PostGisSessionObject', 'rpycnode', 'self']:
                     value = self.getInputFromPort(k)
                     sql_input = sql_input.replace(k, value.__str__())
-            
+
             sql_input = sql_input.split(';', 1)[0]
             sql_input = re.sub(r'--.*\n*', '', sql_input)
-            
-            result  = re.split(r'(?i) where ', re.split(r'(?i)from ', sql_input, 1)[1], 1)
-            
+
+            result = re.split(r'(?i) where ', re.split(r'(?i)from ', sql_input, 1)[1], 1)
+
             if len(result) > 1:
                 sql_table, sql_where = result
             else:
                 sql_table = result[0]
                 sql_where = ''
-            
+
             sql_table = sql_table.strip()
             sql_where = sql_where.strip()
-                        
+
             postGISRequest = PostGISRequest()
             postGISRequest.setConnection(pgsession.host,
                               pgsession.port,
                               pgsession.database,
                               pgsession.user,
                               pgsession.pwd)
-                                          
-            postGISRequest.setDataSource('public',      #schema must be blank
+
+            postGISRequest.setDataSource('public',      # schema must be blank
                               sql_table,
-                              'the_geom',         #TODO: assuming the_geom, this must be looked up
-                              sql_where,          #where clause must be blank
-                              'gid')              #TODO: assuming gid, this must be looked up
-            #select * from ba_modis_giglio limit 10000
-            #TODO: make sure that the user can select a layer name or we generate a random one
+                              'the_geom',         # TODO: assuming the_geom, this must be looked up
+                              sql_where,          # where clause must be blank
+                              'gid')              # TODO: assuming gid, this must be looked up
+            # select * from ba_modis_giglio limit 10000
+            # TODO: make sure that the user can select a layer name or we generate a random one
             qgsVectorLayer = QgsVectorLayer(
                 postGISRequest.get_uri(),
                 postGISRequest.get_layername(),
                 postGISRequest.get_driver())
-            
+
             self.setResult('PostGISRequest', postGISRequest)
             self.setResult('QgsVectorLayer', qgsVectorLayer)
 
         except Exception as ex:
             #print "PostGIS:180 ", ex
-            raise ModuleError, (PostGisFeatureReturningCursor, \
+            raise ModuleError(PostGisFeatureReturningCursor, \
                                  "Could not execute SQL Statement")
 
 
@@ -237,7 +235,7 @@ class PostGisBasicReturningCursor(ThreadSafeMixin, RPyCModule):
             self.setResult('records', sql_return_list)
         except Exception as ex:
             #print "PostGIS:217 ", ex
-            raise ModuleError, (PostGisFeatureReturningCursor,\
+            raise ModuleError(PostGisFeatureReturningCursor,\
                                  "Could not execute SQL Statement")
         finally:
             curs.close()
@@ -288,7 +286,7 @@ class PostGisNonReturningCursor(NotCacheable, ThreadSafeMixin, RPyCModule):
                                 theLen = len(v)
                             if theLen > 0 and len(v) != theLen:
                                 #print "PostGIS:268" k, v, theLen
-                                raise ModuleError, (PostGisNonReturningCursor,\
+                                raise ModuleError(PostGisNonReturningCursor,\
                                          "All list like params must have same length")
                     if theLen > 0:
                         parameters = [{} for x in xrange(theLen)]
@@ -312,7 +310,7 @@ class PostGisNonReturningCursor(NotCacheable, ThreadSafeMixin, RPyCModule):
             self.setResult('status', resultstatus)
         except Exception as ex:
             #print "PostGIS:292 ",ex
-            raise ModuleError, (PostGisFeatureReturningCursor, \
+            raise ModuleError(PostGisFeatureReturningCursor, \
                                  "Could not execute SQL Statement")
         finally:
             curs.close()
@@ -365,7 +363,7 @@ class PostGisCopyFrom(NotCacheable, ThreadSafeMixin, RPyCModule):
             self.setResult('status', resultstatus)
         except Exception as ex:
             #print "PostGIS:345 ", ex
-            raise ModuleError, (PostGisFeatureReturningCursor,\
+            raise ModuleError(PostGisFeatureReturningCursor,\
                                  "Could not execute SQL Statement")
         finally:
             curs.close()
@@ -419,13 +417,14 @@ class PostGisCopyTo(NotCacheable, ThreadSafeMixin, Module):
             self.setResult('status', resultstatus)
         except Exception as ex:
             #print "PostGIS:399 ", ex
-            raise ModuleError, (PostGisFeatureReturningCursor,\
+            raise ModuleError(PostGisFeatureReturningCursor,\
                                  "Could not execute SQL Statement")
         finally:
             curs.close()
             pgconn.close()
 
+
 class SQLSourceConfigurationWidget(SyntaxSourceConfigurationWidget):
     def __init__(self, module, controller, parent=None):
-       SyntaxSourceConfigurationWidget.__init__(self, module, controller, 
+        SyntaxSourceConfigurationWidget.__init__(self, module, controller,
                                                  "SQL", parent=parent)
