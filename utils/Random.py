@@ -54,4 +54,4 @@ class Random(Module):
             self.setResult('random float', random.random() * (high - low) + low)
         else:
             self.setResult('random integer', random.randint(low, 10000))
-            self.setResult('random float', random.random()
+            self.setResult('random float', random.random())
