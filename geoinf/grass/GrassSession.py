@@ -39,9 +39,14 @@ Also see:
 ## path to GRASS settings file
 #export GISRC="$HOME/.grassrc6"
 
+# library
+# third-party
+# vistrails
 from utils.session import Session
+# eo4vistrails
 from packages.eo4vistrails.geoinf.SpatialTemporalConfigurationWidget import \
     SpatialTemporalConfigurationWidget
+# local
 
 
 class GrassSession(Session):

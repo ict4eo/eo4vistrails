@@ -33,6 +33,7 @@ from core.modules.module_registry import get_module_registry
 from core.utils import PortAlreadyExists
 from core.utils import VistrailsInternalError
 
+
 class SpatioTemporalConfigurationWidgetTabs(QtGui.QTabWidget):
     """Geoinf Configuration Tab Widgets
     are added via the addTab method of the QTabWidget
@@ -40,14 +41,14 @@ class SpatioTemporalConfigurationWidgetTabs(QtGui.QTabWidget):
     """
     def __init__(self, parent=None):
         QtGui.QTabWidget.__init__(self, parent)
-        self.setGeometry(QtCore.QRect(20, 20, 790, 540)) # 20, 20, 990, 740
+        self.setGeometry(QtCore.QRect(20, 20, 790, 540))  # 20, 20, 990, 740
         self.setTabShape(QtGui.QTabWidget.Rounded)
         self.setElideMode(QtCore.Qt.ElideNone)
         self.setObjectName("SpatioTemporalConfigurationWidgetTabsInstance")
 
 
 class SpatialWidget(QtGui.QWidget):
-    """Gather coordinates of a bounding box, or in the case of GRASS, a location
+    """Gather coordinates of a bounding box or, in the case of GRASS, a location
 
     """
 
@@ -91,21 +92,21 @@ class SpatialWidget(QtGui.QWidget):
         MSG = "Warning: POINT (%s) OUT OF BOUNDS... Selected area may be empty!!"
         # setup
         minX = str(layer_box[0])
-        minY= str(layer_box[1])
-        maxX= str(layer_box[2])
-        maxY= str(layer_box[3])
+        minY = str(layer_box[1])
+        maxX = str(layer_box[2])
+        maxY = str(layer_box[3])
         x1 = str(self.bbox_tlx.text())
         y1 = str(self.bbox_tly.text())
         x2 = str(self.bbox_brx.text())
         y2 = str(self.bbox_bry.text())
         # check
-        if minX < x1< maxX and minY < y1 < maxY:
+        if minX < x1 < maxX and minY < y1 < maxY:
             pass
-        else :
+        else:
             message = MSG % 'X1,Y1'
-        if minX < x2< maxX and minY < y2 < maxY:
+        if minX < x2 < maxX and minY < y2 < maxY:
             pass
-        else :
+        else:
             message = MSG % 'X2,Y2'
         return message
 
@@ -118,8 +119,7 @@ class SpatialWidget(QtGui.QWidget):
             self.bbox_tlx.text(),
             self.bbox_tly.text(),
             self.bbox_brx.text(),
-            self.bbox_bry.text()
-            )
+            self.bbox_bry.text())
 
 
 class TemporalWidget(QtGui.QWidget):
@@ -196,16 +196,15 @@ class TemporalWidget(QtGui.QWidget):
         self.tIntervalLayout.addWidget(self.daySlider, 3, 1)
         self.tIntervalLayout.addWidget(self.dayLcd, 3, 2)
         #LCD related
-        self.dayLcd.setDigitCount (3)
+        self.dayLcd.setDigitCount(3)
         #Slider related
-        self.daySlider.setRange (0, 364)
+        self.daySlider.setRange(0, 364)
         #connecting the signal and slot of the slider and lcd
         self.connect(
             self.daySlider,
             QtCore.SIGNAL('valueChanged(int)'),
             self.dayLcd,
-            QtCore.SLOT('display(int)')
-        )
+            QtCore.SLOT('display(int)'))
         # HOURS
         # setting up the lcd and the slider widgets
         self.hourLcd = QtGui.QLCDNumber(self)
@@ -223,8 +222,7 @@ class TemporalWidget(QtGui.QWidget):
             self.hourSlider,
             QtCore.SIGNAL('valueChanged(int)'),
             self.hourLcd,
-            QtCore.SLOT('display(int)')
-        )
+            QtCore.SLOT('display(int)'))
         # MINUTES
         # setting up the lcd and the slider widgets
         self.minuteLcd = QtGui.QLCDNumber(self)
@@ -242,8 +240,7 @@ class TemporalWidget(QtGui.QWidget):
             self.minuteSlider,
             QtCore.SIGNAL('valueChanged(int)'),
             self.minuteLcd,
-            QtCore.SLOT('display(int)')
-        )
+            QtCore.SLOT('display(int)'))
 
     """TIME
     QDateTime::toString ( const QString & format )
@@ -307,35 +304,27 @@ class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
                 "SpatialTemporalConfigurationWidget",
                 "Bounding Coordinates",
                 None,
-                QtGui.QApplication.UnicodeUTF8
-            )
-        )
+                QtGui.QApplication.UnicodeUTF8))
         self.tabs.setTabToolTip(
             self.tabs.indexOf(self.spatial_widget),
             QtGui.QApplication.translate(
                 "SpatialTemporalConfigurationWidget",
                 "Gather coordinates of a bounding box or, in the case of GRASS, a location",
                 None,
-                QtGui.QApplication.UnicodeUTF8
-            )
-        )
+                QtGui.QApplication.UnicodeUTF8))
         self.tabs.setTabText(
             self.tabs.indexOf(self.temporal_widget),
             QtGui.QApplication.translate(
                 "SpatialTemporalConfigurationWidget",
                 "Temporal Bounds and Intervals",
-                None, QtGui.QApplication.UnicodeUTF8
-            )
-        )
+                None, QtGui.QApplication.UnicodeUTF8))
         self.tabs.setTabToolTip(
             self.tabs.indexOf(self.temporal_widget),
             QtGui.QApplication.translate(
                 "SpatialTemporalConfigurationWidget",
                 "Choose and set temporal bounds and interval parameters",
                 None,
-                QtGui.QApplication.UnicodeUTF8
-            )
-        )
+                QtGui.QApplication.UnicodeUTF8))
         self.tabLayout = QtGui.QHBoxLayout()
         self.tabLayout.addWidget(self.tabs)
         self.tabs.setCurrentIndex(0)
@@ -377,8 +366,7 @@ class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
         """
         return (
             self.temporal_widget.getTimeBegin(),
-            self.temporal_widget.getTimeEnd(),
-            )
+            self.temporal_widget.getTimeEnd(),)
 
     def getBoundingBox(self):
         """Return a tuple containing box co-ordinates.
@@ -389,13 +377,13 @@ class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
             self.spatial_widget.bbox_tlx.text(),
             self.spatial_widget.bbox_tly.text(),
             self.spatial_widget.bbox_brx.text(),
-            self.spatial_widget.bbox_bry.text()
-            )
+            self.spatial_widget.bbox_bry.text())
 
     def getBoundingBoxString(self):
         """Return a comma-delimited string containing box co-ordinates."""
         bbox = self.getBoundingBox()
-        return str(bbox[0])+','+str(bbox[1])+','+str(bbox[2])+','+str(bbox[3])
+        return str(bbox[0]) + ',' + str(bbox[1]) + ',' + \
+               str(bbox[2]) + ',' + str(bbox[3])
 
     def okTriggered(self, checked=False, functions=[]):
         """ okTriggered(checked: bool, functions: array) -> None

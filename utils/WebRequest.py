@@ -27,15 +27,15 @@
 """This module forms part of the eo4vistrails capabilities - it is used to
 handle web request (e.g. for WFS, WCS or SOS) processing inside vistrails.
 """
-
 # library
 import os
 import socket
 import urllib
 import urllib2
-# third party
+# third-party
 # vistrails
 from core.modules.vistrails_module import ModuleError
+# eo4vistrails
 # local
 from DataRequest import DataRequest
 
@@ -47,7 +47,7 @@ class WebRequest(DataRequest):
     * With the 'data' port set as well, the module will execute a POST request.
     """
 
-    def __init__(self, url=None, data=None, runTheRequest=False, timeout=600):
+    def __init__(self, url=None, data=None, runTheRequest=False, timeout=60):
         DataRequest.__init__(self)
         self.url = url
         self.data = data
@@ -111,7 +111,7 @@ class WebRequest(DataRequest):
             elif request_type == 'POST':
                 user_agent = 'Mozilla/4.0 (compatible; MSIE 5.5; Windows NT)'
                 headers = {'User-Agent': user_agent,
-                           'Content-Type':'application/xml'}
+                           'Content-Type': 'application/xml'}
                 req = urllib2.Request(self.url, self.data, headers)
             else:
                 raise ModuleError(

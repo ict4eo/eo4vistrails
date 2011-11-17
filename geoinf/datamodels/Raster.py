@@ -27,19 +27,24 @@
 All eo4vistrails modules dealing with raster data must extend this class.
 """
 
+# library
+import hashlib
 import os
 import os.path
 import urllib
-import hashlib
-import core.modules.module_registry
-import core.system
-from core.modules.vistrails_module import Module, ModuleError
-from core.modules.basic_modules import File
-import gui.application
+# third-party
 try:
     from osgeo import gdal
 except:
     import gdal
+# vistrails
+import core.modules.module_registry
+from core.modules.vistrails_module import Module, ModuleError
+from core.modules.basic_modules import File
+import core.system
+import gui.application
+# eo4vistrails
+# local
 
 
 class _GdalMemModel():

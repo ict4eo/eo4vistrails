@@ -30,9 +30,7 @@
 from tempfile import mkstemp
 from os import fdopen
 # third-party
-
 # vistrails
-
 # eo4vistrails
 from packages.eo4vistrails.rpyc.RPyC import RPyCModule
 from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin

@@ -28,11 +28,15 @@ selection widgets for configuring geoinf.ogc modules.
 
 This refers primarily to GetCapabilities requests
 """
+# library
+# third-party
 from PyQt4 import QtCore, QtGui
+# vistrails
 from core import debug
 from core.modules.module_configure import StandardModuleConfigurationWidget
 from core.modules.module_registry import get_module_registry
 from core.utils import PortAlreadyExists
+# eo4vistrails
 
 
 class Port():
@@ -48,7 +52,7 @@ class Port():
 
     def value(self):
         """Create a tuple-form of a port, for use by Vistrails module"""
-        return ((self.id, '('+self.sigstring+')', self.sort_key))
+        return ((self.id, '(' + self.sigstring + ')', self.sort_key))
 
 
 class PortConfigurationWidget(StandardModuleConfigurationWidget):
@@ -134,7 +138,7 @@ class PortConfigurationWidget(StandardModuleConfigurationWidget):
         """
         return QtCore.QSize(512, 256)
 
-    def okTriggered(self, checked = False):
+    def okTriggered(self, checked=False):
         """ okTriggered(checked: bool) -> None
         Update vistrail controller and module when the user click Ok
 

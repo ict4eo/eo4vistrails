@@ -27,7 +27,6 @@
 """This module forms part of the eo4vistrails capabilities - it is used to
 handle data and PostGIS requests for processing inside vistrails.
 """
-
 # library
 # third party
 from qgis.core import QgsDataSourceURI

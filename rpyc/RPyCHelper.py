@@ -30,13 +30,18 @@ It also has the rpyc remote code that is used for ???.
 #History
 #Terence van Zyl, 15 Dec 2010, Version 1.0
 
+# library
+# third-party
+import rpyc
+from RPyC import RPyCModule, refreshPackage
+# vistrails
+from core.modules import basic_modules
 from core.modules.vistrails_module import ModuleError, NotCacheable, Module
 from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
-from RPyC import RPyCModule, refreshPackage
+# eo4vistrails
 from packages.eo4vistrails.utils.DropDownListWidget import ComboBoxWidget
 from packages.eo4vistrails.utils.ModuleHelperMixin import ModuleHelperMixin
-from core.modules import basic_modules
-import rpyc
+# local
 
 
 def getRemoteConnection(ip, port):
@@ -45,16 +50,16 @@ def getRemoteConnection(ip, port):
                         {'allow_all_attrs': True,
                          'instantiate_custom_exceptions': True,
                          'import_custom_exceptions': True})
-    
+
     print "Got a Remote Node"
     #Make sure all the right stuff is in place espcially dummy core and packages
     #on the remote node, no need for this if local as the machine is already set up
     print "Checking requirements on node..."
-    
+
     #make sure all packages are in the path
     if not "./tmp" in connection.modules.sys.path:
         connection.modules.sys.path.append('./tmp')
-    
+
     #Check version info
     force = False
     try:
@@ -98,7 +103,7 @@ def getSubConnection():
                                          {'allow_all_attrs': True,
                                           'instantiate_custom_exceptions': True,
                                           'import_custom_exceptions': True})
-    
+
     #connection = rpyc.classic.connect_subproc()
     #make sure all packages are in the path
     print "Got a subProc"
@@ -107,8 +112,9 @@ def getSubConnection():
     #connection.modules.sys.path.extend(sys.path)
     connection.modules.sys.path.append(core.system.vistrails_root_directory())
     #connection.modules.sys.path.append(core.system.packages_directory())
-    
+
     return connection
+
 
 class RPyCCode(ThreadSafeMixin, NotCacheable, Module, ModuleHelperMixin):
     """
@@ -116,16 +122,16 @@ class RPyCCode(ThreadSafeMixin, NotCacheable, Module, ModuleHelperMixin):
     TODO: This code is not threadsafe. Terence needs to fix it
     """
     #TODO: If you want a PythonSource execution to fail, call fail(error_message).
-    #TODO: If you want a PythonSource execution to be cached, call cache_this().    
-    
-    _input_ports = [('rpycnode', '(za.co.csir.eo4vistrails:RpyC Node:rpyc)')]    
-    
+    #TODO: If you want a PythonSource execution to be cached, call cache_this().
+
+    _input_ports = [('rpycnode', '(za.co.csir.eo4vistrails:RpyC Node:rpyc)')]
+
     def __init__(self):
         ThreadSafeMixin.__init__(self)
         Module.__init__(self)
         self.preCodeString = None
         self.postCodeString = None
-        
+
     def clear(self):
         print "clear"
         Module.clear(self)
@@ -142,26 +148,26 @@ class RPyCCode(ThreadSafeMixin, NotCacheable, Module, ModuleHelperMixin):
                 self.conn.close()
             except:
                 pass
-    
+
     def run_code_common(self, locals_, execute, code_str, use_input, use_output, pre_code_string, post_code_string):
-        import core.packagemanager        
-        
+        import core.packagemanager
+
         def fail(msg):
             raise ModuleError(self, msg)
 
         def cache_this():
             self.is_cacheable = lambda *args, **kwargs: True
-        
+
         if use_input:
             inputDict = None
             self.setInputResults(locals_, inputDict)
-        
+
         outputDict = None
         if use_output:
             outputDict = dict([(k, None) for k in self.outputPorts])
             del outputDict['self']
             locals_.update(outputDict)
-            
+
         _m = core.packagemanager.get_package_manager()
         from core.modules.module_registry import get_module_registry
         reg = get_module_registry()
@@ -176,30 +182,30 @@ class RPyCCode(ThreadSafeMixin, NotCacheable, Module, ModuleHelperMixin):
         execute(code_str)
         if post_code_string:
             execute(post_code_string)
-        
+
         if use_output:
             self.setOutputResults(locals_, outputDict)
 
     def setInputResults(self, locals_, inputDict):
         from packages.NumSciPy.Array import NDArray
-        
+
         inputDict = dict([(k, self.getInputFromPort(k)) for k in self.inputPorts])
         del inputDict['source']
-        if inputDict.has_key('rpycnode'):
+        if 'rpycnode' in inputDict:
             del inputDict['rpycnode']
 
-        #check that if any are NDArrays we get the numpy array out        
+        #check that if any are NDArrays we get the numpy array out
         for k in inputDict.iterkeys():
             if type(inputDict[k]) == NDArray or str(type(inputDict[k])) == "<netref class 'packages.NumSciPy.Array.NDArray'>":
                 inputDict[k] = inputDict[k].get_array()
         locals_.update(inputDict)
-    
+
     def setOutputResults(self, locals_, outputDict):
         from packages.NumSciPy.Array import NDArray
-        
+
         for k in outputDict.iterkeys():
             try:
-                if locals_.has_key(k) and locals_[k] != None:
+                if k in locals_ and locals_[k] != None:
                     if self.getPortType(k) == NDArray or str(type(outputDict[k])) == "<netref class 'packages.NumSciPy.Array.NDArray'>":
                         outArray = NDArray()
                         outArray.set_array(locals_[k])
@@ -209,7 +215,6 @@ class RPyCCode(ThreadSafeMixin, NotCacheable, Module, ModuleHelperMixin):
             except AttributeError:
                 self.setResult(k, locals_[k])
 
-
     def run_code_orig(self, code_str, use_input, use_output, pre_code_string, post_code_string):
         """run_code runs a piece of code as a VisTrails module.
         use_input and use_output control whether to use the inputport
@@ -217,6 +222,7 @@ class RPyCCode(ThreadSafeMixin, NotCacheable, Module, ModuleHelperMixin):
         execution."""
 
         locals_ = locals()
+
         def execute(s):
             exec s in locals_
 
@@ -251,7 +257,7 @@ class RPyCCode(ThreadSafeMixin, NotCacheable, Module, ModuleHelperMixin):
 
         if s == '':
             return
-                    
+
         if self.conn:
             self.run_code(s, self.conn, True, True, self.preCodeString, self.postCodeString)
         else:

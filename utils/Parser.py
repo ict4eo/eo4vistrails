@@ -60,8 +60,8 @@ NAMESPACES = {
     "xlink": "http://www.w3.org/1999/xlink",
     "om": "http://www.opengis.net/om/1.0",
     "swe": "http://www.opengis.net/swe/1.0.1",
-    "sa": "http://www.opengis.net/sampling/1.0"
-}
+    "sa": "http://www.opengis.net/sampling/1.0"}
+
 #ows
 KEY_NAMESPACE = 'http://www.opengis.net/ows/1.1'
 
@@ -248,7 +248,7 @@ class Parser(object):
         if path is None:
             return None
         if not namespace:
-            namespace=self.namespace
+            namespace = self.namespace
         components = []
         if '/' in path:
             for component in path.split('/'):
@@ -271,7 +271,7 @@ class Parser(object):
         if name is None:
             return None
         if not nss:
-            nss = (self.namespace,'')
+            nss = (self.namespace, '')
 
         for namespace in nss:
             if namespace:

@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
 # SOURCE: http://youarealegend.blogspot.com/2008/09/windrose.html
-"""
+
 __version__ = '1.4'
 __author__ = 'Lionel Roubeyrie'
 __mail__ = 'lionel.roubeyrie@gmail.com'

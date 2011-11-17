@@ -42,13 +42,14 @@ from packages.eo4vistrails.utils.DropDownListWidget import ComboBoxWidget
 from core.modules import basic_modules
 from threading import Thread, currentThread, RLock
 
+
 class EPSGComboBoxWidget(ComboBoxWidget):
     """TODO: Add docstring
     """
     default = ('4326', 4326)
 
     def getKeyValues(self):
-        return {'3867':3786, '4326': 4326}
+        return {'3867': 3786, '4326': 4326}
 
 EPSGCode = basic_modules.new_constant('EPSG Code',
                                       staticmethod(eval),
@@ -56,18 +57,18 @@ EPSGCode = basic_modules.new_constant('EPSG Code',
                                       staticmethod(lambda x: type(x) == int),
                                       EPSGComboBoxWidget)
 
+
 #global globalQgsLock
 #globalQgsLock = RLock()
 
-#class QgsMapLayer(ThreadSafeMixin, Module):
 class QgsMapLayer(Module):
     """
     This module will create a QGIS layer from a file
     IT is not threadsafe and has race conditions on the qgis drivers
     """
-    
-    #_input_ports = [('EPSG Code', '(za.co.csir.eo4vistrails:EPSG Code:data)')] 
-    
+
+    #_input_ports = [('EPSG Code', '(za.co.csir.eo4vistrails:EPSG Code:data)')]
+
     def __init__(self):
         #ThreadSafeMixin.__init__(self)
         Module.__init__(self)
@@ -97,7 +98,7 @@ class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
     """
 
     def __init__(self, uri=None, layername=None, driver=None):
-        QgsMapLayer.__init__(self)        
+        QgsMapLayer.__init__(self)
         if uri and layername and driver:
             qgis.core.QgsVectorLayer.__init__(self, uri, layername, driver)
         self.SUPPORTED_DRIVERS = ['WFS', 'ogr', 'postgres']
@@ -110,7 +111,7 @@ class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
             thefile = self.forceGetInputFromPort('file', None)
             dataReq = self.forceGetInputFromPort('dataRequest', None)
             theProj = self.forceGetInputFromPort('EPSG Code', None)
-            
+
             try:
                 isFILE = (thefile != None) and (thefile.name != '')
             except AttributeError:
@@ -125,7 +126,7 @@ class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
                 thefilename = QFileInfo(thefilepath).fileName()
 
                 #globalQgsLock.acquire()
-                
+
                 qgis.core.QgsVectorLayer.__init__(
                     self,
                     thefilepath,
@@ -133,7 +134,7 @@ class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
                     "ogr")
 
                 #globalQgsLock.release()
-                
+
                 if theProj:
                     self.setCrs(qgis.core.QgsCoordinateReferenceSystem(theProj))
             elif isQGISSuported:
@@ -161,6 +162,7 @@ class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
             self.setResult('value', self)
         except Exception, e:
             self.raiseError('Cannot set output port: %s' % str(e))
+
 
 class QgsRasterLayer(QgsMapLayer, qgis.core.QgsRasterLayer):
     """Create a QGIS raster layer.

@@ -24,15 +24,15 @@
 ### WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ###
 #############################################################################
-"""This module holds a rpycnode type that can be passed around between modules.
+"""This module ???
 """
 # library
-
 # third-party
 import pysal
 # vistrails
 from core.modules.vistrails_module import Module
 # eo4vistrails
+# local
 
 
 class PySALModule(object):

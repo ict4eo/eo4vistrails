@@ -1,11 +1,42 @@
+# -*- coding: utf-8 -*-
+############################################################################
+###
+### Copyright (C) 2010 CSIR Meraka Institute. All rights reserved.
+###
+### This full package extends VisTrails, providing GIS/Earth Observation
+### ingestion, pre-processing, transformation, analytic and visualisation
+### capabilities . Included is the abilty to run code transparently in
+### OpenNebula cloud environments. There are various software
+### dependencies, but all are FOSS.
+###
+### This file may be used under the terms of the GNU General Public
+### License version 2.0 as published by the Free Software Foundation
+### and appearing in the file LICENSE.GPL included in the packaging of
+### this file.  Please review the following to ensure GNU General Public
+### Licensing requirements will be met:
+### http://www.opensource.org/licenses/gpl-license.php
+###
+### If you are unsure which license is appropriate for your use (for
+### instance, you are interested in developing a commercial derivative
+### of VisTrails), please contact us at vistrails@sci.utah.edu.
+###
+### This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
+### WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+###
+#############################################################################
+"""This module ???
+"""
+# library
+import psycopg2
+from psycopg2 import ProgrammingError
+# third-party
 # vistrails
 from core.modules.vistrails_module import Module, ModuleError
 # eo4vistrails
 from packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
 from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
+# local
 
-import psycopg2
-from psycopg2 import ProgrammingError
 
 #@RPyCSafeModule()
 class InputStream(Module):
@@ -14,6 +45,7 @@ class InputStream(Module):
                     ('in_python_datatype', '(edu.utah.sci.vistrails.basic:String)')]
     _output_ports = [('datalist', '(edu.utah.sci.vistrails.basic:List)'),
                     ('python_datatype', '(edu.utah.sci.vistrails.basic:String)')]
+
     def __init__(self):
         #ThreadSafeMixin.__init__(self)
         Module.__init__(self)
@@ -34,7 +66,6 @@ class pgSQLMergeInsert(Module):
                             ('dbsession', '(za.co.csir.eo4vistrails:PostGisSession:postGIS)'),  \
                             ('table', '(edu.utah.sci.vistrails.basic:String)')]
     _output_ports = [('result', '(edu.utah.sci.vistrails.basic:String)')]
-
 
     def __init__(self):
         #ThreadSafeMixin.__init__(self)
@@ -59,23 +90,18 @@ class pgSQLMergeInsert(Module):
                 colnames = colnames + metaitem[0] + ","
                 if not metaitem[2] is None:
                     default_vals.append(self.tblmeta.index(metaitem))
-
-            colnames = colnames[:len(colnames) -1]
-
+            colnames = colnames[:len(colnames) - 1]
 
             ziprecords = zip(*input_streams)
-
-            insert_stmt  = "INSERT INTO %s (%s) VALUES " % (tbl,  colnames)
+            insert_stmt = "INSERT INTO %s (%s) VALUES " % (tbl, colnames)
             records = []
             if default_vals != []:
-
                 for record in ziprecords:
                     record_as_list = list(record)
                     for dv in default_vals:
                         record_as_list.insert(dv, 'DEFAULT')
                         records.append(str(tuple(record_as_list)))
             else:
-
                 for record in ziprecords:
                     records.append(str(record))
 
@@ -88,9 +114,9 @@ class pgSQLMergeInsert(Module):
             self.setResult('result', curs.statusmessage)
 
         except Exception as ex:
-            print "PostGIS:292 ",ex
-            raise ModuleError, (pgSQLMergeInsert, \
-                                 "Could not execute SQL Statement")
+            print "DataTranformations:123", ex
+            raise ModuleError(pgSQLMergeInsert, \
+                              "Could not execute SQL Statement")
         finally:
             curs.close()
             pgconn.close()

@@ -28,19 +28,23 @@ This module provides an generic OGC Simple Features data model via OGR.
 All eo4vistrails modules dealing with feature data must extend one of the
 provided classes.
 """
+# library
 import os
 import os.path
 import urllib
 import hashlib
-import core.modules.module_registry
-import core.system
-from core.modules.vistrails_module import Module, ModuleError
-from core.modules.basic_modules import File
+# third-party
 import gui.application
 try:
     from osgeo import ogr
 except:
     import ogr
+# vistrails
+import core.modules.module_registry
+import core.system
+from core.modules.vistrails_module import Module, ModuleError
+from core.modules.basic_modules import File
+# eo4vistrails
 
 
 class _OgrMemModel():
@@ -181,10 +185,10 @@ class _OgrMemModel():
         '''Loads up a string of spatial data of some kind, e.g. GeoJSON, GML.
 
         Expects GeoStrings objects such as GMLString, GeoJSONString'''
-        #FIXME: get rid of string truncation by getting conf from the proper widget
+        #TODO FIXME: get rid of string truncation by getting conf from the proper widget
         #- for now, make sure strings are small...
 
-        #will write string to temp file , then load it up
+        # Write string to temp file, then load it up
         def _viaCache():
             temp_filepath = core.system.default_dot_vistrails() + "/eo4vistrails/ogr/"
 
@@ -203,7 +207,7 @@ class _OgrMemModel():
                     return "gml"
 
             temp_filename = temp_filepath + hashlib.sha1(
-                str(len(geo_string.__dict__['outputPorts']["value_as_string"]))).hexdigest() + "." + _get_ext()#geo_string.__name__
+                str(len(geo_string.__dict__['outputPorts']["value_as_string"]))).hexdigest() + "." + _get_ext()  # geo_string.__name__
             f = open(temp_filename, 'w')
             f.write(geo_string.__dict__['outputPorts']["value_as_string"])
             f.close()
@@ -215,9 +219,9 @@ class _OgrMemModel():
 
     def dumpToFile(self, filesource, datasetType="ESRI Shapefile"):
         """TODO add docstring"""
-        #always overwrites
+        # Always overwrites
         if not os.path.exists(filesource):
-            os.remove(filesource) #but for shapefiles? maybe the dataset creation process has an override option rather...
+            os.remove(filesource)  # but for shapefiles? maybe the dataset creation process has an override option rather...
 
         try:
             driver = ogr.GetDriverByName(datasetType)
@@ -325,8 +329,8 @@ class FileFeatureModel(File):
             ogr = _OgrMemModel()
             ogr.loadContentFromFile(source_file)
 
-        elif (self.hasInputFromPort("source_feature_dataset")): #and self.getInputFromPort("source_feature_dataset")):
-            ogr = self.getInputFromPort("source_feature_dataset").feature_model #which is the same, an instance of _OgrMemModel
+        elif (self.hasInputFromPort("source_feature_dataset")):  # and self.getInputFromPort("source_feature_dataset")):
+            ogr = self.getInputFromPort("source_feature_dataset").feature_model  # which is the same, an instance of _OgrMemModel
             print ogr
         elif (self.hasInputFromPort("webrequest") and self.getInputFromPort("webrequest")):
             ogr = _OgrMemModel()
@@ -442,7 +446,7 @@ class FeatureModelGeometryComparitor(Module):
 
 def initialize(*args, **keywords):
     """sets everything up"""
-    # We'll first create a local alias for the module_registry so that
+    # First create a local alias for the module_registry so that
     # we can refer to it in a shorter way.
     reg = core.modules.module_registry.get_module_registry()
     reg.add_module(FeatureModel)

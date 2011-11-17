@@ -51,7 +51,7 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
 
     For example, in the case of a SOS, the data fetched from the server
     will be stored in an O&M schema-based XML file (self.results_file)
-    """    
+    """
 
     def __init__(self, uri=None, layername=None, driver=None):
         QgsVectorLayer.__init__(self)

@@ -30,13 +30,12 @@
 from script import Script
 import urllib
 # third-party
-
 # vistrails
-
 # eo4vistrails
 from packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
 from packages.eo4vistrails.utils.synhigh import SyntaxSourceConfigurationWidget
 from packages.eo4vistrails.utils.ModuleHelperMixin import ModuleHelperMixin
+# local
 
 
 @RPyCSafeModule()

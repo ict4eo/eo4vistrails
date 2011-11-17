@@ -26,12 +26,14 @@
 """This abstract module provides string specialisations that allow modules to
 understand what kind of data is being passed into a method as a string.
 """
+# library
+# third-party
 from PyQt4 import QtCore, QtGui
+# vistrails
 from core.modules import basic_modules
 from core.utils import any, expression
-#from core.modules.source_configure import SourceConfigurationWidget
 from core.modules.constant_configuration import ConstantWidgetMixin
-
+# eo4vistrails
 
 
 #class GMLString(GeoString):
@@ -96,8 +98,8 @@ class GeoStringConstantWidget(QtGui.QTextEdit, ConstantWidgetMixin):
 
     def setContents(self, strValue, silent=True):
         """setContents(strValue: str) -> None
-        Re-implement this method so the widget can change its value after 
-        constructed. If silent is False, it will propagate the event back 
+        Re-implement this method so the widget can change its value after
+        constructed. If silent is False, it will propagate the event back
         to the parent.
         As this is a QLineEdit, we just call setText(strValue)
         """
@@ -105,7 +107,7 @@ class GeoStringConstantWidget(QtGui.QTextEdit, ConstantWidgetMixin):
         self.update_text()
         if not silent:
             self.update_parent()
-            
+
     def update_text(self):
         """ update_text() -> None
         Update the text to the result of the evaluation
@@ -120,16 +122,16 @@ class GeoStringConstantWidget(QtGui.QTextEdit, ConstantWidgetMixin):
                 self.setText(str(eval(str(base), None, None)))
             except:
                 self.setText(base)
-                
+
     def sizeHint(self):
         metrics = QtGui.QFontMetrics(self.font())
-        width = min(metrics.width(self.toPlainText())+10,70)
-        return QtCore.QSize(width, 
-                            metrics.height()+60)
-    
+        width = min(metrics.width(self.toPlainText()) + 10, 70)
+        return QtCore.QSize(width,
+                            metrics.height() + 60)
+
     def minimumSizeHint(self):
         return self.sizeHint()
-    
+
     ###########################################################################
     # event handlers
 

@@ -24,31 +24,28 @@
 ### WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ###
 #############################################################################
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Aug 25 09:46:42 2011
-
-@author: tvzyl
-"""
-
 """TODO  Add documentation to this module.
 """
+# Created on Thu Aug 25 09:46:42 2011 @author: tvzyl
 
-from core.modules.vistrails_module import Module, ModuleError
-
+# library
 import random
+# third-party
+# vistrails
+from core.modules.vistrails_module import Module, ModuleError
+# eo4vistrails
+# local
+
 
 class Command(Module):
     """ Container class for the random class """
-    
+
     _input_ports = [('command', '(edu.utah.sci.vistrails.basic:String)'),
                     ('input file path', '(edu.utah.sci.vistrails.basic:String)'),
-                    ('output file path', '(edu.utah.sci.vistrails.basic:String)')
-                   ]
+                    ('output file path', '(edu.utah.sci.vistrails.basic:String)')]
 
-    _output_ports = [('output file path', '(edu.utah.sci.vistrails.basic:String)')
-                    ]
-                    
+    _output_ports = [('output file path', '(edu.utah.sci.vistrails.basic:String)')]
+
     def __init__(self):
         Module.__init__(self)
 
@@ -56,9 +53,8 @@ class Command(Module):
         command = self.getInputFromPort('command')
         i_name = self.forceGetInputFromPort('input file path', None)
         o_name = self.forceGetInputFromPort('output file path', None)
-        
-        from subprocess import call
-        call(command%{"i": i_name, "o": o_name},shell=True)
 
-        self.setResult('output file path', o_name )
-             
+        from subprocess import call
+        call(command % {"i": i_name, "o": o_name}, shell=True)
+
+        self.setResult('output file path', o_name)

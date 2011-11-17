@@ -25,41 +25,33 @@
 ###
 #############################################################################
 # -*- coding: utf-8 -*-
-"""
-Created on Thu Aug 25 09:46:42 2011
-
-@author: tvzyl
-"""
-
 """TODO  Add documentation to this module.
 """
+#Created on Thu Aug 25 09:46:42 2011 @author: tvzyl
 
 from core.modules.vistrails_module import Module, ModuleError
-
 import random
+
 
 class Random(Module):
     """ Container class for the random class """
-    
+
     _input_ports = [('lowest number', '(edu.utah.sci.vistrails.basic:Float)'),
-                    ('highest number', '(edu.utah.sci.vistrails.basic:Float)')
-                   ]
+                    ('highest number', '(edu.utah.sci.vistrails.basic:Float)')]
 
     _output_ports = [('random float', '(edu.utah.sci.vistrails.basic:Float)'),
-                     ('random integer', '(edu.utah.sci.vistrails.basic:Integer)')
-                    ]
-                    
+                     ('random integer', '(edu.utah.sci.vistrails.basic:Integer)')]
+
     def __init__(self):
         Module.__init__(self)
 
     def compute(self):
         low = self.forceGetInputFromPort('lowest number', 0)
         high = self.forceGetInputFromPort('highest number', None)
-        
+
         if high:
-            self.setResult('random integer', random.randint(low, high) )
-            self.setResult('random float', random.random()*(high-low) + low )
+            self.setResult('random integer', random.randint(low, high))
+            self.setResult('random float', random.random() * (high - low) + low)
         else:
-            self.setResult('random integer', random.randint(low, 10000) )
-            self.setResult('random float', random.random() )
-             
+            self.setResult('random integer', random.randint(low, 10000))
+            self.setResult('random float', random.random()

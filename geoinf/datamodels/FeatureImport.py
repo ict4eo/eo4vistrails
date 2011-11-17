@@ -33,23 +33,24 @@
 ############################################################################
 """This module provides a Feature file Import
 """
-
-#from owslib.wfs import WFS
+# library
+import os
+import sys
+import fnmatch
+# third-party
+from numpy import *
+from osgeo import ogr, gdal
+from PyQt4 import QtCore, QtGui
+from scipy import *
+# vistrails
 import core.modules.module_registry
 import core.system
-from PyQt4 import QtCore, QtGui
+from core.modules.vistrails_module import Module, new_module, NotCacheable,\
+    ModuleError
+# eo4vistrails
 from packages.eo4vistrails.geoinf.datamodels.Feature import FeatureModel
 from packages.eo4vistrails.geoinf.ogc.OgcConfigurationWidget import \
     OgcConfigurationWidget
-from core.modules.vistrails_module import Module, new_module, NotCacheable,\
-    ModuleError
-#from geoinf.datamodels.Raster import RasterModel
-import os
-import sys
-from numpy import *
-from osgeo import ogr, gdal
-import fnmatch
-from scipy import *
 
 
 #need to import the configuration widget we develop
@@ -72,7 +73,7 @@ class FeatureImportCommonWidget(QtGui.QWidget):
         QtGui.QWidget.__init__(self, parent)
         self.setObjectName("FeatureImportCommonWidget")
         self.parent_widget = ogc_widget
-        self.contents = None #  only set in self.loadOfferings()
+        self.contents = None  # only set in self.loadOfferings()
         self.create_config_window()
 
         # listen for signals emitted by OgcCommonWidget class

@@ -24,7 +24,7 @@
 ### WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ###
 #############################################################################
-"""This module holds a rpycnode type that can be passed around between modules.
+"""This module ???
 """
 # library
 from script import Script

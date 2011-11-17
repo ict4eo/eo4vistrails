@@ -26,12 +26,14 @@
 #############################################################################
 """TODO  Add documentation to this module.
 """
-
+# library
+# third-party
+import numpy
+# vistrails
 import core.modules
 import core.modules.module_registry
 from core.modules.vistrails_module import Module, ModuleError
-
-import numpy
+# eo4vistrails
 
 
 class ArrayModule(object):
@@ -277,8 +279,8 @@ class NDArray(Module, ArrayModule):
 
     # Array Access
     def get_row_range(self, start, to):
-        return self.array[start:to+1, :]
+        return self.array[start:to + 1, :]
 
     # Array Access
     def get_col_range(self, start, to):
-        return self.array[:, start:to+1]
+        return self.array[:, start:to + 1]

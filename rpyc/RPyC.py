@@ -29,10 +29,8 @@
 #History
 #Terence van Zyl, 15 Dec 2010, Version 1.0
 
-#This lib goes accross as part of the setup
-import Shared
-#Node must have rpyc installed so not a problem
-import rpyc
+import Shared  # This lib goes accross as part of the setup
+import rpyc  # Node must have rpyc installed so not a problem
 #node has dummy versions of these so not a problem
 from core.modules.vistrails_module import Module
 
@@ -116,7 +114,7 @@ class RPyCSafeModule(object):
             new__dict__ = clazz.__dict__.copy()
             new__dict__['_original_compute'] = new__dict__['compute']
 
-            del(new__dict__['compute']) # = RPyCSafeMixin.compute
+            del(new__dict__['compute'])  # = RPyCSafeMixin.compute
 
         return type(clazz.__name__, new__bases__, new__dict__)
 
@@ -181,7 +179,7 @@ class RPyCSafeMixin(object):
             #redirect StdIO back here so we can see what is going on
             import sys
             self.conn.modules.sys.stdout = sys.stdout
-            
+
             #Just sum setup stuff to make sure vistrails is safe
             #self.conn.execute('import core.requirements')
             self.conn.execute('import init_for_library')
@@ -190,10 +188,10 @@ class RPyCSafeMixin(object):
             self.conn.execute('Shared.isRemoteRPyCNode=True')
 
             #Instantiate Shadow Object
-            print 'from %s import %s'%(self.__module__, self.__class__.__name__)
-            print '%s'%self.conn.modules.sys.path
-            self.conn.execute('from %s import %s'%(self.__module__, self.__class__.__name__))
-            shadow = self.conn.eval('%s()'%(self.__class__.__name__))
+            print 'from %s import %s' % (self.__module__, self.__class__.__name__)
+            print '%s' % self.conn.modules.sys.path
+            self.conn.execute('from %s import %s' % (self.__module__, self.__class__.__name__))
+            shadow = self.conn.eval('%s()' % (self.__class__.__name__))
 
             #Hook Up Shadow Objects Methods and Attributes
             #attributes
@@ -213,10 +211,10 @@ class RPyCSafeMixin(object):
             shadow.is_fold_module = self.is_fold_module
             shadow.computed = self.computed
             shadow.signature = self.signature
-            
+
             self.conn.execute('import core.interpreter.default')
             shadow.interpreter = self.conn.eval('core.interpreter.default.get_default_interpreter()')
-            
+
             print "Executing in the shadow class"
             #Call the Shadow Objects Compute
             shadow.compute()

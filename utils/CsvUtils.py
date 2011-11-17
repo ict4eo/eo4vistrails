@@ -27,7 +27,7 @@
 """This module forms part of the eo4vistrails capabilities - it is used to
 handle write csv files to a given location with or without headers.
 """
-# global
+# library
 import csv
 import os
 import os.path
@@ -175,4 +175,4 @@ class CsvWriter(ThreadSafeMixin, Module):
             print ex
             #raise an error
 
-        csvfile = None #flush to disk
+        csvfile = None  # flush to disk

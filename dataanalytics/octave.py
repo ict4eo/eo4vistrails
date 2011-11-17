@@ -24,7 +24,7 @@
 ### WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ###
 #############################################################################
-"""This module holds a rpycnode type that can be passed around between modules.
+"""This module ???
 """
 # library
 from subprocess import call
@@ -32,7 +32,6 @@ from tempfile import mkstemp
 from os import fdopen
 import urllib
 # third-party
-
 # vistrails
 from core.modules.vistrails_module import ModuleError, Module
 # eo4vistrails

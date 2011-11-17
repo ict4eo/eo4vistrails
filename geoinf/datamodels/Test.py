@@ -23,7 +23,7 @@
 ## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ##
 ############################################################################
-"""This module provides a test bed for Sphinx document generation.
+"""This module provides a test bed for helping with Sphinx document generation.
 """
 
 import os

@@ -24,8 +24,7 @@
 ### WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ###
 #############################################################################
-
-"""This module holds a rpycnode type that can be passed around between modules.
+"""This module ???
 """
 # library
 import pickle
@@ -33,13 +32,13 @@ from script import Script
 from subprocess import call
 import urllib
 # third-party
-
 # vistrails
 from core.modules.vistrails_module import ModuleError, NotCacheable, Module
 from core.modules.basic_modules import File
 # eo4vistrails
 from packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
 from packages.eo4vistrails.utils.synhigh import SyntaxSourceConfigurationWidget
+# local
 
 
 @RPyCSafeModule()

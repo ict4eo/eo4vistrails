@@ -26,11 +26,12 @@
 #############################################################################
 """This module holds a GeoJSON type that can be passed around between modules.
 """
-#History
-#Derek Hohls, 23 Feb 2011, Version 0.1.1
-
-from core.modules.vistrails_module import Module
+# library
+# third-party
 import geojson
+# vistrails
+from core.modules.vistrails_module import Module
+# eo4vistrails
 
 
 class GeoJSONModule(object):
