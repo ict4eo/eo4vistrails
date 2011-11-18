@@ -1,7 +1,8 @@
 def initialize(*args, **keywords):
     from core.modules.module_registry import get_module_registry
 
-    from DataCube import CubeReaderHandle, ModisCubeReaderHandle, CubeReader, PostGISCubeReader, CubeDateConverter
+    from DataCube import CubeReaderHandle, ModisCubeReaderHandle, CubeReader, \
+                         PostGISCubeReader, CubeDateConverter
 
     reg = get_module_registry()
     namespace = "datacube"

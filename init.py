@@ -58,15 +58,21 @@ try:
     from geoinf.helpers import init as helpers_init
 except:
     import  geoinf.helpers.init as helpers_init
-    
+
+# brings in plots
+try:
+    from lib.plots.standard import init as plots_init
+except:
+    import  lib.plots.standard.init as plots_init
+
 
 def initialize(*args, **keywords):
     '''sets everything up'''
     # VisTrails cannot currently automatically detect your derived
     # classes, and the ports that they support as input and
-    # output. Because of this, you as a module developer need to let
-    # VisTrails know that you created a new module. This is done by calling
-    # function addModule:
+    # output. Because of this, you as a module developer, need to let
+    # VisTrails know that you created a new module.
+    # This is done by calling function addModule()
 
     #Isolate the registration of the modules
 
@@ -81,3 +87,4 @@ def initialize(*args, **keywords):
     transform_init.initialize(*args, **keywords)
     datacube_init.initialize(*args, **keywords)
     helpers_init.initialize(*args, **keywords)
+    plots_init.initialize(*args, **keywords)

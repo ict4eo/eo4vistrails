@@ -100,4 +100,4 @@ class ComboBoxWidget(QtGui.QComboBox, ConstantWidgetMixin):
 
 class LinuxDemoComboBoxWidget(ComboBoxWidget):
     """TODO Write docstring."""
-    _KEY_VALUES = {'Ubuntu': (2, 2), 'Fedora': (1, 1), 'Gentoo': (3, 3)}
+    _KEY_VALUES = {'Ubuntu': (2, 2), 'Fedora': (1, 1), 'Gentoo': (3, 3), 'Mint': (0, 0)}
