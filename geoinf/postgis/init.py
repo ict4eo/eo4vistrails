@@ -28,6 +28,7 @@ import core
 #from core.modules.python_source_configure import PythonSourceConfigurationWidget
 #from utils.session import Session
 from PostGIS import *
+from pgLoadersDumpers import *
 from packages.eo4vistrails.geoinf.datamodels.QgsLayer import QgsVectorLayer
 from packages.eo4vistrails.utils.DataRequest import PostGISRequest
 
@@ -97,3 +98,15 @@ def initialize(*args, **keywords):
 
     reg.add_module(PostGisCopyFrom, name="Copy From File To Table", namespace=postgis_namespace)
     reg.add_module(PostGisCopyTo, name="Copy From Table To File", namespace=postgis_namespace)
+
+    #for the loaders/dumpers
+    reg.add_module(Shape2PostGIS, 
+                   name = "Shapefile Loader", 
+                   namespace = postgis_namespace)
+    reg.add_input_port(Shape2PostGIS,"PostGisSessionObject", PostGisSession)
+    reg.add_input_port(Shape2PostGIS,"InputShapefile", core.modules.basic_modules.String)
+    reg.add_input_port(Shape2PostGIS,"TableName", core.modules.basic_modules.String)
+    reg.add_input_port(Shape2PostGIS,"EPSG_SRS", core.modules.basic_modules.String)
+    reg.add_input_port(Shape2PostGIS,"Index", core.modules.basic_modules.Boolean)
+    reg.add_input_port(Shape2PostGIS,"Simplify", core.modules.basic_modules.Boolean)
+

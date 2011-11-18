@@ -211,7 +211,6 @@ class SaveArrayToRaster(RasterlangModule, RPyCModule):
         ndarray = self.getInputFromPort('numpy array')
         prototype = self.getInputFromPort('prototype')
         outformat = self.getInputFromPort('format')
-
         print "protoype nodata", prototype.noDataValue()
 
         gdalnumeric.SaveArray(ndarray.get_array(), outfile.name, format=outformat, prototype=str(prototype.source()))
