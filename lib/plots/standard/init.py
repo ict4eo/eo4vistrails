@@ -4,7 +4,8 @@ def initialize(*args, **keywords):
     from packages.pylab.plot import MplPlot, MplPlotConfigurationWidget
     from packages.eo4vistrails.lib.plots.standard.plot import \
         StandardPlot, StandardHistogram, StandardWindrose, \
-        MatplotlibMarkerComboBox, MatplotlibPlotTypeComboBox
+        MatplotlibMarkerComboBox, MatplotlibPlotTypeComboBox, \
+        MatplotlibLineStyleComboBox
 
     reg = get_module_registry()
     namespace = "plots"
@@ -12,6 +13,7 @@ def initialize(*args, **keywords):
     # drop-down list modules - Abstract types
     reg.add_module(MatplotlibMarkerComboBox, namespace=namespace, abstract=True)
     reg.add_module(MatplotlibPlotTypeComboBox, namespace=namespace, abstract=True)
+    reg.add_module(MatplotlibLineStyleComboBox, namespace=namespace, abstract=True)
     #reg.add_module(, namespace=namespace
 
     # active modules
