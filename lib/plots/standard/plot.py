@@ -47,6 +47,7 @@ plt.plot(range(2),range(2))
 import time
 import urllib
 from datetime import datetime
+import random
 # third party
 # vistrails
 from core.bundles import py_import
@@ -76,30 +77,29 @@ except Exception, e:
 class StandardHistogram(NotCacheable, Module):
     _input_ports = [('columnData', '(edu.utah.sci.vistrails.basic:List)'),
                     ('title', '(edu.utah.sci.vistrails.basic:String)'),
-                    ('xlabel', '(edu.utah.sci.vistrails.basic:String)'),
-                    ('ylabel', '(edu.utah.sci.vistrails.basic:String)'),
+                    ('xAxis_label', '(edu.utah.sci.vistrails.basic:String)'),
+                    ('yAxis_label', '(edu.utah.sci.vistrails.basic:String)'),
                     ('bins', '(edu.utah.sci.vistrails.basic:Integer)'),
                     ('facecolor', '(edu.utah.sci.vistrails.basic:Color)')]
     _output_ports = [('source', '(edu.utah.sci.vistrails.basic:String)')]
 
     def compute(self):
         data = [float(x) for x in self.getInputFromPort('columnData')]
+        bins = self.forceGetInputFromPort('bins', 10)
+        if self.hasInputFromPort('facecolor'):
+            self.facecolor = self.getInputFromPort('facecolor').tuple
+        else:
+            self.facecolor = 'w'
+
         fig = pylab.figure()
-        pylab.setp(fig, facecolor='w')
+        pylab.setp(fig, facecolor=self.facecolor)
         if self.hasInputFromPort('title'):
             pylab.title(self.getInputFromPort('title'))
-        if self.hasInputFromPort('xlabel'):
-            pylab.xlabel(self.getInputFromPort('xlabel'))
-        if self.hasInputFromPort('ylabel'):
-            pylab.ylabel(self.getInputFromPort('ylabel'))
-        if self.hasInputFromPort('bins'):
-            bins = self.getInputFromPort('bins')
-        else:
-            bins = 10
-        if self.hasInputFromPort('facecolor'):
-            color = self.getInputFromPort('facecolor').tuple
-        else:
-            color = 'b'
+        if self.hasInputFromPort('xAxis_label'):
+            pylab.xlabel(self.getInputFromPort('xAxis_label'))
+        if self.hasInputFromPort('yAxis_label'):
+            pylab.ylabel(self.getInputFromPort('yAxis_label'))
+
         pylab.hist(data, bins, facecolor=color)
         pylab.get_current_fig_manager().toolbar.hide()
         self.setResult('source', "")
@@ -112,47 +112,96 @@ class StandardPlot(NotCacheable, Module):
                     ('marker', '(za.co.csir.eo4vistrails:Plot Marker:plots)'),
                     ('line_style', '(za.co.csir.eo4vistrails:Plot Line Style:plots)'),
                     ('title', '(edu.utah.sci.vistrails.basic:String)'),
-                    ('xlabel', '(edu.utah.sci.vistrails.basic:String)'),
-                    ('ylabel', '(edu.utah.sci.vistrails.basic:String)'),
+                    ('xAxis_label', '(edu.utah.sci.vistrails.basic:String)'),
+                    ('yAxis_label', '(edu.utah.sci.vistrails.basic:String)'),
                     ('facecolor', '(edu.utah.sci.vistrails.basic:Color)')]
     _output_ports = [('source', '(edu.utah.sci.vistrails.basic:String)')]
 
     def compute(self):
-        plot_type = self.getInputFromPort('plot') or 'scatter'
-        marker_type = self.getInputFromPort('marker') or 's'
-        line_style = self.getInputFromPort('line_style') or '-'
-        print "plot:109 marker_type", type(marker_type), marker_type
-        print "plot:110 line_type", type(line_style), line_style
+        plot_type = self.forceGetInputFromPort('plot', 'scatter')
+        marker_type = self.forceGetInputFromPort('marker', 's')
+        line_style = self.forceGetInputFromPort('line_style', '-')
+        if self.hasInputFromPort('facecolor'):
+            self.facecolor = self.getInputFromPort('facecolor').tuple
+        else:
+            self.facecolor = 'r'
 
         y_data = [float(y) for y in self.getInputFromPort('yData')]
         fig = pylab.figure()
-        # pylab.setp(fig, facecolor='w')
         if self.hasInputFromPort('title'):
             pylab.title(self.getInputFromPort('title'))
-        if self.hasInputFromPort('xlabel'):
-            pylab.xlabel(self.getInputFromPort('xlabel'))
-        if self.hasInputFromPort('ylabel'):
-            pylab.ylabel(self.getInputFromPort('ylabel'))
-        if self.hasInputFromPort('facecolor'):
-            color = self.getInputFromPort('facecolor').tuple
-        else:
-            color = 'r'
+        if self.hasInputFromPort('xAxis_label'):
+            pylab.xlabel(self.getInputFromPort('xAxis_label'))
+        if self.hasInputFromPort('yAxis_label'):
+            pylab.ylabel(self.getInputFromPort('yAxis_label'))
 
         if plot_type == 'date':
-            # TODO - get date-formatted from x-data
             #matplotlib.dates.date2num(d) #d is either a datetime instance or a sequence of datetimes.
             DATE_FORMAT = '%Y-%m-%d'  # pass this in as option?
             x_data = [matplotlib.dates.date2num(datetime.strptime(x, DATE_FORMAT))
                       for x in self.getInputFromPort('xData')]
             pylab.plot_date(x_data, y_data, xdate=True, marker=marker_type,
-                            markerfacecolor=color)
+                            markerfacecolor=self.facecolor)
+            fig.autofmt_xdate()  # pretty-format date axis
         else:
             x_data = [float(x) for x in self.getInputFromPort('xData')]
             if plot_type == 'scatter':
-                pylab.scatter(x_data, y_data, marker=marker_type, facecolor=color)
+                pylab.scatter(x_data, y_data, marker=marker_type, facecolor=self.facecolor)
             elif plot_type == 'line':
                 pylab.plot(x_data, y_data, marker=marker_type,
-                           linestyle=line_style, markerfacecolor=color)
+                           linestyle=line_style, markerfacecolor=self.facecolor)
+            else:
+                pass
+
+        pylab.get_current_fig_manager().toolbar.hide()
+        self.setResult('source', "")
+
+
+class MultiPlot(NotCacheable, Module):
+    _input_ports = [('dataSets', '(edu.utah.sci.vistrails.basic:List)'),
+                    ('plot', '(za.co.csir.eo4vistrails:Plot Type:plots)'),
+                    ('title', '(edu.utah.sci.vistrails.basic:String)'),
+                    ('xAxis_label', '(edu.utah.sci.vistrails.basic:String)'),
+                    ('yAxis_label', '(edu.utah.sci.vistrails.basic:String)')]
+    _output_ports = [('source', '(edu.utah.sci.vistrails.basic:String)')]
+
+    def compute(self):
+        MARKER = ('o', 'd', '*', '+', 's', 'v', 'x',  '>', '<', '^', 'h', )
+        plot_type = self.forceGetInputFromPort('plot', 'scatter')
+        line_style = '-'
+
+        fig = pylab.figure()
+        if self.hasInputFromPort('title'):
+            pylab.title(self.getInputFromPort('title'))
+        if self.hasInputFromPort('xAxis_label'):
+            pylab.xlabel(self.getInputFromPort('xAxis_label'))
+        if self.hasInputFromPort('yAxis_label'):
+            pylab.ylabel(self.getInputFromPort('yAxis_label'))
+
+        ax = pylab.subplot(111)
+        max_markers = len(MARKER)
+        for key, dataset in enumerate(self.getInputFromPort('dataSets')):
+            series = key - (max_markers * int(key / max_markers))
+            y_data = [float(y) for y in dataset[1]]
+            hexcode = "#%x" % random.randint(0, 16777215)
+            self.facecolor = hexcode.ljust(7).replace(' ', '0')
+            #print "series", series, "color", self.facecolor, 'marker', MARKER[series]
+            if plot_type == 'date':
+                DATE_FORMAT = '%Y-%m-%d'  # pass this in as option?
+                x_data = [matplotlib.dates.date2num(datetime.strptime(x, DATE_FORMAT))
+                          for x in dataset[0]]
+                ax.plot_date(x_data, y_data, xdate=True,
+                                marker=MARKER[series],
+                                markerfacecolor=self.facecolor)
+                fig.autofmt_xdate()  # pretty-format date axis
+            elif plot_type == 'scatter':
+                x_data = [float(x) for x in dataset[0]]
+                ax.scatter(x_data, y_data, marker=MARKER[series],
+                                facecolor=self.facecolor)
+            elif plot_type == 'line':
+                x_data = [float(x) for x in dataset[0]]
+                ax.plot(x_data, y_data, marker=MARKER[series],
+                           linestyle=line_style, markerfacecolor=self.facecolor)
             else:
                 pass
 
@@ -164,11 +213,10 @@ class StandardWindrose(NotCacheable, Module):
     _input_ports = [('direction', '(edu.utah.sci.vistrails.basic:List)'),
                     ('variable', '(edu.utah.sci.vistrails.basic:List)'),
                     ('title', '(edu.utah.sci.vistrails.basic:String)'),
-                    ('xlabel', '(edu.utah.sci.vistrails.basic:String)'),
-                    ('ylabel', '(edu.utah.sci.vistrails.basic:String)'),
+                    ('xAxis_label', '(edu.utah.sci.vistrails.basic:String)'),
+                    ('yAxis_label', '(edu.utah.sci.vistrails.basic:String)'),
                     ('facecolor', '(edu.utah.sci.vistrails.basic:Color)')]
     _output_ports = [('source', '(edu.utah.sci.vistrails.basic:String)')]
-
 
     def new_axes(self):
         fig = pylab.figure(figsize=(8, 8), dpi=80, facecolor=self.facecolor,
@@ -182,15 +230,15 @@ class StandardWindrose(NotCacheable, Module):
         l = ax.legend(axespad=-0.10)
         pylab.setp(l.get_texts(), fontsize=8)
 
-    def create_rose(self, ws, wd):
-        if wd and ws:
+    def create_rose(self, wv, wd):
+        if wd and wv:
             ax = self.new_axes()
-            ax.bar(wd, ws, normed=True, opening=0.8, edgecolor='w')
+            ax.bar(wd, wv, normed=True, opening=0.8, edgecolor='w')
             self.set_legend(ax)
             ax.set_title(self.title)
             return ax
         else:
-            print "WS or WD are null..."
+            print "wv and/or wd are null..."
             return None
 
     def compute(self):
@@ -202,9 +250,9 @@ class StandardWindrose(NotCacheable, Module):
             self.facecolor = self.getInputFromPort('facecolor').tuple
         else:
             self.facecolor = 'w'
-        ws = [float(y) for y in self.getInputFromPort('variable')]
-        wd = [float(x) for x in self.getInputFromPort('direction')]
-        fig = self.create_rose(ws, wd)
+        wind_variable = [float(y) for y in self.getInputFromPort('variable')]
+        wind_direction = [float(x) for x in self.getInputFromPort('direction')]
+        fig = self.create_rose(wind_variable, wind_direction)
 
         pylab.get_current_fig_manager().toolbar.hide()
         self.setResult('source', "")
@@ -212,9 +260,10 @@ class StandardWindrose(NotCacheable, Module):
 
 class MatplotlibMarkerComboBoxWidget(ComboBoxWidget):
     """Marker constants used for drawing markers on a matplotlib plot."""
-    _KEY_VALUES = {'#': '#', '+': '+', ',': ',', 'o': 'o', '.': '.',
-                   's': 's', 'v': 'v', 'x': 'x', '>': '>', '<': '<',
-                   '^': '^'}
+    _KEY_VALUES = {'plus': '+', 'circle': 'o', 'diamond': 'd', 'star': '*',
+                   'square': 's', 'cross': 'x', 'hexagon': 'h',
+                   'triangle_down': 'v', 'triangle_right': '>',
+                   'triangle_left': '<', 'triangle_up': '^', }
 
 MatplotlibMarkerComboBox = basic_modules.new_constant('Plot Marker',
                                         staticmethod(str),
@@ -236,7 +285,7 @@ MatplotlibLineStyleComboBox = basic_modules.new_constant('Plot Line Style',
 
 class MatplotlibPlotTypeComboBoxWidget(ComboBoxWidget):
     """matplotlib plot types."""
-    _KEY_VALUES = {'Scatter': 'scatter', 'Line': 'line', 'Date(x)': 'date'}
+    _KEY_VALUES = {'scatter': 'scatter', 'line': 'line', 'date(x)': 'date'}
 
 MatplotlibPlotTypeComboBox = basic_modules.new_constant('Plot Type',
                                         staticmethod(str),
