@@ -117,4 +117,4 @@ class RSourceConfigurationWidget(SyntaxSourceConfigurationWidget):
 
         SyntaxSourceConfigurationWidget.__init__(self, module, controller, "r",
                                                  parent=parent,
-                                                 displayedComboItem=displayedComboItems)
+                                                 displayedComboItems=displayedComboItems)

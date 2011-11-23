@@ -45,7 +45,7 @@ def initialize(*args, **keywords):
     reg = get_module_registry()
     mynamespace = "rpyc"
 
-#Add RPyCNode
+    #Add RPyCNode
     reg.add_module(RPyCHelper.RpyCNodie,
                    name="RpyC Nodie",
                    namespace=mynamespace,
@@ -69,7 +69,6 @@ def initialize(*args, **keywords):
                        basic_modules.String)
     reg.add_output_port(RPyCHelper.RPyCCode, 'self',
                         basic_modules.Module)
-
     reg.add_module(RPyCHelper.RPyC_C_Code,
                    name = "RPyC C Code",
                    configureWidgetType=PythonSourceConfigurationWidget,
@@ -78,6 +77,6 @@ def initialize(*args, **keywords):
     #Add RPyCTestModule
     reg.add_module(RPyCTest.RPyCTestModule,
                    name="RpyC Test Module",
-                   namespace="utils|tests")
+                   namespace="utils|tests")                   
     reg.add_input_port(RPyCTest.RPyCTestModule, 'input',
                        basic_modules.String)

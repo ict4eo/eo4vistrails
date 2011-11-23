@@ -35,10 +35,8 @@ from threading import Thread, currentThread, RLock
 from core.modules.vistrails_module import Module, NotCacheable, \
         InvalidOutput, ModuleError, ModuleErrors, ModuleBreakpoint
 
-
 global globalThreadLock
 globalThreadLock = RLock()
-
 
 class ThreadSafeMixin(object):
     """TODO Write docstring."""
@@ -138,7 +136,6 @@ class ThreadSafeMixin(object):
             self.logging.end_update(self)
             self.logging.signalSuccess(self)
         print self, "release compute lock"
-
 
 class Fork(ThreadSafeMixin, NotCacheable, Module):
     """TODO Write docstring."""

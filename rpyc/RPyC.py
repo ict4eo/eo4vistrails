@@ -31,6 +31,8 @@
 
 import Shared  # This lib goes accross as part of the setup
 import rpyc  # Node must have rpyc installed so not a problem
+#used top make a copy of the returned value
+import copy
 #node has dummy versions of these so not a problem
 from core.modules.vistrails_module import Module
 
@@ -154,7 +156,7 @@ class RPyCSafeMixin(object):
             print v
 
             (isRemote, connection) = self.inputPorts['rpycnode'][0].obj.getSharedConnection()
-
+            
             if isRemote:
                 #TODO: remove once finishing dev should just work of version numbers
                 #Upload any vistrails packages that may be required
@@ -165,6 +167,9 @@ class RPyCSafeMixin(object):
 
         return connection
 
+    def setResultCopy(self, port, value):
+        self.outputPorts[port] = rpyc.classic.obtain(value)
+
     def compute(self):
         #Get RPyC Node in good standing
         #input from rpycmodule
@@ -174,9 +179,10 @@ class RPyCSafeMixin(object):
         if not self.conn:
             #run as per normal
             print "run as per normal", self
+            self.setResultCopy = self.setResult
             self._original_compute()
         else:
-            #redirect StdIO back here so we can see what is going on
+            #redirect StdIO back here so we can see what is going on            
             import sys
             self.conn.modules.sys.stdout = sys.stdout
 

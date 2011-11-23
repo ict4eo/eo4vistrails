@@ -37,6 +37,7 @@ from core.modules.vistrails_module import Module, ModuleError
 # eo4vistrails
 from packages.eo4vistrails.utils.DataRequest import DataRequest
 from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
+from packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
 from packages.eo4vistrails.utils.DropDownListWidget import ComboBoxWidget
 # local
 from core.modules import basic_modules
@@ -163,7 +164,7 @@ class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
         except Exception, e:
             self.raiseError('Cannot set output port: %s' % str(e))
 
-
+@RPyCSafeModule()
 class QgsRasterLayer(QgsMapLayer, qgis.core.QgsRasterLayer):
     """Create a QGIS raster layer.
     """
@@ -187,8 +188,9 @@ class QgsRasterLayer(QgsMapLayer, qgis.core.QgsRasterLayer):
             print "thefile", thefile
             print "thefile name", thefile.name
             print "projection", theProj
-
-            isFILE = (thefile != None) and (thefile.name != '')
+           
+            if thefile:
+                isFILE = (thefile.name != '')
             isQGISSuported = isinstance(dataReq, DataRequest) and \
                             dataReq.get_driver() in self.SUPPORTED_DRIVERS
 
