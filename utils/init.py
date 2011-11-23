@@ -8,11 +8,10 @@ def initialize(*args, **keywords):
     from WebRequest import WebRequest
     from DataRequest import DataRequest, PostGISRequest
     from Array import NDArray
-    from CsvUtils import CsvWriter, CsvReader, ListDirContent
+    from CsvUtils import CsvWriter, CsvReader, ListDirContent, CsvFilter
     from Random import Random
     from Command import Command
     from DataTransformations import InputStream,  pgSQLMergeInsert
-
 
     reg = get_module_registry()
     utils_namespace = "utils"
@@ -29,8 +28,6 @@ def initialize(*args, **keywords):
     reg.add_module(DataRequest,
                    namespace=utils_namespace,
                    abstract=True)
-
-
 
     # ==========================================================================
     # Standard Modules
@@ -107,17 +104,17 @@ def initialize(*args, **keywords):
         'out',
         basic_modules.Variant)
 
-
-
-
     # ==========================================================================
-    # Simple Modules - without ports
+    # Simple Modules - without ports OR with locally defined ports
     # ==========================================================================
 
     reg.add_module(CsvWriter,
                    namespace=utils_namespace)
 
     reg.add_module(CsvReader,
+                   namespace=utils_namespace)
+
+    reg.add_module(CsvFilter,
                    namespace=utils_namespace)
 
     reg.add_module(ListDirContent,
@@ -131,6 +128,6 @@ def initialize(*args, **keywords):
 
     reg.add_module(InputStream,
                    namespace=utils_namespace)
-                   
+
     reg.add_module(pgSQLMergeInsert,
                    namespace=utils_namespace)
