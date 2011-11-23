@@ -1,3 +1,0 @@
-target = QTermWidget
-sources = sipQTermWidgetcmodule.cpp sipQTermWidgetQTermWidget.cpp
-headers = sipAPIQTermWidget.h
