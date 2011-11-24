@@ -423,6 +423,68 @@ class PostGisCopyTo(NotCacheable, ThreadSafeMixin, Module):
             curs.close()
             pgconn.close()
 
+class reprojectPostGISTable(Module):
+    '''
+    Using PostGIS SRID codes, transforms the coordinates of geometries of a table 
+    from one spatial reference to another. 
+    
+    The SRID must exist in the target database spatial_ref_sys table
+    
+    Requires:
+    - PostGisSessionObject
+    - SRID:: Integer - the index of the spatial reference
+    - tablename:: String - the target table, which must exist in the target database 
+                                    and have a geometry column    
+    
+    '''
+    def __init__(self):
+        Module.__init__(self)
+        
+    def compute(self):
+        #need to grab expected projection from input port
+        #need to grab tablename from input port
+        #then, probe geometry_columns table for the name of the geom column
+        #then, run ST_Transform on the geom in an Update statement (inside a transaction)
+        #then (inside same transaction), run UpdateGeometrySRID
+        pgsession = self.getInputFromPort("PostGisSessionObject")
+        srid = self.forceGetInputFromPort("new_srs", 4326)
+        tablename = self.forceGetInputFromPort("target_table", None)
+        
+        probegeomstr = "SELECT geometry_columns.f_geometry_column, geometry_columns.srid FROM geometry_columns WHERE geometry_columns.f_table_name = '%s';" % tablename
+        
+        try:
+            pgconn = psycopg2.connect(pgsession.connectstr)
+            curs1 = pgconn.cursor()
+            curs1.execute(probegeomstr)
+            geomcol_details = curs1.fetchall()
+            
+            if geomcol_details[0][1] == srid:
+                print "existing and desired srid are the same, no transformation necessary"
+            else:
+                gc = geomcol_details[0][0]
+                result = []
+                updatesridstr = "BEGIN;"
+                updatesridstr += "ALTER TABLE %s DROP CONSTRAINT enforce_srid_%s;"% (tablename,  gc)
+                updatesridstr += "UPDATE %s SET %s = ST_TRANSFORM(%s,%i);" % (tablename, gc,gc, srid)
+                updatesridstr += "ALTER TABLE %s ADD CONSTRAINT enforce_srid_%s CHECK (st_srid(%s)=%i);"% (tablename, gc, gc, srid) 
+                updatesridstr += "SELECT UpdateGeometrySRID('%s','%s',%i);" %  (tablename, gc, srid)
+                updatesridstr += "COMMIT;"
+                print updatesridstr
+                curs = pgconn.cursor()
+                curs.execute(updatesridstr)
+                result.append(curs.statusmessage)
+                self.setResult('status', result)
+
+        except Exception as ex:
+            raise ModuleError(reprojectPostGISTable,\
+                                 "Could not execute SQL Statement")
+        finally:
+            curs1.close()
+            curs.close()
+            pgconn.close()
+                                                    
+                    
+
 
 class SQLSourceConfigurationWidget(SyntaxSourceConfigurationWidget):
     def __init__(self, module, controller, parent=None):

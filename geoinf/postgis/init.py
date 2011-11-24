@@ -99,6 +99,15 @@ def initialize(*args, **keywords):
     reg.add_module(PostGisCopyFrom, name="Copy From File To Table", namespace=postgis_namespace)
     reg.add_module(PostGisCopyTo, name="Copy From Table To File", namespace=postgis_namespace)
 
+    #for canned queries
+    reg.add_module(reprojectPostGISTable, 
+                   name = "Reproject PostGIS Table", 
+                   namespace = postgis_namespace)
+    reg.add_input_port(reprojectPostGISTable, "PostGisSessionObject", PostGisSession)
+    reg.add_input_port(reprojectPostGISTable, "target_table", core.modules.basic_modules.String)
+    reg.add_input_port(reprojectPostGISTable, "new_srs", core.modules.basic_modules.Integer)    
+    reg.add_output_port(reprojectPostGISTable, 'status', core.modules.basic_modules.List)
+    
     #for the loaders/dumpers
     reg.add_module(Shape2PostGIS, 
                    name = "Shapefile Loader", 
@@ -109,4 +118,5 @@ def initialize(*args, **keywords):
     reg.add_input_port(Shape2PostGIS,"EPSG_SRS", core.modules.basic_modules.String)
     reg.add_input_port(Shape2PostGIS,"Index", core.modules.basic_modules.Boolean)
     reg.add_input_port(Shape2PostGIS,"Simplify", core.modules.basic_modules.Boolean)
+    reg.add_input_port(Shape2PostGIS,"Encoding", core.modules.basic_modules.String, optional=True)
 

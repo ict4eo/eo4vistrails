@@ -50,6 +50,21 @@ from packages.eo4vistrails.rpyc.RPyC import RPyCModule, RPyCSafeModule
 from subprocess import call,  Popen,  PIPE
 
 class Shape2PostGIS(Module):
+    '''
+    A wrapper for the PostGIS utility shp2pgsql
+    
+    Takes a PostGIS Session object to extract connection info
+    
+    Requires:
+    - a shapefile (be sure that when you choose the shapefile, delete the .shp extension
+    - a tablename
+    
+    Optionally
+    - choose to spatially index
+    - choose a character encoding (defaults to LATIN1)
+    - choose to simplify geometries
+    - choose a SRS (defaults to WGS84 Lat/Lon, a.k.a. EPSG:4326)
+    '''
     def __init__(self):
         Module.__init__(self)
     
@@ -66,6 +81,7 @@ class Shape2PostGIS(Module):
         self.epsg_srs = self.forceGetInputFromPort("EPSG_SRS", "4326")
         self.index = self.forceGetInputFromPort("Index",  False)
         self.simplify = self.forceGetInputFromPort("Simplify",  False)
+        self.encoding = self.forceGetInputFromPort("Encoding",  "LATIN1")
         if self.buildSQL():
             self.loadSQL()
             
@@ -77,13 +93,15 @@ class Shape2PostGIS(Module):
             params.append(' -I')
         if self.simplify:
             params.append(' -S')
+        params.append(' -W %s' % self.encoding)
         params.append(" " + self.shp_name)
         params.append(" " + self.table_name)
         params.append(" " + self.db)
         #TODO:use vistrails tmpfile framework
         params.append(" > ")
-        self.sqlfile = "/tmp/" + self.table_name + ".sql"
-        params.append(self.sqlfile)
+        self.sqlfile = self.interpreter.filePool.create_file(prefix = self.table_name,  suffix=".sql")
+        #self.sqlfile = "/tmp/" + self.table_name + ".sql"
+        params.append(self.sqlfile.name)
         params_as_str = ""
         for param in params:
             params_as_str += param
@@ -93,12 +111,18 @@ class Shape2PostGIS(Module):
         call (buildercommand,  shell = True)
         return True
     def loadSQL(self):
-        loadercommand = "psql -d %s -h %s -p %s -U %s -w -f %s" % (self.db, self.host, self.port, self.user, self.sqlfile)
+        loadercommand = "psql -d %s -h %s -p %s -U %s -w -f %s" % (self.db, self.host, self.port, self.user, self.sqlfile.name)
+        print "About to load: %s" % self.sqlfile.name
         psql_env = dict(PGPASSWORD='%s' % (self.pwd))
         p = Popen([loadercommand], env=psql_env, stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True)
         data = p.stdout.read()
         err = p.stderr.read()
         p.terminate()
+#        print "about to delete sqlfile: %s" % self.sqlfile.name
+#        rmcommand = "rm " + self.sqlfile.name
+#        print rmcommand
+#        call(rmcommand, shell=True)
+        return True
 
         
         
