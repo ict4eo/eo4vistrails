@@ -3,7 +3,7 @@ def initialize(*args, **keywords):
     from core.modules.module_registry import get_module_registry
     from packages.pylab.plot import MplPlot, MplPlotConfigurationWidget
     from packages.eo4vistrails.lib.plots.standard.plot import \
-        StandardPlot, StandardHistogram, StandardWindrose, MultiPlot, \
+        ParentPlot, StandardPlot, StandardHistogram, MultiPlot, \
         MatplotlibMarkerComboBox, MatplotlibPlotTypeComboBox, \
         MatplotlibLineStyleComboBox
 
@@ -16,11 +16,14 @@ def initialize(*args, **keywords):
     reg.add_module(MatplotlibLineStyleComboBox, namespace=namespace, abstract=True)
     #reg.add_module(, namespace=namespace
 
+    # abstract modules
+    reg.add_module(ParentPlot, namespace=namespace, abstract=True)
+
     # active modules
     reg.add_module(StandardPlot, namespace=namespace, configureWidgetType=MplPlotConfigurationWidget)
     reg.add_module(StandardHistogram, namespace=namespace, configureWidgetType=MplPlotConfigurationWidget)
-    reg.add_module(StandardWindrose, namespace=namespace, configureWidgetType=MplPlotConfigurationWidget)
     reg.add_module(MultiPlot, namespace=namespace, configureWidgetType=MplPlotConfigurationWidget)
+
 
     """
 #    reg.add_input_port(MplPlot, 'source', String, True)

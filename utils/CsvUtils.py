@@ -134,15 +134,21 @@ class CsvReader(ThreadSafeMixin, Module):
 class CsvWriter(ThreadSafeMixin, Module):
     """Simple csv file writer utility.
 
-    Requires:
-     *  a directory path to which the file will be written
-     *  a filename
-     *  a column headings list (which can be an empty)
-     *  a list of lists containing the rows of data to write to file
+    Input ports:
+        directory path:
+            place to which the file will be written
+        filename:
+            name of output file
+        column_header_list:
+            optional list of column headings
+        data_values_listoflists:
+            list of lists contain the rows of data to write to file
 
-    Returns:
-     *  a full pathname to the file created, if successful. On RPyC nodes,
-        will refer to files on that remote filesystem.
+    Output ports:
+        created_file:
+            a full pathname to the file created, if successful. On RPyC nodes,
+            will refer to files on that remote filesystem.
+
     """
 
     _input_ports = [('directorypath', '(edu.utah.sci.vistrails.basic:String)'),
@@ -193,56 +199,73 @@ class CsvFilter(ThreadSafeMixin, Module):
             switch to enable output of a transposed set of data (default False)
         delimiter:
             an optional item delimiter (defaults to a ",")
-        output_rows:
-            an optional specification of which rows appear in the output
-        output_rows:
-            an optional specification of which rows appear in the output
+        filter__rows:
+            an optional specification of which rows appear in the output (the
+            values assume a starting row number of 1')
+        filter__col:
+            an optional specification of which cols appear in the output (the
+            values assume a starting column number of 1')
+        pairs:
+            x,y pairs, in a semi-colon delimited string, representing output
+            datasets.
 
-    The "output_" specification uses the following syntax:
-     *  N: a single row/col
-     *  N-M: a range of rows/cols
-     *  N, M: two different rows/cols (chain additional singles or ranges)
+    The "filter_" specification uses the following syntax:
+     *  N: a single integer; or a single Excel column letter
+     *  N-M: a range of integers; or a range of Excel column letters
+     *  N, M, ...: multiple different single/range values
 
-    Output ports
+    Output ports:
         csv_file:
             a CSV file, containing all filtered data from the file
         dataset:
             a list of lists, containing all filtered data from the file
-        datagroup:
-            a grouped list of lists, containing all filtered data from the file
+        datapairs:
+            a paired list of lists, containing all filtered data from the file
         html:
             an HTML 'view' string, containing all filtered data from the file
+
     """
 
     _input_ports = [('fullfilename', '(edu.utah.sci.vistrails.basic:String)'),
                     ('delimiter', '(edu.utah.sci.vistrails.basic:String)'),
                     ('sample_set', '(edu.utah.sci.vistrails.basic:Boolean)'),
                     ('transpose', '(edu.utah.sci.vistrails.basic:Boolean)'),
-                    ('output_rows', '(edu.utah.sci.vistrails.basic:String)'),
-                    ('output_cols', '(edu.utah.sci.vistrails.basic:String)')]
+                    ('filter_rows', '(edu.utah.sci.vistrails.basic:String)'),
+                    ('filter_cols', '(edu.utah.sci.vistrails.basic:String)'),
+                    ('pairs', '(edu.utah.sci.vistrails.basic:String)')]
     _output_ports = [('csv_file', '(edu.utah.sci.vistrails.basic:File)'),
                     ('dataset', '(edu.utah.sci.vistrails.basic:List)'),
-                    ('datagroups', '(edu.utah.sci.vistrails.basic:List)'),
+                    ('datapairs', '(edu.utah.sci.vistrails.basic:List)'),
                     ('html', '(edu.utah.sci.vistrails.basic:String)')]
 
     def __init__(self):
         ThreadSafeMixin.__init__(self)
         Module.__init__(self)
 
-    def html_table(self, list):
+    def transpose_array(self, lists):
+        """Swap rows and columns from a 'list of lists'.
+
+        This works for equal length and unequal length arrays. See:
+        http://code.activestate.com/recipes/410687-transposing-a-list-of-lists-with-different-lengths/
+        """
+        if not lists:
+            return []
+        return map(lambda *row: list(row), *lists)
+
+    def html_table(self, lists):
         """Create an HTML table string from a 'list of lists'."""
         table = '<table>'
-        for sublist in list:
+        for list in lists:
             table = table + '\n' + '  <tr><td>'
-            table = table + '</td><td>'.join(sublist)
-            table = table + '</td></tr>' + '\n'
-        table = table + '</table>'
+            table = table + '</td><td>'.join(str(column) for column in list)
+            table = table + '</td></tr>'
+        table = table + '\n' + '</table>'
         return table
 
     def create_csv(self, list):
         """Create an output CSV from a 'list of lists'."""
-        newfile = self.interpreter.filePool.create_file(suffix='.foo')
-        #print "csvutils.245:", newfile, type(newfile)
+        newfile = self.interpreter.filePool.create_file(suffix='.csv')
+        #print "csvutils.259:", newfile, type(newfile)
         try:
             csvfile = csv.writer(open(newfile, 'w'),
                                  delimiter=',',
@@ -254,8 +277,41 @@ class CsvFilter(ThreadSafeMixin, Module):
             self.raiseError('Cannot create CSV file: %s' % str(e))
             return None
 
-    def get_output_specs(self, items):
-        """Return a list of values from an input string.
+    def create_pairs(self, pairs, lists):
+        """Create a list of paired values from a "list of lists".
+
+        Accepts:
+
+        A single string, with a specification that uses the following syntax:
+         *  N,M: a paired set of values
+         *  N,M; O,P; ...: multiple paired values
+
+        Returns:
+         *  A list of paired lists
+
+        """
+        pair_list = []
+        if pairs:
+            try:
+                item_list = pairs.split(';')
+                for item in item_list:
+                    if ',' in item:
+                        pair_values = item.split(',')
+                        #print "***", item, pair_values
+                        pair_list.append([lists[int(pair_values[0]) - 1],
+                                          lists[int(pair_values[1]) - 1]])
+                    else:
+                        pass
+            except Exception, e:
+                self.raiseError('Cannot process pair specifications: %s' % str(e))
+                return lists
+        if pair_list:
+            return pair_list
+        else:
+            return lists  # no changes
+
+    def get_filter_specs(self, items):
+        """Create a list of values from numeric ranges defined in a string.
 
         Accepts:
 
@@ -278,7 +334,7 @@ class CsvFilter(ThreadSafeMixin, Module):
             except:
                 pass
             for letter in index[::-1]:
-                d = int(letter,36) - 9
+                d = int(letter, 36) - 9
                 s += pow * d
                 pow *= 26
             # excel starts column numeration from 1
@@ -304,19 +360,19 @@ class CsvFilter(ThreadSafeMixin, Module):
         else:
             return list  # empty list
 
-
     def compute(self):
         fullname = self.getInputFromPort('fullfilename')
         delimiter = self.forceGetInputFromPort('delimiter', ",")
         sample = self.forceGetInputFromPort("sample_set", False)
         transpose = self.forceGetInputFromPort("transpose", False)
-        output_rows = self.forceGetInputFromPort("output_rows", "")
-        output_cols = self.forceGetInputFromPort("output_cols", "")
+        filter_rows = self.forceGetInputFromPort("filter_rows", "")
+        filter_cols = self.forceGetInputFromPort("filter_cols", "")
+        pairs = self.forceGetInputFromPort("pairs", "")
 
         list_of_lists = []
-        column_list = self.get_output_specs(output_cols)
-        row_list = self.get_output_specs(output_rows)
-        #print "csvutils.315: ", column_list, row_list
+        cols_list = self.get_filter_specs(filter_cols)
+        rows_list = self.get_filter_specs(filter_rows)
+        #print "csvutils.366: ", cols_list, rows_list
 
         if os.path.isfile(fullname):
             try:
@@ -326,27 +382,32 @@ class CsvFilter(ThreadSafeMixin, Module):
                     if sample and key > 9:
                         break
                     else:
-                        if not column_list:
-                            if not row_list:
+                        if not cols_list:
+                            if not rows_list:
                                 list_of_lists.append(row)
                             else:
-                                if row + 1 in row_list:
+                                if row + 1 in rows_list:
                                     list_of_lists.append(row)
                         else:
-                            if row_list and not row + 1 in row_list:
+                            if rows_list and not row + 1 in rows_list:
                                 pass
                             else:
                                 row_out = []
                                 # filter each column
                                 for key, c in enumerate(row):
-                                    if key + 1 in column_list:
+                                    if key + 1 in cols_list:
                                         row_out.append(c)
                                 list_of_lists.append(row_out)
+                if transpose:
+                    list_of_lists = self.transpose_array(list_of_lists)
+                #print "csvutils.397: ", list_of_lists
                 self.setResult('dataset', list_of_lists)
                 if 'html' in self.outputPorts:
                     self.setResult('html', self.html_table(list_of_lists))
                 if 'csv_file' in self.outputPorts:
                     self.setResult('csv_file', self.create_csv(list_of_lists))
+                if 'datagroups' in self.outputPorts:
+                    self.setResult('datapairs', self.create_pairs(pairs, list_of_lists))
             except Exception, ex:
                 print ex
             csvfile = None
