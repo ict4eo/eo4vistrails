@@ -199,12 +199,12 @@ class CsvFilter(ThreadSafeMixin, Module):
             switch to enable output of a transposed set of data (default False)
         delimiter:
             an optional item delimiter (defaults to a ",")
-        filter__rows:
-            an optional specification of which rows appear in the output (the
-            values assume a starting row number of 1')
-        filter__col:
-            an optional specification of which cols appear in the output (the
-            values assume a starting column number of 1')
+        filter_rows:
+            an optional specification of which rows appear in the output (this
+            notation assumes a starting row number of 1')
+        filter_cols:
+            an optional specification of which cols appear in the output (this
+            notation assumes a starting column number of 1')
         pairs:
             x,y pairs, in a semi-colon delimited string, representing output
             datasets.
@@ -265,7 +265,7 @@ class CsvFilter(ThreadSafeMixin, Module):
     def create_csv(self, list):
         """Create an output CSV from a 'list of lists'."""
         newfile = self.interpreter.filePool.create_file(suffix='.csv')
-        #print "csvutils.259:", newfile, type(newfile)
+        #print "csvutils.269:", newfile, type(newfile)
         try:
             csvfile = csv.writer(open(newfile, 'w'),
                                  delimiter=',',
@@ -297,7 +297,6 @@ class CsvFilter(ThreadSafeMixin, Module):
                 for item in item_list:
                     if ',' in item:
                         pair_values = item.split(',')
-                        #print "***", item, pair_values
                         pair_list.append([lists[int(pair_values[0]) - 1],
                                           lists[int(pair_values[1]) - 1]])
                     else:
@@ -372,13 +371,13 @@ class CsvFilter(ThreadSafeMixin, Module):
         list_of_lists = []
         cols_list = self.get_filter_specs(filter_cols)
         rows_list = self.get_filter_specs(filter_rows)
-        #print "csvutils.366: ", cols_list, rows_list
+        #print "csvutils.375: ", cols_list, rows_list
 
         if os.path.isfile(fullname):
             try:
                 csvfile = csv.reader(open(fullname, 'r'), delimiter=delimiter)
                 for key, row in enumerate(csvfile):
-                    #print "csvutils.321: ", key, row
+                    #print "csvutils.381: ", key, row
                     if sample and key > 9:
                         break
                     else:
@@ -398,9 +397,10 @@ class CsvFilter(ThreadSafeMixin, Module):
                                     if key + 1 in cols_list:
                                         row_out.append(c)
                                 list_of_lists.append(row_out)
+                #print "csvutils.401:pre_transpose ", list_of_lists
                 if transpose:
                     list_of_lists = self.transpose_array(list_of_lists)
-                #print "csvutils.397: ", list_of_lists
+                #print "csvutils.404:post_transpose ", list_of_lists
                 self.setResult('dataset', list_of_lists)
                 if 'html' in self.outputPorts:
                     self.setResult('html', self.html_table(list_of_lists))

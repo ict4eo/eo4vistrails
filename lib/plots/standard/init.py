@@ -5,7 +5,7 @@ def initialize(*args, **keywords):
     from packages.eo4vistrails.lib.plots.standard.plot import \
         ParentPlot, StandardPlot, StandardHistogram, MultiPlot, \
         MatplotlibMarkerComboBox, MatplotlibPlotTypeComboBox, \
-        MatplotlibLineStyleComboBox
+        MatplotlibLineStyleComboBox, MatplotlibHistogramTypeComboBox
 
     reg = get_module_registry()
     namespace = "plots"
@@ -14,6 +14,7 @@ def initialize(*args, **keywords):
     reg.add_module(MatplotlibMarkerComboBox, namespace=namespace, abstract=True)
     reg.add_module(MatplotlibPlotTypeComboBox, namespace=namespace, abstract=True)
     reg.add_module(MatplotlibLineStyleComboBox, namespace=namespace, abstract=True)
+    reg.add_module(MatplotlibHistogramTypeComboBox, namespace=namespace, abstract=True)
     #reg.add_module(, namespace=namespace
 
     # abstract modules

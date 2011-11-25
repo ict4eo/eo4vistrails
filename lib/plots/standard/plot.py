@@ -34,7 +34,7 @@ import time
 import urllib
 from datetime import datetime
 import random
-from numpy import ma
+from numpy import array, ma
 # third party
 # vistrails
 from core.bundles import py_import
@@ -64,15 +64,22 @@ except Exception, e:
 class ParentPlot(NotCacheable, Module):
     """Provides common routines and data for all plot modules."""
 
+    MISSING = 1e-8
+
+    def random_color(self):
+        """Returns a random hex color."""
+        hexcode = "#%x" % random.randint(0, 16777215)
+        return hexcode.ljust(7).replace(' ', '0')
+
     def to_float(self, s):
         """Returns a float from a string, or 'almost zero' if invalid."""
         try:
             return float(s)
         except:
-            return 1e-8
+            return self.MISSING
 
     def to_str(self, s):
-        """Returns a string from an input, or an empty string if None."""
+        """Returns a string, or an empty string if None."""
         if s:
             return str(s)
         else:
@@ -90,7 +97,28 @@ class ParentPlot(NotCacheable, Module):
         try:
             return matplotlib.dates.date2num(datetime.strptime(x, date_format))
         except:
-            return 1e-8
+            return self.MISSING
+
+    def list_to_floats(self, items):
+        """Convert a list into a list of masked floating point values."""
+        if not items:
+            return None
+        data = [self.to_float(x) for x in items]
+        return ma.masked_values(data, self.MISSING)  # ignore missing data
+
+    def list_to_dates(self, items, date_format='%Y-%m-%d'):
+        """Convert a list into a list of masked date values.
+
+        Notes:
+        ------
+
+        matplotlib seems to require data in the form '%Y-%m-%d' ???
+        """
+        if not items:
+            return None
+        x_data = [self.to_date(x, date_format) for x in items]
+        return ma.masked_values(x_data, 1e-8)  # ignore missing data
+
 
     def compute(self):
         pass
@@ -98,23 +126,46 @@ class ParentPlot(NotCacheable, Module):
 
 class StandardHistogram(ParentPlot):
     _input_ports = [('columnData', '(edu.utah.sci.vistrails.basic:List)'),
+                    ('plot', '(za.co.csir.eo4vistrails:Histogram Type:plots)'),
                     ('title', '(edu.utah.sci.vistrails.basic:String)'),
                     ('xAxis_label', '(edu.utah.sci.vistrails.basic:String)'),
                     ('yAxis_label', '(edu.utah.sci.vistrails.basic:String)'),
+                    ('facecolor', '(edu.utah.sci.vistrails.basic:Color)'),
                     ('bins', '(edu.utah.sci.vistrails.basic:Integer)'),
-                    ('facecolor', '(edu.utah.sci.vistrails.basic:Color)')]
+                    ('cumulative', '(edu.utah.sci.vistrails.basic:Boolean)'),
+                    ]
     _output_ports = [('source', '(edu.utah.sci.vistrails.basic:String)')]
 
     def compute(self):
-        data = [self.to_float(x) for x in self.getInputFromPort('columnData')]
+        data_in = self.getInputFromPort('columnData')
+        hist_type = self.forceGetInputFromPort('plot', 'bar')
+        cumulative = self.forceGetInputFromPort('cumulative', False)
+        dataset = []
+
+        if all(isinstance(item, list) for item in data_in):
+            # this is a 'list of lists'
+            if len(data_in) > 1:
+                # multi-series list
+                for item in data_in:
+                    dataset.append(self.list_to_floats(item))
+            elif len(data_in) == 1:
+                # single-series list
+                dataset.append(self.list_to_floats(data_in[0]))
+            else:
+                pass
+        else:
+            # just a set of normal values
+            dataset.append(self.list_to_floats(data_in))
+
+        print "plots:160 - histogram data", dataset
         bins = self.forceGetInputFromPort('bins', 10)
         if self.hasInputFromPort('facecolor'):
             self.facecolor = self.getInputFromPort('facecolor').tuple
         else:
-            self.facecolor = 'w'
+            self.facecolor = 'r'  # bar color
 
         fig = pylab.figure()
-        pylab.setp(fig, facecolor=self.facecolor)
+        pylab.setp(fig, facecolor='w')  # background color
         if self.hasInputFromPort('title'):
             pylab.title(self.getInputFromPort('title'))
         if self.hasInputFromPort('xAxis_label'):
@@ -122,7 +173,24 @@ class StandardHistogram(ParentPlot):
         if self.hasInputFromPort('yAxis_label'):
             pylab.ylabel(self.getInputFromPort('yAxis_label'))
 
-        pylab.hist(data, bins, facecolor=color)
+        if dataset:
+            if len(dataset) == 1:
+                # single-series
+                pylab.hist(dataset[0], bins, histtype=hist_type,
+                           cumulative=cumulative, facecolor=self.facecolor)
+            else:
+                # multi-series
+                colors = [self.random_color() for x in dataset]
+
+                combine = []
+                for d in dataset:
+                    combine = combine + d
+                a = array(combine)  # numpy array
+                data_array = a.reshape(len(dataset[0]), len(dataset))  # rows * cols
+
+                pylab.hist(data_array, bins, histtype=hist_type,
+                           cumulative=cumulative, color=colors)
+
         pylab.get_current_fig_manager().toolbar.hide()
         self.setResult('source', "")
 
@@ -149,7 +217,7 @@ class StandardPlot(ParentPlot):
         yAxis_label:
             an optional label for the Y-axis (ignored for windrose)
         facecolor:
-            the color for the marker face (plot color for windrose)
+            the color for the face of the markers (plot color for windrose)
 
     Output ports:
         source:
@@ -181,13 +249,13 @@ class StandardPlot(ParentPlot):
         if len(direction) > 0 and len(value) > 0:
             ax = self.new_axes()
             ax.bar(direction, value, normed=True, opening=0.8, edgecolor='w')
-            l = ax.legend(axespad=-0.10)
+            l = ax.legend(borderaxespad=-0.10)
             pylab.setp(l.get_texts(), fontsize=8)
             if self.hasInputFromPort('title'):
                 ax.set_title(self.getInputFromPort('title'))
             return ax
         else:
-            print "wind direction and/or value are null..."
+            raise NameError("wind directions and/or values are null...")
             return None
 
     def compute(self):
@@ -201,9 +269,9 @@ class StandardPlot(ParentPlot):
 
         xyData = self.forceGetInputFromPort('xyData', [])
         if xyData and len(xyData) == 2:
-            y_data = [float(y) for y in xyData[1]]
-            y_data_m = ma.masked_values(y_data, 1e-8)  # ignore missing data
+            y_data_m = self.list_to_floats(xyData[1])
             fig = pylab.figure()
+            pylab.setp(fig, facecolor='w')  # background color
             if self.hasInputFromPort('title'):
                 pylab.title(self.getInputFromPort('title'))
             if self.hasInputFromPort('xAxis_label'):
@@ -212,15 +280,12 @@ class StandardPlot(ParentPlot):
                 pylab.ylabel(self.getInputFromPort('yAxis_label'))
 
             if plot_type == 'date':
-                DATE_FORMAT = '%Y-%m-%d'  # pass this in as option - seems matplotlib requires it!?
-                x_data = [self.to_date(x, DATE_FORMAT) for x in xyData[0]]
-                x_data_m = ma.masked_values(x_data, 1e-8)  # ignore missing data
+                x_data_m = self.list_to_dates(xyData[0])
                 pylab.plot_date(x_data_m, y_data_m, xdate=True, marker=marker_type,
                                 markerfacecolor=self.facecolor)
                 fig.autofmt_xdate()  # pretty-format date axis
             else:
-                x_data = [self.to_float(x) for x in xyData[0]]
-                x_data_m = ma.masked_values(x_data, 1e-8)  # ignore missing data
+                x_data_m = self.list_to_floats(xyData[0])
                 if plot_type == 'scatter':
                     pylab.scatter(x_data_m, y_data_m, marker=marker_type, facecolor=self.facecolor)
                 elif plot_type == 'line':
@@ -229,7 +294,7 @@ class StandardPlot(ParentPlot):
                 elif plot_type == 'windrose':
                     fig = self.create_rose(y_data_m, x_data_m)
                 else:
-                    pass
+                    raise NameError('plot_type %s  is undefined.' % plot_type)
 
         pylab.get_current_fig_manager().toolbar.hide()
         self.setResult('source', "")
@@ -272,9 +337,10 @@ class MultiPlot(ParentPlot):
             data_sets = self.getInputFromPort('datasets')
         else:
             data_sets = []
-        #print "plot:273", data_sets
+        #print "plot:339", data_sets
 
         fig = pylab.figure()
+        pylab.setp(fig, facecolor='w')  # background color
         if self.hasInputFromPort('title'):
             pylab.title(self.getInputFromPort('title'))
         if self.hasInputFromPort('xAxis_label'):
@@ -287,27 +353,22 @@ class MultiPlot(ParentPlot):
 
         if data_sets:
             x_series = data_sets[0]
-            #print "plot:288", x_series
+            #print "plot:345", x_series
             for key, dataset in enumerate(data_sets):
                 if key:  # skip first series (used for X-axis data)
                     marker_number = key - (max_markers * int(key / max_markers)) - 1
-                    hexcode = "#%x" % random.randint(0, 16777215)
-                    self.facecolor = hexcode.ljust(7).replace(' ', '0')
+                    self.facecolor = self.random_color()
 
                     # Y AXIS DATA
-                    y_data = [self.to_float(y) for y in dataset]
-                    y_data_m = ma.masked_values(y_data, 1e-8)  # ignore missing data
-                    #print "plot:298", key, marker_number, y_data
+                    y_data_m = x_data_m = self.list_to_floats(dataset)
+                    #print "plot:354", key, marker_number, y_data
                     # X-AXIS DATA
                     if plot_type in ('scatter', 'line'):
-                        x_data = [self.to_float(x) for x in x_series]
-                        x_data_m = ma.masked_values(x_data, 1e-8)  # ignore missing data
+                        x_data_m = self.list_to_floats(x_series)
 
                     if plot_type == 'date':
-                        DATE_FORMAT = '%Y-%m-%d'  # pass this in as option?- seems matplotlib requires it!?
-                        x_data = [self.to_date(x, DATE_FORMAT) for x in x_series]
-                        x_data_m = ma.masked_values(x_data, 1e-8)  # ignore missing data
-                        #print "plot:308", key, marker_number, x_data, x_data_m
+                        x_data_m = self.list_to_dates(x_series)
+                        #print "plot:361", key, marker_number, x_data, x_data_m
                         ax.plot_date(x_data_m, y_data_m, xdate=True,
                                         marker=MARKER[marker_number],
                                         markerfacecolor=self.facecolor)
@@ -320,7 +381,7 @@ class MultiPlot(ParentPlot):
                                 linestyle=line_style,
                                 markerfacecolor=self.facecolor)
                     else:
-                        pass
+                        raise NameError('plot_type %s  is undefined.' % plot_type)
 
         pylab.get_current_fig_manager().toolbar.hide()
         self.setResult('source', "")
@@ -395,3 +456,15 @@ MatplotlibPlotTypeComboBox = basic_modules.new_constant('Plot Type',
                                         'scatter',
                                         staticmethod(lambda x: type(x) == str),
                                         MatplotlibPlotTypeComboBoxWidget)
+
+
+class MatplotlibHistogramTypeComboBoxWidget(ComboBoxWidget):
+    """matplotlib histogram types."""
+    _KEY_VALUES = {'bar': 'bar', 'step': 'step', 'barstacked': 'bar - stacked',
+                   'stepfilled': 'step - filled', }
+
+MatplotlibHistogramTypeComboBox = basic_modules.new_constant('Histogram Type',
+                                        staticmethod(str),
+                                        'bar',
+                                        staticmethod(lambda x: type(x) == str),
+                                        MatplotlibHistogramTypeComboBoxWidget)
