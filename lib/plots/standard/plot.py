@@ -27,20 +27,6 @@
 
 This module is based on the vistrails.packages.pylab module, but with
 extended plotting types and configuration options.
-
-Development Notes
-==================
-
-#For multiple graphs ...
-
-import matplotlib.pyplot as plt
-
-plt.figure(1)
-plt.plot(range(10),range(10))
-
-plt.figure(2)
-plt.plot(range(2),range(2))
-
 """
 
 # library
@@ -48,6 +34,7 @@ import time
 import urllib
 from datetime import datetime
 import random
+from numpy import ma
 # third party
 # vistrails
 from core.bundles import py_import
@@ -75,25 +62,35 @@ except Exception, e:
 
 
 class ParentPlot(NotCacheable, Module):
-    """Provide common routines and data for all plot modules."""
+    """Provides common routines and data for all plot modules."""
 
     def to_float(self, s):
+        """Returns a float from a string, or 'almost zero' if invalid."""
         try:
             return float(s)
         except:
-            return ''
+            return 1e-8
 
     def to_str(self, s):
+        """Returns a string from an input, or an empty string if None."""
         if s:
             return str(s)
         else:
             return ''
 
-    def to_date(self, x, DATE_FORMAT):
+    def to_date(self, x, date_format):
+        """Returns a date from a string in the specified format.
+
+        Notes:
+        -----
+
+        Uses matplotlib.dates.date2num(d):
+            d is either a datetime instance or a sequence of datetimes.
+        """
         try:
-            return matplotlib.dates.date2num(datetime.strptime(x, DATE_FORMAT))
+            return matplotlib.dates.date2num(datetime.strptime(x, date_format))
         except:
-            return None
+            return 1e-8
 
     def compute(self):
         pass
@@ -131,7 +128,7 @@ class StandardHistogram(ParentPlot):
 
 
 class StandardPlot(ParentPlot):
-    """Allow a single series to be plotted.
+    """Allows a single series to be plotted.
 
     Input ports:
         xyData:
@@ -158,6 +155,9 @@ class StandardPlot(ParentPlot):
         source:
             the matplotlib source code for the plot
 
+    Notes:
+    ------
+    * The matplotlib cbook module is extremely useful for data conversion
     """
     _input_ports = [('xyData', '(edu.utah.sci.vistrails.basic:List)'),
                     ('plot', '(za.co.csir.eo4vistrails:Plot Type:plots)'),
@@ -177,15 +177,12 @@ class StandardPlot(ParentPlot):
         fig.add_axes(ax)
         return ax
 
-    def set_legend(self, ax):
-        l = ax.legend(axespad=-0.10)
-        pylab.setp(l.get_texts(), fontsize=8)
-
     def create_rose(self, value, direction):
-        if direction and value:
+        if len(direction) > 0 and len(value) > 0:
             ax = self.new_axes()
             ax.bar(direction, value, normed=True, opening=0.8, edgecolor='w')
-            self.set_legend(ax)
+            l = ax.legend(axespad=-0.10)
+            pylab.setp(l.get_texts(), fontsize=8)
             if self.hasInputFromPort('title'):
                 ax.set_title(self.getInputFromPort('title'))
             return ax
@@ -205,6 +202,7 @@ class StandardPlot(ParentPlot):
         xyData = self.forceGetInputFromPort('xyData', [])
         if xyData and len(xyData) == 2:
             y_data = [float(y) for y in xyData[1]]
+            y_data_m = ma.masked_values(y_data, 1e-8)  # ignore missing data
             fig = pylab.figure()
             if self.hasInputFromPort('title'):
                 pylab.title(self.getInputFromPort('title'))
@@ -214,21 +212,22 @@ class StandardPlot(ParentPlot):
                 pylab.ylabel(self.getInputFromPort('yAxis_label'))
 
             if plot_type == 'date':
-                #matplotlib.dates.date2num(d) #d is either a datetime instance or a sequence of datetimes.
-                DATE_FORMAT = '%Y-%m-%d'  # pass this in as option?
-                x_data = [self.to_date(self, x, DATE_FORMAT) for x in xyData[0]]
-                pylab.plot_date(x_data, y_data, xdate=True, marker=marker_type,
+                DATE_FORMAT = '%Y-%m-%d'  # pass this in as option - seems matplotlib requires it!?
+                x_data = [self.to_date(x, DATE_FORMAT) for x in xyData[0]]
+                x_data_m = ma.masked_values(x_data, 1e-8)  # ignore missing data
+                pylab.plot_date(x_data_m, y_data_m, xdate=True, marker=marker_type,
                                 markerfacecolor=self.facecolor)
                 fig.autofmt_xdate()  # pretty-format date axis
             else:
                 x_data = [self.to_float(x) for x in xyData[0]]
+                x_data_m = ma.masked_values(x_data, 1e-8)  # ignore missing data
                 if plot_type == 'scatter':
-                    pylab.scatter(x_data, y_data, marker=marker_type, facecolor=self.facecolor)
+                    pylab.scatter(x_data_m, y_data_m, marker=marker_type, facecolor=self.facecolor)
                 elif plot_type == 'line':
-                    pylab.plot(x_data, y_data, marker=marker_type,
+                    pylab.plot(x_data_m, y_data_m, marker=marker_type,
                                linestyle=line_style, markerfacecolor=self.facecolor)
                 elif plot_type == 'windrose':
-                    fig = self.create_rose(y_data, x_data)
+                    fig = self.create_rose(y_data_m, x_data_m)
                 else:
                     pass
 
@@ -237,7 +236,7 @@ class StandardPlot(ParentPlot):
 
 
 class MultiPlot(ParentPlot):
-    """Allow multiple series to be plotted on the same plot.
+    """Allows multiple series to be plotted on the same plot.
 
     Input ports:
         datasets:
@@ -273,7 +272,7 @@ class MultiPlot(ParentPlot):
             data_sets = self.getInputFromPort('datasets')
         else:
             data_sets = []
-        print "plot:271", data_sets
+        #print "plot:273", data_sets
 
         fig = pylab.figure()
         if self.hasInputFromPort('title'):
@@ -288,28 +287,36 @@ class MultiPlot(ParentPlot):
 
         if data_sets:
             x_series = data_sets[0]
-            print "plot:283", x_series
+            #print "plot:288", x_series
             for key, dataset in enumerate(data_sets):
                 if key:  # skip first series (used for X-axis data)
                     marker_number = key - (max_markers * int(key / max_markers)) - 1
-                    y_data = [self.to_float(y) for y in dataset]
                     hexcode = "#%x" % random.randint(0, 16777215)
                     self.facecolor = hexcode.ljust(7).replace(' ', '0')
-                    print "plot:291", key, marker_number, y_data
+
+                    # Y AXIS DATA
+                    y_data = [self.to_float(y) for y in dataset]
+                    y_data_m = ma.masked_values(y_data, 1e-8)  # ignore missing data
+                    #print "plot:298", key, marker_number, y_data
+                    # X-AXIS DATA
+                    if plot_type in ('scatter', 'line'):
+                        x_data = [self.to_float(x) for x in x_series]
+                        x_data_m = ma.masked_values(x_data, 1e-8)  # ignore missing data
+
                     if plot_type == 'date':
-                        DATE_FORMAT = '%Y-%m-%d'  # pass this in as option?
+                        DATE_FORMAT = '%Y-%m-%d'  # pass this in as option?- seems matplotlib requires it!?
                         x_data = [self.to_date(x, DATE_FORMAT) for x in x_series]
-                        ax.plot_date(x_data, y_data, xdate=True,
+                        x_data_m = ma.masked_values(x_data, 1e-8)  # ignore missing data
+                        #print "plot:308", key, marker_number, x_data, x_data_m
+                        ax.plot_date(x_data_m, y_data_m, xdate=True,
                                         marker=MARKER[marker_number],
                                         markerfacecolor=self.facecolor)
                         fig.autofmt_xdate()  # pretty-format date axis
                     elif plot_type == 'scatter':
-                        x_data = [self.to_float(x) for x in x_series]
-                        ax.scatter(x_data, y_data, marker=MARKER[marker_number],
+                        ax.scatter(x_data_m, y_data_m, marker=MARKER[marker_number],
                                    facecolor=self.facecolor)
                     elif plot_type == 'line':
-                        x_data = [self.to_float(x) for x in x_series]
-                        ax.plot(x_data, y_data, marker=MARKER[marker_number],
+                        ax.plot(x_data_m, y_data_m, marker=MARKER[marker_number],
                                 linestyle=line_style,
                                 markerfacecolor=self.facecolor)
                     else:
@@ -317,6 +324,40 @@ class MultiPlot(ParentPlot):
 
         pylab.get_current_fig_manager().toolbar.hide()
         self.setResult('source', "")
+
+
+"""
+class GroupPlot(ParentPlot):
+    Allows multiple series to be plotted on different plots.
+
+    Input ports:
+        datapairs:
+            a list of lists - each list contains two lists: the first list is
+            the X values, and the second list is the Y values.  X-values can be
+            numeric or dates, but Y-values must be numeric.
+        plotsettings:
+            a list of dictionaries of plot settings. Each dictionary may include:
+            * plot: the type of plot (defaults to scatter)
+            * title: title that will appear above the plot
+            * xAxis_label: the label for the X-axis
+            * yAxis_label: the label for the Y-axis
+
+    Output ports:
+        source:
+            the matplotlib source code for the plot
+
+
+#For multiple graphs ...
+
+import matplotlib.pyplot as plt
+
+plt.figure(1)
+plt.plot(range(10),range(10))
+
+plt.figure(2)
+plt.plot(range(2),range(2))
+
+    """
 
 
 class MatplotlibMarkerComboBoxWidget(ComboBoxWidget):
@@ -354,12 +395,3 @@ MatplotlibPlotTypeComboBox = basic_modules.new_constant('Plot Type',
                                         'scatter',
                                         staticmethod(lambda x: type(x) == str),
                                         MatplotlibPlotTypeComboBoxWidget)
-
-
-
-
-def to_str(self, s):
-    try:
-        return str(s)
-    except:
-        return ''
