@@ -117,7 +117,8 @@ class Rpy2Script(Script):
                         self.setResult(k, robjects.globalenv[k][0])
                     elif str(self.getPortType(k)) == "<class 'core.modules.vistrails_module.Boolean'>":
                         self.setResult(k, robjects.globalenv[k][0])
-                    elif str(self.getPortType(k)) == "<class 'core.modules.vistrails_module.List'>":
+                    elif str(self.getPortType(k)) == "<class 'core.modules.vistrails_module.List'>" or \
+                    str(self.getPortType(k)) == "<class 'packages.NumSciPy.Array.NDArray'>" :
                         self.setResult(k, numpy.array(robjects.globalenv[k]))
                     elif self.getPortType(k) == type(rResult):
                         self.setResult(k, rResult)
