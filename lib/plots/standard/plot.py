@@ -182,7 +182,7 @@ class StandardHistogram(ParentPlot):
                 # multi-series
                 colors = [self.random_color() for x in dataset]
 
-                combine = []
+                combine = [] # ? maybe need to combine pre-masked data??? then mask...
                 for d in dataset:
                     combine = combine + d
                 a = array(combine)  # numpy array

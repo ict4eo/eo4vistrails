@@ -88,17 +88,18 @@ class ListDirContent(ThreadSafeMixin, Module):
 class CsvReader(ThreadSafeMixin, Module):
     """Simple csv file reader utility.
 
-    Requires:
-
     Input ports:
-     *  a full directory path and filename to be read
-     *  an optional list of column headers
-     *  an optional item delimiter (defaults to a ",")
-
-    Returns:
+        fullfilename:
+            name of input file (including a full directory path)
+        column_header_list:
+            optional list of column headings
+        delimiter:
+            an optional item delimiter (defaults to a ",")
 
     Output ports:
-     *  a list of lists, containing all data from the file
+        read_data_listoflists:
+            a list of lists, containing all data from the file
+
     """
 
     _input_ports = [('fullfilename', '(edu.utah.sci.vistrails.basic:String)'),
@@ -193,12 +194,20 @@ class CsvFilter(ThreadSafeMixin, Module):
     Input ports:
         fullfilename:
             a full directory path and filename to be read
-        sample_set:
-            switch to enable output of a maximum of the first 10 rows  (default False)
-        transpose:
-            switch to enable output of a transposed set of data (default False)
         delimiter:
             an optional item delimiter (defaults to a ",")
+        sample_set:
+            switch to enable output of a maximum of the first 10 rows
+            (default False)
+        transpose:
+            switch to enable output of a transposed set of data (default False)
+        header_in:
+            switch to indicate if first row, in the input data set, contains
+            header data (default False); thiis header row is ignored for data
+            import
+        header_out:
+            switch to indicate if first row (likely containing headers) should
+            be written to output (default True)
         filter_rows:
             an optional specification of which rows appear in the output (this
             notation assumes a starting row number of 1')
@@ -230,13 +239,15 @@ class CsvFilter(ThreadSafeMixin, Module):
                     ('delimiter', '(edu.utah.sci.vistrails.basic:String)'),
                     ('sample_set', '(edu.utah.sci.vistrails.basic:Boolean)'),
                     ('transpose', '(edu.utah.sci.vistrails.basic:Boolean)'),
+                    ('header_in', '(edu.utah.sci.vistrails.basic:Boolean)'),
+                    ('header_out', '(edu.utah.sci.vistrails.basic:Boolean)'),
                     ('filter_rows', '(edu.utah.sci.vistrails.basic:String)'),
                     ('filter_cols', '(edu.utah.sci.vistrails.basic:String)'),
                     ('pairs', '(edu.utah.sci.vistrails.basic:String)')]
     _output_ports = [('csv_file', '(edu.utah.sci.vistrails.basic:File)'),
                     ('dataset', '(edu.utah.sci.vistrails.basic:List)'),
                     ('datapairs', '(edu.utah.sci.vistrails.basic:List)'),
-                    ('html', '(edu.utah.sci.vistrails.basic:String)')]
+                    ('html_file', '(edu.utah.sci.vistrails.basic:File)')]
 
     def __init__(self):
         ThreadSafeMixin.__init__(self)
@@ -252,20 +263,35 @@ class CsvFilter(ThreadSafeMixin, Module):
             return []
         return map(lambda *row: list(row), *lists)
 
-    def html_table(self, lists):
-        """Create an HTML table string from a 'list of lists'."""
-        table = '<table>'
-        for list in lists:
-            table = table + '\n' + '  <tr><td>'
-            table = table + '</td><td>'.join(str(column) for column in list)
-            table = table + '</td></tr>'
+    def create_html(self, lists, heading=False):
+        """Create a file with an HTML table from a 'list of lists'."""
+        table = '<table border="1">'
+        for key, list in enumerate(lists):
+            if heading and not key:
+                table = table + '\n' + '  <tr><th>'
+                table = table + '</th><th>'.join(str(column) for column in list)
+                table = table + '</th></tr>'
+            else:
+                table = table + '\n' + '  <tr><td>'
+                table = table + '</td><td>'.join(str(column) for column in list)
+                table = table + '</td></tr>'
         table = table + '\n' + '</table>'
-        return table
+        #print  "csvutils.279:", table
+
+        try:
+            output_file = self.interpreter.filePool.create_file(suffix='.html')
+            f = open(str(output_file.name), "w")
+            f.write(table)
+            f.close()
+            return output_file
+        except Exception, e:
+            self.raiseError('Cannot create HTML file: %s' % str(e))
+            return None
 
     def create_csv(self, list):
-        """Create an output CSV from a 'list of lists'."""
+        """Create a CSV file from a 'list of lists'."""
         newfile = self.interpreter.filePool.create_file(suffix='.csv')
-        #print "csvutils.269:", newfile, type(newfile)
+        #print "csvutils.299:", newfile, type(newfile)
         try:
             csvfile = csv.writer(open(newfile, 'w'),
                                  delimiter=',',
@@ -364,6 +390,8 @@ class CsvFilter(ThreadSafeMixin, Module):
         delimiter = self.forceGetInputFromPort('delimiter', ",")
         sample = self.forceGetInputFromPort("sample_set", False)
         transpose = self.forceGetInputFromPort("transpose", False)
+        header_in = self.forceGetInputFromPort("sample_set", False)
+        header_out = self.forceGetInputFromPort("sample_set", True)
         filter_rows = self.forceGetInputFromPort("filter_rows", "")
         filter_cols = self.forceGetInputFromPort("filter_cols", "")
         pairs = self.forceGetInputFromPort("pairs", "")
@@ -371,7 +399,9 @@ class CsvFilter(ThreadSafeMixin, Module):
         list_of_lists = []
         cols_list = self.get_filter_specs(filter_cols)
         rows_list = self.get_filter_specs(filter_rows)
-        #print "csvutils.375: ", cols_list, rows_list
+        #print "csvutils.404: ", cols_list, rows_list
+        if not header_in:
+            header_out = False  # cannot write out a row that is not there...
 
         if os.path.isfile(fullname):
             try:
@@ -380,6 +410,8 @@ class CsvFilter(ThreadSafeMixin, Module):
                     #print "csvutils.381: ", key, row
                     if sample and key > 9:
                         break
+                    elif header_in and not header_out and key == 1:
+                        pass  # skip header row
                     else:
                         if not cols_list:
                             if not rows_list:
@@ -397,17 +429,19 @@ class CsvFilter(ThreadSafeMixin, Module):
                                     if key + 1 in cols_list:
                                         row_out.append(c)
                                 list_of_lists.append(row_out)
-                #print "csvutils.401:pre_transpose ", list_of_lists
+                #print "csvutils.431:pre_transpose ", list_of_lists
                 if transpose:
                     list_of_lists = self.transpose_array(list_of_lists)
-                #print "csvutils.404:post_transpose ", list_of_lists
+                #print "csvutils.434:post_transpose ", list_of_lists
                 self.setResult('dataset', list_of_lists)
-                if 'html' in self.outputPorts:
-                    self.setResult('html', self.html_table(list_of_lists))
+                if 'html_file' in self.outputPorts:
+                    self.setResult('html_file', self.create_html(list_of_lists,
+                                                                 header_out))
                 if 'csv_file' in self.outputPorts:
                     self.setResult('csv_file', self.create_csv(list_of_lists))
                 if 'datagroups' in self.outputPorts:
-                    self.setResult('datapairs', self.create_pairs(pairs, list_of_lists))
+                    self.setResult('datapairs', self.create_pairs(pairs,
+                                                                  list_of_lists))
             except Exception, ex:
                 print ex
             csvfile = None
