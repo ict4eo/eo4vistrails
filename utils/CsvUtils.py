@@ -43,9 +43,17 @@ class ListDirContent(ThreadSafeMixin, Module):
     """A utility for walking a directory to discover csv files with specified
     filenames.
 
-    Returns:
-     *  A list of full filenames. On RPyC nodes, will refer to files on that
-        remote filesystem.
+    Input ports:
+        directory path:
+            place in which files are to be discovered
+        file_extensions:
+            a list of types of files to be discovered
+
+    Output ports:
+        csv_list:
+            A list of full filenames. On RPyC nodes, will refer to files on
+            that remote filesystem.
+
     """
 
     _input_ports = [('directorypath', '(edu.utah.sci.vistrails.basic:String)'),

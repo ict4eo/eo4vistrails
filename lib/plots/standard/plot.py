@@ -64,7 +64,7 @@ except Exception, e:
 class ParentPlot(NotCacheable, Module):
     """Provides common routines and data for all plot modules."""
 
-    MISSING = 1e-8
+    MISSING = 1e-8  # used by numpy as a "placeholder"
 
     def random_color(self):
         """Returns a random hex color."""
@@ -86,7 +86,8 @@ class ParentPlot(NotCacheable, Module):
             return ''
 
     def to_date(self, x, date_format):
-        """Returns a date from a string in the specified format.
+        """Returns a date from a string, in the specified format,
+        or 'almost zero' if invalid.
 
         Notes:
         -----
@@ -99,12 +100,19 @@ class ParentPlot(NotCacheable, Module):
         except:
             return self.MISSING
 
-    def list_to_floats(self, items):
-        """Convert a list into a list of masked floating point values."""
+    def list_to_floats(self, items, mask=True):
+        """Convert a list into a list of floating point values.
+
+        mask:
+            replace None or empty strings with a MISSING value
+        """
         if not items:
             return None
         data = [self.to_float(x) for x in items]
-        return ma.masked_values(data, self.MISSING)  # ignore missing data
+        if mask:
+            return ma.masked_values(data, self.MISSING)  # ignore missing data
+        else:
+            return data
 
     def list_to_dates(self, items, date_format='%Y-%m-%d'):
         """Convert a list into a list of masked date values.
@@ -119,12 +127,41 @@ class ParentPlot(NotCacheable, Module):
         x_data = [self.to_date(x, date_format) for x in items]
         return ma.masked_values(x_data, 1e-8)  # ignore missing data
 
-
     def compute(self):
         pass
 
 
 class StandardHistogram(ParentPlot):
+    """Allows single or multiple series to be plotted as a histogram.
+
+    Input ports:
+        columnData:
+            a list containing one or more lists - each list is a series
+        plot:
+            the type of histogram (bar, step, barstacked, stepfilled)
+        title:
+            an optional title that will appear above the plot
+        xAxis_label:
+            an optional label for the X-axis
+        yAxis_label:
+            an optional label for the Y-axis
+        facecolor:
+            the color for the face of the single-series bars
+        bins:
+            the number of bins into which to group the data
+        cumulative:
+            switch to indicate if the data should be accumulated
+
+    Output ports:
+        source:
+            the matplotlib source code for the plot
+
+    Notes:
+    ------
+    * The matplotlib cbook module is extremely useful for data conversion
+
+    """
+
     _input_ports = [('columnData', '(edu.utah.sci.vistrails.basic:List)'),
                     ('plot', '(za.co.csir.eo4vistrails:Histogram Type:plots)'),
                     ('title', '(edu.utah.sci.vistrails.basic:String)'),
@@ -140,29 +177,7 @@ class StandardHistogram(ParentPlot):
         data_in = self.getInputFromPort('columnData')
         hist_type = self.forceGetInputFromPort('plot', 'bar')
         cumulative = self.forceGetInputFromPort('cumulative', False)
-        dataset = []
-
-        if all(isinstance(item, list) for item in data_in):
-            # this is a 'list of lists'
-            if len(data_in) > 1:
-                # multi-series list
-                for item in data_in:
-                    dataset.append(self.list_to_floats(item))
-            elif len(data_in) == 1:
-                # single-series list
-                dataset.append(self.list_to_floats(data_in[0]))
-            else:
-                pass
-        else:
-            # just a set of normal values
-            dataset.append(self.list_to_floats(data_in))
-
-        print "plots:160 - histogram data", dataset
         bins = self.forceGetInputFromPort('bins', 10)
-        if self.hasInputFromPort('facecolor'):
-            self.facecolor = self.getInputFromPort('facecolor').tuple
-        else:
-            self.facecolor = 'r'  # bar color
 
         fig = pylab.figure()
         pylab.setp(fig, facecolor='w')  # background color
@@ -172,24 +187,65 @@ class StandardHistogram(ParentPlot):
             pylab.xlabel(self.getInputFromPort('xAxis_label'))
         if self.hasInputFromPort('yAxis_label'):
             pylab.ylabel(self.getInputFromPort('yAxis_label'))
+        if self.hasInputFromPort('facecolor'):
+            self.facecolor = self.getInputFromPort('facecolor').tuple
+        else:
+            self.facecolor = 'r'  # bar color for single series
 
-        if dataset:
-            if len(dataset) == 1:
-                # single-series
+        dataset = []
+        if all(isinstance(item, list) for item in data_in):
+            if len(data_in) > 1:
+                # this is a 'list of lists' (multi-series)
+                # NOTE: ranges are being tracked manually as pylab.hist appears
+                #   to only track max/min for the first series/array...
+                combined = []
+                ranges = []
+                for item in data_in:
+                    floats = self.list_to_floats(item)
+                    compressed = array(floats.compressed())  # remove masked values
+                    combined.append(compressed)
+                    ranges.append(compressed.max())
+                    ranges.append(compressed.min())
+                range_max = array(ranges).max()
+                range_min = array(ranges).min()
+                print "plot:211-combined", combined, range_min, range_max
+
+                """
+                    combined = combined + item  # join the raw data lists
+                # get masked numeric values
+                dataset = self.list_to_floats(combined, mask=False)
+                print "plot:200", dataset
+                # convert to a numpy array
+                # a = array(dataset)
+                # print "plot:203", a
+                # shape into rows * cols -  all are equal length
+                data_array1 = array(dataset).reshape(len(data_in), item_length_base).transpose()
+                # hide null values
+                data_array = ma.masked_values(data_array1, self.MISSING)
+                print "plot:206", data_array
+                #colors = [self.random_color() for x in data_in] .. autogenerate
+                """
+
+                # plot
+                pylab.hist(combined, bins, histtype=hist_type,
+                           range=(range_min, range_max),
+                           cumulative=cumulative)
+
+            elif len(data_in) == 1:
+                # a single nested list (single-series)
+                dataset.append(self.list_to_floats(data_in[0]))
                 pylab.hist(dataset[0], bins, histtype=hist_type,
                            cumulative=cumulative, facecolor=self.facecolor)
+
             else:
-                # multi-series
-                colors = [self.random_color() for x in dataset]
-
-                combine = [] # ? maybe need to combine pre-masked data??? then mask...
-                for d in dataset:
-                    combine = combine + d
-                a = array(combine)  # numpy array
-                data_array = a.reshape(len(dataset[0]), len(dataset))  # rows * cols
-
-                pylab.hist(data_array, bins, histtype=hist_type,
-                           cumulative=cumulative, color=colors)
+                pass  # length '0' list containing no data...
+        else:
+            # a set of normal values (not contained in nested list)
+            dataset = self.list_to_floats(data_in)
+            print "plot:223", dataset, "\n bins", bins, "\n cumu", cumulative,\
+                "\n face", self.facecolor
+            pylab.hist(dataset, bins, histtype=hist_type,
+                       cumulative=cumulative, facecolor=self.facecolor)
 
         pylab.get_current_fig_manager().toolbar.hide()
         self.setResult('source', "")
@@ -226,6 +282,7 @@ class StandardPlot(ParentPlot):
     Notes:
     ------
     * The matplotlib cbook module is extremely useful for data conversion
+
     """
     _input_ports = [('xyData', '(edu.utah.sci.vistrails.basic:List)'),
                     ('plot', '(za.co.csir.eo4vistrails:Plot Type:plots)'),
@@ -460,8 +517,8 @@ MatplotlibPlotTypeComboBox = basic_modules.new_constant('Plot Type',
 
 class MatplotlibHistogramTypeComboBoxWidget(ComboBoxWidget):
     """matplotlib histogram types."""
-    _KEY_VALUES = {'bar': 'bar', 'step': 'step', 'barstacked': 'bar - stacked',
-                   'stepfilled': 'step - filled', }
+    _KEY_VALUES = {'bar': 'bar', 'step': 'step', 'bar - stacked': 'barstacked',
+                   'step - filled': 'stepfilled', }
 
 MatplotlibHistogramTypeComboBox = basic_modules.new_constant('Histogram Type',
                                         staticmethod(str),
