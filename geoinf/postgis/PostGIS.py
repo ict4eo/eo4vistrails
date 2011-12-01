@@ -93,7 +93,14 @@ class PostGisNumpyReturningCursor(ThreadSafeMixin, RPyCModule):
         try:
             import random
             random.seed()
+            pgconn = None
+            curs = None
+            #print "Debug: Connection String: %s" % pgsession.connectstr
             pgconn = psycopg2.connect(pgsession.connectstr)
+            
+            if pgconn is None:
+                raise ModuleError (PostGisNonReturningCursor,"No PostGIS connection established: %s" % pgsession.connectstr )
+                
             curs = pgconn.cursor('VISTRAILS' + str(random.randint(0, 10000)))
             sql_input = urllib.unquote(str(self.forceGetInputFromPort('source', '')))
             '''here we substitute input port values within the source'''
@@ -133,8 +140,10 @@ class PostGisNumpyReturningCursor(ThreadSafeMixin, RPyCModule):
             #print "PostGIS:130 ", ex
             raise ModuleError(PostGisNumpyReturningCursor, "Could not execute SQL Statement")
         finally:
-            curs.close()
-            pgconn.close()
+            if curs:
+                curs.close()
+            if pgconn:
+                pgconn.close()
 
 
 @RPyCSafeModule()
@@ -220,7 +229,14 @@ class PostGisBasicReturningCursor(ThreadSafeMixin, RPyCModule):
         Overrides supers method"""
         pgsession = self.getInputFromPort("PostGisSessionObject")
         try:
+            pgconn = None
+            curs = None
+            #print "Debug: Connection String: %s" % pgsession.connectstr
             pgconn = psycopg2.connect(pgsession.connectstr)
+            
+            if pgconn is None:
+                raise ModuleError (PostGisNonReturningCursor,"No PostGIS connection established: %s" % pgsession.connectstr )
+
             curs = pgconn.cursor()
             sql_input = urllib.unquote(str(self.forceGetInputFromPort('source', '')))
             '''here we substitute input port values within the source'''
@@ -238,8 +254,10 @@ class PostGisBasicReturningCursor(ThreadSafeMixin, RPyCModule):
             raise ModuleError(PostGisFeatureReturningCursor,\
                                  "Could not execute SQL Statement")
         finally:
-            curs.close()
-            pgconn.close()
+            if curs:
+                curs.close()
+            if pgconn:
+                pgconn.close()
             #set output port to receive this list
 
 
@@ -267,14 +285,23 @@ class PostGisNonReturningCursor(NotCacheable, ThreadSafeMixin, RPyCModule):
         try:
             # we could be dealing with multiple requests here,
             #   so parse string and execute requests one by one
+            pgconn = None
+            curs = None
+            #print "Debug: Connection String: %s" % pgsession.connectstr
             pgconn = psycopg2.connect(pgsession.connectstr)
-            #print pgconn
+            
+            if pgconn is None:
+                raise ModuleError (PostGisNonReturningCursor,"No PostGIS connection established: %s" % pgsession.connectstr )
+
             curs = pgconn.cursor()
-            #print curs
+            #print "Debug: Got cursor"
             resultstatus = []
             sql_input = urllib.unquote(str(self.forceGetInputFromPort('source', '')))
+            #print "Debug: Got sql_input: %s" % sql_input
+            
             for query in sql_input.split(";"):
                 if len(query) > 0:
+                    #print "DEBUG: got several queries top process"
                     values = {}
                     for k in self.inputPorts:
                         if k not in ['source', 'PostGisSessionObject', 'rpycnode', 'self']:
@@ -301,20 +328,24 @@ class PostGisNonReturningCursor(NotCacheable, ThreadSafeMixin, RPyCModule):
                         pgconn.commit()
                         resultstatus.append(curs.statusmessage)
                     else:
+                        #print "DEBUG: got one queries top process"
                         parameters = {}
                         for k, v in values.items():
                             parameters[k] = v
+                        
                         curs.execute(query + ";", parameters)
                         pgconn.commit()
                         resultstatus.append(curs.statusmessage)
             self.setResult('status', resultstatus)
         except Exception as ex:
             #print "PostGIS:292 ",ex
-            raise ModuleError(PostGisFeatureReturningCursor, \
+            raise ModuleError(PostGisNonReturningCursor, \
                                  "Could not execute SQL Statement")
         finally:
-            curs.close()
-            pgconn.close()
+            if curs:
+                curs.close()
+            if pgconn:
+                pgconn.close()
 
 
 @RPyCSafeModule()
@@ -346,7 +377,13 @@ class PostGisCopyFrom(NotCacheable, ThreadSafeMixin, RPyCModule):
         try:
             # we could be dealing with multiple requests here,
             #   so parse string and execute requests one by one
+            pgconn = None
+            curs = None
+            #print "Debug: Connection String: %s" % pgsession.connectstr
             pgconn = psycopg2.connect(pgsession.connectstr)
+            
+            if pgconn is None:
+                raise ModuleError (PostGisNonReturningCursor,"No PostGIS connection established: %s" % pgsession.connectstr )
             #print "PostGIS:330 ", pgconn
             curs = pgconn.cursor()
             #print "PostGIS:332 ", curs
@@ -366,8 +403,10 @@ class PostGisCopyFrom(NotCacheable, ThreadSafeMixin, RPyCModule):
             raise ModuleError(PostGisFeatureReturningCursor,\
                                  "Could not execute SQL Statement")
         finally:
-            curs.close()
-            pgconn.close()
+            if curs:
+                curs.close()
+            if pgconn:
+                pgconn.close()
 
 
 @RPyCSafeModule()
@@ -399,7 +438,13 @@ class PostGisCopyTo(NotCacheable, ThreadSafeMixin, Module):
         try:
             # we could be dealing with multiple requests here,
             #   so parse string and execute requests one by one
+            pgconn = None
+            curs = None
+            #print "Debug: Connection String: %s" % pgsession.connectstr
             pgconn = psycopg2.connect(pgsession.connectstr)
+            
+            if pgconn is None:
+                raise ModuleError (PostGisNonReturningCursor,"No PostGIS connection established: %s" % pgsession.connectstr )
             #print "PostGIS:383 ", pgconn
             curs = pgconn.cursor()
             #print "PostGIS:385 ", curs
@@ -420,8 +465,10 @@ class PostGisCopyTo(NotCacheable, ThreadSafeMixin, Module):
             raise ModuleError(PostGisFeatureReturningCursor,\
                                  "Could not execute SQL Statement")
         finally:
-            curs.close()
-            pgconn.close()
+            if curs:
+                curs.close()
+            if pgconn:
+                pgconn.close()
 
 class reprojectPostGISTable(Module):
     '''
@@ -453,7 +500,15 @@ class reprojectPostGISTable(Module):
         probegeomstr = "SELECT geometry_columns.f_geometry_column, geometry_columns.srid FROM geometry_columns WHERE geometry_columns.f_table_name = '%s';" % tablename
         
         try:
+            pgconn = None
+            curs = None
+            curs1 = None
+            #print "Debug: Connection String: %s" % pgsession.connectstr
             pgconn = psycopg2.connect(pgsession.connectstr)
+            
+            if pgconn is None:
+                raise ModuleError (PostGisNonReturningCursor,"No PostGIS connection established: %s" % pgsession.connectstr )
+                
             curs1 = pgconn.cursor()
             curs1.execute(probegeomstr)
             geomcol_details = curs1.fetchall()
@@ -479,9 +534,12 @@ class reprojectPostGISTable(Module):
             raise ModuleError(reprojectPostGISTable,\
                                  "Could not execute SQL Statement")
         finally:
-            curs1.close()
-            curs.close()
-            pgconn.close()
+            if curs:
+                curs.close()
+            if curs1:
+                curs1.close()                
+            if pgconn:
+                pgconn.close()
                                                     
                     
 
