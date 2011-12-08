@@ -427,7 +427,9 @@ class FeatureOfInterestDefinerConfigurationWidget(StandardModuleConfigurationWid
         print "added Layer"
 
     def addMemoryLayer(self):
-        '''adds a layer to contain the feature defined by a bounding box, wkt, digitised poly|line|point or selection from other layer'''
+        '''Adds a layer to contain the feature defined by a bounding box, wkt,
+        digitised poly|line|point or selection from other layer.
+        '''
         foi_type = self.foi_type.lower()
         if foi_type == 'areaofinterestdefiner':
             layer = QgsVectorLayer("Polygon", "Area of Interest",  "memory")
@@ -481,6 +483,7 @@ class FeatureOfInterestDefinerConfigurationWidget(StandardModuleConfigurationWid
         print "added Layer"
 
     def addGeomToMemoryLayer(self, the_geom, origin=0, delete_when_done=False):
+        """TO DO: Add doc string"""
         foi_type = self.foi_type.lower()
         print "got foi_type"
         if self.mem_layer_obj.featureCount() > 0:
@@ -537,8 +540,7 @@ class FeatureOfInterestDefinerConfigurationWidget(StandardModuleConfigurationWid
         #print "GFI not yet implemented"
 
     def gotFeatureForIdentification(self, pos):
-        """ show dialog with road information """
-
+        """Show a dialog with road information """
         #pos is a rectangle
         self.mem_layer_obj.select()
         ftr = QgsFeature()
@@ -558,9 +560,7 @@ class FeatureOfInterestDefinerConfigurationWidget(StandardModuleConfigurationWid
             if foi_type == 'pointofinterestdefiner':
                 ftrData = "You have selected the following feature(s) for use as a Point of Interest:\n\n"
             for fid in ftr_ids:
-
                 self.mem_layer_obj.dataProvider().featureAtId(fid, f,  True)
-
                 ftrData += f.attributeMap()[0].toString()
                 ftrData += "\n_____________________________\n"
                 self.chosenFOIGeoms.append(f.geometry())

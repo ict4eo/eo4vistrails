@@ -4,8 +4,11 @@ def initialize(*args, **keywords):
     from core.modules.basic_modules import File, Float, String
     from packages.eo4vistrails.geoinf.datamodels.QgsLayer import QgsRasterLayer
     from packages.eo4vistrails.geoinf.datamodels.GeoStrings import GeoJSONString,  WKTString
-    from AOI_Utils import FeatureOfInterestDefiner,  FeatureOfInterestDefinerConfigurationWidget,  AreaOfInterestDefiner, LineOfInterestDefiner,  PointOfInterestDefiner
-    
+    from AOI_Utils import FeatureOfInterestDefiner, \
+                          FeatureOfInterestDefinerConfigurationWidget, \
+                          AreaOfInterestDefiner, LineOfInterestDefiner, \
+                          PointOfInterestDefiner
+
     reg = get_module_registry()
     helpers_namespace = "helpers"
 
@@ -13,37 +16,37 @@ def initialize(*args, **keywords):
     # Abstract Modules - these MUST appear FIRST
     # ==========================================================================
 
-    reg.add_module(FeatureOfInterestDefiner, 
-                   namespace=helpers_namespace,  
+    reg.add_module(FeatureOfInterestDefiner,
+                   namespace=helpers_namespace,
                    abstract = True)
-                   
+
     reg.add_input_port(
-        FeatureOfInterestDefiner, 
-        "BaseLayer", 
+        FeatureOfInterestDefiner,
+        "BaseLayer",
         QgsRasterLayer)
 
     reg.add_input_port(
-        FeatureOfInterestDefiner, 
-        "SRS", 
+        FeatureOfInterestDefiner,
+        "SRS",
         String)
-        
+
     reg.add_input_port(
-        FeatureOfInterestDefiner, 
-        "WKTGeometry", 
-        WKTString)    
-  
+        FeatureOfInterestDefiner,
+        "WKTGeometry",
+        WKTString)
+
 #    reg.add_input_port(
-#        FeatureOfInterestDefiner, 
-#        "QgsGeometry", 
-#        String)    
+#        FeatureOfInterestDefiner,
+#        "QgsGeometry",
+#        String)
 
     # ==========================================================================
     # Standard Modules
     # ==========================================================================
-    
-    
-    reg.add_module(AreaOfInterestDefiner, 
-                   configureWidgetType=FeatureOfInterestDefinerConfigurationWidget, 
+
+
+    reg.add_module(AreaOfInterestDefiner,
+                   configureWidgetType=FeatureOfInterestDefinerConfigurationWidget,
                    namespace=helpers_namespace)
 
     reg.add_output_port(
@@ -51,18 +54,18 @@ def initialize(*args, **keywords):
         "AreaOfInterest",
         (WKTString, 'Area as WKT snippet'))
 
-    reg.add_module(LineOfInterestDefiner, 
-                   configureWidgetType=FeatureOfInterestDefinerConfigurationWidget, 
+    reg.add_module(LineOfInterestDefiner,
+                   configureWidgetType=FeatureOfInterestDefinerConfigurationWidget,
                    namespace=helpers_namespace)
 
     reg.add_output_port(
         LineOfInterestDefiner,
         "LineOfInterest",
         (WKTString, 'Line as WKT snippet'))
-        
 
-    reg.add_module(PointOfInterestDefiner, 
-                   configureWidgetType=FeatureOfInterestDefinerConfigurationWidget, 
+
+    reg.add_module(PointOfInterestDefiner,
+                   configureWidgetType=FeatureOfInterestDefinerConfigurationWidget,
                    namespace=helpers_namespace)
 
     reg.add_output_port(
