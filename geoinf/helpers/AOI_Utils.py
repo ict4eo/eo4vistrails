@@ -600,6 +600,9 @@ class FeatureOfInterestDefinerConfigurationWidget(StandardModuleConfigurationWid
                     ("SRS", [self.crsTextAsProj4.text()])])
         self.close()
         #self.controller.update_ports_and_functions(self.module.id, [], [], functions)
+        # NB -  functions - array of port tuples - ("portname", array_of_port_values)
+        #       port_value MUST be wrapped in an array, as Vistrails allows for
+        #       possibility of multiple inputs to a port
 
 
 class FeatureOfInterestDefiner(Module):

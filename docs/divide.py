@@ -97,8 +97,12 @@ class DivideConfigurationWidget(StandardModuleConfigurationWidget):
 
     def okTriggered(self):
         foo = 1.0
+        #self.controller.update_ports_and_functions(self.module.id, [], [], functions)
+        # NB -  functions = array of port tuples: ("portname", array_of_port_values)
+        #       port_value MUST be wrapped in an array, as Vistrails allows for
+        #       possibility of multiple inputs to a p
         self.controller.update_ports_and_functions(
-                self.module.id, [], [], [("arg1", foo), ("arg2", foo)])
+                self.module.id, [], [], [("arg1", [foo]), ("arg2", [foo])])
         self.close()
 
 
