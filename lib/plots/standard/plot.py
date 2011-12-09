@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 ############################################################################
 ###
 ### Copyright (C) 2011 CSIR Meraka Institute. All rights reserved.
@@ -64,29 +65,29 @@ except Exception, e:
 class ParentPlot(NotCacheable, Module):
     """Provides common routines and data for all plot modules."""
 
-    MISSING = 1e-8  # used by numpy as a "placeholder"
+    MISSING = 1e-8  # used by numpy as a "placeholder" for missing values
 
     def random_color(self):
-        """Returns a random hex color."""
+        """Returns a 6-digit random hex color."""
         hexcode = "#%x" % random.randint(0, 16777215)
         return hexcode.ljust(7).replace(' ', '0')
 
-    def to_float(self, s):
+    def to_float(self, string):
         """Returns a float from a string, or 'almost zero' if invalid."""
         try:
-            return float(s)
+            return float(string)
         except:
             return self.MISSING
 
-    def to_str(self, s):
+    def to_str(self, string):
         """Returns a string, or an empty string if None."""
-        if s:
-            return str(s)
+        if string:
+            return str(string)
         else:
             return ''
 
-    def to_date(self, x, date_format):
-        """Returns a date from a string, in the specified format,
+    def to_date(self, string, date_format):
+        """Returns a date from a string, in the specified date format,
         or 'almost zero' if invalid.
 
         Notes:
@@ -96,7 +97,8 @@ class ParentPlot(NotCacheable, Module):
             d is either a datetime instance or a sequence of datetimes.
         """
         try:
-            return matplotlib.dates.date2num(datetime.strptime(x, date_format))
+            return matplotlib.dates.date2num(datetime.strptime(
+                                                        string, date_format))
         except:
             return self.MISSING
 
@@ -110,17 +112,18 @@ class ParentPlot(NotCacheable, Module):
             return None
         data = [self.to_float(x) for x in items]
         if mask:
-            return ma.masked_values(data, self.MISSING)  # ignore missing data
+            return ma.masked_values(data, self.MISSING)  # ignores missing data
         else:
             return data
 
     def list_to_dates(self, items, date_format='%Y-%m-%d'):
-        """Convert a list into a list of masked date values.
+        """Convert a list into a list of masked date values, with each date
+        in the specified date format.
 
         Notes:
         ------
 
-        matplotlib seems to require data in the form '%Y-%m-%d' ???
+        matplotlib seems to require date data in the form '%Y-%m-%d' ???
         """
         if not items:
             return None
@@ -131,7 +134,7 @@ class ParentPlot(NotCacheable, Module):
         pass
 
 
-class StandardHistogram(ParentPlot):
+class Histogram(ParentPlot):
     """Allows single or multiple series to be plotted as a histogram.
 
     Input ports:
@@ -158,7 +161,7 @@ class StandardHistogram(ParentPlot):
 
     Notes:
     ------
-    * The matplotlib cbook module is extremely useful for data conversion
+    * The matplotlib `cbook` module is extremely useful for data conversion
 
     """
 
@@ -197,7 +200,7 @@ class StandardHistogram(ParentPlot):
             if len(data_in) > 1:
                 # this is a 'list of lists' (multi-series)
                 # NOTE: ranges are being tracked manually as pylab.hist appears
-                #   to only track max/min for the first series/array...
+                #   to only track max/min for the first series/array.
                 combined = []
                 ranges = []
                 for item in data_in:
@@ -208,25 +211,7 @@ class StandardHistogram(ParentPlot):
                     ranges.append(compressed.min())
                 range_max = array(ranges).max()
                 range_min = array(ranges).min()
-                print "plot:211-combined", combined, range_min, range_max
-
-                """
-                    combined = combined + item  # join the raw data lists
-                # get masked numeric values
-                dataset = self.list_to_floats(combined, mask=False)
-                print "plot:200", dataset
-                # convert to a numpy array
-                # a = array(dataset)
-                # print "plot:203", a
-                # shape into rows * cols -  all are equal length
-                data_array1 = array(dataset).reshape(len(data_in), item_length_base).transpose()
-                # hide null values
-                data_array = ma.masked_values(data_array1, self.MISSING)
-                print "plot:206", data_array
-                #colors = [self.random_color() for x in data_in] .. autogenerate
-                """
-
-                # plot
+                #print "plot:211-combined", combined, range_min, range_max
                 pylab.hist(combined, bins, histtype=hist_type,
                            range=(range_min, range_max),
                            cumulative=cumulative)
@@ -242,8 +227,8 @@ class StandardHistogram(ParentPlot):
         else:
             # a set of normal values (not contained in nested list)
             dataset = self.list_to_floats(data_in)
-            print "plot:223", dataset, "\n bins", bins, "\n cumu", cumulative,\
-                "\n face", self.facecolor
+            #print "plot:228", dataset, "\n bins", bins, "\n cumu", cumulative,\
+            #    "\n face", self.facecolor
             pylab.hist(dataset, bins, histtype=hist_type,
                        cumulative=cumulative, facecolor=self.facecolor)
 
@@ -251,7 +236,7 @@ class StandardHistogram(ParentPlot):
         self.setResult('source', "")
 
 
-class StandardPlot(ParentPlot):
+class SinglePlot(ParentPlot):
     """Allows a single series to be plotted.
 
     Input ports:
@@ -394,7 +379,7 @@ class MultiPlot(ParentPlot):
             data_sets = self.getInputFromPort('datasets')
         else:
             data_sets = []
-        #print "plot:339", data_sets
+        #print "plot:380", data_sets
 
         fig = pylab.figure()
         pylab.setp(fig, facecolor='w')  # background color
@@ -410,7 +395,7 @@ class MultiPlot(ParentPlot):
 
         if data_sets:
             x_series = data_sets[0]
-            #print "plot:345", x_series
+            #print "plot:395", x_series
             for key, dataset in enumerate(data_sets):
                 if key:  # skip first series (used for X-axis data)
                     marker_number = key - (max_markers * int(key / max_markers)) - 1
@@ -418,14 +403,14 @@ class MultiPlot(ParentPlot):
 
                     # Y AXIS DATA
                     y_data_m = x_data_m = self.list_to_floats(dataset)
-                    #print "plot:354", key, marker_number, y_data
+                    #print "plot:404", key, marker_number, y_data
                     # X-AXIS DATA
                     if plot_type in ('scatter', 'line'):
                         x_data_m = self.list_to_floats(x_series)
 
                     if plot_type == 'date':
                         x_data_m = self.list_to_dates(x_series)
-                        #print "plot:361", key, marker_number, x_data, x_data_m
+                        #print "plot:411", key, marker_number, x_data, x_data_m
                         ax.plot_date(x_data_m, y_data_m, xdate=True,
                                         marker=MARKER[marker_number],
                                         markerfacecolor=self.facecolor)
@@ -454,18 +439,20 @@ class GroupPlot(ParentPlot):
             the X values, and the second list is the Y values.  X-values can be
             numeric or dates, but Y-values must be numeric.
         plotsettings:
-            a list of dictionaries of plot settings. Each dictionary may include:
-            * plot: the type of plot (defaults to scatter)
-            * title: title that will appear above the plot
-            * xAxis_label: the label for the X-axis
-            * yAxis_label: the label for the Y-axis
+            a list of dictionaries of plot settings. Each dictionary is
+            associated with a corresponding datapair list, and may include:
+             * index: the index of the datapair list item
+             * plot: the type of plot (defaults to scatter)
+             * title: title that will appear above the plot
+             * xAxis_label: the label for the X-axis
+             * yAxis_label: the label for the Y-axis
 
     Output ports:
         source:
             the matplotlib source code for the plot
 
 
-#For multiple graphs ...
+#Eg. for multiple graphs ...
 
 import matplotlib.pyplot as plt
 
