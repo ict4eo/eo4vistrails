@@ -44,7 +44,8 @@ import core.modules.module_registry
 from core import debug
 from core.modules import basic_modules
 from core.modules.basic_modules import File, String, Boolean
-from core.modules.vistrails_module import Module, NotCacheable, InvalidOutput
+from core.modules.vistrails_module import Module, ModuleError, NotCacheable, \
+                                          InvalidOutput
 from packages.pylab.plot import MplPlot, MplPlotConfigurationWidget
 # eo4vistrails
 from packages.eo4vistrails.utils.DropDownListWidget import ComboBoxWidget
@@ -130,6 +131,25 @@ class ParentPlot(NotCacheable, Module):
         x_data = [self.to_date(x, date_format) for x in items]
         return ma.masked_values(x_data, 1e-8)  # ignore missing data
 
+    def all_the_same(self, vals):
+        ''' Test if vals is an iterable whose elements are all equal.
+
+        Notes:
+        ------
+        http://mail.python.org/pipermail/tutor/2004-November/033394.html
+        '''
+
+        i = iter(vals)  # Raises TypeError if vals is not a sequence
+        try:
+            first = i.next()
+        except StopIteration:
+            # vals is an empty sequence
+            return True
+        for item in i:
+            if first != item:
+                return False
+        return True
+
     def compute(self):
         pass
 
@@ -203,18 +223,27 @@ class Histogram(ParentPlot):
                 #   to only track max/min for the first series/array.
                 combined = []
                 ranges = []
+                lengths = []
                 for item in data_in:
                     floats = self.list_to_floats(item)
-                    compressed = array(floats.compressed())  # remove masked values
-                    combined.append(compressed)
-                    ranges.append(compressed.max())
-                    ranges.append(compressed.min())
+                    compress = array(floats.compressed())  # remove masked vals
+                    lengths.append(len(compress))  # track series' length
+                    combined.append(compress)
+                    ranges.append(compress.max())
+                    ranges.append(compress.min())
                 range_max = array(ranges).max()
                 range_min = array(ranges).min()
-                #print "plot:211-combined", combined, range_min, range_max
-                pylab.hist(combined, bins, histtype=hist_type,
-                           range=(range_min, range_max),
-                           cumulative=cumulative)
+                #print "plot:214-combined", combined, range_min, range_max
+                if self.all_the_same(lengths):
+                    # pylab.hist FAILS if all series have the same length:
+                    # http://old.nabble.com/Inconsistent-behavior-in-plt.hist-tt27857685.html
+                    # http://old.nabble.com/Problem-with-hist-td25925830.html
+                    raise ModuleError(self,
+                                      "All series cannot be the same length...")
+                else:
+                    pylab.hist(combined, bins, histtype=hist_type,
+                               range=(range_min, range_max),
+                               cumulative=cumulative)
 
             elif len(data_in) == 1:
                 # a single nested list (single-series)
@@ -227,7 +256,7 @@ class Histogram(ParentPlot):
         else:
             # a set of normal values (not contained in nested list)
             dataset = self.list_to_floats(data_in)
-            #print "plot:228", dataset, "\n bins", bins, "\n cumu", cumulative,\
+            #print "plot:258", dataset, "\n bins", bins, "\n cumu", cumulative,\
             #    "\n face", self.facecolor
             pylab.hist(dataset, bins, histtype=hist_type,
                        cumulative=cumulative, facecolor=self.facecolor)
