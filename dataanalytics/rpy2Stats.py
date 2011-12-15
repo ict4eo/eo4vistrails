@@ -119,7 +119,9 @@ class Rpy2Script(Script):
                         self.setResult(k, robjects.globalenv[k][0])
                     elif str(self.getPortType(k)) == "<class 'core.modules.vistrails_module.List'>" or \
                     str(self.getPortType(k)) == "<class 'packages.NumSciPy.Array.NDArray'>" :
-                        self.setResult(k, numpy.array(robjects.globalenv[k]))
+                        outArray = NDArray()
+                        outArray.set_array(numpy.array(robjects.globalenv[k]))                        
+                        self.setResult(k, outArray)
                     elif self.getPortType(k) == type(rResult):
                         self.setResult(k, rResult)
 #                   else:

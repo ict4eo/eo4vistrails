@@ -32,3 +32,8 @@ nodes to become aware of whether they are the master node or not
 """
 #History
 #Terence van Zyl, 15 Dec 2010, Version 1.0
+#TODO make sure this is a weakref
+import weakref
+isRemoteRPyCNode = False
+cachedSharedResults = weakref.WeakValueDictionary()
+cachedResults =  weakref.WeakValueDictionary()

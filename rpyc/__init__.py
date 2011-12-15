@@ -28,5 +28,12 @@ ingestion, pre-processing, transformation, analytic and visualisation
 capabilities . Included is the abilty to run code transparently in 
 OpenNebula cloud environments.
 """
+import subprocess
+try:
+    out = subprocess.check_output(['svn', 'info', __path__[0]])
+    revision = out[out.find('Revision'):out.find('\n', out.find('Revision'))][10:]
+except:
+    revision = 0
+version='0.1.%s'%revision
 pass
 

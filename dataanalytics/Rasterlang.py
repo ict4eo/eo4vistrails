@@ -38,6 +38,7 @@ from packages.NumSciPy.Array import NDArray
 
 import gdalnumeric
 import gdal
+import ctypes
 
 class RasterlangModule(ThreadSafeMixin):
     def __init__(self):
@@ -60,6 +61,7 @@ class RasterLang(RPyCCode):
     
     def __init__(self):
         RPyCCode.__init__(self)
+        self._requiredVisPackages.append("packages.NumSciPy")
         self.preCodeString = "from numpy import *\nfrom scipy import *\n"
         self.postCodeString = None
         self.raster_prototype = None
@@ -74,9 +76,9 @@ class RasterLang(RPyCCode):
         #check that if any are NDArrays we get the numpy array out        
         self.extent = None
         for k in inputDict.iterkeys():
-            if type(inputDict[k]) == NDArray or str(type(inputDict[k])) == "<netref class 'packages.NumSciPy.Array.NDArray'>":
+            if isinstance(inputDict[k], NDArray):
                 inputDict[k] = inputDict[k].get_array()
-            elif type(inputDict[k]) == QgsRasterLayer or str(type(inputDict[k])) == "<netref class 'packages.eo4vistrails.geoinf.datamodels.QgsLayer.QgsRasterLayer'>":
+            elif isinstance(inputDict[k], QgsRasterLayer):
                 if self.extent == None:
                     e = inputDict[k].extent()
                     self.extent = [e.xMinimum(),e.yMinimum(),e.xMaximum(),e.yMaximum()]
@@ -92,13 +94,13 @@ class RasterLang(RPyCCode):
         
         for k in outputDict.iterkeys():
             if locals_.has_key(k) and locals_[k] != None:
-                if self.getPortType(k) == NDArray:
+                if issubclass(self.getPortType(k), NDArray):
                     print "got %s"%k
                     outArray = NDArray()
                     outArray.set_array(numpy.array(locals_[k]))
                     self.setResult(k, outArray)
-                elif self.getPortType(k) == QgsRasterLayer or str(type(outputDict[k])) == "<netref class 'packages.eo4vistrails.geoinf.datamodels.QgsLayer.QgsRasterLayer'>":
-                    #TODO: This should all be done using a gal inmemorybuffer nut
+                elif issubclass(self.getPortType(k), QgsRasterLayer):
+                    #TODO: This should all be done using a gal inmemorybuffer but
                     #I dont have time now
                     fileDescript, fileName = mkstemp(suffix='.img', text=False)
                     if self.raster_prototype:
@@ -138,17 +140,18 @@ class layerAsArray(RasterlangModule, RPyCModule):
         RPyCModule.__init__(self)
         RasterlangModule.__init__(self)
 
+    def preCompute(self):
+        layer = self.getInputFromPort('Raster Layer')
+        g = gdal.Open(str(layer.source()))
+        self.allocateSharedMemoryArray('numpy array', ctypes.c_float, (g.RasterYSize,g.RasterXSize))
+    
     def compute(self):
         layer = self.getInputFromPort('Raster Layer')
-        print layer, str(layer.source())
         
-        array = gdalnumeric.LoadFile(str(layer.source()))
-        print array
-        
-        ndarray = NDArray()
-        ndarray.set_array(array)
+        g = gdal.Open(str(layer.source()))
+        g.ReadAsArray(buf_obj=self.sharedPorts['numpy array'][0])
 
-        self.setResult("numpy array", ndarray)
+        self.setResult("numpy array", None, asNDArray=True)
 
 
 @RPyCSafeModule()
@@ -156,7 +159,7 @@ class arrayAsLayer(RasterlangModule, RPyCModule):
     """ Container class for the connected components command """
 
     _input_ports  = [('numpy array', '(edu.utah.sci.vistrails.numpyscipy:Numpy Array:numpy|array)'),
-                     ('Raster Layer', '(za.co.csir.eo4vistrails:Raster Layer:data)')]
+                     ('prototype', '(za.co.csir.eo4vistrails:Raster Layer:data)')]
     _output_ports = [('raster layer', '(za.co.csir.eo4vistrails:Raster Layer:data)')]
 
     def __init__(self):
@@ -165,23 +168,22 @@ class arrayAsLayer(RasterlangModule, RPyCModule):
 
     def clear(self):
         RPyCModule.clear(self)
-        import os
-        os.remove(self.fileName)
 
     def compute(self):
         ndarray = self.getInputFromPort('numpy array')
-        layer = self.getInputFromPort('Raster Layer')
+        prototype = self.getInputFromPort('prototype')
 
-        e = layer.extent()
+        e = prototype.extent()
         extent = [e.xMinimum(),e.yMinimum(),e.xMaximum(),e.yMaximum()]
 
-        from tempfile import mkstemp
         #TODO: make platform independant
-        fileDescript, fileName = mkstemp(suffix='img', text=True)
+        tmpFile = self.interpreter.filePool.create_file(suffix='.img')
 
-        writeImage(ndarray.get_array(), extent, fileName, format='HFA' )
-        
-        outlayer = QgsRasterLayer(self.fileName, self.filename)
+        #writeImage(ndarray.get_array(), extent, tmpFile.name, format='HFA' )
+
+        gdalnumeric.SaveArray(ndarray.get_array(), tmpFile.name, format='HFA', prototype=str(prototype.source()))
+
+        outlayer = QgsRasterLayer(tmpFile.name, tmpFile.name)
 
         self.setResult("raster layer", outlayer)
 

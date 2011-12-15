@@ -28,7 +28,7 @@
 """
 # library
 from subprocess import call
-from tempfile import mkstemp
+from tempfile import mkstemp, mkdtemp
 from os import fdopen
 import urllib
 # third-party
@@ -44,20 +44,29 @@ class OctaveScript(Module, ModuleHelperMixin):
        Executes a Octave Script
        Writes output to output files and reads input from input files
     """
-    _input_ports = [('source', '(edu.utah.sci.vistrails.basic:String)')]
+    _input_ports = [('source', '(edu.utah.sci.vistrails.basic:String)'),
+                    ('Script Name', '(edu.utah.sci.vistrails.basic:String)'),
+                    ('Is Function', '(edu.utah.sci.vistrails.basic:Boolean)'),
+                    ('Script Dependency', '(za.co.csir.eo4vistrails:Octave Script:octave)')]
 
-    _output_ports = [('self', '(edu.utah.sci.vistrails.basic:Module)')]
+    _output_ports = [('self', '(za.co.csir.eo4vistrails:Octave Script:octave)')]
 
     def __init__(self):
         Module.__init__(self)
-
-    def write_script_to_file(self, script, preScript=None, postScript=None,
+    
+    def clear(self):
+        print 'clear octave'
+        Module.clear(self)
+        import shutil
+        shutil.rmtree(self.scriptDir)
+    
+    def write_script_to_file(self, script, fileName, preScript=None, postScript=None,
                              suffix='.e4v'):
-        #Get a temp file to write the script into
-        self.scriptFileDescript, self.scriptFileName = mkstemp(suffix=suffix,
-                                                               text=True)
-        #Write the script to the file
-        scriptFile = fdopen(self.scriptFileDescript, 'w')
+        import os
+        self.scriptDir =  mkdtemp()
+        self.scriptPath = os.path.join(self.scriptDir, fileName+suffix)
+
+        scriptFile = open(self.scriptPath, "w")
         if preScript:
             scriptFile.write(preScript)
             scriptFile.write("\n")
@@ -76,6 +85,10 @@ class OctaveScript(Module, ModuleHelperMixin):
 
         # Lets get the script fromn theinput port named source
         octave_script = urllib.unquote(str(self.forceGetInputFromPort('source', '')))
+        fileName = self.getInputFromPort('Script Name')
+        dependencies = self.forceGetInputListFromPort('Script Dependency')
+        isFunction = self.forceGetInputFromPort('Is Function', False)
+        
 
         #Lets get the list of input ports so we can get there values
         inputDict = dict([(k, self.getInputFromPort(k))
@@ -83,60 +96,78 @@ class OctaveScript(Module, ModuleHelperMixin):
 
         # remove the script from the list
         del inputDict['source']
+        del inputDict['Script Name']
         if 'rpycnode' in inputDict:
             del inputDict['rpycnode']
+        if 'Script Dependency' in inputDict:
+            del inputDict['Script Dependency']
 
         #check that if any are NDArrays we get the numpy array out
         for k in inputDict.iterkeys():
             if type(inputDict[k]) == NDArray:
                 inputDict[k] = inputDict[k].get_array()
 
-        #Get a temp file to place the matclab data in
-        matInFileName = self.interpreter.filePool.create_file(suffix='.mat')
-
-        #save the current python values for the scripts inputs to a matlab file
-        scipy.io.savemat(matInFileName.name, inputDict)
-        #run the following at the begining of the octave script
-        #this loads the file with all the input values into octave
-        octave_preScript = "load %s" % matInFileName.name
-
-        #create a temp file for the returned results
-        matOutFileName = self.interpreter.filePool.create_file(suffix='.mat')
-        #run the following at the end of the octave script
-        #this writes out the results of running begining the script
-        octave_postScript = "save -v7 %s" % matOutFileName.name
-
-        #write the script out
-        self.write_script_to_file(octave_script, preScript=octave_preScript,
-                                  postScript=octave_postScript, suffix='.m')
-
-        #Execute the script
-        args = ["octave", self.scriptFileName]
-        a = call(args)
-
-        if a == 0:
-            #load the results of the script running back into the python input variables
-            scriptResult = scipy.io.loadmat(matOutFileName.name,
-                                            chars_as_strings=True,
-                                            squeeze_me=True,
-                                            struct_as_record=True)
-            outputDict = dict([(k, None)
-                               for k in self.outputPorts])
-            del(outputDict['self'])
-
-            for k in outputDict.iterkeys():
-                if k in scriptResult and scriptResult[k] != None:
-                    if self.getPortType(k) == NDArray:
-                        outArray = NDArray()
-                        outArray.set_array(scriptResult[k])
-                        self.setResult(k, outArray)
-                    else:
-                        if scriptResult[k].ndim == 0:
-                            self.setResult(k, scriptResult[k].item())
+        if not isFunction:
+            #Get a temp file to place the matlab data in
+            matInFileName = self.interpreter.filePool.create_file(suffix='.mat')
+    
+            #save the current python values for the scripts inputs to a matlab file
+            scipy.io.savemat(matInFileName.name, inputDict)
+            #run the following at the begining of the octave script
+            #this loads the file with all the input values into octave
+            octave_preScript = "load %s" % matInFileName.name
+    
+            #create a temp file for the returned results
+            matOutFileName = self.interpreter.filePool.create_file(suffix='.mat')
+            #run the following at the end of the octave script
+            #this writes out the results of running begining the script
+            octave_postScript = "save -v7 %s" % matOutFileName.name
+        
+            #write the script out
+            self.write_script_to_file(octave_script, fileName, preScript=octave_preScript,
+                                      postScript=octave_postScript, suffix='.m')
+    
+            #Execute the script
+            args = ["octave"]
+            for dep in dependencies:
+                args.append('-p')
+                args.append(dep.scriptDir)
+            args.append(self.scriptPath)
+            print args
+            
+            a = call(args)
+    
+            if a == 0:
+                #load the results of the script running back into the python input variables
+                scriptResult = scipy.io.loadmat(matOutFileName.name,
+                                                chars_as_strings=True,
+                                                squeeze_me=True,
+                                                struct_as_record=True)
+                outputDict = dict([(k, None)
+                                   for k in self.outputPorts])
+                del(outputDict['self'])
+    
+                for k in outputDict.iterkeys():
+                    if k in scriptResult and scriptResult[k] != None:
+                        if self.getPortType(k) == NDArray:
+                            outArray = NDArray()
+                            outArray.set_array(scriptResult[k])
+                            self.setResult(k, outArray)
                         else:
-                            self.setResult(k, scriptResult[k][0])
+                            if scriptResult[k].ndim == 0:
+                                self.setResult(k, scriptResult[k].item())
+                            else:
+                                self.setResult(k, scriptResult[k][0])
+            else:
+                raise ModuleError(OctaveScript, "Could not execute Octave Script")
+
         else:
-            raise ModuleError(OctaveScript, "Could not execute Octave Script")
+            octave_preScript = ""
+            octave_postScript = ""
+            #write the script out
+            self.write_script_to_file(octave_script, fileName, preScript=octave_preScript,
+                                      postScript=octave_postScript, suffix='.m')
+
 
 
 class OctaveSourceConfigurationWidget(SyntaxSourceConfigurationWidget):

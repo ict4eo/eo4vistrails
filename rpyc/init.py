@@ -78,5 +78,3 @@ def initialize(*args, **keywords):
     reg.add_module(RPyCTest.RPyCTestModule,
                    name="RpyC Test Module",
                    namespace="utils|tests")                   
-    reg.add_input_port(RPyCTest.RPyCTestModule, 'input',
-                       basic_modules.String)

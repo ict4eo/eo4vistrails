@@ -33,90 +33,17 @@ It also has the rpyc remote code that is used for ???.
 # library
 # third-party
 import rpyc
-from RPyC import RPyCModule, refreshPackage
+from RPyC import RPyCSafeMixin, RPyCModule
 # vistrails
 from core.modules import basic_modules
-from core.modules.vistrails_module import ModuleError, NotCacheable, Module
+from core.modules.vistrails_module import ModuleError, NotCacheable
 from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
 # eo4vistrails
 from packages.eo4vistrails.utils.DropDownListWidget import ComboBoxWidget
 from packages.eo4vistrails.utils.ModuleHelperMixin import ModuleHelperMixin
 # local
 
-
-def getRemoteConnection(ip, port):
-    from rpyc.core.service import SlaveService
-    connection = rpyc.connect(ip, port, SlaveService,
-                        {'allow_all_attrs': True,
-                         'instantiate_custom_exceptions': True,
-                         'import_custom_exceptions': True})
-
-    print "Got a Remote Node"
-    #Make sure all the right stuff is in place espcially dummy core and packages
-    #on the remote node, no need for this if local as the machine is already set up
-    print "Checking requirements on node..."
-
-    #make sure all packages are in the path
-    if not "./tmp" in connection.modules.sys.path:
-        connection.modules.sys.path.append('./tmp')
-
-    #Check version info
-    force = False
-    try:
-        core_system = connection.modules["core.system"]
-        import core.system
-        if core_system.vistrails_version() != core.system.vistrails_version():
-            force = True
-            print "Different Versions....", core_system.vistrails_version(), "and", core.system.vistrails_version()
-        else:
-            print "Vistrails Ok..."
-    except ImportError:
-        print "Core System Not Loaded"
-        connection.modules.sys.path_importer_cache['./tmp'] = None
-
-    print "Uploading requirements to node...."
-    import packages.eo4vistrails.rpyc.tmp
-    rpyc.classic.upload_package(connection, packages.eo4vistrails.rpyc.tmp, "./tmp")
-    #import init_for_library
-    #rpyc.classic.upload_module(connection, init_for_library, "./tmp")
-    refreshPackage(connection, "api", force=force)
-    refreshPackage(connection, "core", force=force)
-    refreshPackage(connection, "db", force=force)
-    refreshPackage(connection, "gui", force=force)
-    refreshPackage(connection, "index", force=force)
-    refreshPackage(connection, "tests", force=force)
-    #added to make sure we have everything on the first load.
-    refreshPackage(connection, "packages", force=force)
-    print "Finished uploading vistrails requirements to node...."
-
-    return connection
-
-
-def getSubConnection():
-    from rpyc.core.service import SlaveService
-    from rpyc.utils import factory
-    connection = factory.connect_subproc(["python", "-u",
-                                         "/usr/local/bin/rpyc_classic.py",
-                                         #rpyc.classic.SERVER_FILE,
-                                         "-q", "-m", "stdio"],
-                                         SlaveService,
-                                         {'allow_all_attrs': True,
-                                          'instantiate_custom_exceptions': True,
-                                          'import_custom_exceptions': True})
-
-    #connection = rpyc.classic.connect_subproc()
-    #make sure all packages are in the path
-    print "Got a subProc"
-    import core.system
-    #import sys
-    #connection.modules.sys.path.extend(sys.path)
-    connection.modules.sys.path.append(core.system.vistrails_root_directory())
-    #connection.modules.sys.path.append(core.system.packages_directory())
-
-    return connection
-
-
-class RPyCCode(ThreadSafeMixin, NotCacheable, Module, ModuleHelperMixin):
+class RPyCCode(NotCacheable, RPyCSafeMixin, ThreadSafeMixin, RPyCModule, ModuleHelperMixin):
     """
     This module that executes an arbitrary piece of Python code remotely.
     TODO: This code is not threadsafe. Terence needs to fix it
@@ -124,30 +51,12 @@ class RPyCCode(ThreadSafeMixin, NotCacheable, Module, ModuleHelperMixin):
     #TODO: If you want a PythonSource execution to fail, call fail(error_message).
     #TODO: If you want a PythonSource execution to be cached, call cache_this().
 
-    _input_ports = [('rpycnode', '(za.co.csir.eo4vistrails:RpyC Node:rpyc)')]
-
     def __init__(self):
+        self._requiredVisPackages = ["packages.eo4vistrails", "packages.spreadsheet"]
         ThreadSafeMixin.__init__(self)
-        Module.__init__(self)
+        RPyCModule.__init__(self)
         self.preCodeString = None
         self.postCodeString = None
-
-    def clear(self):
-        print "clear"
-        Module.clear(self)
-        if self.conn:
-            try:
-                self.conn.proc.terminate()
-            except:
-                pass
-            try:
-                self.conn.proc.wait()
-            except:
-                pass
-            try:
-                self.conn.close()
-            except:
-                pass
 
     def run_code_common(self, locals_, execute, code_str, use_input, use_output, pre_code_string, post_code_string):
         import core.packagemanager
@@ -196,7 +105,7 @@ class RPyCCode(ThreadSafeMixin, NotCacheable, Module, ModuleHelperMixin):
 
         #check that if any are NDArrays we get the numpy array out
         for k in inputDict.iterkeys():
-            if type(inputDict[k]) == NDArray or str(type(inputDict[k])) == "<netref class 'packages.NumSciPy.Array.NDArray'>":
+            if isinstance(inputDict[k], NDArray):
                 inputDict[k] = inputDict[k].get_array()
         locals_.update(inputDict)
 
@@ -206,7 +115,7 @@ class RPyCCode(ThreadSafeMixin, NotCacheable, Module, ModuleHelperMixin):
         for k in outputDict.iterkeys():
             try:
                 if k in locals_ and locals_[k] != None:
-                    if self.getPortType(k) == NDArray or str(type(outputDict[k])) == "<netref class 'packages.NumSciPy.Array.NDArray'>":
+                    if isinstance(self.getPortType(k), NDArray):
                         outArray = NDArray()
                         outArray.set_array(locals_[k])
                         self.setResult(k, outArray)
@@ -237,8 +146,8 @@ class RPyCCode(ThreadSafeMixin, NotCacheable, Module, ModuleHelperMixin):
         Use_input and use_output control whether to use the input port
         and output port dictionary as local variables inside the execution.
         """
-        import sys
-        conn.modules.sys.stdout = sys.stdout
+        #import sys
+        #conn.modules.sys.stdout = sys.stdout
 
         print "Starting executing in other thread"
         self.run_code_common(conn.namespace, conn.execute, code_str, use_input, use_output, pre_code_string, post_code_string)
@@ -248,16 +157,18 @@ class RPyCCode(ThreadSafeMixin, NotCacheable, Module, ModuleHelperMixin):
         """
         Vistrails Module Compute, Entry Point Refer, to Vistrails Docs
         """
-        self.conn = None
-        if self.hasInputFromPort('rpycnode'):
-            (isRemote, self.conn) = self.inputPorts['rpycnode'][0].obj.getSharedConnection()
+        self.sharedPorts = {}
+        isRemote, self.conn, v = self.getConnection()
+        
+#        if self.hasInputFromPort('rpycnode'):
+#            (isRemote, self.conn) = self.inputPorts['rpycnode'][0].obj.getSharedConnection()
 
         from core.modules import basic_modules
         s = basic_modules.urllib.unquote(str(self.forceGetInputFromPort('source', '')))
 
         if s == '':
             return
-
+        
         if self.conn:
             self.run_code(s, self.conn, True, True, self.preCodeString, self.postCodeString)
         else:
@@ -344,8 +255,8 @@ class RPyC_C_Code(RPyCCode):
             self.is_cacheable = lambda *args, **kwargs: True
 
         #TODO: changed to demo that this is in the cloud!!!!
-        import sys
-        conn.modules.sys.stdout = sys.stdout
+        #import sys
+        #conn.modules.sys.stdout = sys.stdout
 
         if use_input:
             inputDict = dict([(k, self.getInputFromPort(k)) for k in self.inputPorts])
@@ -416,7 +327,7 @@ class RPyCNodeWidget(ComboBoxWidget):
             try:
                 discoveredSlavesTuple = list(rpyc.discover("slave"))
                 for slaveTuple in discoveredSlavesTuple:
-                    self.discoveredSlaves[slaveTuple[0]] = slaveTuple
+                    self.discoveredSlaves["%s:%s"%slaveTuple] = slaveTuple
             except rpyc.utils.factory.DiscoveryError:
                 pass
         return self.discoveredSlaves
@@ -425,36 +336,6 @@ class RPyCNodeWidget(ComboBoxWidget):
 class RpyCNodie(basic_modules.Constant):
     """TODO: Add docstring
     """
-
-    def _getConnection(self, allowNone):
-        v = self.get_output('value')
-        print v
-        connection = None
-        if str(v[0]) == 'None' or str(v[0]) == '' and not allowNone:
-            isRemote = False
-            connection = None
-
-        elif str(v[0]) == 'main'  and not allowNone:
-            isRemote = False
-            connection = None
-
-        elif str(v[0]) == 'own' or allowNone:
-            isRemote = False
-            connection = getSubConnection()
-
-        else:
-            isRemote = True
-            connection = getRemoteConnection(v[0], v[1])
-
-        return (isRemote, connection)
-
-    def getSharedConnection(self, allowNone=False):
-        try:
-            if not self.conn:
-                (self.isRemote, self.conn) = self._getConnection(allowNone)
-        except:
-            (self.isRemote, self.conn) = self._getConnection(allowNone)
-        return (self.isRemote, self.conn)
 
 #Add ComboBox
 RPyCNode = basic_modules.new_constant('RpyCNode',

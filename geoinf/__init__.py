@@ -27,4 +27,11 @@
 In particular, provides GRASS, PostGIS, OGC clients and some 
 visualisation capabilities through the QGIS API.
 """
+import subprocess
+try:
+    out = subprocess.check_output(['svn', 'info', __path__[0]])
+    revision = out[out.find('Revision'):out.find('\n', out.find('Revision'))][10:]
+except:
+    revision = 0
+version='0.1.%s'%revision
 pass
