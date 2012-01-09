@@ -51,15 +51,16 @@ from multiprocessing import sharedctypes
 import numpy
 from packages.NumSciPy.Array import NDArray
 
+
 def getRemoteConnection(ip, port):
     connection = rpyc.connect(ip, port, SlaveService,
                         {'allow_all_attrs': True,
                          'instantiate_custom_exceptions': True,
                          'import_custom_exceptions': True})
     if connection:
-        print "Got a Remote Node ip:%s port:%s"%(ip,port)
+        print "Got a Remote Node ip:%s port:%s" % (ip, port)
     else:
-        raise ModuleError("no connection found ip:%s port:%s"%(ip,port))
+        raise ModuleError("no connection found ip:%s port:%s" % (ip, port))
     #Make sure all the right stuff is in place espcially dummy core and packages
     #on the remote node, no need for this if local as the machine is already set up
     print "Checking requirements on node..."
@@ -99,9 +100,10 @@ def getRemoteConnection(ip, port):
 
     return connection
 
+
 def getSubConnection(args={}):
     connection = connect_multiprocess(SlaveService, remote_service=SlaveService, args=args)
-    
+
     #connection = rpyc.classic.connect_subproc()
     #make sure all packages are in the path
     print "Got a subProc"
@@ -112,12 +114,14 @@ def getSubConnection(args={}):
     #connection.modules.sys.path.append(core.system.packages_directory())
     return connection
 
-# This is a temp solution until we have our changes merged into the RPYC 
+
+# This is a temp solution until we have our changes merged into the RPYC
 # core repo
-def connect_multiprocess(service = VoidService, config = {}, remote_service = VoidService, remote_config = {}, args={}):
-    """starts an rpyc server on a new thread, bound to an arbitrary port, 
+def connect_multiprocess(service=VoidService, config={},
+                         remote_service=VoidService, remote_config={}, args={}):
+    """starts an rpyc server on a new thread, bound to an arbitrary port,
     and connects to it over a socket.
-    
+
     :param service: the local service to expose (defaults to Void)
     :param config: configuration dict
     :param server_service: the remote service to expose (of the server; defaults to Void)
@@ -127,27 +131,29 @@ def connect_multiprocess(service = VoidService, config = {}, remote_service = Vo
     listener = socket.socket()
     listener.bind(("localhost", 0))
     listener.listen(1)
-    
+
     def server(listener, args):
         client = listener.accept()[0]
         listener.close()
-        conn = connect_stream(SocketStream(client), service = remote_service, config = remote_config)        
+        conn = connect_stream(SocketStream(client), service=remote_service,
+                              config=remote_config)
         try:
             for k in args:
                 conn._local_root.exposed_namespace[k] = args[k]
             conn.serve_all()
-        except KeyboardInterrupt:            
+        except KeyboardInterrupt:
             interrupt_main()
-    proc = Process(target = server, args=(listener, args))
+    proc = Process(target=server, args=(listener, args))
     proc.start()
     host, port = listener.getsockname()
-    conn = connect(host, port, service = service, config = config)
+    conn = connect(host, port, service=service, config=config)
     conn.proc = proc
     return conn
 
+
 def refreshModule(connection, moduleName):
     module = __import__(moduleName, fromlist=['packages'])
-    
+
     print "Uploading module %s..." % moduleName
     rpyc.classic.upload_module(connection, module, "./tmp/" +\
                                 moduleName.replace(".", "/"))
@@ -156,9 +162,10 @@ def refreshModule(connection, moduleName):
         rmodule = connection.modules[moduleName]
         connection.modules.__builtin__.reload(rmodule)
         #print "Refreshed Module %s..."%refreshmodule
-    except ImportError:                    
-        print "Module %s not refreshed..."%moduleName
-        
+    except ImportError:
+        print "Module %s not refreshed..." % moduleName
+
+
 def refreshPackage(connection, packageName, checkVersion=False, force=False):
     reFresh = force
     package = __import__(packageName, fromlist=['packages'])
@@ -170,12 +177,12 @@ def refreshPackage(connection, packageName, checkVersion=False, force=False):
         reFresh = True
     try:
         if (not reFresh) and checkVersion and (rpackage.version != package.version):
-            print packageName, "Versions Differ %s vs %s"%(rpackage.version, package.version)
+            print packageName, "Versions Differ %s vs %s" % (rpackage.version, package.version)
             reFresh = True
     except AttributeError:
         print packageName, "Has no versions forcing refresh"
         reFresh = True
-        
+
     if reFresh:
         print "Uploading package %s..." % packageName
         rpyc.classic.upload_package(connection, package, "./tmp/" +\
@@ -189,7 +196,7 @@ def refreshPackage(connection, packageName, checkVersion=False, force=False):
                     rpackage = connection.modules[refreshmodule]
                     connection.modules.__builtin__.reload(rpackage)
                     #print "Refreshed Module %s..."%refreshmodule
-                except ImportError:                    
+                except ImportError:
                     pass
                     #print "Module %s not refreshed..."%refreshmodule
     else:
@@ -226,7 +233,7 @@ class RPyCSafeModule(object):
             self._requiredVisPackages.append("packages.eo4vistrails.geoinf")
             self._requiredVisPackages.append("packages.eo4vistrails.lib")
             self._requiredVisPackages.append("packages.eo4vistrails.rpyc")
-            self._requiredVisPackages.append("packages.eo4vistrails.transform")            
+            self._requiredVisPackages.append("packages.eo4vistrails.transform")
             self._requiredVisPackages.append("packages.eo4vistrails.utils")
             pass
         if not "packages.spreadsheet" in self._requiredVisPackages:
@@ -249,14 +256,17 @@ class RPyCSafeModule(object):
 
         return type(clazz.__name__, new__bases__, new__dict__)
 
-class DummyConnector(ModuleConnector):    
-    
+
+class DummyConnector(ModuleConnector):
+    """TODO: Add docstring.
+    """
+
     def __init__(self, obj, port, oid, netref_ip, netref_port):
         ModuleConnector.__init__(self, obj, port)
         self.oid = oid
         self.netref_ip = netref_ip
-        self.netref_port  = netref_port
-        
+        self.netref_port = netref_port
+
     def clear(self):
         try:
             if self.conn:
@@ -275,19 +285,19 @@ class DummyConnector(ModuleConnector):
             pass
         print "clearing Connector"
         ModuleConnector.clear(self)
-    
+
     def __call__(self):
         _locals = locals()
-        print "in the closure Remote:%s"%Shared.isRemoteRPyCNode
+        print "in the closure Remote:%s" % Shared.isRemoteRPyCNode
         print "Shared.cachedResults", Shared.cachedResults.valuerefs()
-        if _locals.has_key("___shm_%s"%self.oid):
-            print "got shared mem %s"%self.oid
-            return _locals["___shm_%s"%self.oid]
+        if _locals.has_key("___shm_%s" % self.oid):
+            print "got shared mem %s" % self.oid
+            return _locals["___shm_%s" % self.oid]
         elif Shared.cachedResults.has_key(self.oid):
-            print "got cached result from same process for oid:%s"%self.oid
+            print "got cached result from same process for oid:%s" % self.oid
             return Shared.cachedResults[self.oid]
         elif isinstance(self.obj.get_output(self.port), BaseNetref) and self.netref_ip != "" and self.netref_port != "":
-            print "setting up connection (%s, %s) for oid: %s"%(self.netref_ip, self.netref_port, self.oid)
+            print "setting up connection (%s, %s) for oid: %s" % (self.netref_ip, self.netref_port, self.oid)
             self.conn = rpyc.connect(self.netref_ip, self.netref_port, SlaveService,
                             {'allow_all_attrs': True,
                              'instantiate_custom_exceptions': True,
@@ -298,6 +308,7 @@ class DummyConnector(ModuleConnector):
         else:
             print "using fallback connector"
             return ModuleConnector.__call__(self)
+
 
 class DummyArray(object):
     pass
@@ -312,7 +323,7 @@ class RPyCSafeMixin(ModuleHelperMixin):
     vistrails module mixed in by the annotation. On a RPyC node
     the dummy verion is used to instantiate a shadow of the original
     module. The shadow's methods are linked back to the original module.
-    """    
+    """
 
     def clear(self):
         try:
@@ -336,32 +347,32 @@ class RPyCSafeMixin(ModuleHelperMixin):
     def getConnection(self):
         connection = None
         isRemote = False
-        rpycnode = ('','')
+        rpycnode = ('', '')
         if self.hasInputFromPort('rpycnode'):
             rpycnode = self.getInputFromPort('rpycnode')
 
             if str(rpycnode[0]) == 'None' or str(rpycnode[0]) == '':
                 self.preCompute()
-    
+
             elif str(rpycnode[0]) == 'main':
                 self.preCompute()
-    
+
             elif str(rpycnode[0]) == 'own':
                 #setup shared memory
                 #TODO: what happens if we want to have multi inputs on a shared
-                #memory port? 
+                #memory port?
                 #Maybe I have handled it already I'm not sure, need to test
                 print "Setting Up Shared Memory"
                 self.preCompute()
                 args = {}
-                args.update( self.sharedPorts )
+                args.update(self.sharedPorts)
                 for port in self.inputPorts:
                     values = self.forceGetInputListFromPort(port)
                     for value in values:
                         if Shared.cachedSharedResults.has_key(id(value)):
-                            args.update({'___shm_%s'%id(value):value})
+                            args.update({'___shm_%s' % id(value): value})
                 connection = getSubConnection(args)
-            else:            
+            else:
                 isRemote = True
                 connection = getRemoteConnection(rpycnode[0], rpycnode[1])
                 #Upload any vistrails packages that may be required
@@ -372,17 +383,17 @@ class RPyCSafeMixin(ModuleHelperMixin):
                     else:
                         refreshPackage(connection, packageName, checkVersion=True, force=False)
                 print "Finished uploading module requirements to node...."
-        else:         
+        else:
             self.preCompute()
         return (isRemote, connection, rpycnode)
 
     def compute(self):
         #Get RPyC Node in good standing
-        #input from rpycmodule        
-        
+        #input from rpycmodule
+
         isRemote = False
-        rpycnode = ('','')
-        
+        rpycnode = ('', '')
+
         if Shared.isRemoteRPyCNode:
             self.conn = None
         else:
@@ -394,7 +405,7 @@ class RPyCSafeMixin(ModuleHelperMixin):
             print "run as per normal", self
             self._original_compute()
         else:
-            #redirect StdIO back here so we can see what is going on            
+            #redirect StdIO back here so we can see what is going on
 
             #make sure we have the rpycnode info available
             self.conn.rpycnode = rpycnode
@@ -404,7 +415,7 @@ class RPyCSafeMixin(ModuleHelperMixin):
             #Make sure it knows its a remote node
             self.conn.execute('import packages.eo4vistrails.rpyc.Shared as Shared')
             self.conn.execute('from packages.eo4vistrails.rpyc.RPyC import DummyConnector')
-            
+
             self.conn.execute('Shared.isRemoteRPyCNode=True')
             #print "Entry remote Shared.cachedResults:", self.conn.namespace['Shared'].cachedResults.valuerefs()
 
@@ -420,7 +431,7 @@ class RPyCSafeMixin(ModuleHelperMixin):
             for attribute in Module.__dict__:
                 if not str(attribute) in ('setResult', 'getInputFromPort', 'forceGetInputFromPort', 'getInputListFromPort', 'forceGetInputListFromPort', 'compute', '__dict__', '__module__', '__doc__', '__str__', '__weakref__', '__init__'):
                     shadow.__setattr__(str(attribute), self.__getattribute__(str(attribute)))
-            
+
             self.conn.execute('shadow.inputPorts = {}')
             shadow.inputPorts = self.inputPorts
             shadow.outputPorts = self.outputPorts
@@ -439,7 +450,7 @@ class RPyCSafeMixin(ModuleHelperMixin):
             shadow.interpreter = self.conn.eval('core.interpreter.default.get_default_interpreter()')
 
             self.conn.execute('shadow.sharedPorts = {}')
-          
+
             #set up the sharedports on the client
             for port in shadow.inputPorts:
                 for i in xrange(len(shadow.inputPorts[port])):
@@ -450,16 +461,16 @@ class RPyCSafeMixin(ModuleHelperMixin):
                     else:
                         netref_ip = ""
                         netref_port = ""
-                    if self.conn.namespace.has_key('___shm_%s'%id(connector())) \
+                    if self.conn.namespace.has_key('___shm_%s' % id(connector())) \
                     or isinstance(connector(), BaseNetref):
-                        print "ip: %s, port: %s"%(netref_ip,netref_port)
-                        print "Setting up Dummy Connector for %s"%port
+                        print "ip: %s, port: %s" % (netref_ip, netref_port)
+                        print "Setting up Dummy Connector for %s" % port
                         shadow.inputPorts[port][i] = self.conn.namespace['DummyConnector'](connector.obj, connector.port, id(connector()), netref_ip, netref_port)
-                        
-            #set up the sharedports on the client            
+
+            #set up the sharedports on the client
             for port in self.sharedPorts:
                 shadow.sharedPorts[port] = self.conn.namespace[port]
-                    
+
             print "Executing in the shadow class"
             #Call the Shadow Objects Compute and pre compute
             if isRemote:
@@ -469,7 +480,7 @@ class RPyCSafeMixin(ModuleHelperMixin):
             for port in self.outputPorts:
                 if port not in ['self']:
                     self._obtainLocalCopy(port, isRemote)
-            
+
             #disconnect the remote node
             if not isRemote and self.conn:
                 self.conn.close()
@@ -477,55 +488,54 @@ class RPyCSafeMixin(ModuleHelperMixin):
                 self.conn.proc.join()
                 print "joined"
                 self.conn = None
-            
+
             #print "Exit remote Shared.cachedResults:", self.conn.namespace['Shared'].cachedResults.valuerefs()
 
     def preCompute(self):
-        """       
+        """
         Abstract method here you should call allocateSharedArrayMemory()
-        to set up any shared memory that will be used for output ports.      
-        
+        to set up any shared memory that will be used for output ports.
+
         """
         pass
-    
+
     def allocateSharedMemoryArray(self, port, data_ctype, shape):
-        """       
+        """
         Allocated Shared Array memory to be used as an output port
-        
+
         :param port: the port to perfomr the operation on
         :param data_ctype: the data type as a ctype
         :param shape: shape of elements in array
-        
+
         """
         if not isinstance(shape, tuple):
             shape = (shape,)
         size = 1
         for i in shape:
             size *= i
-        
+
         a = sharedctypes.RawArray(data_ctype, size)
         dt = numpy.dtype(a._type_)
         d = DummyArray()
         d.__array_interface__ = {
-            'data' : (a._wrapper.get_address(), False),
-            'typestr' : dt.str,
-            'descr' : [('', dt.str)],
-            'shape' : shape,
-            'strides' : None,
-            'version' : 3
-        }
+            'data': (a._wrapper.get_address(), False),
+            'typestr': dt.str,
+            'descr': [('', dt.str)],
+            'shape': shape,
+            'strides': None,
+            'version': 3}
         self.sharedPorts[port] = (numpy.asarray(d), a)
-    
+
     def setResult(self, port, value, asNDArray=False):
-        """       
+        """
         Overide the set result of the base class
         if not a numpy array uses the origional
-        
+
         :param port: the port to perfomr the operation on
         :param value: the actual value to set the port
         :param asNDArray: True ensures a NDArray is set if array type
-        
-        """        
+
+        """
         try:
             if self.sharedPorts.has_key(port):
                 print "#We set a shared memory case"
@@ -538,7 +548,7 @@ class RPyCSafeMixin(ModuleHelperMixin):
                     if asNDArray:
                         value = NDArray()
                         value.set_array(shmem_np)
-                    else:                        
+                    else:
                         value = shmem_np
                 elif value is None:
                     #no need to do the copy they giving us the original shared mem back this the quickest
@@ -552,20 +562,20 @@ class RPyCSafeMixin(ModuleHelperMixin):
         except (AttributeError, RuntimeError):
             pass
         Module.setResult(self, port, value)
-    
+
     def _obtainLocalCopy(self, port, isRemote):
-        """       
+        """
         Get a local copy of a remote connections result, may be the case it is
         shared memory and should be handled differently,
         also in the case of a remote node a local copy is
         handled somewhat different
-        
+
         :param port: the port to perform the operation on
         :param isRemote: was this done on a remote connection
-        
+
         """
         if self.sharedPorts.has_key(port):
-            print "#We obtained a shared memory case for port %s"%(port)
+            print "#We obtained a shared memory case for port %s" % (port)
             if isinstance(self.outputPorts[port], NDArray):
                 self.outputPorts[port] = NDArray()
                 self.outputPorts[port].set_array(self.sharedPorts[port][0])
@@ -573,7 +583,7 @@ class RPyCSafeMixin(ModuleHelperMixin):
                 self.outputPorts[port] = self.sharedPorts[port][0]
             Shared.cachedSharedResults[id(self.outputPorts[port])] = self.outputPorts[port]
         elif not isRemote:
-            print "#We obtained a non-remote memory case for port %s"%(port)
+            print "#We obtained a non-remote memory case for port %s" % (port)
             #make arrays into a shared mamory case to pass to next process
             #costs us nothing since we doing a copy already
             if isinstance(self.outputPorts[port], NDArray):
@@ -596,9 +606,7 @@ class RPyCSafeMixin(ModuleHelperMixin):
         try:
             Shared.cachedResults[id(self.outputPorts[port])] = self.outputPorts[port]
             if isRemote:
-                print "#making sure the Remote cache is set up for port %s, oid %s"%(port, id(self.outputPorts[port]))
+                print "#making sure the Remote cache is set up for port %s, oid %s" % (port, id(self.outputPorts[port]))
                 self.conn.namespace['Shared'].cachedResults[id(self.outputPorts[port])] = self.outputPorts[port]
         except TypeError:
-            print "Cache is not set up for port %s, oid %s"%(port, id(self.outputPorts[port]))
-        
-            
+            print "Cache is not set up for port %s, oid %s" % (port, id(self.outputPorts[port]))

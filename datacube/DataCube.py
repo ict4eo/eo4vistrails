@@ -24,7 +24,7 @@
 ## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ##
 ############################################################################
-"""This module ???
+"""The `datacube` module ???
 """
 # library
 import os.path

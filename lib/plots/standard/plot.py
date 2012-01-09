@@ -92,10 +92,8 @@ class ParentPlot(NotCacheable, Module):
         or 'almost zero' if invalid.
 
         Notes:
-        -----
-
-        Uses matplotlib.dates.date2num(d):
-            d is either a datetime instance or a sequence of datetimes.
+         *  Uses matplotlib.dates.date2num(d), where:
+                d is either a datetime instance or a sequence of datetimes.
         """
         try:
             return matplotlib.dates.date2num(datetime.strptime(
@@ -122,9 +120,7 @@ class ParentPlot(NotCacheable, Module):
         in the specified date format.
 
         Notes:
-        ------
-
-        matplotlib seems to require date data in the form '%Y-%m-%d' ???
+         *  matplotlib seems to require date data in the form '%Y-%m-%d'
         """
         if not items:
             return None
@@ -135,8 +131,7 @@ class ParentPlot(NotCacheable, Module):
         ''' Test if vals is an iterable whose elements are all equal.
 
         Notes:
-        ------
-        http://mail.python.org/pipermail/tutor/2004-November/033394.html
+         *  http://mail.python.org/pipermail/tutor/2004-November/033394.html
         '''
 
         i = iter(vals)  # Raises TypeError if vals is not a sequence
@@ -180,8 +175,7 @@ class Histogram(ParentPlot):
             the matplotlib source code for the plot
 
     Notes:
-    ------
-    * The matplotlib `cbook` module is extremely useful for data conversion
+     *  The matplotlib `cbook` module is extremely useful for data conversion
 
     """
 
@@ -294,8 +288,7 @@ class SinglePlot(ParentPlot):
             the matplotlib source code for the plot
 
     Notes:
-    ------
-    * The matplotlib cbook module is extremely useful for data conversion
+     *  The matplotlib cbook module is extremely useful for data conversion
 
     """
     _input_ports = [('xyData', '(edu.utah.sci.vistrails.basic:List)'),
@@ -520,7 +513,7 @@ MatplotlibLineStyleComboBox = basic_modules.new_constant('Plot Line Style',
 
 
 class MatplotlibPlotTypeComboBoxWidget(ComboBoxWidget):
-    """matplotlib plot types."""
+    """matplotlib plot type constants for combobox."""
     _KEY_VALUES = {'scatter': 'scatter', 'line': 'line', 'date(x)': 'date',
                    'windrose': 'windrose'}
 
@@ -532,7 +525,7 @@ MatplotlibPlotTypeComboBox = basic_modules.new_constant('Plot Type',
 
 
 class MatplotlibHistogramTypeComboBoxWidget(ComboBoxWidget):
-    """matplotlib histogram types."""
+    """matplotlib histogram type constants for combobox."""
     _KEY_VALUES = {'bar': 'bar', 'step': 'step', 'bar - stacked': 'barstacked',
                    'step - filled': 'stepfilled', }
 

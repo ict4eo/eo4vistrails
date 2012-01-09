@@ -43,7 +43,9 @@ from packages.eo4vistrails.utils.DropDownListWidget import ComboBoxWidget
 from packages.eo4vistrails.utils.ModuleHelperMixin import ModuleHelperMixin
 # local
 
-class RPyCCode(NotCacheable, RPyCSafeMixin, ThreadSafeMixin, RPyCModule, ModuleHelperMixin):
+
+class RPyCCode(NotCacheable, RPyCSafeMixin, ThreadSafeMixin, RPyCModule,
+               ModuleHelperMixin):
     """
     This module that executes an arbitrary piece of Python code remotely.
     TODO: This code is not threadsafe. Terence needs to fix it
@@ -58,7 +60,10 @@ class RPyCCode(NotCacheable, RPyCSafeMixin, ThreadSafeMixin, RPyCModule, ModuleH
         self.preCodeString = None
         self.postCodeString = None
 
-    def run_code_common(self, locals_, execute, code_str, use_input, use_output, pre_code_string, post_code_string):
+    def run_code_common(self, locals_, execute, code_str, use_input, use_output,
+                        pre_code_string, post_code_string):
+        """TODO: Add docstring.
+        """
         import core.packagemanager
 
         def fail(msg):
@@ -96,6 +101,8 @@ class RPyCCode(NotCacheable, RPyCSafeMixin, ThreadSafeMixin, RPyCModule, ModuleH
             self.setOutputResults(locals_, outputDict)
 
     def setInputResults(self, locals_, inputDict):
+        """TODO: Add docstring.
+        """
         from packages.NumSciPy.Array import NDArray
 
         inputDict = dict([(k, self.getInputFromPort(k)) for k in self.inputPorts])
@@ -110,6 +117,8 @@ class RPyCCode(NotCacheable, RPyCSafeMixin, ThreadSafeMixin, RPyCModule, ModuleH
         locals_.update(inputDict)
 
     def setOutputResults(self, locals_, outputDict):
+        """TODO: Add docstring.
+        """
         from packages.NumSciPy.Array import NDArray
 
         for k in outputDict.iterkeys():
@@ -125,7 +134,7 @@ class RPyCCode(NotCacheable, RPyCSafeMixin, ThreadSafeMixin, RPyCModule, ModuleH
                 self.setResult(k, locals_[k])
 
     def run_code_orig(self, code_str, use_input, use_output, pre_code_string, post_code_string):
-        """run_code runs a piece of code as a VisTrails module.
+        """Runs a piece of code as a VisTrails module.
         use_input and use_output control whether to use the inputport
         and output port dictionary as local variables inside the
         execution."""
@@ -136,10 +145,12 @@ class RPyCCode(NotCacheable, RPyCSafeMixin, ThreadSafeMixin, RPyCModule, ModuleH
             exec s in locals_
 
         print "Starting executing in main thread"
-        self.run_code_common(locals_, execute, code_str, use_input, use_output, pre_code_string, post_code_string)
+        self.run_code_common(locals_, execute, code_str, use_input, use_output,
+                             pre_code_string, post_code_string)
         print "Finished executing in main thread"
 
-    def run_code(self, code_str, conn, use_input, use_output, pre_code_string, post_code_string):
+    def run_code(self, code_str, conn, use_input, use_output, pre_code_string,
+                 post_code_string):
         """
         Runs a piece of code as a VisTrails module.
 
@@ -150,7 +161,8 @@ class RPyCCode(NotCacheable, RPyCSafeMixin, ThreadSafeMixin, RPyCModule, ModuleH
         #conn.modules.sys.stdout = sys.stdout
 
         print "Starting executing in other thread"
-        self.run_code_common(conn.namespace, conn.execute, code_str, use_input, use_output, pre_code_string, post_code_string)
+        self.run_code_common(conn.namespace, conn.execute, code_str, use_input,
+                             use_output, pre_code_string, post_code_string)
         print "Finished executing in other thread"
 
     def compute(self):
@@ -159,7 +171,7 @@ class RPyCCode(NotCacheable, RPyCSafeMixin, ThreadSafeMixin, RPyCModule, ModuleH
         """
         self.sharedPorts = {}
         isRemote, self.conn, v = self.getConnection()
-        
+
 #        if self.hasInputFromPort('rpycnode'):
 #            (isRemote, self.conn) = self.inputPorts['rpycnode'][0].obj.getSharedConnection()
 
@@ -168,7 +180,7 @@ class RPyCCode(NotCacheable, RPyCSafeMixin, ThreadSafeMixin, RPyCModule, ModuleH
 
         if s == '':
             return
-        
+
         if self.conn:
             self.run_code(s, self.conn, True, True, self.preCodeString, self.postCodeString)
         else:
@@ -176,7 +188,7 @@ class RPyCCode(NotCacheable, RPyCSafeMixin, ThreadSafeMixin, RPyCModule, ModuleH
 
 
 class RPyC_C_Code(RPyCCode):
-    """TODO: Add doc.
+    """TODO: Add docstring.
     """
 
     def run_code_orig(self, code_str, use_input=False, use_output=False):
@@ -299,7 +311,7 @@ class RPyC_C_Code(RPyCCode):
         keys = inputDict.keys() + outputDict.keys()
         conn.namespace["keys"] = keys
 
-        err = conn.eval("inline(code_str, keys, type_converters=blitz, compiler = 'gcc')")
+        err = conn.eval("inline(code_str, keys, type_converters=blitz, compiler='gcc')")
         #err = inline(code_str, keys, type_converters=blitz, compiler = 'gcc')
         print err
         #conn.execute(code_str)
@@ -327,7 +339,7 @@ class RPyCNodeWidget(ComboBoxWidget):
             try:
                 discoveredSlavesTuple = list(rpyc.discover("slave"))
                 for slaveTuple in discoveredSlavesTuple:
-                    self.discoveredSlaves["%s:%s"%slaveTuple] = slaveTuple
+                    self.discoveredSlaves["%s:%s" % slaveTuple] = slaveTuple
             except rpyc.utils.factory.DiscoveryError:
                 pass
         return self.discoveredSlaves

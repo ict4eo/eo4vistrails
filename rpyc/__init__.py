@@ -2,10 +2,10 @@
 ##
 ## Copyright (C) 2010 CSIR Meraka Institute. All rights reserved.
 ##
-## This full package extends VisTrails, providing GIS/Earth Observation 
-## ingestion, pre-processing, transformation, analytic and visualisation 
-## capabilities . Included is the abilty to run code transparently in 
-## OpenNebula cloud environments. There are various software 
+## This full package extends VisTrails, providing GIS/Earth Observation
+## ingestion, pre-processing, transformation, analytic and visualisation
+## capabilities . Included is the abilty to run code transparently in
+## OpenNebula cloud environments. There are various software
 ## dependencies, but all are FOSS.
 ##
 ## This file may be used under the terms of the GNU General Public
@@ -23,17 +23,16 @@
 ## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ##
 ############################################################################
-"""This full package extends VisTrails, providing GIS/Earth Observation 
-ingestion, pre-processing, transformation, analytic and visualisation 
-capabilities . Included is the abilty to run code transparently in 
-OpenNebula cloud environments.
+"""This module forms part of the rpyc vistrails capabilties.  It adds multicore
+parallel and distributed processing to VisTrails.
 """
+
 import subprocess
 try:
     out = subprocess.check_output(['svn', 'info', __path__[0]])
-    revision = out[out.find('Revision'):out.find('\n', out.find('Revision'))][10:]
+    revision = out[out.find('Revision'):out.find('\n',
+                   out.find('Revision'))][10:]
 except:
     revision = 0
-version='0.1.%s'%revision
+version = '0.1.%s' % revision
 pass
-

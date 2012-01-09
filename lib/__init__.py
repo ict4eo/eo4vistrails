@@ -1,8 +1,2 @@
-# -*- coding: utf-8 -*-
+"""This package provide library routines, including data plotting.
 """
-Created on Thu Oct 27 12:48:14 2011
-
-@author: tvzyl
-"""
-
-pass
