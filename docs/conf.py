@@ -34,11 +34,13 @@ class Mock(object):
     def __getattr__(self, name):
         return Mock() if name not in ('__file__', '__path__') else '/dev/null'
 
-MOCK_MODULES = ['h5py', 'geojson', 'matplotlib', 'networkx', 'pysal', 'gdal',
-                'gis.core', 'owslib.wfs', 'PyQT4', 'PyQt4.QtCore',
-                'core.modules.vistrails_module', 'core.modules.module_registry',
-                'core.modules.constant_configuration', 'core.system',
-                'core.bundles', 'gui.application']  # change for project !!
+# third-party modules
+MOCK_MODULES = ['h5py', 'geojson', 'matplotlib', 'matplotlib.cm', 'networkx',
+                'pysal', 'gdal', 'qgis', 'qgis.core', 'owslib', 'owslib.wfs',
+                'PyQt4', 'PyQt4.QtCore', 'gui', 'gui.application', 'core',
+                'core.modules', 'core.bundles', 'core.modules.vistrails_module',
+                'core.modules.module_registry', 'core.system',
+                'core.modules.constant_configuration']
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = Mock()
 
