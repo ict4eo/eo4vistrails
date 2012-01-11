@@ -39,6 +39,7 @@ MOCK_MODULES = ['h5py', 'geojson', 'gdal', 'qgis', 'qgis.core',
                 'matplotlib',
                 'matplotlib.cm',
                 'matplotlib.patches',
+                'matplotlib.text',
                 'matplotlib.ticker',
                 'networkx', 'pysal', 'ogr', 'owslib', 'owslib.wfs',
                 'PyQt4', 'PyQt4.QtCore', 'gui', 'gui.application',
@@ -57,14 +58,19 @@ MOCK_MODULES = ['h5py', 'geojson', 'gdal', 'qgis', 'qgis.core',
                 'packages.eo4vistrails',
                 'packages.eo4vistrails.geoinf',
                 'packages.eo4vistrails.geoinf.SpatialTemporalConfigurationWidget',
+                'packages.eo4vistrails.geoinf.datamodels',
                 'packages.eo4vistrails.geoinf.datamodels.QgsLayer',
                 'packages.eo4vistrails.geoinf.datamodels.Raster',
                 'packages.eo4vistrails.rpyc',
                 'packages.eo4vistrails.rpyc.RPyC',
+                'packages.eo4vistrails.rpyc.RPyCHelper',
                 'packages.eo4vistrails.utils',
                 'packages.eo4vistrails.utils.DataRequest',
                 'packages.eo4vistrails.utils.ModuleHelperMixin',
-                'packages.eo4vistrails.utils.Parser'
+                'packages.eo4vistrails.utils.Parser',
+                'packages.eo4vistrails.utils.ThreadSafe',
+                'packages.pylab',
+                'packages.pylab.plot'
                 ]
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = Mock()
