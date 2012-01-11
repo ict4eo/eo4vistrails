@@ -36,8 +36,11 @@ class Mock(object):
 
 # third-party modules
 MOCK_MODULES = ['h5py', 'geojson', 'gdal', 'qgis', 'qgis.core',
-                'matplotlib', 'matplotlib.cm', 'matplotlib.patches', 'networkx',
-                'pysal', 'ogr', 'owslib', 'owslib.wfs',
+                'matplotlib',
+                'matplotlib.cm',
+                'matplotlib.patches',
+                'matplotlib.ticker',
+                'networkx', 'pysal', 'ogr', 'owslib', 'owslib.wfs',
                 'PyQt4', 'PyQt4.QtCore', 'gui', 'gui.application',
 
                 'core', 'core.bundles',
@@ -48,17 +51,20 @@ MOCK_MODULES = ['h5py', 'geojson', 'gdal', 'qgis', 'qgis.core',
                 'core.modules.module_configure',
                 'core.modules.source_configure',
                 'core.modules.vistrails_module',
-                'core.system',
+                'core.system', 'core.utils',
 
+                'packages',
+                'packages.eo4vistrails',
+                'packages.eo4vistrails.geoinf',
                 'packages.eo4vistrails.geoinf.SpatialTemporalConfigurationWidget',
                 'packages.eo4vistrails.geoinf.datamodels.QgsLayer',
                 'packages.eo4vistrails.geoinf.datamodels.Raster',
+                'packages.eo4vistrails.rpyc',
                 'packages.eo4vistrails.rpyc.RPyC',
+                'packages.eo4vistrails.utils',
                 'packages.eo4vistrails.utils.DataRequest',
                 'packages.eo4vistrails.utils.ModuleHelperMixin',
-                'packages.eo4vistrails.utils.Parser',
-
-
+                'packages.eo4vistrails.utils.Parser'
                 ]
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = Mock()
