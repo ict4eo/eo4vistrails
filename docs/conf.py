@@ -11,17 +11,19 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys, os
+import sys
+import os
 
-sys.path.insert(0, os.path.abspath('../'+'/'))  # !
-print "Project Directory:",sys.path[0]  # !
+sys.path.insert(0, os.path.abspath('../' + '/'))  # !
+print "Project Directory:", sys.path[0]  # !
 
 sys.path.insert(0, os.path.abspath('/home/dhohls/Downloads/VisTrails/vistrails-src-1.6-e9f97c5908ac/vistrails/'))
-print "VisTrails Directory:",sys.path[0]
+print "VisTrails Directory:", sys.path[0]
 
 """
 From: http://read-the-docs.readthedocs.org/en/latest/faq.html#i-get-import-errors-on-libraries-that-depend-on-c-modules
 """
+
 
 class Mock(object):
     def __init__(self, *args, **kwargs):
@@ -39,6 +41,8 @@ MOCK_MODULES = ['h5py', 'geojson', 'gdal', 'qgis', 'qgis.core',
                 'matplotlib',
                 'matplotlib.cm',
                 'matplotlib.patches',
+                'matplotlib.projections',
+                'matplotlib.projections.polar',
                 'matplotlib.text',
                 'matplotlib.ticker',
                 'networkx', 'pysal', 'ogr', 'owslib', 'owslib.wfs',
@@ -61,14 +65,19 @@ MOCK_MODULES = ['h5py', 'geojson', 'gdal', 'qgis', 'qgis.core',
                 'packages.eo4vistrails.geoinf.datamodels',
                 'packages.eo4vistrails.geoinf.datamodels.QgsLayer',
                 'packages.eo4vistrails.geoinf.datamodels.Raster',
+                'packages.eo4vistrails.geoinf.datamodels.TemporalVectorLayer',
                 'packages.eo4vistrails.rpyc',
                 'packages.eo4vistrails.rpyc.RPyC',
                 'packages.eo4vistrails.rpyc.RPyCHelper',
                 'packages.eo4vistrails.utils',
+                'packages.eo4vistrails.utils.Array',
                 'packages.eo4vistrails.utils.DataRequest',
+                'packages.eo4vistrails.utils.DropDownListWidget',
                 'packages.eo4vistrails.utils.ModuleHelperMixin',
                 'packages.eo4vistrails.utils.Parser',
+                'packages.eo4vistrails.utils.synhigh',
                 'packages.eo4vistrails.utils.ThreadSafe',
+                'packages.eo4vistrails.utils.WebRequest',
                 'packages.pylab',
                 'packages.pylab.plot'
                 ]
