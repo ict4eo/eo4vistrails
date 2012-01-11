@@ -35,12 +35,31 @@ class Mock(object):
         return Mock() if name not in ('__file__', '__path__') else '/dev/null'
 
 # third-party modules
-MOCK_MODULES = ['h5py', 'geojson', 'matplotlib', 'matplotlib.cm', 'networkx',
-                'pysal', 'gdal', 'qgis', 'qgis.core', 'owslib', 'owslib.wfs',
-                'PyQt4', 'PyQt4.QtCore', 'gui', 'gui.application', 'core',
-                'core.modules', 'core.bundles', 'core.modules.vistrails_module',
-                'core.modules.module_registry', 'core.system',
-                'core.modules.constant_configuration']
+MOCK_MODULES = ['h5py', 'geojson', 'gdal', 'qgis', 'qgis.core',
+                'matplotlib', 'matplotlib.cm', 'matplotlib.patches', 'networkx',
+                'pysal', 'ogr', 'owslib', 'owslib.wfs',
+                'PyQt4', 'PyQt4.QtCore', 'gui', 'gui.application',
+
+                'core', 'core.bundles',
+                'core.modules',
+                'core.modules.basic_modules',
+                'core.modules.constant_configuration',
+                'core.modules.module_registry',
+                'core.modules.module_configure',
+                'core.modules.source_configure',
+                'core.modules.vistrails_module',
+                'core.system',
+
+                'packages.eo4vistrails.geoinf.SpatialTemporalConfigurationWidget',
+                'packages.eo4vistrails.geoinf.datamodels.QgsLayer',
+                'packages.eo4vistrails.geoinf.datamodels.Raster',
+                'packages.eo4vistrails.rpyc.RPyC',
+                'packages.eo4vistrails.utils.DataRequest',
+                'packages.eo4vistrails.utils.ModuleHelperMixin',
+                'packages.eo4vistrails.utils.Parser',
+
+
+                ]
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = Mock()
 
