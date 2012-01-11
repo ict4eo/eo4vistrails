@@ -37,7 +37,8 @@ class Mock(object):
         return Mock() if name not in ('__file__', '__path__') else '/dev/null'
 
 # third-party modules
-MOCK_MODULES = ['h5py', 'geojson', 'gdal', 'qgis', 'qgis.core',
+MOCK_MODULES = ['h5py', 'geojson', 'gdal', 'gdalnumeric',
+                'qgis', 'qgis.core',
                 'matplotlib',
                 'matplotlib.cm',
                 'matplotlib.patches',
@@ -51,7 +52,8 @@ MOCK_MODULES = ['h5py', 'geojson', 'gdal', 'qgis', 'qgis.core',
                 'packages.NumSciPy.Array',
 
                 'networkx', 'pysal', 'ogr', 'owslib', 'owslib.wfs',
-                'PyQt4', 'PyQt4.QtCore', 'gui', 'gui.application',
+                'PyQt4', 'PyQt4.QtCore', 'gui', 'gui.application', 'pylab',
+                'rpyc',
 
                 'core', 'core.bundles',
                 'core.modules',
