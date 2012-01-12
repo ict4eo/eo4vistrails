@@ -31,8 +31,8 @@ Service (SOS) client, making use of a local version of the owslib library.
 import traceback
 # third party
 from PyQt4 import QtCore, QtGui
-from qgis.core import *
-from qgis.gui import *
+#from qgis.core import *
+#from qgis.gui import *
 # vistrails
 from core.modules.vistrails_module import Module, ModuleError
 from core.modules.module_configure import StandardModuleConfigurationWidget
@@ -564,11 +564,16 @@ class SOSConfigurationWidget(OgcConfigurationWidget, StandardModuleConfiguration
         #result['bounds'] = "10" TEST
         return result
 
+
+    '''
+    # attempting to store data on the input ports so as to re-use when editing
     def okTriggered(self): # ,checked=False, functions=None in parent?
         """Extends method defined in SpatialTemporalConfigurationWidget."""
         #print "=== OK Triggered in SOSConfigurationWidget (line 569)"
         self.bounds = "10"  #result.get('bounds', None)
         if self.bounds:
+            # functions is unknown here...???
             functions.append(
                 (init.BOUNDS_PORT, [self.bounds]),)
         OGCConfigurationWidget.okTriggered(self, functions)
+    '''
