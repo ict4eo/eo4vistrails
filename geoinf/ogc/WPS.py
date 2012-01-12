@@ -37,15 +37,20 @@ import string
 import tempfile
 import urllib2
 import urllib
-from httplib import * #??? are we using this
+#from httplib import **  # poor practice; breaks RTD docs
 from urlparse import urlparse
 # third party
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
-from PyQt4.QtNetwork import *
-from PyQt4 import QtXml
-from qgis.core import *
-from qgis.gui import *
+
+# !!! all * imports removed 12/1/12 - code MAY be broken - needs testing !!!
+
+#from PyQt4.QtCore import *  # poor practice; breaks RTD docs
+#from PyQt4.QtGui import **  # poor practice; breaks RTD docs
+#from PyQt4.QtNetwork import **  # poor practice; breaks RTD docs
+#from qgis.core import **  # poor practice; breaks RTD docs
+#from qgis.gui import **  # poor practice; breaks RTD docs
+from PyQt4 import QtXml, QtCore, QtGui, QtSql
+from qgis.core import QgsFeature, QgsRectangle, QgsMapLayerRegistry,\
+    QgsDataSourceURI
 # vistrails
 from core.modules.module_descriptor import ModuleDescriptor
 from core.modules.module_configure import StandardModuleConfigurationWidget
@@ -421,7 +426,7 @@ class WPS(Module):
                         fileLink = reference.attributeNS(
                             "http://www.w3.org/1999/xlink", "href", "0")
                     if fileLink == '0':
-                        self.raiseError(str(QCoreApplication.translate(
+                        self.raiseError(str(QtCore.QCoreApplication.translate(
                             "WPS Error: Unable to download the result of reference: ")) + str(fileLink))
                         return
 
@@ -459,14 +464,14 @@ class WPS(Module):
                 elif f_element.elementsByTagNameNS("http://www.opengis.net/wps/1.0.0", "LiteralData").size() > 0:
                     literalText = f_element.elementsByTagNameNS("http://www.opengis.net/wps/1.0.0", "LiteralData").at(0).toElement().text()
                     # TODO: how to handle this ?
-                    #self.popUpMessageBox(QCoreApplication.translate("QgsWps", 'Result'),literalText)
+                    #self.popUpMessageBox(QtCore.QCoreApplication.translate("QgsWps", 'Result'),literalText)
                 else:
                     self.raiseError(
                         "WPS Error",
                         "Missing Reference tag, or literal data, in response XML")
 
             # TODO: how to handle this ?
-            #QMessageBox.information(None, QCoreApplication.translate("QgsWps", 'Process result'), QCoreApplication.translate("QgsWps", 'The process finished successful'))
+            #QtGui.QMessageBox.information(None, QtCore.QCoreApplication.translate("QgsWps", 'Process result'), QCoreApplication.translate("QgsWps", 'The process finished successful'))
         else:
             self.errorHandler(resultXML)
 
@@ -475,7 +480,7 @@ class WPS(Module):
 
         * vLayer is an actual QGIS vector layer (not a string)
         """
-        myQTempFile = QTemporaryFile()
+        myQTempFile = QtCore.QTemporaryFile()
         myQTempFile.open()
         tmpFile = unicode(myQTempFile.fileName(), 'latin1')
 
@@ -504,11 +509,11 @@ class WPS(Module):
 
         del writer
 
-        myFile = QFile(tmpFile)
-        if (not myFile.open(QIODevice.ReadOnly | QIODevice.Text)):
+        myFile = QtCore.QFile(tmpFile)
+        if (not myFile.open(QtCore.QIODevice.ReadOnly | QtCore.QIODevice.Text)):
             pass
 
-        myGML = QTextStream(myFile)
+        myGML = QtCore.QTextStream(myFile)
         gmlString = ""
 
         # Overread the first Line of GML Result
@@ -540,7 +545,7 @@ class WPS(Module):
         base64String = outfile.read()
         os.remove(filename)
         #except:
-        #    QMessageBox.warning(None, '', "Unable to create temporary file: " + filename + " for base64 encoding")
+        #    QtGui.QMessageBox.warning(None, '', "Unable to create temporary file: " + filename + " for base64 encoding")
         """
         base64String = base64.encodestring(rLayer) # error: no len() for rLayer
         """
@@ -592,7 +597,7 @@ class WPS(Module):
             "GML")
         if writer.hasError() != QgsVectorFileWriter.NoError:
             message = self.writerErrorMessage(writer.hasError())
-            QMessageBox.warning(None, '', message)
+            QtGui.QMessageBox.warning(None, '', message)
             return 0
         return writer
 
@@ -693,16 +698,16 @@ class WPSConfigurationWidget(PortConfigurationWidget):
         self.setWindowTitle("OGC WPS Configuration Widget")
         self.setWindowModality(Qt.WindowModal)
         self.setMinimumSize(593, 442)
-        self.mainLayout = QGridLayout()
+        self.mainLayout = QtGui.QGridLayout()
         self.setLayout(self.mainLayout)
-        self.GroupBox1 = QGroupBox("Server Connections")
+        self.GroupBox1 = QtGui.QGroupBox("Server Connections")
         self.mainLayout.addWidget(self.GroupBox1, 0, 0, 1, 1)
         self.mainLayout.setMargin(9)
         self.mainLayout.setSpacing(6)
 
-        spacerItem = QSpacerItem(171, 30, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        spacerItem = QtGui.QSpacerItem(171, 30, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
         self.mainLayout.addItem(spacerItem, 3, 4, 1, 1)
-        self.btnConnect = QPushButton(self.GroupBox1)
+        self.btnConnect = QtGui.QPushButton(self.GroupBox1)
         self.btnConnect.setEnabled(True)
         self.btnConnect.setObjectName("btnConnect")
         self.btnConnect.setText("Connect")
@@ -710,26 +715,26 @@ class WPSConfigurationWidget(PortConfigurationWidget):
 
         #at runtime will be parsing a url
         self.mainLayout.addWidget(QLabel('WPS URL:'), 1, 0, 1, 1)
-        self.URLConnect = QLineEdit(DEFAULT_URL)
+        self.URLConnect = QtGui.QLineEdit(DEFAULT_URL)
         self.URLConnect.setEnabled(True) #sets it not to be editable
         self.mainLayout.addWidget(self.URLConnect, 1, 1, 1, -1)
 
         self.mainLayout.addWidget(QLabel('WPS Version:'), 2, 0, 1, 1)
-        self.launchversion = QComboBox()
+        self.launchversion = QtGui.QComboBox()
         self.launchversion.addItems(['1.0.0', ])
         self.mainLayout.addWidget(self.launchversion, 2, 1, 1, 1)
 
         # tabs
-        self.tabWidget = QTabWidget()
-        self.tabService = QWidget()
-        self.tabProcess = QWidget()
-        self.tabProcessLayout = QVBoxLayout(self.tabProcess)
-        self.tabServiceLayout = QVBoxLayout(self.tabService)
+        self.tabWidget = QtGui.QTabWidget()
+        self.tabService = QtGui.QWidget()
+        self.tabProcess = QtGui.QWidget()
+        self.tabProcessLayout = QtGui.QVBoxLayout(self.tabProcess)
+        self.tabServiceLayout = QtGui.QVBoxLayout(self.tabService)
         self.tabWidget.addTab(self.tabService, "Process &List")
         self.tabWidget.addTab(self.tabProcess, "Process &Inputs/Outputs")
 
         # service tree
-        self.treeWidgetService = QTreeWidget()
+        self.treeWidgetService = QtGui.QTreeWidget()
         self.treeWidgetService.setColumnCount(3)
         self.treeWidgetService.setObjectName("treeWidget")
         self.treeWidgetService.setSortingEnabled(True)
@@ -741,7 +746,7 @@ class WPSConfigurationWidget(PortConfigurationWidget):
         self.tabServiceLayout.addWidget(self.treeWidgetService)
 
         # process tree
-        self.treeWidgetProcess = QTreeWidget()
+        self.treeWidgetProcess = QtGui.QTreeWidget()
         self.treeWidgetProcess.setColumnCount(4)
         self.treeWidgetProcess.setObjectName("treeWidget")
         self.treeWidgetProcess.setSortingEnabled(True)
@@ -757,19 +762,19 @@ class WPSConfigurationWidget(PortConfigurationWidget):
 
         self.mainLayout.addWidget(self.tabWidget, 4, 0, 1, -1)
 
-        #spacerItem1 = QSpacerItem(10, 10, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        #spacerItem1 = QtGui.QSpacerItem(10, 10, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
         #self.mainLayout.addItem(spacerItem1, 5, 2, 1, 1)
-        self.buttons = QWidget()
-        self.buttonLayout = QHBoxLayout(self.buttons)
+        self.buttons = QtGui.QWidget()
+        self.buttonLayout = QtGui.QHBoxLayout(self.buttons)
         #self.buttonLayout.setGeometry(QtCore.QRect(300, 500, 780, 680))
         self.buttonLayout.setMargin(5)
         self.buttonLayout.addStretch(1)
 
-        self.btnCancel = QPushButton('&Cancel', self)
+        self.btnCancel = QtGui.QPushButton('&Cancel', self)
         self.btnCancel.setAutoDefault(False)
         self.btnCancel.setShortcut('Esc')
         self.buttonLayout.addWidget(self.btnCancel)
-        self.btnOk = QPushButton('&OK', self)
+        self.btnOk = QtGui.QPushButton('&OK', self)
         self.btnOk.setAutoDefault(False)
         self.buttonLayout.addWidget(self.btnOk)
         self.mainLayout.addWidget(self.buttons, 5, 0, 1, -1)
@@ -824,7 +829,7 @@ class WPSConfigurationWidget(PortConfigurationWidget):
             xmlString = self.getServiceXML(connection, "GetCapabilities")
             return True
         except:
-            QMessageBox.critical(None, '', 'Web Connection Failed')
+            QtGui.QMessageBox.critical(None, '', 'Web Connection Failed')
             return False
 
     def getServiceXML(self, name, request, identifier=None):
@@ -881,7 +886,7 @@ class WPSConfigurationWidget(PortConfigurationWidget):
             print 'WPS: XML document parsed'
         #check version - only handle 1.0.0
         if self.getServiceVersion() != "1.0.0":
-            QMessageBox.information(None, 'Error', 'Only WPS Version 1.0.0 is supported')
+            QtGui.QMessageBox.information(None, 'Error', 'Only WPS Version 1.0.0 is supported')
             return 0
         #key metadata for capabilities
         version = self.doc.elementsByTagNameNS(
@@ -916,7 +921,7 @@ class WPSConfigurationWidget(PortConfigurationWidget):
         self.treeWidgetService.clear()
         itemList = []
         for items in taglist:
-            item = QTreeWidgetItem()
+            item = QtGui.QTreeWidgetItem()
             ident = unicode(items[0], 'latin1')
             title = unicode(items[1], 'latin1')
             abstract = unicode(items[2], 'latin1')
@@ -934,7 +939,7 @@ class WPSConfigurationWidget(PortConfigurationWidget):
         try:
             self.processIdentifier = item.text(0)
         except:
-            QMessageBox.warning(None, '',
+            QtGui.QMessageBox.warning(None, '',
                 QCoreApplication.translate("WPS", 'Please select a Process'))
             return False
         # Data Storage
@@ -969,7 +974,7 @@ class WPSConfigurationWidget(PortConfigurationWidget):
             f_element = self.dataOutputs.at(i).toElement()
             identifier, title, abstract, mime_type = \
                 self.getIdentifierTitleAbstractFromElement(f_element)
-            item = QTreeWidgetItem()
+            item = QtGui.QTreeWidgetItem()
             item.setText(0, "Output")
             item.setText(1, identifier)
             item.setText(2, mime_type)
@@ -980,7 +985,7 @@ class WPSConfigurationWidget(PortConfigurationWidget):
             f_element = self.dataInputs.at(i).toElement()
             identifier, title, abstract, mime_type = \
                 self.getIdentifierTitleAbstractFromElement(f_element)
-            item = QTreeWidgetItem()
+            item = QtGui.QTreeWidgetItem()
             item.setText(0, "Input")
             item.setText(1, identifier)
             item.setText(2, mime_type)
@@ -1348,7 +1353,7 @@ class WPSConfigurationWidget(PortConfigurationWidget):
             max_val = value_element.elementsByTagNameNS(
                 "http://www.opengis.net/ows/1.1", "MaximumValue").at(0).toElement().text()
             for n in range(int(min_val), int(max_val) + 1):
-                myVal = QString()
+                myVal = QtGui.QString()
                 myVal.append(str(n))
                 valList.append(myVal)
         # Manage a value list defined by single values
@@ -1370,7 +1375,7 @@ class WPSConfigurationWidget(PortConfigurationWidget):
     def getDBEncoding(self, layerProvider):
         """TODO: add doc string"""
         dbConnection = QgsDataSourceURI(layerProvider.dataSourceUri())
-        db = QSqlDatabase.addDatabase("QPSQL", "WPSClient")
+        db = QtSql.QSqlDatabase.addDatabase("QPSQL", "WPSClient")
         db.setHostName(dbConnection.host())
         db.setDatabaseName(dbConnection.database())
         db.setUserName(dbConnection.username())
@@ -1382,7 +1387,7 @@ class WPSConfigurationWidget(PortConfigurationWidget):
         query += "from pg_catalog.pg_database "
         query += "where datname = '" + dbConnection.database() + "' "
 
-        result = QSqlQuery(query, db)
+        result = QtSql.QSqlQuery(query, db)
         result.first()
         encoding = result.value(0).toString()
         db.close()
@@ -1390,21 +1395,21 @@ class WPSConfigurationWidget(PortConfigurationWidget):
         return encoding
 
 
-class WPSMessageBox(QMessageBox):
+class WPSMessageBox(QtGui.QMessageBox):
     """A resizable message box to show debug info"""
 
     def __init__(self):
-        QMessageBox.__init__(self)
+        QtGui.QMessageBox.__init__(self)
         self.setSizeGripEnabled(True)
 
     def event(self, e):
-        result = QMessageBox.event(self, e)
+        result = QtGui.QMessageBox.event(self, e)
 
         self.setMinimumHeight(600)
         self.setMaximumHeight(16777215)
         self.setMinimumWidth(800)
         self.setMaximumWidth(16777215)
-        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
 
         textEdit = self.findChild(QTextEdit)
         if textEdit != None:
@@ -1412,6 +1417,6 @@ class WPSMessageBox(QMessageBox):
             textEdit.setMaximumHeight(16777215)
             textEdit.setMinimumWidth(300)
             textEdit.setMaximumWidth(16777215)
-            textEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+            textEdit.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
 
         return result
