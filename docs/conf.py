@@ -61,7 +61,7 @@ MOCK_MODULES = ['h5py', 'geojson', 'gdal', 'gdalnumeric',
                 'core.modules.constant_configuration',
                 'core.modules.module_registry',
                 'core.modules.module_configure',
-                'core.modules.source_configure',
+                'core.modules.module_descriptor',
                 'core.modules.vistrails_module',
                 'core.system', 'core.utils',
 
