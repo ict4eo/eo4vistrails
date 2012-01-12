@@ -28,22 +28,23 @@
 """
 # library
 # third-party
-import geojson
+from geojson import Feature
 # vistrails
 from core.modules.vistrails_module import Module
 # eo4vistrails
 
 
 class GeoJSONModule(object):
+    """TOD: Write docstring."""
     pass
 
 
-class GJFeature(GeoJSONModule, Module, geojson.Feature):
-    """ Container class for the geojson.Feature class """
+class GJFeature(GeoJSONModule, Module, Feature):
+    """ Container class for the geojson.Feature class."""
 
     def __init__(self):
         Module.__init__(self)
-        geojson.Feature.__init__(self)
+        Feature.__init__(self)
 
     def compute(self):
         self.feature = self.forceGetInputFromPort('feature')
