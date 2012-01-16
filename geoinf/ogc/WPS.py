@@ -37,7 +37,7 @@ import string
 import tempfile
 import urllib2
 import urllib
-#from httplib import **  # poor practice; breaks RTD docs
+from httplib import HTTPConnection
 from urlparse import urlparse
 # third party
 
@@ -176,8 +176,8 @@ class WPS(Module):
                 + self.addInputsToPOST(
                     self.postString,
                     self.processID)
-            #print "\nWPS:172 POST self.postString\n", self.postString, "\n\n"
-            print "\nWPS:173 POST len(self.postString)\n", len(self.postString)
+            #print "\nWPS:179 POST self.postString\n", self.postString, "\n\n"
+            #print "\nWPS:180 POST len(self.postString)\n", len(self.postString)
             if DEBUG:
                 home = os.getenv("HOME")
                 outFile = open(home + '/Desktop/wps_poststring', 'w')
@@ -696,7 +696,7 @@ class WPSConfigurationWidget(PortConfigurationWidget):
          * hook buttons to methods
         """
         self.setWindowTitle("OGC WPS Configuration Widget")
-        self.setWindowModality(Qt.WindowModal)
+        self.setWindowModality(QtCore.Qt.WindowModal)
         self.setMinimumSize(593, 442)
         self.mainLayout = QtGui.QGridLayout()
         self.setLayout(self.mainLayout)
@@ -714,12 +714,12 @@ class WPSConfigurationWidget(PortConfigurationWidget):
         self.mainLayout.addWidget(self.btnConnect, 3, 1, 1, 1)
 
         #at runtime will be parsing a url
-        self.mainLayout.addWidget(QLabel('WPS URL:'), 1, 0, 1, 1)
+        self.mainLayout.addWidget(QtGui.QLabel('WPS URL:'), 1, 0, 1, 1)
         self.URLConnect = QtGui.QLineEdit(DEFAULT_URL)
         self.URLConnect.setEnabled(True) #sets it not to be editable
         self.mainLayout.addWidget(self.URLConnect, 1, 1, 1, -1)
 
-        self.mainLayout.addWidget(QLabel('WPS Version:'), 2, 0, 1, 1)
+        self.mainLayout.addWidget(QtGui.QLabel('WPS Version:'), 2, 0, 1, 1)
         self.launchversion = QtGui.QComboBox()
         self.launchversion.addItems(['1.0.0', ])
         self.mainLayout.addWidget(self.launchversion, 2, 1, 1, 1)
@@ -783,31 +783,30 @@ class WPSConfigurationWidget(PortConfigurationWidget):
         # Connect button
         self.connect(
             self.btnConnect,
-            SIGNAL('clicked(bool)'),
+            QtCore.SIGNAL('clicked(bool)'),
             self.connectServer)
         # OK button
         self.connect(
             self.btnOk,
-            SIGNAL('clicked(bool)'),
+            QtCore.SIGNAL('clicked(bool)'),
             self.btnOK_clicked)
         # Cancel Button
         self.connect(
             self.btnCancel,
-            SIGNAL('clicked(bool)'),
+            QtCore.SIGNAL('clicked(bool)'),
             self.close)
         # Tab
         self.connect(
             self.tabWidget,
-            SIGNAL('currentChanged(int)'),
+            QtCore.SIGNAL('currentChanged(int)'),
             self.showProcess)
 
-    def connectServer(self, connection):
+    def connectServer(self):
         """Add items to treeWidget
 
         See qgswps.py:: createCapabilities Gui
         """
         connection = self.URLConnect.text()
-        # pass version here
         version = self.launchversion.currentText()
         if not self.webConnectionExists(connection):
             self.tabWidget.setTabEnabled(1, False)
@@ -863,10 +862,10 @@ class WPSConfigurationWidget(PortConfigurationWidget):
 
     def getServer(self, name):
         """Return server details as a dictionary"""
-        settings = QSettings()
+        settings = QtCore.QSettings()
         myURL = urlparse(str(name))
         mySettings = "/WPS/" + name
-        settings.setValue(mySettings + "/method", QVariant("GET"))
+        settings.setValue(mySettings + "/method", QtCore.QVariant("GET"))
         result = {}
         result["url"] = str(name)
         result["scheme"] = myURL.scheme
@@ -940,7 +939,8 @@ class WPSConfigurationWidget(PortConfigurationWidget):
             self.processIdentifier = item.text(0)
         except:
             QtGui.QMessageBox.warning(None, '',
-                QCoreApplication.translate("WPS", 'Please select a Process'))
+                QtCore.QCoreApplication.translate("WPS",
+                                                  'Please select a Process'))
             return False
         # Data Storage
         self.inputsMetaInfo = {} # input metainfo, key is input identifier
@@ -1006,7 +1006,7 @@ class WPSConfigurationWidget(PortConfigurationWidget):
         if self.updateVistrail():  # PortConfigurationWidget
             # set default port info (request, processID etc)
             self.getProcessInfo()
-            self.emit(SIGNAL('doneConfigure()'))
+            self.emit(QtCore.SIGNAL('doneConfigure()'))
             self.close()
 
     def getProcessAttributes(self, process_attr):
@@ -1183,7 +1183,7 @@ class WPSConfigurationWidget(PortConfigurationWidget):
         dataInputs = self.doc.elementsByTagName("Input")
         dataOutputs = self.doc.elementsByTagName("Output")
 
-        #QApplication.setOverrideCursor(Qt.WaitCursor)
+        #QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
         result = self.getServer(self.processName)
         scheme = result["scheme"]
         path = result["path"]

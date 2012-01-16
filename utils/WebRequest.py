@@ -47,7 +47,7 @@ class WebRequest(DataRequest):
     * With the 'data' port set as well, the module will execute a POST request.
     """
 
-    def __init__(self, url=None, data=None, runTheRequest=False, timeout=60):
+    def __init__(self, url=None, data=None, runTheRequest=False, timeout=180):
         DataRequest.__init__(self)
         self.url = url
         self.data = data
