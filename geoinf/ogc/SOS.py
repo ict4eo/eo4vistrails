@@ -200,9 +200,12 @@ class SosCommonWidget(QtGui.QWidget):
 
         self.cbRequest = QtGui.QComboBox()
         self.detailsLayout.addWidget(self.cbRequest, 11, 1)
+
+        """
         self.cbRequest.addItem('GetFeatureOfInterest')
         self.cbRequest.addItem('GetObservation')
         self.cbRequest.addItem('DescribeSensor')
+        """
 
         # local signals
         self.connect(
@@ -235,7 +238,7 @@ class SosCommonWidget(QtGui.QWidget):
         self.lbxOfferings.clear()
 
     def clearOfferings(self):
-        """Reset all displayed offering values."""
+        """Reset all displayed offering and request values."""
         self.lblDescription.setText('-')
         self.lblTL_X.setText('-')
         self.lblTL_Y.setText('-')
@@ -245,6 +248,7 @@ class SosCommonWidget(QtGui.QWidget):
         self.lblStartTime.setText('-')
         self.lblEndTime.setText('-')
         self.cbProcedure.clear()
+        self.cbRequest.clear()
         self.cbResponseFormat.clear()
         self.cbResponseMode.clear()
         self.cbResultModel.clear()
@@ -261,12 +265,16 @@ class SosCommonWidget(QtGui.QWidget):
             self.parent_widget.service.service_valid and self.contents:
             for content in self.contents:
                 if selected_offering == content.id:
+                    # description
                     if content.description:
                         self.lblDescription.setText(content.description)
                     elif content.name:
                         self.lblDescription.setText(content.name)
                     else:
                         self.lblDescription.setText(content.id)
+                    # service operations
+                    for service in self.parent_widget.service.service_operations:
+                        self.cbRequest.addItem(service)
                     # update other offering details...
                     if content.time:
                         self.lblStartTime.setText(str(content.time[0]))
@@ -334,7 +342,7 @@ class SOSConfigurationWidget(OgcConfigurationWidget, StandardModuleConfiguration
         #  "functions" are VisTrails internal representation of ports at design time
         for function in self.module.functions:
             if function.name in port_widget:
-                print "SOS:336", function.name, function.params[0].strValue
+                #print "SOS:336", function.name, function.params[0].strValue
                 port_widget[function.name].setText(function.params[0].strValue)
 
         # move parent tab to first place
@@ -355,6 +363,32 @@ class SOSConfigurationWidget(OgcConfigurationWidget, StandardModuleConfiguration
                 None,
                 QtGui.QApplication.UnicodeUTF8))
         self.tabs.setCurrentIndex(0)
+
+    def get_valid_srs(self, srsURN):
+        """Return a valid EPSG srsName according to OGC 09-048r3
+
+        Accepts:
+          * valid srs string in URN form (delimited by :)
+
+        Returns:
+          * valid EPSG srsName string, or default of EPSG 4326 if not found
+
+        Notes:
+          * Repalce with http://owslib.sourceforge.net/#crs-handling  ???
+        """
+        srs = None
+        try:
+            srs_items = srsURN.split(':')
+            code = srs_items[len(srs_items) - 1]
+            #print "SOS:372", srs_items, code
+            if code and int(code) > 0:
+                return 'urn:ogc:def:crs:EPSG::' + code  # omit any version no.
+            else:
+                return 'urn:ogc:def:crs:EPSG::4326'
+        except:
+            self.raiseError(self, 'Unable to construct valid srsName from %s'\
+                            % srsURN, error='')
+        return srs
 
     def constructRequest(self):
         """Return an XML-encoded request from configuration parameters
@@ -434,9 +468,13 @@ class SOSConfigurationWidget(OgcConfigurationWidget, StandardModuleConfiguration
                     # see SosCommonWidget (this module)
                     bbox = self.config.getBoundingBoxOffering()
                 data += '<location>\n <ogc:BBOX>\n' + \
-                    '  <ogc:PropertyName>urn:ogc:data:location</ogc:PropertyName>\n' + \
-                    '  <gml:Envelope srsName="' + \
-                    self.config.lblSRS.text() + '">\n' + \
+                    '  <ogc:PropertyName>urn:ogc:data:location</ogc:PropertyName>\n'
+                srsName = self.get_valid_srs(self.config.lblSRS.text())
+                if srsName:
+                    data += '    <gml:Envelope srsName="' + srsName + '">\n'
+                else:
+                    data += '    <gml:Envelope>\n'
+                data += \
                     '   <gml:lowerCorner>' + bbox[2] + ' ' + bbox[3] + \
                     '</gml:lowerCorner>\n' + \
                     '   <gml:upperCorner>' + bbox[0] + ' ' + bbox[1] + \
@@ -498,9 +536,13 @@ class SOSConfigurationWidget(OgcConfigurationWidget, StandardModuleConfiguration
                         self,
                         'Unknown WFS bounding box type' + ': %s' % str(error))
                 data += '<featureOfInterest>\n <ogc:BBOX>\n' + \
-                    '  <ogc:PropertyName>urn:ogc:data:location</ogc:PropertyName>\n' + \
-                    '  <gml:Envelope srsName="' + \
-                    self.config.lblSRS.text() + '">\n' + \
+                    '  <ogc:PropertyName>urn:ogc:data:location</ogc:PropertyName>\n'
+                srsName = self.get_valid_srs(self.config.lblSRS.text())
+                if srsName:
+                    data += '<gml:Envelope srsName="' + srsName + '">\n'
+                else:
+                    data += '  <gml:Envelope>\n'
+                data += \
                     '   <gml:lowerCorner>' + bbox[2] + ' ' + bbox[3] + \
                     '</gml:lowerCorner>\n' + \
                     '   <gml:upperCorner>' + bbox[0] + ' ' + bbox[1] + \
@@ -516,7 +558,7 @@ class SOSConfigurationWidget(OgcConfigurationWidget, StandardModuleConfiguration
             if mode:
                 data += '<responseMode>' + mode + '</responseMode>\n'
 
-        # wrapper
+        # add wrappers
         if rType == 'DescribeSensor':
             header = \
             """<DescribeSensor service="SOS" version="1.0.0"
@@ -548,8 +590,7 @@ class SOSConfigurationWidget(OgcConfigurationWidget, StandardModuleConfiguration
             xmlns:ns="http://www.opengis.net/om/1.0"
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
             xsi:schemaLocation="http://www.opengis.net/sos/1.0
-            http://schemas.opengis.net/sos/1.0.0/sosGetObservation.xsd"
-            srsName="%s">\n""" % self.config.lblSRS.text()
+            http://schemas.opengis.net/sos/1.0.0/sosGetObservation.xsd">\n"""
             data = header + data + '</GetObservation>\n'
         else:
             raise ModuleError(
@@ -557,7 +598,7 @@ class SOSConfigurationWidget(OgcConfigurationWidget, StandardModuleConfiguration
                 'Unknown SOS request type' + ': %s' % str(rType))
         # xml header
         data = '<?xml version="1.0" encoding="UTF-8"?>\n' + data
-        #print "SOS:560 - data:\n", data  # show line breaks for testing !!!
+        #print "SOS:590 - data:\n", data  # show line breaks for testing !!!
         data = data.replace('\n', '')  # remove line breaks
         result['request_type'] = 'POST'
         result['data'] = data
@@ -566,7 +607,7 @@ class SOSConfigurationWidget(OgcConfigurationWidget, StandardModuleConfiguration
 
 
     '''
-    # attempting to store data on the input ports so as to re-use when editing
+    # attempting to store data on the input ports so as to re-use when editing.
     def okTriggered(self): # ,checked=False, functions=None in parent?
         """Extends method defined in SpatialTemporalConfigurationWidget."""
         #print "=== OK Triggered in SOSConfigurationWidget (line 569)"

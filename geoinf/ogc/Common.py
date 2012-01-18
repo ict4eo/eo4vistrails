@@ -57,7 +57,7 @@ class OgcService():
     ## also wfs will never load a 1.1.0 instance, but it should be loaded as wfs200
     #########
 
-    def __init__(self, service_url, service_type, service_version, timeout=60):
+    def __init__(self, service_url, service_type, service_version, timeout=180):
         self.INVALID_OGC_TYPE_MESSAGE = \
             "Please provide an OGC Service Type: 'wfs', 'sos', or 'wcs'"
         #print "OgcService():__init__:\nservice_url, service_type, service_version\n", \
@@ -155,8 +155,24 @@ class OgcService():
                     self.service.__dict__['identification'].__dict__)
                 self.setProviderIdentification(
                     self.service.__dict__['provider'].__dict__)
+                self.setOperations(
+                    self.service.__dict__['operations'])
             else:
                 raise ValueError(self.INVALID_OGC_TYPE_MESSAGE)
+
+    def setOperations(self, service_list):
+        """service identification metadata is structured differently
+        for the different services - parse appropriately"""
+
+        self.service_operations = []
+        if self.ini_service_type == "sos":
+            for service in service_list:
+                if 'name' in service.__dict__:
+                    self.service_operations.append(service.__dict__['name'])
+        else:
+            raise NotImplementedError(
+                "OGC Service version %s not supported for Operations." % \
+                self.ini_service_version)
 
     def setServiceIdentification(self, service_dict):
         """service identification metadata is structured differently
@@ -208,7 +224,7 @@ class OgcService():
                 pass
             else:
                 raise NotImplementedError(
-                    "OGC Service version %s not supported." % \
+                    "OGC Service version %s not supported for ServiceIdentification." % \
                     self.ini_service_version)
 
         elif self.ini_service_type == "wcs":

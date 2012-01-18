@@ -281,6 +281,12 @@ class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
         self.layout().addLayout(self.buttonLayout)
         #self.create_config_window()
 
+    def raiseError(self, msg, error=''):
+        """Raise a VisTrails error."""
+        import traceback
+        traceback.print_exc()
+        raise ModuleError(self, msg + ': %s' % str(error))
+
     def updateVistrail(self):
         """TO DO - add docstring"""
         msg = "updateVistrail() is not yet implemented in this subclass"

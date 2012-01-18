@@ -314,7 +314,7 @@ class WPS(Module):
                         postString = xmlExecuteRequestInputStart(identifier, True, "")
                         postString += '<wps:LiteralData>'
                         #bar = port_object.get_output(port_port) #see 454 in vistrails_module.py
-                        #print "309:bar",key,type(bar),bar
+                        print "317:WPS",key,type(bar),bar
                         postString += port_object.get_output(port_port) #string.get_output('value')
                         postString += '</wps:LiteralData>'
                         # end wrapper
@@ -325,9 +325,10 @@ class WPS(Module):
                             postString,
                             'DataInputs',
                             'http://www.opengis.net/wps/1.0.0')
+
                     else:
                         self.raiseError('Configuration Incomplete',\
-                                'Unable to handle port type for %s', key)
+                                'Unable to handle port type for %s' % key)
 
                 """
                 ######### CODE THAT NEEDS TO BE ADAPTED TO ENHANCE THE ABOVE ##########
