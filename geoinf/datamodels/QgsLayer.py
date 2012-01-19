@@ -116,6 +116,7 @@ class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
             thefile = self.forceGetInputFromPort('file', None)
             dataReq = self.forceGetInputFromPort('dataRequest', None)
             theProj = self.forceGetInputFromPort('EPSG Code', None)
+            self.layer_file = thefile
 
             try:
                 isFILE = (thefile != None) and (thefile.name != '')

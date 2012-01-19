@@ -84,12 +84,21 @@ class SpatialTemporalTransform(Transform):
         layer = self.getInputFromPort('QgsMapLayer')
         # get other parameters (from input ports?) e.g. CSV options
         # TODO ???
-        # get GML file associated with layer
-        gml_file = layer.results_file
-        # call get_csv to process GML
-        filename_list = self.get_csv(gml_file, missing_value=CSV_NO_DATA)
-        # attach result (list of filenames) to the output port
-        self.setResult("CSV_list", filename_list)
+        try:
+            # get GML file associated with layer
+            print "TLT:89", layer, type(layer)
+            gml_file = layer.layer_file  # results_file
+            print "TLT:91", gml_file, type(gml_file)
+            if 'CSV_list' in self.outputPorts:
+                # call get_csv to process GML
+                filename_list = self.get_csv(gml_file, missing_value=CSV_NO_DATA)
+                # attach result (list of filenames) to the output port
+                self.setResult("CSV_list", filename_list)
+        except Exception, e:
+            self.setResult("CSV_list", None)
+            self.raiseError('Cannot process output specifications: %s' % str(e))
+
+
 
     def get_csv(self, SOS_XML_file, delimiter=',', header=True,
                 missing_value=None, quotechar='"'):
@@ -106,7 +115,8 @@ class SpatialTemporalTransform(Transform):
         Returns:
          *  a tuple of filenames.
         """
-        results = self.extract_time_series(SOS_XML_file)  # get data and metadata
+        results = self.extract_time_series(SOS_XML_file)  # get data a& metadata
+        print "TLT:117", results
         filenames = []
         for index, result in enumerate(results):
             file_out = self.interpreter.filePool.create_file(suffix=".csv")

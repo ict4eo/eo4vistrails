@@ -38,5 +38,14 @@ class Transform(Module):
     def __init__(self):
         Module.__init__(self)
 
+    def raiseError(self, msg, error=''):
+        """Raise a VisTrails error with traceback display."""
+        import traceback
+        traceback.print_exc()
+        if error:
+            raise ModuleError(self, msg + ' - %s' % str(error))
+        else:
+            raise ModuleError(self, msg)
+
     def compute(self):
         pass
