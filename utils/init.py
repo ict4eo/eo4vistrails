@@ -11,6 +11,7 @@ def initialize(*args, **keywords):
     from CsvUtils import CsvWriter, CsvReader, ListDirContent, CsvFilter
     from Random import Random
     from Command import Command
+    from ListFilter import ListFilter
     from DataTransformations import InputStream,  pgSQLMergeInsert
 
     reg = get_module_registry()
@@ -59,6 +60,29 @@ def initialize(*args, **keywords):
         Fork,
         'modules',
         basic_modules.Module)
+
+
+    # ListFilter
+    reg.add_module(ListFilter,
+                   namespace=utils_namespace)
+    reg.add_input_port(
+        ListFilter,
+        'list_in',
+        basic_modules.List)
+    reg.add_input_port(
+        ListFilter,
+        'subset',
+        basic_modules.String)
+
+    reg.add_output_port(
+        ListFilter,
+        'string',
+        (basic_modules.String, 'String representation of sub-setted list'))
+    reg.add_output_port(
+        ListFilter,
+        'list_out',
+        (basic_modules.List, 'sub-setted list'))
+
 
     # ThreadTest
     reg.add_module(ThreadTestModule,

@@ -47,7 +47,7 @@ GML_NO_DATA = "noData"  # string used by GML to indicate missing data
 CSV_NO_DATA = "9999"  # string used by CSV to indicate missing data
 
 
-class SpatialTemporalTransformModule(Transform):
+class SpatialTemporalTransform(Transform):
     """Transform GML data associated with a Spatial Temporal Layer.
 
     Parse the GML (XML format) file created by a OGC web service (for example,

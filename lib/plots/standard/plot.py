@@ -154,7 +154,8 @@ class Histogram(ParentPlot):
 
     Input ports:
         columnData:
-            a list containing one or more lists - each list is a series
+            a list containing one or more lists - each list contains a string
+            of common-separated numeric data values
         plot:
             the type of histogram (bar, step, barstacked, stepfilled)
         title:
@@ -264,10 +265,10 @@ class SinglePlot(ParentPlot):
 
     Input ports:
         xyData:
-            a list containing two lists - one of X data values,
-            and one of Y data values.  For:
-            * windrose plots, X data values are wind direction;
-            * date(x) plots, X data values are dates.
+            a list containing two lists - one with the X-axis values,
+            and one with the Y-axis numeric data values. For:
+            * windrose plots, X data points are wind directions (numeric values)
+            * date(x) plots, X data points are date values
         plot:
             the type of plot (line, scatter, date(x), windrose)
         line_style:

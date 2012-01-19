@@ -24,9 +24,8 @@
 ### WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ###
 #############################################################################
-"""This package provides GIS capabilities for eo4vistrails.
-This module provides a data structure for storing raster and vector data
-in the format defined by QGIS.
+"""This module provides a data structure for storing raster and vector data
+in the formats defined by QGIS.
 """
 # library
 # third party
@@ -65,7 +64,9 @@ EPSGCode = basic_modules.new_constant('EPSG Code',
 class QgsMapLayer(Module):
     """
     This module will create a QGIS layer from a file
-    IT is not threadsafe and has race conditions on the qgis drivers
+
+    Notes:
+        It is not threadsafe and has race conditions on the qgis drivers
     """
 
     #_input_ports = [('EPSG Code', '(za.co.csir.eo4vistrails:EPSG Code:data)')]
@@ -75,10 +76,13 @@ class QgsMapLayer(Module):
         Module.__init__(self)
 
     def raiseError(self, msg, error=''):
-        """Raise a VisTrails error."""
+        """Raise a VisTrails error with traceback display."""
         import traceback
         traceback.print_exc()
-        raise ModuleError(self, msg + ': %s' % str(error))
+        if error:
+            raise ModuleError(self, msg + ' - %s' % str(error))
+        else:
+            raise ModuleError(self, msg)
 
     def mapLayerFactory(self, uri=None, layername=None, driver=None):
         """Create a QGIS map layer based on driver."""
@@ -127,13 +131,11 @@ class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
                 thefilename = QFileInfo(thefilepath).fileName()
 
                 #globalQgsLock.acquire()
-
                 qgis.core.QgsVectorLayer.__init__(
                     self,
                     thefilepath,
                     thefilename,
                     "ogr")
-
                 #globalQgsLock.release()
 
                 if theProj:
@@ -141,13 +143,11 @@ class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
             elif isQGISSuported:
 
                 #globalQgsLock.acquire()
-
                 qgis.core.QgsVectorLayer.__init__(
                     self,
                     dataReq.get_uri(),
                     dataReq.get_layername(),
                     dataReq.get_driver())
-
                 #globalQgsLock.release()
 
                 if theProj:
@@ -164,6 +164,7 @@ class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
         except Exception, e:
             self.raiseError('Cannot set output port: %s' % str(e))
 
+
 @RPyCSafeModule()
 class QgsRasterLayer(QgsMapLayer, qgis.core.QgsRasterLayer):
     """Create a QGIS raster layer.
@@ -176,19 +177,18 @@ class QgsRasterLayer(QgsMapLayer, qgis.core.QgsRasterLayer):
         self.SUPPORTED_DRIVERS = ['WCS', 'gdl']
 
     def compute(self):
-
+        """Execute the module to create the output"""
         global globalQgsLock
 
-        """Execute the module to create the output"""
         try:
             thefile = self.forceGetInputFromPort('file', None)
             dataReq = self.forceGetInputFromPort('dataRequest', None)
             theProj = self.forceGetInputFromPort('EPSG Code', None)
 
-            print "thefile", thefile
-            print "thefile name", thefile.name
-            print "projection", theProj
-           
+            #print "Qgslayer:188-thefile", thefile
+            #print "Qgslayer:189-thefile name", thefile.name
+            #print "Qgslayer:190-projection", theProj
+
             if thefile:
                 isFILE = (thefile.name != '')
             isQGISSuported = isinstance(dataReq, DataRequest) and \
@@ -199,32 +199,33 @@ class QgsRasterLayer(QgsMapLayer, qgis.core.QgsRasterLayer):
                 thefilename = QFileInfo(thefilepath).fileName()
 
                 #globalQgsLock.acquire()
-
                 qgis.core.QgsRasterLayer.__init__(
                     self,
                     thefilepath,
                     thefilename)
-
                 #globalQgsLock.release()
 
                 if theProj:
                     self.setCrs(qgis.core.QgsCoordinateReferenceSystem(theProj))
+
             elif isQGISSuported:
 
                 #globalQgsLock.acquire()
-
                 qgis.core.QgsRasterLayer.__init__(
                     self,
                     dataReq.get_uri(),
                     dataReq.get_layername())
-
                 #globalQgsLock.release()
 
                 if theProj:
                     self.setCrs(qgis.core.QgsCoordinateReferenceSystem(theProj))
+
             else:
-                self.raiseError('Raster Layer Driver %s not supported' %
+                if dataReq:
+                    self.raiseError('Raster Layer Driver %s not supported' %
                                 str(dataReq.get_driver()))
+                else:
+                    self.raiseError('Raster Layer is not specified.')
 
             self.setResult('value', self)
         except Exception, e:

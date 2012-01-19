@@ -251,12 +251,12 @@ class WPS(Module):
             # TO DO - need find a better way to exclude "static" port from iterkeys() ???
             for key in self.inputPorts.iterkeys():
                 if not key in [init.OGC_REQUEST_PORT, init.OGC_POST_DATA_PORT, init.WPS_PROCESS_PORT]:
-                    #print "244: key", key, self.inputPorts[key]
+                    #print "254: key", key, self.inputPorts[key]
                     connector = self.inputPorts[key][0]
                     port_port = connector.port
                     port_object = connector.obj
                     identifier = key
-                    #print "247: key:port_object", key, ":", port_object, type(port_object)
+                    print "WPS:259 key:port_object/type", key, ":", port_object, type(port_object)
                     if isinstance(port_object, QgsLayer.QgsVectorLayer):
                         mimeType = "text/xml"  # get from layer???
                         schema = "FOO"
@@ -310,14 +310,11 @@ class WPS(Module):
 
                     # Handle string input
                     elif isinstance(port_object, String):
-                        # end wrapper
+                        # wrapper
                         postString = xmlExecuteRequestInputStart(identifier, True, "")
                         postString += '<wps:LiteralData>'
-                        #bar = port_object.get_output(port_port) #see 454 in vistrails_module.py
-                        print "317:WPS",key,type(bar),bar
                         postString += port_object.get_output(port_port) #string.get_output('value')
                         postString += '</wps:LiteralData>'
-                        # end wrapper
                         postString += xmlExecuteRequestInputEnd()
                         # insert new XML into the existing POST string
                         postStringIn = self.insertElement(
@@ -327,8 +324,9 @@ class WPS(Module):
                             'http://www.opengis.net/wps/1.0.0')
 
                     else:
-                        self.raiseError('Configuration Incomplete',\
-                                'Unable to handle port type for %s' % key)
+                        self.raiseError('Configuration Error',\
+                                'Unable to handle port type "%s" for %s port' %
+                                (type(port_object), key))
 
                 """
                 ######### CODE THAT NEEDS TO BE ADAPTED TO ENHANCE THE ABOVE ##########
@@ -689,6 +687,19 @@ class WPSConfigurationWidget(PortConfigurationWidget):
         """
         PortConfigurationWidget.__init__(self, module,
                                         controller, parent)
+
+        self.URLConnect = None
+        # map widgets to ports to enable storing of their settings
+        port_widget = {
+            init.WPS_PROCESS_PORT: self.URLConnect,
+        }
+        # get and set corresponding port value for a configuration widget
+        #  "functions" are VisTrails internal representation of ports at design time
+        for function in self.module.functions:
+            print "WPS:699", function.name, function.params[0].strValue
+            if function.name in port_widget and port_widget[function.name]:
+                    port_widget[function.name].setText(function.params[0].strValue)
+
         self.setObjectName("WpsConfigWidget")
         self.create_config_window()
 
@@ -862,7 +873,15 @@ class WPSConfigurationWidget(PortConfigurationWidget):
         return results.read()
 
     def getServer(self, name):
-        """Return server details as a dictionary"""
+        """Return server details as a dictionary.
+
+        Dictionary contains:
+         * URL
+         * Scheme
+         * Path
+         * Method
+         * Version
+        """
         settings = QtCore.QSettings()
         myURL = urlparse(str(name))
         mySettings = "/WPS/" + name
