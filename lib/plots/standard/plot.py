@@ -400,6 +400,8 @@ class MultiPlot(ParentPlot):
         plot_type = self.forceGetInputFromPort('plot', 'scatter')
         if self.hasInputFromPort('datasets'):
             data_sets = self.getInputFromPort('datasets')
+            if type(data_sets) != list:
+                data_sets = [data_sets]
         else:
             data_sets = []
         #print "plot:380", data_sets

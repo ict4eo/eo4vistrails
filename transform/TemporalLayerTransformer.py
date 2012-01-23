@@ -86,9 +86,7 @@ class SpatialTemporalTransform(Transform):
         # TODO ???
         try:
             # get GML file associated with layer
-            print "TLT:89", layer, type(layer)
-            gml_file = layer.layer_file  # results_file
-            print "TLT:91", gml_file, type(gml_file)
+            gml_file = layer.results_file
             if 'CSV_list' in self.outputPorts:
                 # call get_csv to process GML
                 filename_list = self.get_csv(gml_file, missing_value=CSV_NO_DATA)
@@ -99,15 +97,14 @@ class SpatialTemporalTransform(Transform):
             self.raiseError('Cannot process output specifications: %s' % str(e))
 
 
-
     def get_csv(self, SOS_XML_file, delimiter=',', header=True,
-                missing_value=None, quotechar='"'):
+                quotechar='"', missing_value=None):
         """Create one or more CSV files, containing time series data.
 
         Requires:
          *  a GML (XML-based) file
-         *  a delimiter character (added between each field)
-         *  a boolean header value [on/off]
+         *  a delimiter character (between each field)
+         *  a boolean header value (ON/off)
          *  a quote character; if None then the CSV file writer has the
             QUOTE_MINIMAL flag
          *  a string to be used in place of any missing data
@@ -115,8 +112,9 @@ class SpatialTemporalTransform(Transform):
         Returns:
          *  a tuple of filenames.
         """
+        if not SOS_XML_file:
+            self.raiseError('No GML file specified from which to extract CSV data')
         results = self.extract_time_series(SOS_XML_file)  # get data a& metadata
-        print "TLT:117", results
         filenames = []
         for index, result in enumerate(results):
             file_out = self.interpreter.filePool.create_file(suffix=".csv")
@@ -153,7 +151,7 @@ class SpatialTemporalTransform(Transform):
                 csv_writer.writerow(datum)
             # track filename used
             filenames.append(file_out.name)
-        #print "TLT:144", filenames
+        #print "TLT:154", filenames
         return filenames
 
     def get_fields(self, thefile):

@@ -135,7 +135,7 @@ class CsvReader(ThreadSafeMixin, Module):
                     list_of_lists.append(row)
                 self.setResult('read_data_listoflists', list_of_lists)
             except Exception, e:
-                self.raiseError('Cannot create output list: %s' % str(e))
+                raise ModuleError(self, 'Cannot create output list: %s' % str(e))
             csvfile = None
 
 
@@ -190,7 +190,7 @@ class CsvWriter(ThreadSafeMixin, Module):
                 csvfile.writerows(dvll)
             self.setResult('created_file', newfile)
         except Exception, e:
-            self.raiseError('Cannot set create CSV: %s' % str(e))
+            raise ModuleError(self, 'Cannot set create CSV: %s' % str(e))
 
         csvfile = None  # flush to disk
 
@@ -261,6 +261,12 @@ class CsvFilter(ThreadSafeMixin, Module):
         ThreadSafeMixin.__init__(self)
         Module.__init__(self)
 
+    def raiseError(self, msg, error=''):
+        """Raise a VisTrails error."""
+        import traceback
+        traceback.print_exc()
+        raise ModuleError(self, msg + ': %s' % str(error))
+
     def transpose_array(self, lists):
         """Swap rows and columns from a 'list of lists'.
 
@@ -271,7 +277,7 @@ class CsvFilter(ThreadSafeMixin, Module):
             return []
         return map(lambda *row: list(row), *lists)
 
-    def create_html(self, lists, heading=False):
+    def create_html(self, lists, heading=False, delimiter=','):
         """Create a file with an HTML table from a 'list of lists'."""
         table = '<table border="1">'
         for key, list in enumerate(lists):
@@ -284,7 +290,7 @@ class CsvFilter(ThreadSafeMixin, Module):
                 table = table + '</td><td>'.join(str(column) for column in list)
                 table = table + '</td></tr>'
         table = table + '\n' + '</table>'
-        #print  "csvutils.279:", table
+        #print  "csvutils.293:", table
 
         try:
             output_file = self.interpreter.filePool.create_file(suffix='.html')
@@ -293,20 +299,19 @@ class CsvFilter(ThreadSafeMixin, Module):
             f.close()
             return output_file
         except Exception, e:
-            self.raiseError('Cannot create HTML file: %s' % str(e))
+            self.raiseError('Cannot create CSV file: %s' % str(e))
             return None
 
-    def create_csv(self, list):
+    def create_csv(self, data_list, heading=False, delimiter=','):
         """Create a CSV file from a 'list of lists'."""
-        newfile = self.interpreter.filePool.create_file(suffix='.csv')
-        #print "csvutils.299:", newfile, type(newfile)
+        output_file = self.interpreter.filePool.create_file(suffix='.csv')
         try:
-            csvfile = csv.writer(open(newfile, 'w'),
-                                 delimiter=',',
+            csvfile = csv.writer(open(output_file.name, 'w'),
+                                 delimiter=delimiter,
                                  quotechar="'")
-            if len(list) > 0:
-                csvfile.writerows(list)
-            return newfile
+            if len(data_list) > 0:
+                csvfile.writerows(data_list)
+            return output_file
         except Exception, e:
             self.raiseError('Cannot create CSV file: %s' % str(e))
             return None
@@ -415,7 +420,7 @@ class CsvFilter(ThreadSafeMixin, Module):
             try:
                 csvfile = csv.reader(open(fullname, 'r'), delimiter=delimiter)
                 for key, row in enumerate(csvfile):
-                    #print "csvutils.381: ", key, row
+                    #print "csvutils.421: ", key, row
                     if sample and key > 9:
                         break
                     elif header_in and not header_out and key == 1:
@@ -437,19 +442,22 @@ class CsvFilter(ThreadSafeMixin, Module):
                                     if key + 1 in cols_list:
                                         row_out.append(c)
                                 list_of_lists.append(row_out)
-                #print "csvutils.431:pre_transpose ", list_of_lists
+                #print "csvutils.441:pre_transpose ", list_of_lists
                 if transpose:
                     list_of_lists = self.transpose_array(list_of_lists)
-                #print "csvutils.434:post_transpose ", list_of_lists
+                #print "csvutils.444:post_transpose ", list_of_lists
                 self.setResult('dataset', list_of_lists)
                 if 'html_file' in self.outputPorts:
                     self.setResult('html_file', self.create_html(list_of_lists,
-                                                                 header_out))
+                                                                 header_out,
+                                                                 delimiter))
                 if 'csv_file' in self.outputPorts:
-                    self.setResult('csv_file', self.create_csv(list_of_lists))
+                    self.setResult('csv_file', self.create_csv(list_of_lists,
+                                                                 header_out,
+                                                                 delimiter))
                 if 'datagroups' in self.outputPorts:
                     self.setResult('datapairs', self.create_pairs(pairs,
                                                                   list_of_lists))
-            except Exception, ex:
-                print ex
+            except Exception, e:
+                self.raiseError('Unable to run compute: %s' % str(e))
             csvfile = None

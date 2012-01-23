@@ -59,6 +59,7 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
             qgis.core.QgsVectorLayer.__init__(self, uri, layername, driver)
         self.SUPPORTED_DRIVERS += ['OM', 'HDF']  # add new supported types
         self.time_series = {}
+        self.results_file = None
 
     def compute(self):
         """Execute the module to create the output"""
@@ -66,6 +67,7 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
         try:
             thefile = self.forceGetInputFromPort('file', None)
             dataReq = self.forceGetInputFromPort('dataRequest', None)
+            #print "TVL:70 file,name", thefile, thefile.name
 
             try:
                 isFILE = (thefile != None) and (thefile.name != '')
@@ -82,7 +84,7 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
                     self.thefilepath,
                     self.thefilename,
                     "ogr")
-                #print "TVL:84", self.thefilepath
+                #print "TVL:86", self.thefilepath
                 self.results_file = self.thefilepath
             elif isQGISSuported:
                 qgis.core.QgsVectorLayer.__init__(
