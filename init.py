@@ -57,7 +57,13 @@ except:
 try:
     from geoinf.helpers import init as helpers_init
 except:
-    import  geoinf.helpers.init as helpers_init
+    import geoinf.helpers.init as helpers_init
+
+# brings in tools
+try:
+    from geoinf.tools import init as tools_init
+except:
+    import geoinf.tools.init as tools_init
 
 # brings in plots
 try:
@@ -74,9 +80,9 @@ def initialize(*args, **keywords):
     # VisTrails know that you created a new module.
     # This is done by calling function addModule()
 
-    #Isolate the registration of the modules
+    # Isolate the registration of the modules
 
-    #NOTE! order does count
+    # NOTE! order does count
     rpyc_init.initialize(*args, **keywords)
     utils_init.initialize(*args, **keywords)
     datamodels_init.initialize(*args, **keywords)
@@ -87,4 +93,5 @@ def initialize(*args, **keywords):
     transform_init.initialize(*args, **keywords)
     datacube_init.initialize(*args, **keywords)
     helpers_init.initialize(*args, **keywords)
+    tools_init.initialize(*args, **keywords)
     plots_init.initialize(*args, **keywords)
