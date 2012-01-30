@@ -38,6 +38,8 @@ from packages.NumSciPy.Array import NDArray
 
 import gdalnumeric
 import gdal
+import osr
+from gdal import gdalconst
 import ctypes
 
 class RasterlangModule(ThreadSafeMixin):
@@ -57,7 +59,7 @@ class RasterLang(RPyCCode):
     own constructor, remember that it must not take any extra parameters.
     '''
     
-    _input_ports  = [('Prototype', '(za.co.csir.eo4vistrails:Raster Layer:data)')]
+    _input_ports  = [('prototype', '(za.co.csir.eo4vistrails:Raster Prototype:rasterlang)')]
     
     def __init__(self):
         RPyCCode.__init__(self)
@@ -90,7 +92,7 @@ class RasterLang(RPyCCode):
         from tempfile import mkstemp
         import numpy
         
-        self.raster_prototype = self.forceGetInputFromPort('Prototype', self.raster_prototype)
+        self.raster_prototype = self.forceGetInputFromPort('prototype', self.raster_prototype)
         
         for k in outputDict.iterkeys():
             if locals_.has_key(k) and locals_[k] != None:
@@ -105,7 +107,7 @@ class RasterLang(RPyCCode):
                     fileDescript, fileName = mkstemp(suffix='.img', text=False)
                     if self.raster_prototype:
                         #use the prototype provided
-                        gdalnumeric.SaveArray(locals_[k], fileName, format="HFA", prototype=str(self.raster_prototype.source()))
+                        writeImage(locals_[k], self.raster_prototype, fileName, "HFA")
                     else:
                         #No Prototype
                         gdalnumeric.SaveArray(locals_[k], fileName, format="HFA")
@@ -143,6 +145,7 @@ class layerAsArray(RasterlangModule, RPyCModule):
     def preCompute(self):
         layer = self.getInputFromPort('Raster Layer')
         g = gdal.Open(str(layer.source()))
+        #TODO: Need to cehck the ctype that the image is 
         self.allocateSharedMemoryArray('numpy array', ctypes.c_float, (g.RasterYSize,g.RasterXSize))
     
     def compute(self):
@@ -153,13 +156,43 @@ class layerAsArray(RasterlangModule, RPyCModule):
 
         self.setResult("numpy array", None, asNDArray=True)
 
+@RPyCSafeModule()
+class RasterPrototype(RasterlangModule, RPyCModule):
+    """ Container class for the connected components command """
+
+    _input_ports  = [('(XMin,YMax,XMax,YMin) Extent', '(edu.utah.sci.vistrails.basic:Float,edu.utah.sci.vistrails.basic:Float,edu.utah.sci.vistrails.basic:Float,edu.utah.sci.vistrails.basic:Float)'),
+                     ('(Rows, Cols) Pixel Count', '(edu.utah.sci.vistrails.basic:Integer,edu.utah.sci.vistrails.basic:Integer)'),
+                     ('No Data Value', '(edu.utah.sci.vistrails.basic:Float)'),
+                     ('Cordinate Reference System', '(za.co.csir.eo4vistrails:EPSG Code:data)')]
+    _output_ports = [('self', '(za.co.csir.eo4vistrails:Raster Prototype:rasterlang)')]
+    
+    def __init__(self):
+        RPyCModule.__init__(self)
+        RasterlangModule.__init__(self)
+
+    def clear(self):
+        RPyCModule.clear(self)
+
+    def compute(self):
+        self.epsgcode = self.getInputFromPort('Cordinate Reference System')
+        self.noDatavalue = self.forceGetInputFromPort('No Data Value', None)
+        
+        (self.xmin,self.ymax,self.xmax,self.ymin) = self.getInputFromPort('(XMin,YMax,XMax,YMin) Extent')
+        (self.yrows, self.xcols) = self.getInputFromPort('(Rows, Cols) Pixel Count')
+        
+        self.xres=(self.xmax-self.xmin)/float(self.xcols)
+        self.yres=(self.ymax-self.ymin)/float(self.yrows)
+        
+        self.geotransform=(self.xmin,self.xres,0,self.ymax,0,-self.yres)
+        
+        self.setResult("self", self)
 
 @RPyCSafeModule()
 class arrayAsLayer(RasterlangModule, RPyCModule):
     """ Container class for the connected components command """
 
     _input_ports  = [('numpy array', '(edu.utah.sci.vistrails.numpyscipy:Numpy Array:numpy|array)'),
-                     ('prototype', '(za.co.csir.eo4vistrails:Raster Layer:data)')]
+                     ('prototype', '(za.co.csir.eo4vistrails:Raster Prototype:rasterlang)')]
     _output_ports = [('raster layer', '(za.co.csir.eo4vistrails:Raster Layer:data)')]
 
     def __init__(self):
@@ -173,18 +206,13 @@ class arrayAsLayer(RasterlangModule, RPyCModule):
         ndarray = self.getInputFromPort('numpy array')
         prototype = self.getInputFromPort('prototype')
 
-        e = prototype.extent()
-        extent = [e.xMinimum(),e.yMinimum(),e.xMaximum(),e.yMaximum()]
-
         #TODO: make platform independant
-        tmpFile = self.interpreter.filePool.create_file(suffix='.img')
-
-        #writeImage(ndarray.get_array(), extent, tmpFile.name, format='HFA' )
-
-        gdalnumeric.SaveArray(ndarray.get_array(), tmpFile.name, format='HFA', prototype=str(prototype.source()))
-
+        tmpFile = self.interpreter.filePool.create_file(suffix='.tiff')
+        writeImage(ndarray.get_array(), prototype, tmpFile.name, 'GTiff')
+        
         outlayer = QgsRasterLayer(tmpFile.name, tmpFile.name)
-
+        fixLayerMinMax(outlayer)
+        
         self.setResult("raster layer", outlayer)
 
 @RPyCSafeModule()
@@ -192,7 +220,7 @@ class SaveArrayToRaster(RasterlangModule, RPyCModule):
     """ Container class for the connected components command """
 
     _input_ports  = [('numpy array', '(edu.utah.sci.vistrails.numpyscipy:Numpy Array:numpy|array)'),
-                     ('prototype', '(za.co.csir.eo4vistrails:Raster Layer:data)'),
+                     ('prototype', '(za.co.csir.eo4vistrails:Raster Prototype:rasterlang)'),
                      ('output file', '(edu.utah.sci.vistrails.basic:File)'),
                      ('format', '(za.co.csir.eo4vistrails:GDAL Format:rasterlang)')]
 
@@ -209,14 +237,12 @@ class SaveArrayToRaster(RasterlangModule, RPyCModule):
         prototype = self.getInputFromPort('prototype')
         outformat = self.getInputFromPort('format')
         
-        print "protoype nodata", prototype.noDataValue()
-
-        gdalnumeric.SaveArray(ndarray.get_array(), outfile.name, format=outformat, prototype=str(prototype.source()))
+        if prototype.noDatavalue:
+            print "protoype nodata", prototype.noDataValue
+        
+        writeImage(ndarray.get_array(), prototype, outfile.name, outformat)
         
         self.setResult('output file path', outfile)
-        #e = layer.extent()
-        #extent = [e.xMinimum(),e.yMinimum(),e.xMaximum(),e.yMaximum()]
-#        writeImage(ndarray.get_array(), extent, outfile.name, format='HFA' )
 
 from core.modules import basic_modules
 from packages.eo4vistrails.utils.DropDownListWidget import ComboBoxWidget
@@ -224,15 +250,15 @@ from packages.eo4vistrails.utils.DropDownListWidget import ComboBoxWidget
 class GDALFormatComboBoxWidget(ComboBoxWidget):
     """TODO Write docstring."""
     _KEY_VALUES = {'HFA': 'HFA', 'GEOTiff':'GEOTiff'}
-    
+
 # LinuxComboBox
 GDALFormatComboBox = basic_modules.new_constant('GDAL Format',
                                                 staticmethod(str),
                                                 'HFA',
                                                 staticmethod(lambda x: type(x) == str),
                                                 GDALFormatComboBoxWidget)
-
-def writeImage(arrayData, extent, path, format, epsg=None):
+                                           
+def writeImage(arrayData, prototype, path, format):
     """
     write the given array data to the file 'path' with the given extent.
     
@@ -259,23 +285,93 @@ def writeImage(arrayData, extent, path, format, epsg=None):
         cols = dims[2]
         nbands = dims[0]
 
-    # could possible use CreateCopy from one of the input rasters...
-    dst_ds = driver.Create(path, cols, rows, nbands, gdal.GDT_Float32 )
+    #TODO lookup the data type from the array and do the mapping
+    dst_ds = driver.Create(path, cols, rows, nbands, gdalnumeric.NumericTypeCodeToGDALTypeCode(arrayData.dtype.type) )
 
-    dst_ds.SetGeoTransform( [
-        extent[0], (extent[2]-extent[0])/cols, 0,
-        extent[3], 0, (extent[1]-extent[3])/rows ] )
-
-    if epsg:
-        import osr
+    dst_ds.SetGeoTransform( prototype.geotransform )
+    print prototype.epsgcode
+    
+    if prototype.epsgcode:
         srs = osr.SpatialReference()
-        srs.SetProjCS( "EPSG:%s"%epsg )
+        srs.ImportFromEPSG(prototype.epsgcode)
         dst_ds.SetProjection( srs.ExportToWkt() )
     
     if nbands > 1:
         for i in range(nbands):
-            dst_ds.GetRasterBand(i+1).WriteArray(arrayData[i])
+            dst_ds_rb = dst_ds.GetRasterBand(i+1)
+            dst_ds_rb.WriteArray(arrayData[i])
+            if prototype.noDatavalue:
+                dst_ds_rb.SetNoDataValue(prototype.nodatavalue)
     else:
-        dst_ds.GetRasterBand(1).WriteArray(arrayData)
+        dst_ds_rb = dst_ds.GetRasterBand(1)
+        if prototype.noDatavalue:
+            dst_ds_rb.SetNoDataValue(prototype.nodatavalue)
+        dst_ds_rb.SetColorInterpretation(gdalconst.GCI_GrayIndex)
+        dst_ds_rb.SetColorTable(gdal.ColorTable(gdalconst.GPI_Gray))
+        dst_ds_rb.WriteArray(arrayData)
+    
+    dst_ds = None
         
     return True
+
+def fixLayerMinMax(layer):
+    allowedGreyStyles = [ QgsRasterLayer.SingleBandGray,
+         QgsRasterLayer.MultiBandSingleBandPseudoColor,
+         QgsRasterLayer.MultiBandSingleBandGray,
+         QgsRasterLayer.SingleBandPseudoColor ]
+    allowedRgbStyles = [ QgsRasterLayer.MultiBandColor ]        
+
+    # test if the layer is a raster from a local file (not a wms)
+    if layer.type() == layer.RasterLayer: # and ( not layer.usesProvider() ):
+        # Test if the raster is single band greyscale
+        if layer.drawingStyle() in allowedGreyStyles:
+            #Everything looks fine so set stretch and exit
+            #For greyscale layers there is only ever one band
+            band = layer.bandNumber( layer.grayBandName() ) # base 1 counting in gdal
+            extentMin = 0.0
+            extentMax = 0.0
+            generateLookupTableFlag = False
+            # compute the min and max for the current extent
+            extentMin, extentMax = layer.computeMinimumMaximumEstimates( band )
+            print "min max color", extentMin, extentMax
+            # set the layer min value for this band
+            layer.setMinimumValue( band, extentMin, generateLookupTableFlag )
+            # set the layer max value for this band
+            layer.setMaximumValue( band, extentMax, generateLookupTableFlag )
+            # ensure that stddev is set to zero
+            layer.setStandardDeviations( 0.0 )
+            # let the layer know that the min max are user defined
+            layer.setUserDefinedGrayMinimumMaximum( True )
+            # ensure any cached render data for this layer is cleared
+            layer.setCacheImage( None )
+        elif layer.drawingStyle() in allowedRgbStyles:
+            #Everything looks fine so set stretch and exit
+            redBand = layer.bandNumber( layer.redBandName() )
+            greenBand = layer.bandNumber( layer.greenBandName() )
+            blueBand = layer.bandNumber( layer.blueBandName() )
+            extentRedMin = 0.0
+            extentRedMax = 0.0
+            extentGreenMin = 0.0
+            extentGreenMax = 0.0
+            extentBlueMin = 0.0
+            extentBlueMax = 0.0
+            generateLookupTableFlag = False
+            # compute the min and max for the current extent
+            extentRedMin, extentRedMax = layer.computeMinimumMaximumEstimates( redBand )
+            extentGreenMin, extentGreenMax = layer.computeMinimumMaximumEstimates( greenBand )
+            extentBlueMin, extentBlueMax = layer.computeMinimumMaximumEstimates( blueBand )
+            # set the layer min max value for the red band
+            layer.setMinimumValue( redBand, extentRedMin, generateLookupTableFlag )
+            layer.setMaximumValue( redBand, extentRedMax, generateLookupTableFlag )
+            # set the layer min max value for the red band
+            layer.setMinimumValue( greenBand, extentGreenMin, generateLookupTableFlag )
+            layer.setMaximumValue( greenBand, extentGreenMax, generateLookupTableFlag )
+            # set the layer min max value for the red band
+            layer.setMinimumValue( blueBand, extentBlueMin, generateLookupTableFlag )
+            layer.setMaximumValue( blueBand, extentBlueMax, generateLookupTableFlag )
+            # ensure that stddev is set to zero
+            layer.setStandardDeviations( 0.0 )
+            # let the layer know that the min max are user defined
+            layer.setUserDefinedRGBMinimumMaximum( True )
+            # ensure any cached render data for this layer is cleared
+            layer.setCacheImage( None )

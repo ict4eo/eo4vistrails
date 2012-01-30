@@ -50,14 +50,9 @@ class Rpy2Script(Script):
     """
        Run R scripts using rpy2 interface
     """
-    _input_ports = [
-                    # ('inputDataFiles', '(edu.utah.sci.vistrails.basic:File)')
-                   #,('inputNumpyArray', '(edu.utah.sci.vistrails.numpyscipy:Numpy Array:numpy|array)')
-                   ]
+    _input_ports = []
 
-    _output_ports = [('self', '(edu.utah.sci.vistrails.basic:Module)')
-                     #('myDict', '(edu.utah.sci.vistrails.basic:Dictionary)')
-                     ]
+    _output_ports = [('self', '(edu.utah.sci.vistrails.basic:Module)')]
 
     def __init__(self):
         Script.__init__(self)
@@ -83,7 +78,7 @@ class Rpy2Script(Script):
                 tempDicttoPy = self.rPyConversion(tempDict)
                 inputDict[k] = tempDicttoPy
             elif type(inputDict[k]) == list:
-                myListArr = numpy.array(inputDict[k])
+                myListArr = numpy.asarray(inputDict[k])
                 inputDict[k] = myListArr
             robjects.globalenv[k] = inputDict[k]
 
@@ -94,10 +89,6 @@ class Rpy2Script(Script):
             raise ModuleError(Rpy2Script, "Could not execute R Script")
         #Converting R result to Python type
         rResult = self.rPyConversion(resultVar)
-
-        #Converting R result to Python type
-        mylist = self.rPyConversion(resultVar)
-        #testing purposes
 
         outputDict = dict([(k, None)
                            for k in self.outputPorts])
@@ -117,10 +108,11 @@ class Rpy2Script(Script):
                         self.setResult(k, robjects.globalenv[k][0])
                     elif str(self.getPortType(k)) == "<class 'core.modules.vistrails_module.Boolean'>":
                         self.setResult(k, robjects.globalenv[k][0])
-                    elif str(self.getPortType(k)) == "<class 'core.modules.vistrails_module.List'>" or \
-                    str(self.getPortType(k)) == "<class 'packages.NumSciPy.Array.NDArray'>" :
+                    elif str(self.getPortType(k)) == "<class 'core.modules.vistrails_module.List'>" \
+                    or str(self.getPortType(k)) == "<class 'packages.NumSciPy.Array.NDArray'>" :
+                        print "setting output numpy array"
                         outArray = NDArray()
-                        outArray.set_array(numpy.array(robjects.globalenv[k]))                        
+                        outArray.set_array(numpy.asarray(robjects.globalenv[k]))                    
                         self.setResult(k, outArray)
                     elif self.getPortType(k) == type(rResult):
                         self.setResult(k, rResult)
@@ -154,7 +146,7 @@ class Rpy2Script(Script):
                   isinstance(data, robjects.vectors.ComplexVector) or
                   isinstance(data, robjects.vectors.StrVector)) and \
                   (len(data) > 1):
-                return numpy.array(data)
+                return numpy.asarray(data)
             elif (isinstance(data, robjects.vectors.FloatVector) or \
                   isinstance(data, robjects.vectors.IntVector) or
                   isinstance(data, robjects.vectors.BoolVector) or \
@@ -163,13 +155,13 @@ class Rpy2Script(Script):
                   (len(data) == 1):
                 return data[0]
             elif isinstance(data, rpy2.robjects.vectors.Vector):
-                return numpy.array(data)
+                return numpy.asarray(data)
             elif isinstance(data, rpy2.robjects.vectors.DataFrame):
                 return data
             elif isinstance(data, rpy2.rinterface.RNULLType):
                 return None
             elif isinstance(data, rpy2.robjects.vectors.Array):
-                return numpy.array(data)
+                return numpy.asarray(data)
             elif data == "":
                 return None
         except:

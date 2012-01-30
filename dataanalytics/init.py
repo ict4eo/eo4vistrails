@@ -48,6 +48,7 @@ def initialize(*args, **keywords):
 
     #Add Rasterlang
     reg.add_module(Rasterlang.GDALFormatComboBox, namespace=mynamespace, abstract=True)
+    reg.add_module(Rasterlang.RasterPrototype, name="Raster Prototype", namespace=mynamespace)
     reg.add_module(Rasterlang.layerAsArray, namespace=mynamespace)
     reg.add_module(Rasterlang.SaveArrayToRaster, name="Save Array To Raster", namespace=mynamespace)
     reg.add_module(Rasterlang.arrayAsLayer, namespace=mynamespace)
@@ -89,6 +90,19 @@ def initialize(*args, **keywords):
                    namespace=mynamespace,
                    configureWidgetType=octave.OctaveSourceConfigurationWidget)
 
+#    import rstats
+#    mynamespace = "r"
+#    reg.add_module(rstats.RScript,
+#                   name="R Script",
+#                   namespace=mynamespace,
+#                   configureWidgetType=rstats.RSourceConfigurationWidget)
+
+#    import r   
+#    mynamespace = "r"
+#    reg.add_module(r.RScriptExec,
+#                   name="R Script Exec",
+#                   namespace=mynamespace,
+#                   configureWidgetType=r.RSourceConfigurationWidget)
                    
     import rpy2Stats
     mynamespace="r"
