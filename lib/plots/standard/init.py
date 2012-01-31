@@ -4,6 +4,7 @@ def initialize(*args, **keywords):
     from packages.pylab.plot import MplPlot, MplPlotConfigurationWidget
     from packages.eo4vistrails.lib.plots.standard.plot import \
         ParentPlot, SinglePlot, Histogram, MultiPlot, \
+        MatplotlibDateFormatComboBox, \
         MatplotlibMarkerComboBox, MatplotlibPlotTypeComboBox, \
         MatplotlibLineStyleComboBox, MatplotlibHistogramTypeComboBox
 
@@ -11,6 +12,7 @@ def initialize(*args, **keywords):
     namespace = "plots"
 
     # abstract modules - drop-down lists
+    reg.add_module(MatplotlibDateFormatComboBox, namespace=namespace, abstract=True)
     reg.add_module(MatplotlibMarkerComboBox, namespace=namespace, abstract=True)
     reg.add_module(MatplotlibPlotTypeComboBox, namespace=namespace, abstract=True)
     reg.add_module(MatplotlibLineStyleComboBox, namespace=namespace, abstract=True)

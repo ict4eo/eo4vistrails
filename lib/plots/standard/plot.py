@@ -271,6 +271,8 @@ class SinglePlot(ParentPlot):
             * date(x) plots, X data points are date values
         plot:
             the type of plot (line, scatter, date(x), windrose)
+        date_format:
+            the applicable format for the date values (in date(x) plots)
         line_style:
             the type of line style (defaults to solid)
         marker:
@@ -294,6 +296,7 @@ class SinglePlot(ParentPlot):
     """
     _input_ports = [('xyData', '(edu.utah.sci.vistrails.basic:List)'),
                     ('plot', '(za.co.csir.eo4vistrails:Plot Type:plots)'),
+                    ('date_format', '(za.co.csir.eo4vistrails:Date Format:plots)'),
                     ('marker', '(za.co.csir.eo4vistrails:Plot Marker:plots)'),
                     ('line_style', '(za.co.csir.eo4vistrails:Plot Line Style:plots)'),
                     ('title', '(edu.utah.sci.vistrails.basic:String)'),
@@ -325,6 +328,7 @@ class SinglePlot(ParentPlot):
 
     def compute(self):
         plot_type = self.forceGetInputFromPort('plot', 'scatter')
+        date_format = self.forceGetInputFromPort('date_format', '%Y-%m-%d')
         marker_type = self.forceGetInputFromPort('marker', 's')
         line_style = self.forceGetInputFromPort('line_style', '-')
         if self.hasInputFromPort('facecolor'):
@@ -345,7 +349,7 @@ class SinglePlot(ParentPlot):
                 pylab.ylabel(self.getInputFromPort('yAxis_label'))
 
             if plot_type == 'date':
-                x_data_m = self.list_to_dates(xyData[0])
+                x_data_m = self.list_to_dates(xyData[0], date_format)
                 pylab.plot_date(x_data_m, y_data_m, xdate=True, marker=marker_type,
                                 markerfacecolor=self.facecolor)
                 fig.autofmt_xdate()  # pretty-format date axis
@@ -375,6 +379,15 @@ class MultiPlot(ParentPlot):
             dates, but Y-values must be numeric.
         plot:
             the type of plot
+        date_format:
+            the applicable format for the date values (in date(x) plots)
+             * YY = full year (century and year)
+             * MM = zero-padded month
+             * DD = zero-padded day
+             * HH = zero-padded hours
+             * MM = zero-padded minutes
+             * SS = zero-padded seconds
+             * Z = time zone
         title:
             a title that will appear above the plot
         xAxis_label:
@@ -389,22 +402,25 @@ class MultiPlot(ParentPlot):
     """
     _input_ports = [('datasets', '(edu.utah.sci.vistrails.basic:List)'),
                     ('plot', '(za.co.csir.eo4vistrails:Plot Type:plots)'),
+                    ('date_format', '(za.co.csir.eo4vistrails:Date Format:plots)'),
                     ('title', '(edu.utah.sci.vistrails.basic:String)'),
                     ('xAxis_label', '(edu.utah.sci.vistrails.basic:String)'),
                     ('yAxis_label', '(edu.utah.sci.vistrails.basic:String)')]
     _output_ports = [('source', '(edu.utah.sci.vistrails.basic:String)')]
 
     def compute(self):
+        """Compute results."""
         MARKER = ('o', 'd', '*', '+', 's', 'v', 'x',  '>', '<', '^', 'h', )
         line_style = '-'
         plot_type = self.forceGetInputFromPort('plot', 'scatter')
+        date_format = self.forceGetInputFromPort('date_format', '%Y-%m-%d')
         if self.hasInputFromPort('datasets'):
             data_sets = self.getInputFromPort('datasets')
             if type(data_sets) != list:
                 data_sets = [data_sets]
         else:
             data_sets = []
-        #print "plot:380", data_sets
+        print "plot:416", data_sets
 
         fig = pylab.figure()
         pylab.setp(fig, facecolor='w')  # background color
@@ -420,7 +436,7 @@ class MultiPlot(ParentPlot):
 
         if data_sets:
             x_series = data_sets[0]
-            #print "plot:395", x_series
+            print "plot:432", x_series
             for key, dataset in enumerate(data_sets):
                 if key:  # skip first series (used for X-axis data)
                     marker_number = key - (max_markers * int(key / max_markers)) - 1
@@ -428,14 +444,15 @@ class MultiPlot(ParentPlot):
 
                     # Y AXIS DATA
                     y_data_m = x_data_m = self.list_to_floats(dataset)
-                    #print "plot:404", key, marker_number, y_data
+                    print "plot:440 ydata", key, marker_number, y_data_m
                     # X-AXIS DATA
                     if plot_type in ('scatter', 'line'):
                         x_data_m = self.list_to_floats(x_series)
 
                     if plot_type == 'date':
-                        x_data_m = self.list_to_dates(x_series)
-                        #print "plot:411", key, marker_number, x_data, x_data_m
+                        x_data_m = self.list_to_dates(x_series, date_format)
+                        print "plot:447 xdata", key, marker_number, "\n", x_data_m
+                        #print "plot:449", self.facecolor, "\n", marker_number
                         ax.plot_date(x_data_m, y_data_m, xdate=True,
                                         marker=MARKER[marker_number],
                                         markerfacecolor=self.facecolor)
@@ -488,6 +505,18 @@ plt.figure(2)
 plt.plot(range(2),range(2))
 
     """
+
+
+class MatplotlibDateFormatComboBoxWidget(ComboBoxWidget):
+    """Marker constants used for drawing markers on a matplotlib plot."""
+    _KEY_VALUES = {'YYYYMMDD': '%Y-%m-%d', 'YYYYMMDDHHMMSS': '%Y-%m-%d %H:%M:%S',
+                   'YYYYMMDDHHMMSSZ': '%Y-%m-%d %H:%M:%S %Z'}
+
+MatplotlibDateFormatComboBox = basic_modules.new_constant('Date Format',
+                                        staticmethod(str),
+                                        's',
+                                        staticmethod(lambda x: type(x) == str),
+                                        MatplotlibDateFormatComboBoxWidget)
 
 
 class MatplotlibMarkerComboBoxWidget(ComboBoxWidget):

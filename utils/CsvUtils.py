@@ -403,8 +403,8 @@ class CsvFilter(ThreadSafeMixin, Module):
         delimiter = self.forceGetInputFromPort('delimiter', ",")
         sample = self.forceGetInputFromPort("sample_set", False)
         transpose = self.forceGetInputFromPort("transpose", False)
-        header_in = self.forceGetInputFromPort("sample_set", False)
-        header_out = self.forceGetInputFromPort("sample_set", True)
+        header_in = self.forceGetInputFromPort("header_in", False)
+        header_out = self.forceGetInputFromPort("header_out", True)
         filter_rows = self.forceGetInputFromPort("filter_rows", "")
         filter_cols = self.forceGetInputFromPort("filter_cols", "")
         pairs = self.forceGetInputFromPort("pairs", "")
@@ -412,20 +412,24 @@ class CsvFilter(ThreadSafeMixin, Module):
         list_of_lists = []
         cols_list = self.get_filter_specs(filter_cols)
         rows_list = self.get_filter_specs(filter_rows)
-        #print "csvutils.404: ", cols_list, rows_list
+        #print "csvutils.415: ", cols_list, rows_list
         if not header_in:
-            header_out = False  # cannot write out a row that is not there...
+            header_out = False  # cannot process a row that is not there...
 
         if os.path.isfile(fullname):
             try:
                 csvfile = csv.reader(open(fullname, 'r'), delimiter=delimiter)
+                #print "csvutils.422:", header_in, header_out
                 for key, row in enumerate(csvfile):
-                    #print "csvutils.421: ", key, row
-                    if sample and key > 9:
+                    if key == 0 and header_in and not header_out:
+                        # skip header row
+                        #print "CSVUtils:426 - skip header_out", key
+                        pass
+                    elif key > 9  and sample:
+                        # have the sample data now...
                         break
-                    elif header_in and not header_out and key == 1:
-                        pass  # skip header row
                     else:
+                        #print "csvutils.432: data", key, row
                         if not cols_list:
                             if not rows_list:
                                 list_of_lists.append(row)
@@ -442,10 +446,10 @@ class CsvFilter(ThreadSafeMixin, Module):
                                     if key + 1 in cols_list:
                                         row_out.append(c)
                                 list_of_lists.append(row_out)
-                #print "csvutils.441:pre_transpose ", list_of_lists
+                #print "csvutils.449:pre_transpose ", list_of_lists
                 if transpose:
                     list_of_lists = self.transpose_array(list_of_lists)
-                #print "csvutils.444:post_transpose ", list_of_lists
+                #print "csvutils.454:post_transpose ", list_of_lists
                 self.setResult('dataset', list_of_lists)
                 if 'html_file' in self.outputPorts:
                     self.setResult('html_file', self.create_html(list_of_lists,
