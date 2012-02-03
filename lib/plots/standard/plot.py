@@ -31,11 +31,12 @@ extended plotting types and configuration options.
 """
 
 # library
-import time
-import urllib
 from datetime import datetime
-import random
 from numpy import array, ma
+import random
+import time
+import types
+import urllib
 # third party
 # vistrails
 from core.bundles import py_import
@@ -92,12 +93,12 @@ class ParentPlot(NotCacheable, Module):
         or 'almost zero' if invalid.
 
         Notes:
-         *  Ignores time-zone settings appended with a +;
+         *  Ignores time-zone settings appended with a + because
             datetime.strptime cannot process these "as is".
         """
         try:
             dt = string.split('+')
-            #print "plot:100-to_date", dt
+            print "plot:100-to_date", dt
             return matplotlib.dates.date2num(datetime.strptime(dt[0], date_format))
         except:
             return self.MISSING
@@ -119,9 +120,6 @@ class ParentPlot(NotCacheable, Module):
     def list_to_dates(self, items, date_format='%Y-%m-%d'):
         """Convert a list into a list of masked date values, with each date
         in the specified date format.
-
-        Notes:
-         *  matplotlib seems to require date data in the form '%Y-%m-%d'
         """
         if not items:
             return None
@@ -145,6 +143,61 @@ class ParentPlot(NotCacheable, Module):
             if first != item:
                 return False
         return True
+
+    def series(self, list_array):
+        """Convert a list into lists of X and Y values ("series")
+
+        If the list only contains single values, these are assumed to be Y values
+        and the X values are created from the index values (starting from 1)
+
+        If the list contains tuples, these are assumed to be ordered X,Y values
+
+        If the list contains sublists:
+         * if each of these contains a list of tuples, it is converted as above.
+         * if each of these contains a list of values, then:
+           * the first list is assumed to contain X values, and
+           * the second and subsequent lists are assumed to contain Y values
+
+        """
+
+        def listsOnly(list):
+            return len(list) == len([x for x in list if isinstance(x, types.ListType)])
+
+        def tuplesOnly(list):
+            return len(list) == len([x for x in list if isinstance(x, types.TupleType)])
+
+        def valuesOnly(list):
+            return len(list) == len([x for x in list if not (isinstance(x, types.ListType)\
+                                                             or isinstance(x, types.TupleType))])
+
+        xs = []
+        ys = []
+
+        if listsOnly(list_array):
+            for index, sery in enumerate(list_array):
+                if tuplesOnly(sery):
+                     xs.append( [w[0] for w in sery] )
+                     ys.append( [w[1] for w in sery] )
+                elif valuesOnly(sery):
+                     if index > 0:
+                         xs.append(list_array[0])
+                         ys.append(sery)
+                else:
+                    pass
+
+        elif tuplesOnly(list_array):
+             xs.append( [w[0] for w in list_array] )
+             ys.append( [w[1] for w in list_array] )
+
+        elif valuesOnly(list_array):
+            ys.append(list_array)
+            xs.append( [index + 1 for index, i in enumerate(list_array)] )
+
+        else:
+            pass
+
+        return xs, ys
+
 
     def compute(self):
         pass
@@ -281,16 +334,16 @@ class SinglePlot(ParentPlot):
              * MM = zero-padded minutes
              * SS = zero-padded seconds
              * .n = micro-seconds (up to 6 decimal places)
-        line_style:
-            the type of line style (defaults to solid)
-        marker:
-            the type of marker (defaults to square)
         title:
             an optional title that will appear above the plot
         xAxis_label:
             an optional label for the X-axis (ignored for windrose)
         yAxis_label:
             an optional label for the Y-axis (ignored for windrose)
+        line_style:
+            the type of line style (defaults to solid)
+        marker:
+            the type of marker (defaults to square)
         facecolor:
             the color for the face of the markers (plot color for windrose)
 
@@ -305,11 +358,11 @@ class SinglePlot(ParentPlot):
     _input_ports = [('xyData', '(edu.utah.sci.vistrails.basic:List)'),
                     ('plot', '(za.co.csir.eo4vistrails:Plot Type:plots)'),
                     ('date_format', '(za.co.csir.eo4vistrails:Date Format:plots)'),
-                    ('marker', '(za.co.csir.eo4vistrails:Plot Marker:plots)'),
-                    ('line_style', '(za.co.csir.eo4vistrails:Plot Line Style:plots)'),
                     ('title', '(edu.utah.sci.vistrails.basic:String)'),
                     ('xAxis_label', '(edu.utah.sci.vistrails.basic:String)'),
                     ('yAxis_label', '(edu.utah.sci.vistrails.basic:String)'),
+                    ('marker', '(za.co.csir.eo4vistrails:Plot Marker:plots)'),
+                    ('line_style', '(za.co.csir.eo4vistrails:Plot Line Style:plots)'),
                     ('facecolor', '(edu.utah.sci.vistrails.basic:Color)')]
     _output_ports = [('source', '(edu.utah.sci.vistrails.basic:String)')]
 
@@ -381,10 +434,18 @@ class MultiPlot(ParentPlot):
     """Allows multiple series to be plotted on the same plot.
 
     Input ports:
-        datasets:
-            a list of lists - the first list is the X values, and the second
-            and subsequent sets are the Y values.  X-values can be numeric or
-            dates, but Y-values must be numeric.
+        xyData:
+            a data list of X and Y values - X-values can be numeric or dates,
+            but Y-values must be numeric.  The list format can be any one of:
+             *  [Y0, Y1, Y2 ... Yn]; in this case the X values are created from
+                the index values (i.e. 1, 2, 3...)
+             *  [[X0, X1, X2 ... Xn], [Y0, Y1, Y2 ... Yn]]
+             *  [(X0, Y0), (X1, Y1), (x2, Y2) ... (Xn, Yn)]
+             *  [[X0, X1, X2 ... Xn], [Y0, Y1, Y2 ... Yn], [Y0, Y1, Y2 ... Yn]]
+                for multiple series, with the *same* set of X values
+             *  [[(X0, Y0), (X1, Y1), (x2, Y2) ... (Xn, Yn)],
+                [(X0, Y0), (X1, Y1), (x2, Y2) ... (Xn, Yn)]]
+                for multiple series, with *differing* sets of X values
         plot:
             the type of plot
         date_format:
@@ -408,7 +469,7 @@ class MultiPlot(ParentPlot):
             the matplotlib source code for the plot
 
     """
-    _input_ports = [('datasets', '(edu.utah.sci.vistrails.basic:List)'),
+    _input_ports = [('xyData', '(edu.utah.sci.vistrails.basic:List)'),
                     ('plot', '(za.co.csir.eo4vistrails:Plot Type:plots)'),
                     ('date_format', '(za.co.csir.eo4vistrails:Date Format:plots)'),
                     ('title', '(edu.utah.sci.vistrails.basic:String)'),
@@ -422,13 +483,13 @@ class MultiPlot(ParentPlot):
         line_style = '-'
         plot_type = self.forceGetInputFromPort('plot', 'scatter')
         date_format = self.forceGetInputFromPort('date_format', '%Y-%m-%d')
-        if self.hasInputFromPort('datasets'):
-            data_sets = self.getInputFromPort('datasets')
+        if self.hasInputFromPort('xyData'):
+            data_sets = self.getInputFromPort('xyData')
             if type(data_sets) != list:
                 data_sets = [data_sets]
         else:
             data_sets = []
-        #print "plot:431", data_sets
+        #print "plot:491", data_sets
 
         fig = pylab.figure()
         pylab.setp(fig, facecolor='w')  # background color
@@ -443,37 +504,40 @@ class MultiPlot(ParentPlot):
         max_markers = len(MARKER)
 
         if data_sets:
-            x_series = data_sets[0]
-            #print "plot:442", x_series
-            for key, dataset in enumerate(data_sets):
-                if key:  # skip first series (used for X-axis data)
-                    marker_number = key - (max_markers * int(key / max_markers)) - 1
-                    self.facecolor = self.random_color()
+            x_series, y_series = self.series(data_sets)
+            for key, dataset in enumerate(x_series):
+                print "plot:507 xdata", x_series[key]
 
-                    # Y AXIS DATA
-                    y_data_m = x_data_m = self.list_to_floats(dataset)
-                    #print "plot:455 ydata", key, marker_number, y_data_m
-                    # X-AXIS DATA
-                    if plot_type in ('scatter', 'line'):
-                        x_data_m = self.list_to_floats(x_series)
+                # infinite 'loop' through set of available markers
+                marker_number = key - (max_markers * int(key / max_markers)) - 1
+                self.facecolor = self.random_color()
 
-                    if plot_type == 'date':
-                        x_data_m = self.list_to_dates(x_series, date_format)
-                        #print "plot:462 xdata", key, marker_number, "\n", x_data_m
-                        #print "plot:449", self.facecolor, "\n", marker_number
-                        ax.plot_date(x_data_m, y_data_m, xdate=True,
-                                        marker=MARKER[marker_number],
-                                        markerfacecolor=self.facecolor)
-                        fig.autofmt_xdate()  # pretty-format date axis
-                    elif plot_type == 'scatter':
-                        ax.scatter(x_data_m, y_data_m, marker=MARKER[marker_number],
-                                   facecolor=self.facecolor)
-                    elif plot_type == 'line':
-                        ax.plot(x_data_m, y_data_m, marker=MARKER[marker_number],
-                                linestyle=line_style,
-                                markerfacecolor=self.facecolor)
-                    else:
-                        raise NameError('plot_type %s  is undefined.' % plot_type)
+                # Y AXIS DATA
+                y_data_m = self.list_to_floats(y_series[key])
+                print "plot:515 ydata", key, y_data_m
+
+                # X-AXIS DATA
+                if plot_type in ('scatter', 'line'):
+                    x_data_m = self.list_to_floats(x_series[key])
+                elif plot_type in ('date'):
+                    x_data_m = self.list_to_dates(x_series[key], date_format)
+                else:
+                    raise NameError('plot_type %s  is undefined.' % plot_type)
+
+                if plot_type == 'date':
+                    ax.plot_date(x_data_m, y_data_m, xdate=True,
+                                    marker=MARKER[marker_number],
+                                    markerfacecolor=self.facecolor)
+                    fig.autofmt_xdate()  # pretty-format date axis
+                elif plot_type == 'scatter':
+                    ax.scatter(x_data_m, y_data_m, marker=MARKER[marker_number],
+                               facecolor=self.facecolor)
+                elif plot_type == 'line':
+                    ax.plot(x_data_m, y_data_m, marker=MARKER[marker_number],
+                            linestyle=line_style,
+                            markerfacecolor=self.facecolor)
+                else:
+                    raise NameError('plot_type %s  is undefined.' % plot_type)
 
         pylab.get_current_fig_manager().toolbar.hide()
         self.setResult('source', "")
