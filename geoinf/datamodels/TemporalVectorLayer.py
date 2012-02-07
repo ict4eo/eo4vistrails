@@ -50,7 +50,8 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
     Associated data is stored, and can be referenced, in a local file.
 
     For example, in the case of a SOS, the data fetched from the server
-    will be stored in an O&M schema-based XML file (self.results_file)
+    will be stored in an O&M schema-based XML file, with the filename
+    `self.results_file`
     """
 
     def __init__(self, uri=None, layername=None, driver=None):
@@ -67,7 +68,7 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
         try:
             thefile = self.forceGetInputFromPort('file', None)
             dataReq = self.forceGetInputFromPort('dataRequest', None)
-            #print "TVL:70 file,name", thefile, thefile.name
+            #print "TVL:71 file,name", thefile, thefile.name
 
             try:
                 isFILE = (thefile != None) and (thefile.name != '')
@@ -77,15 +78,20 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
                             dataReq.get_driver() in self.SUPPORTED_DRIVERS
 
             if isFILE:
-                self.thefilepath = thefile.name
+                # self.results_file may have already been set directly
+                if not self.results_file:
+                    self.results_file = self.thefilepath
+                    self.thefilepath = thefile.name
+                else:
+                    self.thefilepath = self.results_file
+                #print "TVL:87", self.thefilepath
+                #print "TVL:88", self.results_file
                 self.thefilename = QFileInfo(self.thefilepath).fileName()
                 qgis.core.QgsVectorLayer.__init__(
                     self,
                     self.thefilepath,
                     self.thefilename,
                     "ogr")
-                #print "TVL:86", self.thefilepath
-                self.results_file = self.thefilepath
             elif isQGISSuported:
                 qgis.core.QgsVectorLayer.__init__(
                     self,

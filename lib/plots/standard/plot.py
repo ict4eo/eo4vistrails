@@ -98,7 +98,7 @@ class ParentPlot(NotCacheable, Module):
         """
         try:
             dt = string.split('+')
-            print "plot:100-to_date", dt
+            #print "plot:100-to_date", dt
             return matplotlib.dates.date2num(datetime.strptime(dt[0], date_format))
         except:
             return self.MISSING
@@ -506,7 +506,7 @@ class MultiPlot(ParentPlot):
         if data_sets:
             x_series, y_series = self.series(data_sets)
             for key, dataset in enumerate(x_series):
-                print "plot:507 xdata", x_series[key]
+                #print "plot:507 xdata", x_series[key]
 
                 # infinite 'loop' through set of available markers
                 marker_number = key - (max_markers * int(key / max_markers)) - 1
@@ -514,7 +514,7 @@ class MultiPlot(ParentPlot):
 
                 # Y AXIS DATA
                 y_data_m = self.list_to_floats(y_series[key])
-                print "plot:515 ydata", key, y_data_m
+                #print "plot:515 ydata", key, y_data_m
 
                 # X-AXIS DATA
                 if plot_type in ('scatter', 'line'):

@@ -72,6 +72,17 @@ class OGC(NotCacheable):
     def compute(self):
         """Execute the module to create the output"""
 
+        def write_gml_data(data):
+            """Write GML data to file; return pointer to file object."""
+            if data:
+                fileObj = self.interpreter.filePool.create_file(suffix=".gml")
+                _file = open(fileObj.name, "w")
+                _file.writelines(self.webRequest.data)
+                _file.close()
+                return fileObj
+            else:
+                return None
+
         # get input
         try:
             self.post_data = self.getInputFromPort(init.OGC_POST_DATA_PORT)
@@ -85,64 +96,67 @@ class OGC(NotCacheable):
             self.url = self.getInputFromPort(init.OGC_URL_PORT)
         except:
             self.url = None
-        #print "OgcService:88\n url: %s\n get_req: %s\n post_data: %s" %\
+        #print "OgcService:99\n url: %s\n get_req: %s\n post_data: %s" %\
         #    (self.url, self.get_request, self.post_data)
 
         # assign initial values to webRequest
+        self.webRequest.data = None
         if self.get_request:
             self.webRequest.url = self.get_request
-            self.webRequest.data = None
         if self.post_data and self.url:
             self.webRequest.url = self.url
             self.webRequest.data = self.post_data
 
+        # create data (in one place, in case of multiple active output ports)
+        if init.DATA_PORT in self.outputPorts or \
+            init.FILE_PORT in self.outputPorts or \
+            init.TEMPORAL_VECTOR_PORT in self.outputPorts:
+            self.webRequest.data = self.webRequest.runRequest()
+
         # request port
         if init.WEB_REQUEST_PORT in self.outputPorts:
             self.setResult(init.WEB_REQUEST_PORT, self.webRequest)
+
+        # url port
         if init.URL_PORT in self.outputPorts:
             self.setResult(init.URL_PORT, self.webRequest.url)
 
         # data port (data could be text or a 'raw' image)
         if init.DATA_PORT in self.outputPorts:
-            self.webRequest.data = self.webRequest.runRequest()  # create data
-            if self.webRequest.data:
-                self.setResult(init.DATA_PORT, self.webRequest.data)
+            self.setResult(init.DATA_PORT, self.webRequest.data)
 
         # file port (ogc text data)
         # conditional execution: only setResult if downstream connection
         if init.FILE_PORT in self.outputPorts:
-            self.webRequest.data = self.webRequest.runRequest()  # create data
-            if self.webRequest.data:
-                fileObj = self.interpreter.filePool.create_file(suffix=".gml")
-                _file = open(fileObj.name, "w")
-                _file.writelines(self.webRequest.data)
-                _file.close()
-                self.setResult(init.FILE_PORT, fileObj)
+            self.setResult(init.FILE_PORT, write_gml_data(self.webRequest.data))
 
         # layer port
         if self.url:
             random.seed()
-            # conditional execution: only set layername if upstream connection
             if init.OGC_LAYERNAME_PORT in self.inputPorts:
                 self.layername = \
                     self.getInputFromPort(init.OGC_LAYERNAME_PORT) or \
                     self.webRequest.get_layername() or \
                     'ogc_layer' + str(random.randint(0, 10000))
-            # conditional execution: only setResult if downstream connection
+
             if init.RASTER_PORT in self.outputPorts:
                 qgsRasterLayer = QgsRasterLayer(
                     self.url, self.layername, self.webRequest.get_driver())
-                #print "OgcService:135 - qgsRasterLayer", qgsRasterLayer
+                #print "OgcService:145 - qgsRasterLayer", qgsRasterLayer
                 self.setResult(init.RASTER_PORT, qgsRasterLayer)
-            # conditional execution: only setResult if downstream connection
+
             if init.VECTOR_PORT in self.outputPorts:
                 qgsVectorLayer = QgsVectorLayer(
                     self.url, self.layername, self.webRequest.get_driver())
-                #print "OgcService:141 -qgsVectorLayer", qgsVectorLayer
+                #print "OgcService:151 -qgsVectorLayer", qgsVectorLayer
                 self.setResult(init.VECTOR_PORT, qgsVectorLayer)
-            # conditional execution: only setResult if downstream connection
+
             if init.TEMPORAL_VECTOR_PORT in self.outputPorts:
                 temporalVectorLayer = TemporalVectorLayer(
                     self.url, self.layername, self.webRequest.get_driver())
-                #print "OgcService:147 - TemporalVectorLayer", TemporalVectorLayer
+                #print "OgcService:157 - TemporalVectorLayer", TemporalVectorLayer
+                _results_file = write_gml_data(self.webRequest.data)
+                #print "OgcService:159", _results, _results.name
+                if _results_file:
+                    temporalVectorLayer.results_file = _results_file.name
                 self.setResult(init.TEMPORAL_VECTOR_PORT, temporalVectorLayer)

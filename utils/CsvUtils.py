@@ -223,8 +223,8 @@ class CsvFilter(ThreadSafeMixin, Module):
             an optional specification of which cols appear in the output (this
             notation assumes a starting column number of 1')
         pairs:
-            x,y pairs, in a semi-colon delimited string, representing output
-            datasets.
+            x,y pairs, in a semi-colon delimited string, representing desired
+            output datasets in the form [ (X1,Y1), (X2,Y2), ... (Xn,Yn)]
 
     The "filter_" specification uses the following syntax:
      *  N: a single integer; or a single Excel column letter
@@ -237,7 +237,7 @@ class CsvFilter(ThreadSafeMixin, Module):
         dataset:
             a list of lists, containing all filtered data from the file
         datapairs:
-            a paired list of lists, containing all filtered data from the file
+            a paired list of tuples, containing all filtered data from the file
         html:
             an HTML 'view' string, containing all filtered data from the file
 
@@ -316,37 +316,43 @@ class CsvFilter(ThreadSafeMixin, Module):
             self.raiseError('Cannot create CSV file: %s' % str(e))
             return None
 
-    def create_pairs(self, pairs, lists):
-        """Create a list of paired values from a "list of lists".
+    def create_paired_tuples(self, pairs, lists):
+        """Create a list of paired tuples from a 'list of lists'.
 
         Accepts:
 
-        A single string, with a specification that uses the following syntax:
-         *  N,M: a paired set of values
-         *  N,M; O,P; ...: multiple paired values
+         *  pairs - a string, that uses the  syntax:
+             *  N,M: a single paired set of values
+             *  N,M; O,P; ...: multiple paired values
+            (where positional numbering starts from `1`)
+         *  lists - a list of lists
 
         Returns:
-         *  A list of paired lists
+         *  A list of paired tuples if valid inputs, else None
 
         """
         pair_list = []
         if pairs:
             try:
                 item_list = pairs.split(';')
-                for item in item_list:
+                print "csv:339", item_list
+                for key, item in enumerate(item_list):
                     if ',' in item:
                         pair_values = item.split(',')
-                        pair_list.append([lists[int(pair_values[0]) - 1],
-                                          lists[int(pair_values[1]) - 1]])
+                        print "   csv:343", item, pair_values
+                        x = lists[int(pair_values[0]) - 1]
+                        y = lists[int(pair_values[1]) - 1]
+                        for key, i in enumerate(x):
+                            pair_list.append((i, y[key]))
                     else:
                         pass
             except Exception, e:
-                self.raiseError('Cannot process pair specifications: %s' % str(e))
+                self.raiseError('Cannot create pairs of tuples: %s' % str(e))
                 return lists
         if pair_list:
             return pair_list
         else:
-            return lists  # no changes
+            return None  # fail
 
     def get_filter_specs(self, items):
         """Create a list of values from numeric ranges defined in a string.
@@ -375,7 +381,7 @@ class CsvFilter(ThreadSafeMixin, Module):
                 d = int(letter, 36) - 9
                 s += pow * d
                 pow *= 26
-            # excel starts column numeration from 1
+            # excel starts column numbering from 1
             return s
 
         list = []
@@ -452,16 +458,16 @@ class CsvFilter(ThreadSafeMixin, Module):
                 #print "csvutils.454:post_transpose ", list_of_lists
                 self.setResult('dataset', list_of_lists)
                 if 'html_file' in self.outputPorts:
-                    self.setResult('html_file', self.create_html(list_of_lists,
-                                                                 header_out,
-                                                                 delimiter))
+                    self.setResult('html_file', self.create_html(
+                                                    list_of_lists,
+                                                    header_out, delimiter))
                 if 'csv_file' in self.outputPorts:
-                    self.setResult('csv_file', self.create_csv(list_of_lists,
-                                                                 header_out,
-                                                                 delimiter))
-                if 'datagroups' in self.outputPorts:
-                    self.setResult('datapairs', self.create_pairs(pairs,
-                                                                  list_of_lists))
+                    self.setResult('csv_file', self.create_csv(
+                                                    list_of_lists,
+                                                    header_out, delimiter))
+                if 'datapairs' in self.outputPorts:
+                    self.setResult('datapairs', self.create_paired_tuples(
+                                                    pairs, list_of_lists))
             except Exception, e:
                 self.raiseError('Unable to run compute: %s' % str(e))
             csvfile = None
