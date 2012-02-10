@@ -80,8 +80,8 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
             if isFILE:
                 # self.results_file may have already been set directly
                 if not self.results_file:
-                    self.results_file = self.thefilepath
                     self.thefilepath = thefile.name
+                    self.results_file = self.thefilepath
                 else:
                     self.thefilepath = self.results_file
                 #print "TVL:87", self.thefilepath

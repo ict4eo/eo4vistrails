@@ -210,21 +210,23 @@ class CsvFilter(ThreadSafeMixin, Module):
         transpose:
             switch to enable output of a transposed set of data (default False)
         header_in:
-            switch to indicate if first row, in the input data set, contains
-            header data (default False); thiis header row is ignored for data
-            import
+            switch to indicate if the first row in the input data set contains
+            header data (default False); this header row is then ignored for
+            data import
         header_out:
-            switch to indicate if first row (likely containing headers) should
-            be written to output (default True)
+            switch to indicate if the first row (likely containing headers)
+            should be written to output (default True)
         filter_rows:
             an optional specification of which rows appear in the output (this
-            notation assumes a starting row number of 1')
+            notation assumes a starting row number of '1')
         filter_cols:
-            an optional specification of which cols appear in the output (this
-            notation assumes a starting column number of 1')
+            an optional specification of which columns appear in the output
+            (this notation assumes a starting column number of '1')
         pairs:
             x,y pairs, in a semi-colon delimited string, representing desired
-            output datasets in the form [ (X1,Y1), (X2,Y2), ... (Xn,Yn)]
+            output tuples (see the `datapairs` output port) to be extracted
+            from incoming lists; each X or Y represents a different list (this
+            notation assumes a starting list number of '1')
 
     The "filter_" specification uses the following syntax:
      *  N: a single integer; or a single Excel column letter
@@ -238,6 +240,7 @@ class CsvFilter(ThreadSafeMixin, Module):
             a list of lists, containing all filtered data from the file
         datapairs:
             a paired list of tuples, containing all filtered data from the file
+            in the form: [(X1,Y1), (X2,Y2), ... (Xn,Yn)]
         html:
             an HTML 'view' string, containing all filtered data from the file
 
@@ -335,11 +338,11 @@ class CsvFilter(ThreadSafeMixin, Module):
         if pairs:
             try:
                 item_list = pairs.split(';')
-                print "csv:339", item_list
+                #print "csv:339", item_list
                 for key, item in enumerate(item_list):
                     if ',' in item:
                         pair_values = item.split(',')
-                        print "   csv:343", item, pair_values
+                        #print "   csv:343", item, pair_values
                         x = lists[int(pair_values[0]) - 1]
                         y = lists[int(pair_values[1]) - 1]
                         for key, i in enumerate(x):
@@ -348,7 +351,7 @@ class CsvFilter(ThreadSafeMixin, Module):
                         pass
             except Exception, e:
                 self.raiseError('Cannot create pairs of tuples: %s' % str(e))
-                return lists
+                return None  # fail
         if pair_list:
             return pair_list
         else:
@@ -418,7 +421,7 @@ class CsvFilter(ThreadSafeMixin, Module):
         list_of_lists = []
         cols_list = self.get_filter_specs(filter_cols)
         rows_list = self.get_filter_specs(filter_rows)
-        #print "csvutils.415: ", cols_list, rows_list
+        #print "csvutils.421: ", cols_list, rows_list
         if not header_in:
             header_out = False  # cannot process a row that is not there...
 
@@ -429,13 +432,13 @@ class CsvFilter(ThreadSafeMixin, Module):
                 for key, row in enumerate(csvfile):
                     if key == 0 and header_in and not header_out:
                         # skip header row
-                        #print "CSVUtils:426 - skip header_out", key
+                        #print "csvutils:432 - skip header_out", key
                         pass
                     elif key > 9  and sample:
                         # have the sample data now...
                         break
                     else:
-                        #print "csvutils.432: data", key, row
+                        #print "csvutils.438: data", key, row
                         if not cols_list:
                             if not rows_list:
                                 list_of_lists.append(row)
@@ -452,10 +455,10 @@ class CsvFilter(ThreadSafeMixin, Module):
                                     if key + 1 in cols_list:
                                         row_out.append(c)
                                 list_of_lists.append(row_out)
-                #print "csvutils.449:pre_transpose ", list_of_lists
+                #print "csvutils.455:pre_transpose ", list_of_lists
                 if transpose:
                     list_of_lists = self.transpose_array(list_of_lists)
-                #print "csvutils.454:post_transpose ", list_of_lists
+                #print "csvutils.458:post_transpose ", list_of_lists
                 self.setResult('dataset', list_of_lists)
                 if 'html_file' in self.outputPorts:
                     self.setResult('html_file', self.create_html(
