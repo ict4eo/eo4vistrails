@@ -222,6 +222,9 @@ class CsvFilter(ThreadSafeMixin, Module):
         filter_cols:
             an optional specification of which columns appear in the output
             (this notation assumes a starting column number of '1')
+        flatten:
+            switch to indicate if nested lists should be combined into one
+            single list (default False); only works for one "level" of nesting
         pairs:
             x,y pairs, in a semi-colon delimited string, representing desired
             output tuples (see the `datapairs` output port) to be extracted
@@ -237,7 +240,8 @@ class CsvFilter(ThreadSafeMixin, Module):
         csv_file:
             a CSV file, containing all filtered data from the file
         dataset:
-            a list of lists, containing all filtered data from the file
+            a list of lists, containing all filtered data from the file (or
+            a single list, if flatten option selected)
         datapairs:
             a paired list of tuples, containing all filtered data from the file
             in the form: [(X1,Y1), (X2,Y2), ... (Xn,Yn)]
@@ -254,6 +258,7 @@ class CsvFilter(ThreadSafeMixin, Module):
                     ('header_out', '(edu.utah.sci.vistrails.basic:Boolean)'),
                     ('filter_rows', '(edu.utah.sci.vistrails.basic:String)'),
                     ('filter_cols', '(edu.utah.sci.vistrails.basic:String)'),
+                    ('flatten', '(edu.utah.sci.vistrails.basic:Boolean)'),
                     ('pairs', '(edu.utah.sci.vistrails.basic:String)')]
     _output_ports = [('csv_file', '(edu.utah.sci.vistrails.basic:File)'),
                     ('dataset', '(edu.utah.sci.vistrails.basic:List)'),
@@ -357,6 +362,11 @@ class CsvFilter(ThreadSafeMixin, Module):
         else:
             return None  # fail
 
+    def flatten_list(self, data_list):
+        """Create flattened list from a 'list of lists'."""
+        return [j for sublist in [i if isinstance(i, list) \
+                                    else [i] for i in data_list] for j in sublist]
+
     def get_filter_specs(self, items):
         """Create a list of values from numeric ranges defined in a string.
 
@@ -416,6 +426,7 @@ class CsvFilter(ThreadSafeMixin, Module):
         header_out = self.forceGetInputFromPort("header_out", True)
         filter_rows = self.forceGetInputFromPort("filter_rows", "")
         filter_cols = self.forceGetInputFromPort("filter_cols", "")
+        flatten = self.forceGetInputFromPort("flatten", False)
         pairs = self.forceGetInputFromPort("pairs", "")
 
         list_of_lists = []
@@ -455,10 +466,13 @@ class CsvFilter(ThreadSafeMixin, Module):
                                     if key + 1 in cols_list:
                                         row_out.append(c)
                                 list_of_lists.append(row_out)
-                #print "csvutils.455:pre_transpose ", list_of_lists
+                print "csvutils.468:pre_transpose ", list_of_lists
                 if transpose:
                     list_of_lists = self.transpose_array(list_of_lists)
-                #print "csvutils.458:post_transpose ", list_of_lists
+                print "csvutils.471:post_transpose ", list_of_lists
+                if flatten:
+                    list_of_lists = self.flatten_list(list_of_lists)
+                print "csvutils.474:post_flatten ", list_of_lists
                 self.setResult('dataset', list_of_lists)
                 if 'html_file' in self.outputPorts:
                     self.setResult('html_file', self.create_html(

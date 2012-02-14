@@ -176,28 +176,27 @@ class ParentPlot(NotCacheable, Module):
         if listsOnly(list_array):
             for index, sery in enumerate(list_array):
                 if tuplesOnly(sery):
-                     xs.append( [w[0] for w in sery] )
-                     ys.append( [w[1] for w in sery] )
+                    xs.append([w[0] for w in sery])
+                    ys.append([w[1] for w in sery])
                 elif valuesOnly(sery):
-                     if index > 0:
-                         xs.append(list_array[0])
-                         ys.append(sery)
+                    if index > 0:
+                        xs.append(list_array[0])
+                        ys.append(sery)
                 else:
                     pass
 
         elif tuplesOnly(list_array):
-             xs.append( [w[0] for w in list_array] )
-             ys.append( [w[1] for w in list_array] )
+            xs.append([w[0] for w in list_array])
+            ys.append([w[1] for w in list_array])
 
         elif valuesOnly(list_array):
             ys.append(list_array)
-            xs.append( [index + 1 for index, i in enumerate(list_array)] )
+            xs.append([index + 1 for index, i in enumerate(list_array)])
 
         else:
             pass
 
         return xs, ys
-
 
     def compute(self):
         pass
@@ -397,7 +396,8 @@ class SinglePlot(ParentPlot):
         else:
             self.facecolor = 'r'
 
-        xyData = self.forceGetInputFromPort('xyData', [])
+        xyData = self.forceGetInputListFromPort('xyData')
+        print "plot:400", xyData
         if xyData and len(xyData) == 2:
             y_data_m = self.list_to_floats(xyData[1])
             fig = pylab.figure()
@@ -411,20 +411,26 @@ class SinglePlot(ParentPlot):
 
             if plot_type == 'date':
                 x_data_m = self.list_to_dates(xyData[0], date_format)
-                pylab.plot_date(x_data_m, y_data_m, xdate=True, marker=marker_type,
+                pylab.plot_date(x_data_m, y_data_m, xdate=True,
+                                marker=marker_type,
                                 markerfacecolor=self.facecolor)
                 fig.autofmt_xdate()  # pretty-format date axis
             else:
                 x_data_m = self.list_to_floats(xyData[0])
                 if plot_type == 'scatter':
-                    pylab.scatter(x_data_m, y_data_m, marker=marker_type, facecolor=self.facecolor)
+                    pylab.scatter(x_data_m, y_data_m, marker=marker_type,
+                                  facecolor=self.facecolor)
                 elif plot_type == 'line':
                     pylab.plot(x_data_m, y_data_m, marker=marker_type,
-                               linestyle=line_style, markerfacecolor=self.facecolor)
+                               linestyle=line_style,
+                               markerfacecolor=self.facecolor)
                 elif plot_type == 'windrose':
                     fig = self.create_rose(y_data_m, x_data_m)
                 else:
                     raise NameError('plot_type %s  is undefined.' % plot_type)
+        else:
+            raise NameError('A %s plot requires exactly two input lists.'\
+                            % plot_type)
 
         pylab.get_current_fig_manager().toolbar.hide()
         self.setResult('source', "")

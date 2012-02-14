@@ -212,7 +212,7 @@ class WindroseAxes(PolarAxes):
          * dir : 1D array - directions the wind blows from, North centred
          * var : 1D array - values of the variable to compute. Typically the wind
            speeds
-        
+
         Optional:
          * nsector: integer - number of sectors used to compute the windrose
            table. If not set, nsectors=16, then each sector will be 360/16=22.5°,
@@ -230,7 +230,7 @@ class WindroseAxes(PolarAxes):
          * cmap : a cm Colormap instance from matplotlib.cm.
            - if cmap == None and colors == None, a default Colormap is used.
 
-        others kwargs: 
+        others kwargs:
          * see help(pylab.plot)
 
         """
@@ -266,7 +266,7 @@ class WindroseAxes(PolarAxes):
          * dir : 1D array - directions the wind blows from, North centred
          * var : 1D array - values of the variable to compute. Typically the wind
            speeds
-        
+
         Optional:
          * nsector: integer - number of sectors used to compute the windrose
            table. If not set, nsectors=16, then each sector will be 360/16=22.5°,
@@ -284,7 +284,7 @@ class WindroseAxes(PolarAxes):
          * cmap : a cm Colormap instance from matplotlib.cm.
            - if cmap == None and colors == None, a default Colormap is used.
 
-        others kwargs : 
+        others kwargs :
          * see help(pylab.plot)
 
         """
@@ -319,7 +319,7 @@ class WindroseAxes(PolarAxes):
           * dir : 1D array - directions the wind blows from, North centred
           * var : 1D array - values of the variable to compute. Typically the wind
             speeds
-        
+
         Optional:
           * nsector: integer - number of sectors used to compute the windrose
             table. If not set, nsectors=16, then each sector will be 360/16=22.5°,
@@ -380,7 +380,7 @@ class WindroseAxes(PolarAxes):
           * dir : 1D array - directions the wind blows from, North centred
           * var : 1D array - values of the variable to compute. Typically the wind
             speeds
-        
+
         Optional:
           * nsector: integer - number of sectors used to compute the windrose
             table. If not set, nsectors=16, then each sector will be 360/16=22.5°,
@@ -430,7 +430,7 @@ def histogram(dir, var, bins, nsector, normed=False, blowto=False):
     Returns an array where, for each sector of wind
     (centred on the north), we have the number of time the wind comes with a
     particular var (speed, polluant concentration, ...).
-    
+
      * dir : 1D array - directions the wind blows from, North centred
      * var : 1D array - values of the variable to compute. Typically the wind
        speeds
@@ -444,7 +444,7 @@ def histogram(dir, var, bins, nsector, normed=False, blowto=False):
     """
 
     if len(var) != len(dir):
-        raise ValueError, "var and dir must have same length"
+        raise ValueError, "Arrays for variable and direction must have same length."
 
     angle = 360./nsector
 
