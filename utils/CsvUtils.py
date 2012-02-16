@@ -298,7 +298,7 @@ class CsvFilter(ThreadSafeMixin, Module):
                 table = table + '</td><td>'.join(str(column) for column in list)
                 table = table + '</td></tr>'
         table = table + '\n' + '</table>'
-        #print  "csvutils.293:", table
+        #print  "csvutils.301:", table
 
         try:
             output_file = self.interpreter.filePool.create_file(suffix='.html')
@@ -307,19 +307,27 @@ class CsvFilter(ThreadSafeMixin, Module):
             f.close()
             return output_file
         except Exception, e:
-            self.raiseError('Cannot create CSV file: %s' % str(e))
+            self.raiseError('Cannot create HTML file: %s' % str(e))
             return None
 
     def create_csv(self, data_list, heading=False, delimiter=','):
         """Create a CSV file from a 'list of lists'."""
+        #print "csvutils.319:", type(data_list), data_list[-10:]
         output_file = self.interpreter.filePool.create_file(suffix='.csv')
         try:
             csvfile = csv.writer(open(output_file.name, 'w'),
                                  delimiter=delimiter,
                                  quotechar="'")
             if len(data_list) > 0:
-                csvfile.writerows(data_list)
+                try:
+                    csvfile.writerows(data_list)
+                except csv.Error:
+                    #may only be one 'row' in the list
+                    csvfile.writerow(data_list)
             return output_file
+        except TypeError:
+            self.raiseError('Cannot create CSV file: Input list is not iterable')
+            return None
         except Exception, e:
             self.raiseError('Cannot create CSV file: %s' % str(e))
             return None
@@ -454,25 +462,25 @@ class CsvFilter(ThreadSafeMixin, Module):
                             if not rows_list:
                                 list_of_lists.append(row)
                             else:
-                                if row + 1 in rows_list:
+                                if key + 1 in rows_list:
                                     list_of_lists.append(row)
                         else:
-                            if rows_list and not row + 1 in rows_list:
+                            if rows_list and not key + 1 in rows_list:
                                 pass
                             else:
                                 row_out = []
                                 # filter each column
-                                for key, c in enumerate(row):
-                                    if key + 1 in cols_list:
+                                for k, c in enumerate(row):
+                                    if k + 1 in cols_list:
                                         row_out.append(c)
                                 list_of_lists.append(row_out)
-                print "csvutils.468:pre_transpose ", list_of_lists
+                #print "csvutils.468:pre_transpose ", list_of_lists
                 if transpose:
                     list_of_lists = self.transpose_array(list_of_lists)
-                print "csvutils.471:post_transpose ", list_of_lists
+                #print "csvutils.471:post_transpose ", list_of_lists
                 if flatten:
                     list_of_lists = self.flatten_list(list_of_lists)
-                print "csvutils.474:post_flatten ", list_of_lists
+                #print "csvutils.474:post_flatten ", list_of_lists
                 self.setResult('dataset', list_of_lists)
                 if 'html_file' in self.outputPorts:
                     self.setResult('html_file', self.create_html(

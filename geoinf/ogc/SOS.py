@@ -81,7 +81,7 @@ class SosCommonWidget(QtGui.QWidget):
     def create_config_window(self):
         """Create datacontainers and layout for displaying SOS-related data."""
         self.setWindowTitle("SOS Configuration Widget")
-        self.setMinimumSize(900, 675)
+        self.setMinimumSize(900, 700)
         # text for combo boxes
         self.SPATIAL_OFFERING = 'Use Offering Bounding Box'
         self.SPATIAL_OWN = 'Use Own Bounding Box'
@@ -181,8 +181,10 @@ class SosCommonWidget(QtGui.QWidget):
         self.detailsLayout.addWidget(self.cbResponseMode, 5, 1)
         self.cbResultModel = QtGui.QComboBox()
         self.detailsLayout.addWidget(self.cbResultModel, 6, 1)
-        self.cbObservedProperty = QtGui.QComboBox()
-        self.detailsLayout.addWidget(self.cbObservedProperty, 7, 1)
+        self.lbObservedProperty = QtGui.QListWidget()
+        self.lbObservedProperty.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
+
+        self.detailsLayout.addWidget(self.lbObservedProperty, 7, 1)
         self.cbFOI = QtGui.QComboBox()
         self.detailsLayout.addWidget(self.cbFOI, 8, 1)
 
@@ -252,7 +254,7 @@ class SosCommonWidget(QtGui.QWidget):
         self.cbResponseFormat.clear()
         self.cbResponseMode.clear()
         self.cbResultModel.clear()
-        self.cbObservedProperty.clear()
+        self.lbObservedProperty.clear()
         self.cbFOI.clear()
         #self.cbTime.clear()
         #self.cbSpatial.clear()
@@ -301,10 +303,9 @@ class SosCommonWidget(QtGui.QWidget):
                     if content.result_model:
                         for rd in content.result_model:
                             self.cbResultModel.addItem(rd)
-                    self.cbObservedProperty.addItem('')
                     if content.observed_property:
                         for op in content.observed_property:
-                            self.cbObservedProperty.addItem(op)
+                            self.lbObservedProperty.addItem(op)
                     self.cbFOI.addItem('')
                     if content.feature_of_interest:
                         for foi in content.feature_of_interest:
@@ -414,10 +415,12 @@ class SOSConfigurationWidget(OgcConfigurationWidget, StandardModuleConfiguration
             model = self.config.cbResultModel.currentText()
         except:
             model = None
-        try:
-            obs_prop = self.config.cbObservedProperty.currentText()
-        except:
-            obs_prop = None
+
+        obs_prop = []
+        for item in self.config.lbObservedProperty.selectedItems():
+            obs_prop.append(item.text())
+        #print "sos:423", obs_prop
+
         try:
             foi = self.config.cbFOI.currentText()
         except:
@@ -511,7 +514,8 @@ class SOSConfigurationWidget(OgcConfigurationWidget, StandardModuleConfiguration
                 else:
                     data += '<procedure>' + procedure + '</procedure>\n'
             if obs_prop:
-                data += '<observedProperty>' + obs_prop + '</observedProperty>\n'
+                for obs in obs_prop:
+                    data += '<observedProperty>' + obs + '</observedProperty>\n'
             else:
                 self.showWarning(WARNING_MUST % ('Observed Property', rType))
                 return None, None

@@ -397,7 +397,7 @@ class SinglePlot(ParentPlot):
             self.facecolor = 'r'
 
         xyData = self.forceGetInputListFromPort('xyData')
-        print "plot:400", xyData
+        #print "plot:400", xyData
         if xyData and len(xyData) == 2:
             y_data_m = self.list_to_floats(xyData[1])
             fig = pylab.figure()
