@@ -27,4 +27,7 @@
 core data streams to be repackaged into standard output formats - in particular
 CSV and HDF.
 """
+identifier = 'za.co.csir.eo4vistrails'
+revision = 1
+version='0.0.%s'%revision
 pass

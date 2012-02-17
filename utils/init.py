@@ -4,7 +4,7 @@ def initialize(*args, **keywords):
 
     import DropDownListWidget
 
-    from Array import NDArray
+    from Array import NDArrayEO
     from Command import Command
     from CsvUtils import CsvWriter, CsvReader, ListDirContent, CsvFilter
     from DataRequest import DataRequest, PostGISRequest
@@ -52,14 +52,14 @@ def initialize(*args, **keywords):
                    namespace=utils_test_namespace)
 
     # NDArray
-    reg.add_module(NDArray,
-                   name="Numpy Array",
+    reg.add_module(NDArrayEO,
+                   name="EO Numpy Array",
                    namespace=utils_namespace,
                    abstract=True)
     reg.add_output_port(
-        NDArray,
+        NDArrayEO,
         "self",
-        (NDArray, 'self'))
+        (NDArrayEO, 'self'))
 
     # Fork
     reg.add_module(Fork,

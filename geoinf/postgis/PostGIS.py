@@ -43,12 +43,12 @@ from PyQt4 import QtCore, QtGui
 from core.modules.vistrails_module import ModuleError, NotCacheable, Module
 from core.modules.source_configure import SourceConfigurationWidget
 from core.system import touch
+from packages.NumSciPy.Array import NDArray
 # eo4vistrails
 from packages.eo4vistrails.geoinf.datamodels.QgsLayer import QgsVectorLayer
 from packages.eo4vistrails.utils.DataRequest import PostGISRequest
 from packages.eo4vistrails.rpyc.RPyC import RPyCModule, RPyCSafeModule
 from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
-from packages.eo4vistrails.utils.Array import NDArray
 from packages.eo4vistrails.utils.session import Session
 from packages.eo4vistrails.utils.synhigh import SyntaxSourceConfigurationWidget
 

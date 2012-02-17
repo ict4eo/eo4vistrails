@@ -176,6 +176,7 @@ class QgsRasterLayer(QgsMapLayer, qgis.core.QgsRasterLayer):
         if uri and layername:
             qgis.core.QgsRasterLayer.__init__(self, uri, layername)
         self.SUPPORTED_DRIVERS = ['WCS', 'gdl']
+        self.ownNotSupported = True
 
     def compute(self):
         """Execute the module to create the output"""

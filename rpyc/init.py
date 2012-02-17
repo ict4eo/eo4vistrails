@@ -46,14 +46,10 @@ def initialize(*args, **keywords):
     mynamespace = "rpyc"
 
     #Add RPyCNode
-    reg.add_module(RPyCHelper.RpyCNodie,
-                   name="RpyC Nodie",
+    reg.add_module(RPyC.RPyCNode,
+                   name="RpyC Node",
                    namespace=mynamespace,
                    abstract=True)
-    #Add RPyCNode
-    reg.add_module(RPyCHelper.RPyCNode,
-                   name="RpyC Node",
-                   namespace=mynamespace)
 
     #Dummy Module Mixed into all RPYCSafeModules
     reg.add_module(RPyC.RPyCModule,

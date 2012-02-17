@@ -33,9 +33,8 @@ import h5py
 # vistrails
 from core.modules.vistrails_module import Module, ModuleError
 # eo4vistrails
+from packages.NumSciPy.Array import NDArray
 from packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
-from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
-
 
 #@RPyCSafeModule()
 class CubeReaderHandle(Module):
@@ -65,7 +64,7 @@ class CubeReaderHandle(Module):
         if self.cubeInit():
             self.setResult('CubeReaderHandle', self)
 
-
+@RPyCSafeModule()
 class ModisCubeReaderHandle(CubeReaderHandle):
     """MODIS HDF data cube initialisation.
 
@@ -87,17 +86,17 @@ class ModisCubeReaderHandle(CubeReaderHandle):
             self.setResult('timeBand', self.time)
 
 
-#@RPyCSafeModule()
+@RPyCSafeModule()
 class CubeReader(Module):
     """HDF data cube reader."""
 
     _input_ports = [('cubereader',
                      '(za.co.csir.eo4vistrails:CubeReaderHandle:datacube)'),
                     ('band',
-                     '(edu.utah.sci.vistrails.basic:String)',
-                     {'optional': True}),
-                    ('offset', '(edu.utah.sci.vistrails.basic:Integer)'), ]
-    _output_ports = [('timeseries', '(edu.utah.sci.vistrails.basic:List)')]
+                     '(edu.utah.sci.vistrails.basic:String)', {'optional': True}),
+                    ('offset', '(edu.utah.sci.vistrails.basic:List)'), ]
+    
+    _output_ports = [('timeseries', '(edu.utah.sci.vistrails.numpyscipy:Numpy Array:numpy|array)')]
 
     def __init__(self):
         #ThreadSafeMixin.__init__(self)
@@ -118,7 +117,10 @@ class CubeReader(Module):
         if not band is None and band != '' and band != cube.band:
             cube.band = band
             cube.data = cube.cube[band]
-        self.setResult('timeseries', self.getData(cube, offset))
+        outArray = NDArray()
+        outArray.set_array(self.getData(cube, offset))
+        
+        self.setResult('timeseries', outArray)
 
 
 class PostGISCubeReader(CubeReader):

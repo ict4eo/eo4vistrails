@@ -50,7 +50,7 @@ def initialize(*args, **keywords):
     # local
     from Feature import FeatureModel, FileFeatureModel, MemFeatureModel
     from Raster import RasterModel
-    from GeoStrings import GMLString, GeoJSONString, GeoString,  WKTString, GeoStringConstantWidget
+    from GeoStrings import GMLString, GeoJSONString, GeoString,  WKTString, GeoStringConstantWidget, Proj4String
     from TemporalVectorLayer import TemporalVectorLayer
     import QgsLayer
     import QgsLayerWriter

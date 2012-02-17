@@ -26,5 +26,13 @@
 """This package provides statistical capabilities for eo4vistrails.
 R, SciPy are proposed to be used
 """
+#import subprocess
+#try:
+#    out = subprocess.check_output(['svn', 'info', __path__[0]])
+#    revision = out[out.find('Revision'):out.find('\n', out.find('Revision'))][10:]
+#except:
+#    revision = 0
+revision = 4
+version='0.1.%s'%revision
+pass
 
-identifier = 'za.co.csir.eo4vistrails'

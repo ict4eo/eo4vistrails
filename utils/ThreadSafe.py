@@ -40,9 +40,10 @@ globalThreadLock = RLock()
 
 class ThreadSafeMixin(object):
     """TODO Write docstring."""
-
+    
     def __init__(self):
         self.computeLock = RLock()
+        #self.getLock = RLock()
 
     def globalThread(self, module):
         """TODO Write docstring."""

@@ -41,12 +41,13 @@ OpenNebula cloud environments.
 identifier = 'za.co.csir.eo4vistrails'
 name = 'eo4vistrails'
 
-import subprocess
-try:
-    out = subprocess.check_output(['svn', 'info', __path__[0]])
-    revision = out[out.find('Revision'):out.find('\n', out.find('Revision'))][10:]
-except:
-    revision = 0
+#import subprocess
+#try:
+#    out = subprocess.check_output(['svn', 'info', __path__[0]])
+#    revision = out[out.find('Revision'):out.find('\n', out.find('Revision'))][10:]
+#except:
+#    revision = 1
+revision = 1
 version='0.1.%s'%revision
 
 author_list = 'tvanzyl,gmcferren,bcwele,dhohls,pshabangu,bsibolla'

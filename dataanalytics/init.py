@@ -49,10 +49,10 @@ def initialize(*args, **keywords):
     #Add Rasterlang
     reg.add_module(Rasterlang.GDALFormatComboBox, namespace=mynamespace, abstract=True)
     reg.add_module(Rasterlang.RasterPrototype, name="Raster Prototype", namespace=mynamespace)
-    reg.add_module(Rasterlang.layerAsArray, namespace=mynamespace)
+    reg.add_module(Rasterlang.layerAsArray, name="Layer As Array", namespace=mynamespace)
     reg.add_module(Rasterlang.SaveArrayToRaster, name="Save Array To Raster", namespace=mynamespace)
-    reg.add_module(Rasterlang.arrayAsLayer, namespace=mynamespace)
-    reg.add_module(Rasterlang.RasterLang, name = "RasterLang", 
+    reg.add_module(Rasterlang.arrayAsLayer, name="Array As Layer", namespace=mynamespace)
+    reg.add_module(Rasterlang.RasterLang, name="RasterLang",
                    configureWidgetType=Rasterlang.RasterSourceConfigurationWidget,
                    namespace=mynamespace)
 

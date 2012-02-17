@@ -42,19 +42,19 @@ class RPyCTestModule(ThreadSafeMixin, Module):
         case = self.forceGetInputFromPort("input", 0)
         print "Hello", case
         inarray = self.forceGetInputFromPort("inarray", None)
-        if inarray is not None:
+        print "oid for inarray: %s"%id(inarray)
+        if inarray is not None: 
             if isinstance(inarray, NDArray):
                 inarray = inarray.get_array()
             inarray += 1
-        print "oid for inarray: %s" % id(inarray)
         print "value for inarray:"
         print inarray
 
         if case == 1 or case == 0:
             self.setResult('narray', numpy.ones(self.theShape))
         if case == 2 or case == 0:
-            numpy.dot(self.sharedPorts['sharedArray'][0], self.sharedPorts['sharedArray'][0].T)
-            self.sharedPorts['sharedArray'][0][:] = 2
+            #numpy.dot(self.sharedMemOutputPorts['sharedArray'][0], self.sharedMemOutputPorts['sharedArray'][0].T)
+            self.sharedMemOutputPorts['sharedArray'][0][:] = 2
             self.setResult('sharedArray', None, True)
         if case == 3:
             self.setResult('sharedArray', numpy.zeros(self.theShape) + 2, True)

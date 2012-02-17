@@ -27,4 +27,13 @@
 In particular, provides a generic session object for connecting to cloud environments, 
 GIS environments and statistical environments.
 """
+identifier = 'za.co.csir.eo4vistrails'
+#import subprocess
+#try:
+#    out = subprocess.check_output(['svn', 'info', __path__[0]])
+#    revision = out[out.find('Revision'):out.find('\n', out.find('Revision'))][10:]
+#except:
+#    revision = 1
+revision = 1
+version='0.0.%s'%revision
 pass

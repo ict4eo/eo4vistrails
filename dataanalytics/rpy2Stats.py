@@ -39,14 +39,16 @@ except:
     pass
 r = robjects.r
 # vistrails
-import core.modules
 from core.modules.vistrails_module import ModuleError
 from packages.NumSciPy.Array import NDArray
 # eo4vistrails
 from packages.eo4vistrails.utils.synhigh import SyntaxSourceConfigurationWidget
+from packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
+from packages.eo4vistrails.utils.ModuleHelperMixin import ModuleHelperMixin
 
 
-class Rpy2Script(Script):
+@RPyCSafeModule()
+class Rpy2Script(Script, ModuleHelperMixin):
     """
        Run R scripts using rpy2 interface
     """
@@ -58,15 +60,23 @@ class Rpy2Script(Script):
         Script.__init__(self)
 
     def compute(self):
+        #cleanup robjects mem before we start
+        #cleanup pythons mem as well
+        import gc
+        robjects.r.gc()
+        gc.collect()
+        
         # Get the script fromn theinput port named source
         r_script = urllib.unquote(str(self.forceGetInputFromPort('source', '')))
 
         # Get the list of input ports so we can get there values
-        inputDict = dict([(k, self.getInputFromPort(k))
-                          for k in self.inputPorts])
-
-        # Remove the script from the list
-        del(inputDict['source'])
+        inputDict = dict([(k, self.getInputFromPort(k)) for k in self.inputPorts])
+        
+        # Remove the script and node from the list
+        if inputDict.has_key('source'):
+            del(inputDict['source'])
+        if inputDict.has_key('rpycnode'):
+            del(inputDict['rpycnode'])
 
         # Check that if any are NDArrays we get the numpy array out
         for k in inputDict.iterkeys():
@@ -81,7 +91,7 @@ class Rpy2Script(Script):
                 myListArr = numpy.asarray(inputDict[k])
                 inputDict[k] = myListArr
             robjects.globalenv[k] = inputDict[k]
-
+        
         # Execute the script
         try:
             resultVar = r(r_script)
@@ -118,14 +128,12 @@ class Rpy2Script(Script):
                         self.setResult(k, rResult)
 #                   else:
 #                       self.setResult(k, robjects.globalenv[k])
-
-    def getPortType(self, portName, portType="output"):
-        for i in self.moduleInfo['pipeline'].module_list:
-            if i.id == self.moduleInfo['moduleId']:
-                for j in i.port_specs:
-                    if i.port_specs[j].type == portType and i.port_specs[j].name == portName:
-                        return i.port_specs[j].signature[0][0]
-
+        #cleanup robjects mem after we end
+        #cleanup pythons mem as well
+        import gc
+        robjects.r.gc()
+        gc.collect()
+    
     #Converting R result to a Python Type.
     def rPyConversion(self, data):
         try:

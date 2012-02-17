@@ -27,4 +27,7 @@
 In particular, provides a generic session object for connecting to cloud environments, 
 GIS environments and statistical environments.
 """
+identifier = 'za.co.csir.eo4vistrails'
+revision = 3
+version='0.0.%s'%revision
 pass

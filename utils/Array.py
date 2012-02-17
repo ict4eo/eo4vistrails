@@ -41,7 +41,7 @@ class ArrayModule(object):
     my_namespace = 'utils|array'
 
 
-class NDArray(Module, ArrayModule):
+class NDArrayEO(Module, ArrayModule):
     """ Container class for the numpy.ndarray class """
 
     def __init__(self):

@@ -32,14 +32,13 @@ It also has the rpyc remote code that is used for ???.
 
 # library
 # third-party
-import rpyc
 from RPyC import RPyCSafeMixin, RPyCModule
 # vistrails
-from core.modules import basic_modules
 from core.modules.vistrails_module import ModuleError, NotCacheable
+from core.utils import VistrailsInternalError
 from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
 # eo4vistrails
-from packages.eo4vistrails.utils.DropDownListWidget import ComboBoxWidget
+
 from packages.eo4vistrails.utils.ModuleHelperMixin import ModuleHelperMixin
 # local
 
@@ -54,7 +53,7 @@ class RPyCCode(NotCacheable, RPyCSafeMixin, ThreadSafeMixin, RPyCModule,
     #TODO: If you want a PythonSource execution to be cached, call cache_this().
 
     def __init__(self):
-        self._requiredVisPackages = ["packages.eo4vistrails", "packages.spreadsheet"]
+        self._requiredVisPackages = ["packages.spreadsheet", "packages.vtk", "packages.NumSciPy", "packages.eo4vistrails"]
         ThreadSafeMixin.__init__(self)
         RPyCModule.__init__(self)
         self.preCodeString = None
@@ -82,9 +81,18 @@ class RPyCCode(NotCacheable, RPyCSafeMixin, ThreadSafeMixin, RPyCModule,
             del outputDict['self']
             locals_.update(outputDict)
 
-        _m = core.packagemanager.get_package_manager()
+        #TODO:Figure out how we get a registry and a package manager
+        try:
+            _m = core.packagemanager.get_package_manager()
+        except VistrailsInternalError:
+            _m = None
+        
         from core.modules.module_registry import get_module_registry
-        reg = get_module_registry()
+        try:
+            reg = get_module_registry()
+        except VistrailsInternalError:
+            reg = None
+        
         locals_.update({'fail': fail,
                         'package_manager': _m,
                         'cache_this': cache_this,
@@ -124,7 +132,7 @@ class RPyCCode(NotCacheable, RPyCSafeMixin, ThreadSafeMixin, RPyCModule,
         for k in outputDict.iterkeys():
             try:
                 if k in locals_ and locals_[k] != None:
-                    if isinstance(self.getPortType(k), NDArray):
+                    if issubclass(self.getPortType(k), NDArray):
                         outArray = NDArray()
                         outArray.set_array(locals_[k])
                         self.setResult(k, outArray)
@@ -165,15 +173,12 @@ class RPyCCode(NotCacheable, RPyCSafeMixin, ThreadSafeMixin, RPyCModule,
                              use_output, pre_code_string, post_code_string)
         print "Finished executing in other thread"
 
-    def compute(self):
+    def _original_compute(self):
         """
         Vistrails Module Compute, Entry Point Refer, to Vistrails Docs
         """
-        self.sharedPorts = {}
-        isRemote, self.conn, v = self.getConnection()
-
-#        if self.hasInputFromPort('rpycnode'):
-#            (isRemote, self.conn) = self.inputPorts['rpycnode'][0].obj.getSharedConnection()
+        #self.sharedMemOutputPorts = {}
+        #isRemote, self.conn, v = self.getConnection()
 
         from core.modules import basic_modules
         s = basic_modules.urllib.unquote(str(self.forceGetInputFromPort('source', '')))
@@ -181,11 +186,10 @@ class RPyCCode(NotCacheable, RPyCSafeMixin, ThreadSafeMixin, RPyCModule,
         if s == '':
             return
 
-        if self.conn:
-            self.run_code(s, self.conn, True, True, self.preCodeString, self.postCodeString)
-        else:
-            self.run_code_orig(s, True, True, self.preCodeString, self.postCodeString)
+        self.run_code_orig(s, True, True, self.preCodeString, self.postCodeString)
 
+    def compute(self):
+        RPyCSafeMixin.compute(self)
 
 class RPyC_C_Code(RPyCCode):
     """TODO: Add docstring.
@@ -325,34 +329,4 @@ class RPyC_C_Code(RPyCCode):
                     self.setResult(k, conn.namespace[k])
 
 
-class RPyCNodeWidget(ComboBoxWidget):
-    """TODO: Add docstring
-    """
 
-    discoveredSlaves = None
-    default = ('main', 0)
-
-    def getKeyValues(self):
-        if not self.discoveredSlaves:
-            self.discoveredSlaves = {
-                'Own Process': ('own', 0), 'Main Process': ('main', 0)}
-            try:
-                discoveredSlavesTuple = list(rpyc.discover("slave"))
-                for slaveTuple in discoveredSlavesTuple:
-                    self.discoveredSlaves["%s:%s" % slaveTuple] = slaveTuple
-            except rpyc.utils.factory.DiscoveryError:
-                pass
-        return self.discoveredSlaves
-
-
-class RpyCNodie(basic_modules.Constant):
-    """TODO: Add docstring
-    """
-
-#Add ComboBox
-RPyCNode = basic_modules.new_constant('RpyCNode',
-                                       staticmethod(eval),
-                                       ('main', 0),
-                                       staticmethod(lambda x: type(x) == tuple),
-                                       RPyCNodeWidget,
-                                       base_class=RpyCNodie)

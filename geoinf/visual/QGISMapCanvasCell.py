@@ -192,6 +192,12 @@ class QGISMapCanvasCellWidget(QCellWidget):
         """ updateContents(inputPorts: tuple) -> None
         Updates the contents with a new, changed filename
         """
+        allowedGreyStyles = [ QgsRasterLayer.SingleBandGray,
+             QgsRasterLayer.MultiBandSingleBandPseudoColor,
+             QgsRasterLayer.MultiBandSingleBandGray,
+             QgsRasterLayer.SingleBandPseudoColor ]
+        allowedRgbStyles = [ QgsRasterLayer.MultiBandColor ]        
+        
         (inputLayers, crsDest) = inputPorts
         if type(inputLayers) != list:
             inputLayers = [inputLayers]
@@ -226,7 +232,7 @@ class QGISMapCanvasCellWidget(QCellWidget):
                 # populate mylist with inputLayers's items
                 self.mylist.append(layer)
                 # test if the layer is a raster from a local file (not a wms)
-                if layer.type() == layer.RasterLayer and ( not layer.usesProvider() ):
+                if layer.type() == layer.RasterLayer: # and ( not layer.usesProvider() ):
                     # Test if the raster is single band greyscale
                     if layer.drawingStyle() in allowedGreyStyles:
                         #Everything looks fine so set stretch and exit
@@ -237,6 +243,7 @@ class QGISMapCanvasCellWidget(QCellWidget):
                         generateLookupTableFlag = False
                         # compute the min and max for the current extent
                         extentMin, extentMax = layer.computeMinimumMaximumEstimates( band )
+                        print "min max color", extentMin, extentMax
                         # set the layer min value for this band
                         layer.setMinimumValue( band, extentMin, generateLookupTableFlag )
                         # set the layer max value for this band
@@ -249,8 +256,7 @@ class QGISMapCanvasCellWidget(QCellWidget):
                         layer.setCacheImage( None )
                         # make sure the layer is redrawn
                         layer.triggerRepaint()
-                        
-                    if layer.drawingStyle() in allowedRgbStyles:
+                    elif layer.drawingStyle() in allowedRgbStyles:
                         #Everything looks fine so set stretch and exit
                         redBand = layer.bandNumber( layer.redBandName() )
                         greenBand = layer.bandNumber( layer.greenBandName() )

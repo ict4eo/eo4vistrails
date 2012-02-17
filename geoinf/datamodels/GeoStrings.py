@@ -172,6 +172,11 @@ GeoJSONString = basic_modules.new_constant('GeoJSONString',
                                         None,
                                         staticmethod(lambda x: type(x) == str),
                                         GeoStringConstantWidget)
+Proj4String = basic_modules.new_constant('Proj4String',
+                                        staticmethod(str),
+                                        None,
+                                        staticmethod(lambda x: type(x) == str),
+                                        GeoStringConstantWidget)
 
 
 #class GeoStringConfigurationWidget(SourceConfigurationWidget):

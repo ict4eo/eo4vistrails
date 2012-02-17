@@ -36,9 +36,10 @@ from packages.eo4vistrails.geoinf.datamodels.QgsLayer import QgsRasterLayer
 from packages.eo4vistrails.utils.synhigh import SyntaxSourceConfigurationWidget
 from packages.NumSciPy.Array import NDArray
 
+from core.modules.vistrails_module import NotCacheable, Module
+
 import gdalnumeric
 import gdal
-import osr
 from gdal import gdalconst
 import ctypes
 
@@ -63,7 +64,6 @@ class RasterLang(RPyCCode):
     
     def __init__(self):
         RPyCCode.__init__(self)
-        self._requiredVisPackages.append("packages.NumSciPy")
         self.preCodeString = "from numpy import *\nfrom scipy import *\n"
         self.postCodeString = None
         self.raster_prototype = None
@@ -95,11 +95,12 @@ class RasterLang(RPyCCode):
         self.raster_prototype = self.forceGetInputFromPort('prototype', self.raster_prototype)
         
         for k in outputDict.iterkeys():
-            if locals_.has_key(k) and locals_[k] != None:
+            if locals_.has_key(k) and not locals_[k] is None:
+                print "%s == %s  -> %s"%(self.getPortType(k), NDArray, issubclass(NDArray, self.getPortType(k)))
                 if issubclass(self.getPortType(k), NDArray):
-                    print "got %s"%k
+                    print "got %s of type %s"%(k, type(locals_[k]))
                     outArray = NDArray()
-                    outArray.set_array(numpy.array(locals_[k]))
+                    outArray.set_array(numpy.asarray(locals_[k]))
                     self.setResult(k, outArray)
                 elif issubclass(self.getPortType(k), QgsRasterLayer):
                     #TODO: This should all be done using a gal inmemorybuffer but
@@ -143,38 +144,40 @@ class layerAsArray(RasterlangModule, RPyCModule):
         RasterlangModule.__init__(self)
 
     def preCompute(self):
+        print "In preCompute"
         layer = self.getInputFromPort('Raster Layer')
+        print "layer: %s"%layer
         g = gdal.Open(str(layer.source()))
-        #TODO: Need to cehck the ctype that the image is 
+        print "g: %s"%g
+        #TODO: Need to check the ctype that the image is
+        print "trying to allocate shared memory"
         self.allocateSharedMemoryArray('numpy array', ctypes.c_float, (g.RasterYSize,g.RasterXSize))
     
     def compute(self):
         layer = self.getInputFromPort('Raster Layer')
         
         g = gdal.Open(str(layer.source()))
-        g.ReadAsArray(buf_obj=self.sharedPorts['numpy array'][0])
+        g.ReadAsArray(buf_obj=self.sharedMemOutputPorts['numpy array'][0])
 
         self.setResult("numpy array", None, asNDArray=True)
 
-@RPyCSafeModule()
-class RasterPrototype(RasterlangModule, RPyCModule):
+class RasterPrototype(RasterlangModule, Module):
     """ Container class for the connected components command """
 
     _input_ports  = [('(XMin,YMax,XMax,YMin) Extent', '(edu.utah.sci.vistrails.basic:Float,edu.utah.sci.vistrails.basic:Float,edu.utah.sci.vistrails.basic:Float,edu.utah.sci.vistrails.basic:Float)'),
                      ('(Rows, Cols) Pixel Count', '(edu.utah.sci.vistrails.basic:Integer,edu.utah.sci.vistrails.basic:Integer)'),
                      ('No Data Value', '(edu.utah.sci.vistrails.basic:Float)'),
-                     ('Cordinate Reference System', '(za.co.csir.eo4vistrails:EPSG Code:data)')]
+                     ('Spatial Reference System', '(za.co.csir.eo4vistrails:WKTString:data)')]
+                     #('Cordinate Reference System', '(za.co.csir.eo4vistrails:EPSG Code:data)')]
     _output_ports = [('self', '(za.co.csir.eo4vistrails:Raster Prototype:rasterlang)')]
     
     def __init__(self):
-        RPyCModule.__init__(self)
+        Module.__init__(self)
         RasterlangModule.__init__(self)
 
-    def clear(self):
-        RPyCModule.clear(self)
-
     def compute(self):
-        self.epsgcode = self.getInputFromPort('Cordinate Reference System')
+        self.wkt = self.forceGetInputFromPort('Spatial Reference System', None)
+                
         self.noDatavalue = self.forceGetInputFromPort('No Data Value', None)
         
         (self.xmin,self.ymax,self.xmax,self.ymin) = self.getInputFromPort('(XMin,YMax,XMax,YMin) Extent')
@@ -184,8 +187,6 @@ class RasterPrototype(RasterlangModule, RPyCModule):
         self.yres=(self.ymax-self.ymin)/float(self.yrows)
         
         self.geotransform=(self.xmin,self.xres,0,self.ymax,0,-self.yres)
-        
-        self.setResult("self", self)
 
 @RPyCSafeModule()
 class arrayAsLayer(RasterlangModule, RPyCModule):
@@ -205,18 +206,16 @@ class arrayAsLayer(RasterlangModule, RPyCModule):
     def compute(self):
         ndarray = self.getInputFromPort('numpy array')
         prototype = self.getInputFromPort('prototype')
-
-        #TODO: make platform independant
-        tmpFile = self.interpreter.filePool.create_file(suffix='.tiff')
-        writeImage(ndarray.get_array(), prototype, tmpFile.name, 'GTiff')
+        
+        tmpFile = self.interpreter.filePool.create_file(suffix='.img')
+        writeImage(ndarray.get_array(), prototype, tmpFile.name, 'HFA')
         
         outlayer = QgsRasterLayer(tmpFile.name, tmpFile.name)
-        fixLayerMinMax(outlayer)
-        
+                
         self.setResult("raster layer", outlayer)
 
 @RPyCSafeModule()
-class SaveArrayToRaster(RasterlangModule, RPyCModule):
+class SaveArrayToRaster(NotCacheable, RasterlangModule, RPyCModule):
     """ Container class for the connected components command """
 
     _input_ports  = [('numpy array', '(edu.utah.sci.vistrails.numpyscipy:Numpy Array:numpy|array)'),
@@ -232,13 +231,17 @@ class SaveArrayToRaster(RasterlangModule, RPyCModule):
         RasterlangModule.__init__(self)
 
     def compute(self):
+        print 'output file'
         outfile = self.getInputFromPort('output file')
+        print 'numpy array'
         ndarray = self.getInputFromPort('numpy array')
+        print 'prototype'
         prototype = self.getInputFromPort('prototype')
+        print 'format'
         outformat = self.getInputFromPort('format')
         
         if prototype.noDatavalue:
-            print "protoype nodata", prototype.noDataValue
+            print "protoype nodata", prototype.noDatavalue
         
         writeImage(ndarray.get_array(), prototype, outfile.name, outformat)
         
@@ -249,7 +252,7 @@ from packages.eo4vistrails.utils.DropDownListWidget import ComboBoxWidget
 
 class GDALFormatComboBoxWidget(ComboBoxWidget):
     """TODO Write docstring."""
-    _KEY_VALUES = {'HFA': 'HFA', 'GEOTiff':'GEOTiff'}
+    _KEY_VALUES = {'HFA': 'HFA', 'GEOTiff':'GTiff'}
 
 # LinuxComboBox
 GDALFormatComboBox = basic_modules.new_constant('GDAL Format',
@@ -264,7 +267,7 @@ def writeImage(arrayData, prototype, path, format):
     
     if arrayData shape is of length 3, then we have multibands (nbad,rows,cols), otherwise one band
     """
-    
+        
     driver = gdal.GetDriverByName( format )
     metadata = driver.GetMetadata()
     if metadata.has_key(gdal.DCAP_CREATE) \
@@ -285,16 +288,15 @@ def writeImage(arrayData, prototype, path, format):
         cols = dims[2]
         nbands = dims[0]
 
-    #TODO lookup the data type from the array and do the mapping
+    #lookup the data type from the array and do the mapping
+    print "----------------------------------------------"
+    print "arraytype:  %s dtype: %s, type: %s, gdaltype: %s"%(type(arrayData), arrayData.dtype, arrayData.dtype.type, gdalnumeric.NumericTypeCodeToGDALTypeCode(arrayData.dtype.type))
     dst_ds = driver.Create(path, cols, rows, nbands, gdalnumeric.NumericTypeCodeToGDALTypeCode(arrayData.dtype.type) )
 
     dst_ds.SetGeoTransform( prototype.geotransform )
-    print prototype.epsgcode
     
-    if prototype.epsgcode:
-        srs = osr.SpatialReference()
-        srs.ImportFromEPSG(prototype.epsgcode)
-        dst_ds.SetProjection( srs.ExportToWkt() )
+    if prototype.wkt:
+        dst_ds.SetProjection( prototype.wkt )
     
     if nbands > 1:
         for i in range(nbands):
@@ -305,7 +307,7 @@ def writeImage(arrayData, prototype, path, format):
     else:
         dst_ds_rb = dst_ds.GetRasterBand(1)
         if prototype.noDatavalue:
-            dst_ds_rb.SetNoDataValue(prototype.nodatavalue)
+            dst_ds_rb.SetNoDataValue(prototype.noDatavalue)
         dst_ds_rb.SetColorInterpretation(gdalconst.GCI_GrayIndex)
         dst_ds_rb.SetColorTable(gdal.ColorTable(gdalconst.GPI_Gray))
         dst_ds_rb.WriteArray(arrayData)
