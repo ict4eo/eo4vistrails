@@ -2,17 +2,20 @@ def initialize(*args, **keywords):
     from core.modules.module_registry import get_module_registry
     from core.modules import basic_modules
 
-    from ThreadSafe import Fork, ThreadTestModule
-    from session import Session
     import DropDownListWidget
-    from WebRequest import WebRequest
-    from DataRequest import DataRequest, PostGISRequest
+
     from Array import NDArray
-    from CsvUtils import CsvWriter, CsvReader, ListDirContent, CsvFilter
-    from Random import Random
     from Command import Command
-    from ListFilter import ListFilter
+    from CsvUtils import CsvWriter, CsvReader, ListDirContent, CsvFilter
+    from DataRequest import DataRequest, PostGISRequest
     from DataTransformations import InputStream,  pgSQLMergeInsert
+    from DataWriter import TextDataWriter, \
+        DataWriterTypeComboBox
+    from ListFilter import ListFilter
+    from Random import Random
+    from session import Session
+    from ThreadSafe import Fork, ThreadTestModule
+    from WebRequest import WebRequest
 
     reg = get_module_registry()
     utils_namespace = "utils"
@@ -27,6 +30,11 @@ def initialize(*args, **keywords):
                    abstract=True)
 
     reg.add_module(DataRequest,
+                   namespace=utils_namespace,
+                   abstract=True)
+
+    # drop-down lists
+    reg.add_module(DataWriterTypeComboBox,
                    namespace=utils_namespace,
                    abstract=True)
 

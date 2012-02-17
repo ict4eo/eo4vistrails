@@ -85,8 +85,10 @@ def initialize(*args, **keywords):
     # QgsLayers
     reg.add_module(QgsLayer.QgsVectorLayer, name="Vector Layer", namespace=mynamespace)
     reg.add_output_port(QgsLayer.QgsVectorLayer, "value", QgsLayer.QgsVectorLayer)
+
     reg.add_module(QgsLayer.QgsRasterLayer, name="Raster Layer", namespace=mynamespace)
     reg.add_output_port(QgsLayer.QgsRasterLayer, "value", QgsLayer.QgsRasterLayer)
+
     reg.add_module(TemporalVectorLayer, name="Temporal Vector Layer", namespace=mynamespace)
     reg.add_output_port(TemporalVectorLayer, "value", TemporalVectorLayer)
 
@@ -100,7 +102,7 @@ def initialize(*args, **keywords):
     reg.add_module(GMLString, configureWidgetType= GeoStringConstantWidget, namespace=mynamespace)
     reg.add_module(GeoJSONString,configureWidgetType= GeoStringConstantWidget, namespace=mynamespace)
     reg.add_module(WKTString, configureWidgetType= GeoStringConstantWidget, namespace=mynamespace)
-    
+
     # MemFeatureModel
     reg.add_module(MemFeatureModel, namespace=mynamespace, abstract=True)
     reg.add_input_port(MemFeatureModel, "source_file", String)
