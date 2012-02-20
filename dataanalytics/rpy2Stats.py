@@ -46,7 +46,6 @@ from packages.eo4vistrails.utils.synhigh import SyntaxSourceConfigurationWidget
 from packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
 from packages.eo4vistrails.utils.ModuleHelperMixin import ModuleHelperMixin
 
-
 @RPyCSafeModule()
 class Rpy2Script(Script, ModuleHelperMixin):
     """

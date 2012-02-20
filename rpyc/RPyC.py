@@ -205,11 +205,11 @@ class RPyCModule(Module):
     This forms the basis for ensuring that rpyc-based modules have the correct
     input ports.
     """
-    _input_ports = [('rpycnode', '(za.co.csir.eo4vistrails:RpyC Node:rpyc)', {"optional": True})]
+    _input_ports = [('rpycnode', '(za.co.csir.eo4vistrails:RpyC Node:rpyc)', {"optional": False})]
 
 
 class RPyCMultiProcessModule(RPyCModule):
-    _input_ports = [('rpycnode', '(za.co.csir.eo4vistrails:RpyC Node:rpyc)', {"optional": True}),
+    _input_ports = [('rpycnode', '(za.co.csir.eo4vistrails:RpyC Node:rpyc)', {"optional": False}),
                     ('worker pool size', '(core.modules.vistrails_module.Integer)', {"optional": True})]
 
 class RPyCSafeModule(object):
@@ -239,8 +239,11 @@ class RPyCSafeModule(object):
             pass
         if not "packages.spreadsheet" in self._requiredVisPackages:
             self._requiredVisPackages.append("packages.spreadsheet")
+        if not "packages.vtk" in self._requiredVisPackages:
             self._requiredVisPackages.append("packages.vtk")
+        if not "packages.NumSciPy" in self._requiredVisPackages:
             self._requiredVisPackages.append("packages.NumSciPy")
+        
         clazz._requiredVisPackages = self._requiredVisPackages
 
         if RPyCModule not in clazz.__bases__:
@@ -254,9 +257,9 @@ class RPyCSafeModule(object):
             new__bases__ = (RPyCSafeMixin,) + clazz.__bases__
             new__dict__ = clazz.__dict__.copy()
             new__dict__['_original_compute'] = new__dict__['compute']
-
+            
             del(new__dict__['compute'])  # = RPyCSafeMixin.compute
-
+            
         return type(clazz.__name__, new__bases__, new__dict__)
 
 class DummyConnector(ModuleConnector):
@@ -322,6 +325,7 @@ class RPyCSafeMixin(ModuleHelperMixin):
     module. The shadow's methods are linked back to the original module.
     """
     ownNotSupported = False
+    multiWorkerSupported = False
 
     def clear(self):
         try:
@@ -342,157 +346,156 @@ class RPyCSafeMixin(ModuleHelperMixin):
         print "clearing"
         Module.clear(self)
 
-    def _getConnection(self):
+    def _getConnection(self, rpycnode):
         connection = None
         isRemote = False
-        rpycnode = ('', '')
-        if self.hasInputFromPort('rpycnode'):
-            rpycnode = self.getInputFromPort('rpycnode')
-
-            if str(rpycnode[0]) == 'None' or str(rpycnode[0]) == '':
-                self.preCompute()
-
-            elif str(rpycnode[0]) == 'main':
-                self.preCompute()
-
-            elif str(rpycnode[0]) == 'own':
-                #setup shared memory
-                #TODO: what happens if we want to have multi inputs on a shared
-                #memory port?
-                #Maybe I have handled it already I'm not sure, need to test                
-                self.preCompute()
-                if self.ownNotSupported:
-                    pass
-                else:
-                    args = {}
-                    args.update( self.sharedMemOutputPorts )
-                    for port in self.inputPorts:
-                        values = self.forceGetInputListFromPort(port)
-                        for value in values:
-                            if not isinstance(value ,BaseNetref):                  
-                                print "Added shared input param: %s value: %s"%('___shm_%s'%id(value), value)
-                                args.update({'___shm_%s'%id(value):value})
-                    connection = getSubConnection(args)
-            else:
-                isRemote = True
-                connection = getRemoteConnection(rpycnode[0], rpycnode[1])
-                #Upload any vistrails packages that may be required
-                for packageName in self._requiredVisPackages:
-                    if packageName.endswith(".py"):
-                        #TODO: this doesn't work for some reason
-                        refreshModule(connection, packageName[:-3])
-                    else:
-                        refreshPackage(connection, packageName, checkVersion=True, force=False)
-                print "Finished uploading module requirements to node...."
-        else:
+        
+        if str(rpycnode[0]) == 'own':
+            #setup shared memory
+            #TODO: what happens if we want to have multi inputs on a shared
+            #memory port?
+            #Maybe I have handled it already I'm not sure, need to test                
             self.preCompute()
-        return (isRemote, connection, rpycnode)
+            args = {}
+            args.update( self.sharedMemOutputPorts )
+            for port in self.inputPorts:
+                values = self.forceGetInputListFromPort(port)
+                for value in values:
+                    if not isinstance(value ,BaseNetref):                  
+                        print "Added shared input param: %s value: %s"%('___shm_%s'%id(value), value)
+                        args.update({'___shm_%s'%id(value):value})
+            connection = getSubConnection(args)
+        else:
+            isRemote = True
+            connection = getRemoteConnection(rpycnode[0], rpycnode[1])
+            #Upload any vistrails packages that may be required
+            for packageName in self._requiredVisPackages:
+                if packageName.endswith(".py"):
+                    #TODO: this doesn't work for some reason
+                    refreshModule(connection, packageName[:-3])
+                else:
+                    refreshPackage(connection, packageName, checkVersion=True, force=False)
+            print "Finished uploading module requirements to node...."
+        
+        return (isRemote, connection)
 
     def compute(self):
         self.hasWorkerPool = False
+        rpycnodes = [(None,None)]
         if self.hasInputFromPort('rpycnode'):
             rpycnodes = self.getInputFromPort('rpycnode')
             if not isinstance(rpycnodes, list):
                 rpycnodes = self.getInputListFromPort('rpycnode')
             if len(rpycnodes) > 1:
                 self.hasWorkerPool = True
-        
-        
-        
-        #Get RPyC Node in good standing
-        #input from rpycmodule        
-        self.isRemote = False
-        rpycnode = ('', '')
 
-        if Shared.isRemoteRPyCNode:
-            self.conn = None
-        else:
-            self.sharedMemOutputPorts = {}
-            self.isRemote, self.conn, rpycnode = self._getConnection()
-        
-        if not self.conn:
-            #run as per normal
-            print "run as per normal", self
-            if not Shared.isRemoteRPyCNode:
-                self._setupDummyInputs(self, locals())
-            self._original_compute()
-        else:
-            #make sure we have the rpycnode info available
-            self.conn.rpycnode = rpycnode
-            
-            #Just sum setup stuff to make sure vistrails is safe
-            self.conn.execute('import init_for_library')
-            #Make sure it knows its a remote node
-            self.conn.execute('import packages.eo4vistrails.rpyc.Shared as Shared')
-            self.conn.execute('from packages.eo4vistrails.rpyc.RPyC import DummyConnector')
-
-            self.conn.execute('Shared.isRemoteRPyCNode=True')
-            #print self.conn.namespace['Shared'].cachedResults.valuerefs()
-            
-            #Instantiate Shadow Object
-            print 'from %s import %s' % (self.__module__, self.__class__.__name__)
-            self.conn.execute('from %s import %s' % (self.__module__, self.__class__.__name__))
-            self.conn.execute('shadow = %s()' % (self.__class__.__name__))
-            shadow = self.conn.eval('shadow')
-            
-            #Hook Up Shadow Objects Methods and Attributes
-            for attribute in Module.__dict__:
-                if not str(attribute) in ('setResult', 'getInputFromPort', 'forceGetInputFromPort', 'getInputListFromPort', 'forceGetInputListFromPort', 'compute', '__dict__', '__module__', '__doc__', '__str__', '__weakref__', '__init__'):
-                    shadow.__setattr__(str(attribute), self.__getattribute__(str(attribute)))
-
-            #This ensures we still have a local copy of each port as they are used in the 
-            #update upstream workflow pipe, and we don't want to be breaking
-            #the local pipe, espacially when we replace all connectors with dummys            
-            self.conn.execute('shadow.inputPorts = {}')
-            for port in self.inputPorts:
-                shadow.inputPorts[port] =  self.conn.eval('[]')
-                for connector in self.inputPorts[port]:
-                    shadow.inputPorts[port].append(connector)
-            
-            shadow.outputPorts = self.outputPorts
-            shadow.is_method = self.is_method
-            shadow.upToDate = self.upToDate
-            shadow.logging = self.logging
-            shadow._latest_method_order = self._latest_method_order
-            shadow.moduleInfo = self.moduleInfo
-            shadow.is_breakpoint = self.is_breakpoint
-            shadow.is_fold_operator = self.is_fold_operator
-            shadow.is_fold_module = self.is_fold_module
-            shadow.computed = self.computed
-            shadow.signature = self.signature
-            
-            self.conn.execute('import core.interpreter.default')
-            shadow.interpreter = self.conn.eval('core.interpreter.default.get_default_interpreter()')
-            
-            #set up the sharedMemOutputPorts on the client
-            self._setupDummyInputs(shadow,  self.conn.namespace)
-            
-            self.conn.execute('shadow.sharedMemOutputPorts = {}')
-            #set up the sharedMemOutputPorts on the client
-            for port in self.sharedMemOutputPorts:
-                shadow.sharedMemOutputPorts[port] = self.conn.namespace[port]
-            
-            import os        
-            #Call the Shadow Objects Compute and pre compute
-            if self.isRemote:
-                print "Process: %s Executing in the pre-compute shadow class"%os.getpid()
-                shadow.preCompute()
-                print "Process: %s Completed Executing pre-compute in the shadow class"%os.getpid()
-            print "Process: %s Executing in the shadow class"%os.getpid()
-            shadow.compute()
-            print "Process: %s Completed Executing in the shadow class"%os.getpid()
-            #Handle Shared memory etc at local node
-            keepConn = False
-            for port in self.outputPorts:
-                keepConn = keepConn or self._obtainLocalCopy(port, self.isRemote)
-
-            #Disconnect the remote node
-            if not self.isRemote and self.conn and keepConn:
-                self.conn.close()
-                print "closed"
-                self.conn.proc.join()
-                print "joined"
+        for index, rpycnode in zip(range(len(rpycnodes)), rpycnodes):
+            #Get RPyC Node in good standing
+            #input from rpycmodule        
+            self.isRemote = False            
+    
+            if Shared.isRemoteRPyCNode:                
                 self.conn = None
+                
+            elif rpycnode[0] is None or rpycnode[0] in ['main', ''] or self.ownNotSupported:
+                self.workerNodeID = None
+                self.conn = None
+                self.preCompute()
+                
+            else:
+                self.sharedMemOutputPorts = {}
+                self.isRemote, self.conn = self._getConnection(rpycnode)
+                
+            if not self.conn:
+                #run as per normal
+                print "run as per normal", self
+                if not Shared.isRemoteRPyCNode:
+                    self._setupDummyInputs(self, locals())
+                self._original_compute()
+            else:
+                #make sure we have the rpycnode info available
+                self.conn.rpycnode = rpycnode
+                
+                #Just sum setup stuff to make sure vistrails is safe
+                self.conn.execute('import init_for_library')
+                #Make sure it knows its a remote node
+                self.conn.execute('import packages.eo4vistrails.rpyc.Shared as Shared')
+                self.conn.execute('from packages.eo4vistrails.rpyc.RPyC import DummyConnector')
+    
+                self.conn.execute('Shared.isRemoteRPyCNode=True')
+                #print self.conn.namespace['Shared'].cachedResults.valuerefs()
+                
+                #Instantiate Shadow Object
+                print 'from %s import %s' % (self.__module__, self.__class__.__name__)
+                self.conn.execute('from %s import %s' % (self.__module__, self.__class__.__name__))
+                self.conn.execute('shadow = %s()' % (self.__class__.__name__))
+                shadow = self.conn.eval('shadow')
+                #Set the worker nodes ID so he know who he is in the pool
+                shadow.workerNodeID = index
+                
+                #Hook Up Shadow Objects Methods and Attributes
+                for attribute in Module.__dict__:
+                    if not str(attribute) in ('setResult', 'getInputFromPort', 'forceGetInputFromPort', 'getInputListFromPort', 'forceGetInputListFromPort', 'compute', '__dict__', '__module__', '__doc__', '__str__', '__weakref__', '__init__'):
+                        shadow.__setattr__(str(attribute), self.__getattribute__(str(attribute)))
+    
+                #This ensures we still have a local copy of each port as they are used in the 
+                #update upstream workflow pipe, and we don't want to be breaking
+                #the local pipe, espacially when we replace all connectors with dummys            
+                self.conn.execute('shadow.inputPorts = {}')
+                for port in self.inputPorts:
+                    shadow.inputPorts[port] =  self.conn.eval('[]')
+                    for connector in self.inputPorts[port]:
+                        shadow.inputPorts[port].append(connector)
+                
+                shadow.outputPorts = self.outputPorts
+                shadow.is_method = self.is_method
+                shadow.upToDate = self.upToDate
+                shadow.logging = self.logging
+                shadow._latest_method_order = self._latest_method_order
+                shadow.moduleInfo = self.moduleInfo
+                shadow.is_breakpoint = self.is_breakpoint
+                shadow.is_fold_operator = self.is_fold_operator
+                shadow.is_fold_module = self.is_fold_module
+                shadow.computed = self.computed
+                shadow.signature = self.signature
+                
+                self.conn.execute('import core.interpreter.default')
+                shadow.interpreter = self.conn.eval('core.interpreter.default.get_default_interpreter()')
+                
+                #set up the sharedMemOutputPorts on the client
+                self._setupDummyInputs(shadow,  self.conn.namespace)
+                
+                self.conn.execute('shadow.sharedMemOutputPorts = {}')
+                #set up the sharedMemOutputPorts on the client
+                for port in self.sharedMemOutputPorts:
+                    shadow.sharedMemOutputPorts[port] = self.conn.namespace[port]
+                
+                import os        
+                #Call the Shadow Objects Compute and pre compute
+                if self.isRemote:
+                    print "Process: %s Executing in the pre-compute shadow class"%os.getpid()
+                    shadow.preCompute()
+                    print "Process: %s Completed Executing pre-compute in the shadow class"%os.getpid()
+                print "Process: %s Executing in the shadow class"%os.getpid()
+                shadow.compute()
+                print "Process: %s Completed Executing in the shadow class"%os.getpid()
+                #Handle Shared memory etc at local node
+                keepConn = False
+                for port in self.outputPorts:
+                    keepConn = keepConn or self._obtainLocalCopy(port, self.isRemote)
+                
+                #Disconnect the remote node
+                if not self.isRemote and self.conn and keepConn:
+                    self.conn.close()
+                    print "closed"
+                    self.conn.proc.join()
+                    print "joined"
+                    self.conn = None
+            
+            #If multiworker is no explicitly supported then we should only 
+            #execute opn the first node
+            if not self.multiWorkerSupported:
+                return    
 
     def _setupDummyInputs(self, module, namespace):
         #set up the sharedMemOutputPorts on the client

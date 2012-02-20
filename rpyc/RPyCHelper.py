@@ -53,7 +53,7 @@ class RPyCCode(NotCacheable, RPyCSafeMixin, ThreadSafeMixin, RPyCModule,
     #TODO: If you want a PythonSource execution to be cached, call cache_this().
 
     def __init__(self):
-        self._requiredVisPackages = ["packages.spreadsheet", "packages.vtk", "packages.NumSciPy", "packages.eo4vistrails"]
+        self._requiredVisPackages = ["packages.spreadsheet", "packages.vtk", "packages.NumSciPy", "packages.eo4vistrails"]        
         ThreadSafeMixin.__init__(self)
         RPyCModule.__init__(self)
         self.preCodeString = None
@@ -156,23 +156,7 @@ class RPyCCode(NotCacheable, RPyCSafeMixin, ThreadSafeMixin, RPyCModule,
         self.run_code_common(locals_, execute, code_str, use_input, use_output,
                              pre_code_string, post_code_string)
         print "Finished executing in main thread"
-
-    def run_code(self, code_str, conn, use_input, use_output, pre_code_string,
-                 post_code_string):
-        """
-        Runs a piece of code as a VisTrails module.
-
-        Use_input and use_output control whether to use the input port
-        and output port dictionary as local variables inside the execution.
-        """
-        #import sys
-        #conn.modules.sys.stdout = sys.stdout
-
-        print "Starting executing in other thread"
-        self.run_code_common(conn.namespace, conn.execute, code_str, use_input,
-                             use_output, pre_code_string, post_code_string)
-        print "Finished executing in other thread"
-
+        
     def _original_compute(self):
         """
         Vistrails Module Compute, Entry Point Refer, to Vistrails Docs
