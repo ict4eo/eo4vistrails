@@ -32,7 +32,7 @@ in the formats defined by QGIS.
 import qgis.core
 from PyQt4.QtCore import QFileInfo
 # vistrails
-from core.modules.vistrails_module import Module, ModuleError
+from core.modules.vistrails_module import Module, ModuleError, NotCacheable
 # eo4vistrails
 from packages.eo4vistrails.utils.DataRequest import DataRequest
 from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
@@ -61,7 +61,7 @@ EPSGCode = basic_modules.new_constant('EPSG Code',
 #global globalQgsLock
 #globalQgsLock = RLock()
 
-class QgsMapLayer(Module):
+class QgsMapLayer(Module, NotCacheable):
     """
     This module will create a QGIS layer from a file
 
@@ -83,6 +83,10 @@ class QgsMapLayer(Module):
             raise ModuleError(self, msg + ' - %s' % str(error))
         else:
             raise ModuleError(self, msg)
+
+    def temp_q(self):
+        """test to check if temp file created."""
+        return self.interpreter.filePool.create_file(suffix=".csv")
 
     def mapLayerFactory(self, uri=None, layername=None, driver=None):
         """Create a QGIS map layer based on driver."""
@@ -107,6 +111,10 @@ class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
         if uri and layername and driver:
             qgis.core.QgsVectorLayer.__init__(self, uri, layername, driver)
         self.SUPPORTED_DRIVERS = ['WFS', 'ogr', 'postgres']
+
+    def temp(self):
+        """test to check if temp file created."""
+        return self.temp_q()
 
     def compute(self):
         """Execute the module to create the output"""

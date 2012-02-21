@@ -86,9 +86,11 @@ def initialize(*args, **keywords):
     reg.add_module(QgsLayer.QgsVectorLayer, name="Vector Layer", namespace=mynamespace)
     reg.add_output_port(QgsLayer.QgsVectorLayer, "value", QgsLayer.QgsVectorLayer)
 
+    # ... raster
     reg.add_module(QgsLayer.QgsRasterLayer, name="Raster Layer", namespace=mynamespace)
     reg.add_output_port(QgsLayer.QgsRasterLayer, "value", QgsLayer.QgsRasterLayer)
 
+    # ... vector
     reg.add_module(TemporalVectorLayer, name="Temporal Vector Layer", namespace=mynamespace)
     reg.add_output_port(TemporalVectorLayer, "value", TemporalVectorLayer)
 
