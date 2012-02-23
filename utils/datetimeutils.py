@@ -23,7 +23,7 @@
 ## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ##
 ############################################################################
-"""This package provides general purpose date and time utility code for
+"""This package provides general purpose date and time utility routines for
 eo4vistrails.
 """
 
@@ -94,7 +94,7 @@ def to_matplotlib_date(self, string, date_format='%Y-%m-%d', missing=1e-10):
 
 def get_date_and_time(datetime_string, date_format="%Y-%m-%d",
                       time_format="%H:%M:%S"):
-    """Return date & time string values from a UTC-encoded date.
+    """Return a tuple of date & time string values from a UTC-encoded date.
 
     Takes a string in the form YYYY-MM-DDTHH:MM:SSZaaaa and returns
     the date and time components as separate string values, formatted
@@ -107,40 +107,43 @@ def get_date_and_time(datetime_string, date_format="%Y-%m-%d",
             _dt = _dt.replace('Z', '')
         else:
             _dt = _dt.replace('Z', '+')
-        _dt_python = self.parse_datetime(_dt)
-        return _dt_python.strftime(date_format),\
-               _dt_python.strftime(time_format)
+        _dt_python = parse_datetime(_dt)
+        return (_dt_python.strftime(date_format),
+               _dt_python.strftime(time_format))
 
 
-def parse_datetime(s):
-    """Create datetime object from date/time in a string.
+def parse_datetime(string):
+    """Create datetime object from string version of a date/time.
 
-    Takes a string in the format produced by calling str()
-    on a python datetime object and returns a datetime
-    instance that would produce that string.
+    Takes a string in a common date/time format, e.g. produced by calling str()
+    on a Python datetime object or from an OGC web service, and returns a
+    standard datetime instance.
 
     Acceptable formats are: "YYYY-MM-DD HH:MM:SS.ssssss+HH:MM",
                             "YYYY-MM-DD HH:MM:SS.ssssss",
                             "YYYY-MM-DD HH:MM:SS+HH:MM",
                             "YYYY-MM-DD HH:MM:SS"
-    Where ssssss represents fractional seconds. The timezone
-    is optional and may be either positive or negative
-    hours/minutes east of UTC.
+    where ssssss represents fractional seconds.
+
+    Alternative formats may use a 'T' as a separator between date and time.
+
+    The timezone is optional and may be either positive or negative
+    hours/minutes east of UTC.  The timezone may omit the ':' separator.
 
     Source:
         http://kbyanc.blogspot.com/2007/09/python-reconstructing-datetimes-from
         .html
     """
     # Pre-checks on string data
-    print "datetimeutils:135", s
-    if s is None:
+    #print "datetimeutils:135", string
+    if string is None:
         return None
     else:
-        s = str(s)
-    if 'T' in s:
-        s = s.replace('T', ' ')  # convert UTC-format into Python format
-    if '/' in s:
-        s = s.replace('/', '-')
+        string = str(string)
+    if 'T' in string:
+        string = string.replace('T', ' ')  # convert UTC-format into Python format
+    if '/' in string:
+        string = string.replace('/', '-')
 
     # Split string in the form 2007-06-18 19:39:25.3300-07:00
     # into its constituent date/time, microseconds, and
@@ -148,18 +151,18 @@ def parse_datetime(s):
     # optional.
 
     # some timezone fields omit the ':'
-    if re.search(r'([-+]\d{4})', s):
-        m = re.match(r'(.*?)(?:\.(\d+))?(([-+]\d{4}))?$', s)
+    if re.search(r'([-+]\d{4})', string):
+        m = re.match(r'(.*?)(?:\.(\d+))?(([-+]\d{4}))?$', string)
         datestr, fractional, tzname, tz = m.groups()
         #print "datetimeutils:153", tz
-        tz_field = re.findall(r'([-+]\d{4})', s)[0]
+        tz_field = re.findall(r'([-+]\d{4})', string)[0]
         #print "datetimeutils:153", tz_field
         tzhour = tz_field[1:3]
         tzmin = tz_field[3:5]
     else:
-        m = re.match(r'(.*?)(?:\.(\d+))?(([-+]\d{1,2}):(\d{2}))?$', s)
+        m = re.match(r'(.*?)(?:\.(\d+))?(([-+]\d{1,2}):(\d{2}))?$', string)
         datestr, fractional, tzname, tzhour, tzmin = m.groups()
-    #print "datetimeutils:160", s, '/n', datestr, '*', tzname, '*', tzhour, '*', tzmin
+    #print "datetimeutils:160", string, '/n', datestr, '*', tzname, '*', tzhour, '*', tzmin
 
     # Create tzinfo object representing the timezone
     # expressed in the input string.  The names we give
