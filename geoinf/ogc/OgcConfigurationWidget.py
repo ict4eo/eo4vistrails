@@ -280,7 +280,7 @@ class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
 
         # constructRequest() method must be fully defined in sub-class
         result = self.constructRequest()
-        #print "OgcConfigurationWidget:281", type(result), result
+        print "OgcConfigurationWidget:283", type(result), result
         self.request_type = result.get('request_type', None)
         self.data = result.get('data', None)
         self.full_url = result.get('full_url', None)

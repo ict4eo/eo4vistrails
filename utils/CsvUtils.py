@@ -250,7 +250,8 @@ class CsvFilter(ThreadSafeMixin, Module):
 
     """
 
-    _input_ports = [('fullfilename', '(edu.utah.sci.vistrails.basic:String)'),
+    _input_ports = [('file_in', '(edu.utah.sci.vistrails.basic:File)'),
+                    ('filename_in', '(edu.utah.sci.vistrails.basic:String)'),
                     ('delimiter', '(edu.utah.sci.vistrails.basic:String)'),
                     ('sample_set', '(edu.utah.sci.vistrails.basic:Boolean)'),
                     ('transpose', '(edu.utah.sci.vistrails.basic:Boolean)'),
@@ -426,7 +427,8 @@ class CsvFilter(ThreadSafeMixin, Module):
             return list  # empty list
 
     def compute(self):
-        fullname = self.getInputFromPort('fullfilename')
+        file_in =  self.getInputFromPort('file_in')
+        fullname = self.getInputFromPort('filename_in')
         delimiter = self.forceGetInputFromPort('delimiter', ",")
         sample = self.forceGetInputFromPort("sample_set", False)
         transpose = self.forceGetInputFromPort("transpose", False)
@@ -440,24 +442,31 @@ class CsvFilter(ThreadSafeMixin, Module):
         list_of_lists = []
         cols_list = self.get_filter_specs(filter_cols)
         rows_list = self.get_filter_specs(filter_rows)
-        #print "csvutils.421: ", cols_list, rows_list
+        #print "csvutils.441: ", cols_list, rows_list
         if not header_in:
             header_out = False  # cannot process a row that is not there...
 
-        if os.path.isfile(fullname):
+        if fullname and os.path.isfile(fullname):
+            filename = fullname
+        elif file_in:
+            filename = file_in.name
+        else:
+            filename = None
+
+        if filename:
             try:
-                csvfile = csv.reader(open(fullname, 'r'), delimiter=delimiter)
-                #print "csvutils.422:", header_in, header_out
+                csvfile = csv.reader(open(filename, 'r'), delimiter=delimiter)
+                #print "csvutils.452:", header_in, header_out
                 for key, row in enumerate(csvfile):
                     if key == 0 and header_in and not header_out:
                         # skip header row
-                        #print "csvutils:432 - skip header_out", key
+                        #print "csvutils:462 - skip header_out", key
                         pass
                     elif key > 9  and sample:
                         # have the sample data now...
                         break
                     else:
-                        #print "csvutils.438: data", key, row
+                        #print "csvutils.468: data", key, row
                         if not cols_list:
                             if not rows_list:
                                 list_of_lists.append(row)
@@ -474,13 +483,13 @@ class CsvFilter(ThreadSafeMixin, Module):
                                     if k + 1 in cols_list:
                                         row_out.append(c)
                                 list_of_lists.append(row_out)
-                #print "csvutils.468:pre_transpose ", list_of_lists
+                #print "csvutils.488:pre_transpose ", list_of_lists
                 if transpose:
                     list_of_lists = self.transpose_array(list_of_lists)
-                #print "csvutils.471:post_transpose ", list_of_lists
+                #print "csvutils.487:post_transpose ", list_of_lists
                 if flatten:
                     list_of_lists = self.flatten_list(list_of_lists)
-                #print "csvutils.474:post_flatten ", list_of_lists
+                #print "csvutils.490:post_flatten ", list_of_lists
                 self.setResult('dataset', list_of_lists)
                 if 'html_file' in self.outputPorts:
                     self.setResult('html_file', self.create_html(

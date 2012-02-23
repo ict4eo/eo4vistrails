@@ -10,7 +10,7 @@ def initialize(*args, **keywords):
     from DataRequest import DataRequest, PostGISRequest
     from DataTransformations import InputStream,  pgSQLMergeInsert
     from DataWriter import TextDataWriter, \
-        DataWriterTypeComboBox
+         DataWriterTypeComboBox
     from ListFilter import ListFilter
     from Random import Random
     from session import Session
@@ -39,7 +39,7 @@ def initialize(*args, **keywords):
                    abstract=True)
 
     # ==========================================================================
-    # Standard Modules
+    # ComboBox definitions
     # ==========================================================================
 
     # LinuxComboBox
@@ -48,18 +48,23 @@ def initialize(*args, **keywords):
                                                    (1, 1),
                                                    staticmethod(lambda x: type(x) == tuple),
                                                    DropDownListWidget.LinuxDemoComboBoxWidget)
+
     reg.add_module(LinuxDemoComboBox,
                    namespace=utils_test_namespace)
 
-    # NDArray
-    reg.add_module(NDArrayEO,
-                   name="EO Numpy Array",
-                   namespace=utils_namespace,
-                   abstract=True)
-    reg.add_output_port(
-        NDArrayEO,
-        "self",
-        (NDArrayEO, 'self'))
+    # DateFormatComboBox
+    DateFormatComboBox = basic_modules.new_constant('Date Format',
+                                        staticmethod(str),
+                                        's',
+                                        staticmethod(lambda x: type(x) == str),
+                                        DropDownListWidget.DateFormatComboBoxWidget)
+
+    reg.add_module(DateFormatComboBox,
+                   namespace=utils_namespace)
+
+    # ==========================================================================
+    # Standard Modules - Ports defined here
+    # ==========================================================================
 
     # Fork
     reg.add_module(Fork,
@@ -68,7 +73,6 @@ def initialize(*args, **keywords):
         Fork,
         'modules',
         basic_modules.Module)
-
 
     # ListFilter
     reg.add_module(ListFilter,
@@ -91,14 +95,15 @@ def initialize(*args, **keywords):
         'list_out',
         (basic_modules.List, 'sub-setted list'))
 
-
-    # ThreadTest
-    reg.add_module(ThreadTestModule,
-                   namespace=utils_test_namespace)
-    reg.add_input_port(
-        ThreadTestModule,
-        'someModuleAboveMe',
-        basic_modules.Module)
+    # NDArray
+    reg.add_module(NDArrayEO,
+                   name="EO Numpy Array",
+                   namespace=utils_namespace,
+                   abstract=True)
+    reg.add_output_port(
+        NDArrayEO,
+        "self",
+        (NDArrayEO, 'self'))
 
     # PostGISRequest
     reg.add_module(PostGISRequest,
@@ -107,6 +112,14 @@ def initialize(*args, **keywords):
         PostGISRequest,
         'value',
         PostGISRequest)
+
+    # ThreadTest
+    reg.add_module(ThreadTestModule,
+                   namespace=utils_test_namespace)
+    reg.add_input_port(
+        ThreadTestModule,
+        'someModuleAboveMe',
+        basic_modules.Module)
 
     # WebRequest
     reg.add_module(WebRequest,
@@ -137,8 +150,11 @@ def initialize(*args, **keywords):
         basic_modules.Variant)
 
     # ==========================================================================
-    # Simple Modules - without ports OR with locally defined ports
+    # Other Modules - without ports OR with locally defined ports
     # ==========================================================================
+
+    reg.add_module(Command,
+                   namespace=utils_namespace)
 
     reg.add_module(CsvWriter,
                    namespace=utils_namespace)
@@ -149,17 +165,17 @@ def initialize(*args, **keywords):
     reg.add_module(CsvFilter,
                    namespace=utils_namespace)
 
+    reg.add_module(InputStream,
+                   namespace=utils_namespace)
+
     reg.add_module(ListDirContent,
+                   namespace=utils_namespace)
+
+    reg.add_module(pgSQLMergeInsert,
                    namespace=utils_namespace)
 
     reg.add_module(Random,
                    namespace=utils_namespace)
 
-    reg.add_module(Command,
-                   namespace=utils_namespace)
-
-    reg.add_module(InputStream,
-                   namespace=utils_namespace)
-
-    reg.add_module(pgSQLMergeInsert,
+    reg.add_module(TextDataWriter,
                    namespace=utils_namespace)

@@ -30,7 +30,6 @@ format defined by QGIS, from different input data types.
 """
 # library
 import csv
-import re
 from datetime import datetime, tzinfo, timedelta
 # third party
 import qgis.core
@@ -45,6 +44,7 @@ from core.modules.vistrails_module import Module, ModuleError
 from packages.eo4vistrails.utils.Parser import Parser
 from packages.eo4vistrails.utils.DataRequest import DataRequest
 from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
+from packages.eo4vistrails.utils.datetimeutils import parse_datetime
 from packages.eo4vistrails.rpyc.RPyC import RPyCModule, RPyCSafeModule
 # local
 from QgsLayer import QgsVectorLayer
@@ -340,10 +340,12 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
                 _dt = _dt.replace('Z', '')
             else:
                 _dt = _dt.replace('Z', '+')
-            _dt_python = self.parse_datetime(_dt)
+            _dt_python = parse_datetime(_dt)
+            print "TVL:345", _dt_python
             return _dt_python.strftime(date_format),\
                    _dt_python.strftime(time_format)
 
+    ''' see datetime_utils in utils
     def parse_datetime(self, s):
         """Create datetime object from date/time in a string.
 
@@ -402,6 +404,7 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
         # Return updated datetime object with microseconds and
         # timezone information.
         return x.replace(microsecond=int(fractional), tzinfo=tz)
+        '''
 
     def to_csv(self, filename_out, header=True,
                delimiter=',', quotechar='"', missing_value=None):
@@ -521,13 +524,21 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
         for key, field in enumerate(results[0]['fields']):
             _field = field['name']
             # extract and record key fields used for OVD
-            if ('time' in _field.lower()) or ('esecs' in _field.lower()):
+            time_names = ['time', 'esecs']
+            depth_names = ['depth', 'z-position']
+            lat_names = ['latitude', 'y-position']
+            lon_names = ['longitude', 'x-position']
+            if True in [_field.lower().__contains__(x) for x in time_names]:
+            #if ('time' in _field.lower()) or ('esecs' in _field.lower()):
                 key_fields[0] = key
-            elif 'latitude' in _field.lower():
+            elif True in [_field.lower().__contains__(x) for x in lat_names]:
+            #elif 'latitude' in _field.lower():
                 key_fields[1] = key
-            elif 'longitude' in _field.lower():
+            elif True in [_field.lower().__contains__(x) for x in lon_names]:
+            #elif 'longitude' in _field.lower():
                 key_fields[2] = key
-            elif 'depth' in _field.lower():
+            elif True in [_field.lower().__contains__(x) for x in depth_names]:
+            #elif 'depth' in _field.lower():
                 key_fields[3] = key
             # ordinary (measured) variable fields
             else:

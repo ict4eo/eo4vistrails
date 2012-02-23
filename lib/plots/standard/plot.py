@@ -88,20 +88,37 @@ class ParentPlot(NotCacheable, Module):
         else:
             return ''
 
-    def to_date(self, string, date_format):
-        """Return a date from a string, in the specified date format,
+    def to_date(self, string, date_format='%Y-%m-%d'):
+        """Return a matplotlib date from a string, in the specified format,
         or 'almost zero' if invalid.
 
         Notes:
-         *  Ignores time-zone settings appended with a + because
-            datetime.strptime cannot process these "as is".
+         *  Ignores time-zone settings appended with a +  or T because
+            datetime.strptime cannot process those "as is".
         """
-        try:
-            dt = string.split('+')
-            #print "plot:100-to_date", dt
-            return matplotlib.dates.date2num(datetime.strptime(dt[0], date_format))
-        except:
-            return self.MISSING
+        if string:
+            string = str(string)
+            # remove time zone
+            if '+' in string:
+                dt = string.split('+')
+                _date = dt[0]
+            elif 'Z' in string:
+                dt = string.split('Z')
+                _date = dt[0]
+            else:
+                _date = string
+            # change separators to defaults
+            if 'T' in _date:
+                _date = _date.replace('T', ' ')
+            if '/' in _date:
+                _date = _date.replace('/', '-')
+
+            try:
+                return matplotlib.dates.date2num(datetime.strptime(_date,
+                                                                   date_format))
+            except ValueError, e:
+                raise ModuleError(self, e)
+        return self.MISSING
 
     def list_to_floats(self, items, mask=True):
         """Convert a list into a list of floating point values.
@@ -356,7 +373,7 @@ class SinglePlot(ParentPlot):
     """
     _input_ports = [('xyData', '(edu.utah.sci.vistrails.basic:List)'),
                     ('plot', '(za.co.csir.eo4vistrails:Plot Type:plots)'),
-                    ('date_format', '(za.co.csir.eo4vistrails:Date Format:plots)'),
+                    ('date_format', '(za.co.csir.eo4vistrails:Date Format:utils)'),
                     ('title', '(edu.utah.sci.vistrails.basic:String)'),
                     ('xAxis_label', '(edu.utah.sci.vistrails.basic:String)'),
                     ('yAxis_label', '(edu.utah.sci.vistrails.basic:String)'),
@@ -477,7 +494,7 @@ class MultiPlot(ParentPlot):
     """
     _input_ports = [('xyData', '(edu.utah.sci.vistrails.basic:List)'),
                     ('plot', '(za.co.csir.eo4vistrails:Plot Type:plots)'),
-                    ('date_format', '(za.co.csir.eo4vistrails:Date Format:plots)'),
+                    ('date_format', '(za.co.csir.eo4vistrails:Date Format:utils)'),
                     ('title', '(edu.utah.sci.vistrails.basic:String)'),
                     ('xAxis_label', '(edu.utah.sci.vistrails.basic:String)'),
                     ('yAxis_label', '(edu.utah.sci.vistrails.basic:String)')]
@@ -495,7 +512,7 @@ class MultiPlot(ParentPlot):
                 data_sets = [data_sets]
         else:
             data_sets = []
-        #print "plot:491", data_sets
+        #print "plot:498", data_sets
 
         fig = pylab.figure()
         pylab.setp(fig, facecolor='w')  # background color
@@ -512,7 +529,7 @@ class MultiPlot(ParentPlot):
         if data_sets:
             x_series, y_series = self.series(data_sets)
             for key, dataset in enumerate(x_series):
-                #print "plot:507 xdata", x_series[key]
+                #print "plot:515 xdata", key, x_series[key]
 
                 # infinite 'loop' through set of available markers
                 marker_number = key - (max_markers * int(key / max_markers)) - 1
@@ -520,7 +537,7 @@ class MultiPlot(ParentPlot):
 
                 # Y AXIS DATA
                 y_data_m = self.list_to_floats(y_series[key])
-                #print "plot:515 ydata", key, y_data_m
+                print "plot:523 ydata", key, y_data_m
 
                 # X-AXIS DATA
                 if plot_type in ('scatter', 'line'):
@@ -528,7 +545,8 @@ class MultiPlot(ParentPlot):
                 elif plot_type in ('date'):
                     x_data_m = self.list_to_dates(x_series[key], date_format)
                 else:
-                    raise NameError('plot_type %s  is undefined.' % plot_type)
+                    raise NameError('Plot_type %s  is undefined.' % plot_type)
+                print "plot:532 ydata", key, x_data_m
 
                 if plot_type == 'date':
                     ax.plot_date(x_data_m, y_data_m, xdate=True,
@@ -583,21 +601,6 @@ plt.figure(2)
 plt.plot(range(2),range(2))
 
     """
-
-
-class MatplotlibDateFormatComboBoxWidget(ComboBoxWidget):
-    """Marker constants used for date formatting on a matplotlib date plot."""
-    _KEY_VALUES = {'YYYY-MM-DD': '%Y-%m-%d',
-                   'YYYY-MM-DD HH:MM:SS': '%Y-%m-%d %H:%M:%S',
-                   'YYYY-MM-DDTHH:MM:SS': '%Y-%m-%dT%H:%M:%S',
-                   'YYYY-M-MDDTHH:MM:SS.n': '%Y-%m-%dT%H:%M:%S.%f'}
-
-MatplotlibDateFormatComboBox = basic_modules.new_constant('Date Format',
-                                        staticmethod(str),
-                                        's',
-                                        staticmethod(lambda x: type(x) == str),
-                                        MatplotlibDateFormatComboBoxWidget)
-
 
 class MatplotlibMarkerComboBoxWidget(ComboBoxWidget):
     """Marker constants used for drawing markers on a matplotlib plot."""

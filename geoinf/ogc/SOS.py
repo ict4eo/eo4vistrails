@@ -497,6 +497,7 @@ class SOSConfigurationWidget(OgcConfigurationWidget, StandardModuleConfiguration
                 elif time_limit == self.config.TIME_OFFERING:
                     # see SpatialTemporalConfigurationWidget
                     timerange = self.config.getTimeIntervalOffering()
+                #this code causing errors with ARC SOS
                 data += '<eventTime>\n <ogc:TM_During>\n' + \
                     '  <ogc:PropertyName>om:samplingTime</ogc:PropertyName>' + \
                     '  <gml:TimePeriod>\n' + \
@@ -505,6 +506,16 @@ class SOSConfigurationWidget(OgcConfigurationWidget, StandardModuleConfiguration
                     '   <gml:endPosition>' + timerange[1] + \
                     '</gml:endPosition>\n' + \
                     '  </gml:TimePeriod>\n </ogc:TM_During>\n</eventTime>\n'
+                """
+                #this code does still not work with ARC SOS
+                data += '<eventTime>\n' + \
+                    '  <gml:TimePeriod>\n' + \
+                    '   <gml:beginPosition>' + timerange[0] + \
+                    '</gml:beginPosition>\n' + \
+                    '   <gml:endPosition>' + timerange[1] + \
+                    '</gml:endPosition>\n' + \
+                    '  </gml:TimePeriod></eventTime>\n'
+                """
             if procedure:
                 if not mode:
                     self.showWarning(WARNING_MUST %

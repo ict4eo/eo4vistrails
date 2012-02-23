@@ -24,20 +24,25 @@
 ### WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ###
 #############################################################################
-"""TODO  Add documentation to this module.
+"""This module forms part of the eo4vistrails capabilities. It is used to
+define combobox widgets which can be attached to a module's port to provide
+simple (and controlled) selection of pre-defined options.
 """
 
-from core.modules.constant_configuration import ConstantWidgetMixin
+# thirdparty
 from PyQt4 import QtCore, QtGui
+# vistrails
+from core.modules.constant_configuration import ConstantWidgetMixin
 
 
 class ComboBoxWidget(QtGui.QComboBox, ConstantWidgetMixin):
-    '''
+    """Base class for module port combobox.
+
     Subclass this class to make your own combobox widget with its own list
-    by setting the value of _KEY_VALUES or by redefing getKeyValues().
+    by setting the value of _KEY_VALUES or by redefining getKeyValues().
 
     NOTE: keys *must* be strings in the dict
-    '''
+    """
 
     _KEY_VALUES = {'please': '1', 'set': '2', 'values': '3'}
     default = ''
@@ -98,7 +103,15 @@ class ComboBoxWidget(QtGui.QComboBox, ConstantWidgetMixin):
         self.update_parent()
 
 
+class DateFormatComboBoxWidget(ComboBoxWidget):
+    """Marker constants used for date formatting on a matplotlib date plot."""
+    _KEY_VALUES = {'YYYY-MM-DD': '%Y-%m-%d',
+                   'MM-DD-YYYY': '%m-%d-%Y',
+                   'YYYY-MM-DD HH:MM:SS': '%Y-%m-%d %H:%M:%S',
+                   'YYYY-M-MDDTHH:MM:SS.n': '%Y-%m-%dT%H:%M:%S.%f'}
+
+
 class LinuxDemoComboBoxWidget(ComboBoxWidget):
-    """TODO Write docstring."""
+    """Example for defining port combobox values."""
     _KEY_VALUES = {'Ubuntu': (2, 2), 'Fedora': (1, 1), 'Gentoo': (3, 3),
                    'Mint': (0, 0)}

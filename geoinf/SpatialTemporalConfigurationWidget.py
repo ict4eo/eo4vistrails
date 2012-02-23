@@ -89,7 +89,7 @@ class SpatialWidget(QtGui.QWidget):
 
         """
         message = None
-        MSG = "Warning: POINT (%s) OUT OF BOUNDS... Selected area may be empty!!"
+        warning = "Warning: POINT (%s) OUT OF BOUNDS... Selected area may be empty!!"
         # setup
         minX = str(layer_box[0])
         minY = str(layer_box[1])
@@ -103,11 +103,11 @@ class SpatialWidget(QtGui.QWidget):
         if minX < x1 < maxX and minY < y1 < maxY:
             pass
         else:
-            message = MSG % 'X1,Y1'
+            message = warning % 'X1,Y1'
         if minX < x2 < maxX and minY < y2 < maxY:
             pass
         else:
-            message = MSG % 'X2,Y2'
+            message = warning % 'X2,Y2'
         return message
 
     def getBoundingBox(self):
@@ -251,13 +251,12 @@ class TemporalWidget(QtGui.QWidget):
 
     def getTimeBegin(self):
         """ TO DO: calculate UTC time string from GUI widgets."""
-        # dummy - example format
-        """
+        """        """
         foo = self.myTimeStart.value()
-        print foo
-        bar = QDateTime.fromString(self.myTimeStart, "yyyy-MM-ddThh:mm:ss")
-        print bar
-        """
+        print "STConfigWidget:257", foo, type(foo)
+        bar = QDateTime.fromString(self.myTimeStart.value(), "yyyy-MM-ddThh:mm:ss")
+        print "STConfigWidget:259", bar, type(bar)
+
         return '2005-09-01T00:00:00'
 
     def getTimeEnd(self):
