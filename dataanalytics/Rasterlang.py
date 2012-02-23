@@ -47,6 +47,7 @@ class RasterlangModule(ThreadSafeMixin):
     def __init__(self):
         ThreadSafeMixin.__init__(self)
 
+@RPyCSafeModule()
 class RasterLang(RPyCCode):
     """
     This module that executes an arbitrary piece of Python code remotely.
@@ -117,7 +118,9 @@ class RasterLang(RPyCCode):
                     self.setResult(k, outlayer)
                 else:
                     self.setResult(k, locals_[k])
-        
+    
+    def compute(self):
+        RPyCCode.compute(self)
         
 class RasterSourceConfigurationWidget(SyntaxSourceConfigurationWidget):
     def __init__(self, module, controller, parent=None):

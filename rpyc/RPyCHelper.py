@@ -32,7 +32,7 @@ It also has the rpyc remote code that is used for ???.
 
 # library
 # third-party
-from RPyC import RPyCSafeMixin, RPyCModule
+from RPyC import RPyCSafeMixin, RPyCModule, RPyCSafeModule
 # vistrails
 from core.modules.vistrails_module import ModuleError, NotCacheable
 from core.utils import VistrailsInternalError
@@ -42,9 +42,7 @@ from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
 from packages.eo4vistrails.utils.ModuleHelperMixin import ModuleHelperMixin
 # local
 
-
-class RPyCCode(NotCacheable, RPyCSafeMixin, ThreadSafeMixin, RPyCModule,
-               ModuleHelperMixin):
+class RPyCCode(ModuleHelperMixin, ThreadSafeMixin, RPyCModule):
     """
     This module that executes an arbitrary piece of Python code remotely.
     TODO: This code is not threadsafe. Terence needs to fix it
@@ -53,7 +51,6 @@ class RPyCCode(NotCacheable, RPyCSafeMixin, ThreadSafeMixin, RPyCModule,
     #TODO: If you want a PythonSource execution to be cached, call cache_this().
 
     def __init__(self):
-        self._requiredVisPackages = ["packages.spreadsheet", "packages.vtk", "packages.NumSciPy", "packages.eo4vistrails"]        
         ThreadSafeMixin.__init__(self)
         RPyCModule.__init__(self)
         self.preCodeString = None
@@ -157,7 +154,8 @@ class RPyCCode(NotCacheable, RPyCSafeMixin, ThreadSafeMixin, RPyCModule,
                              pre_code_string, post_code_string)
         print "Finished executing in main thread"
         
-    def _original_compute(self):
+#    def _original_compute(self):
+    def compute(self):
         """
         Vistrails Module Compute, Entry Point Refer, to Vistrails Docs
         """
@@ -172,8 +170,11 @@ class RPyCCode(NotCacheable, RPyCSafeMixin, ThreadSafeMixin, RPyCModule,
 
         self.run_code_orig(s, True, True, self.preCodeString, self.postCodeString)
 
+@RPyCSafeModule()
+class RemotePythonCode(RPyCCode):
     def compute(self):
-        RPyCSafeMixin.compute(self)
+        RPyCCode.compute(self)
+
 
 class RPyC_C_Code(RPyCCode):
     """TODO: Add docstring.
@@ -275,9 +276,6 @@ class RPyC_C_Code(RPyCCode):
                                'cache_this': cache_this,
                                'registry': reg,
                                'self': self})
-
-        #del conn.namespace['source']
-
         try:
             del inputDict['source']
         except:
@@ -311,6 +309,5 @@ class RPyC_C_Code(RPyCCode):
                         self.setResult(k, conn.namespace[k])
                 except AttributeError:
                     self.setResult(k, conn.namespace[k])
-
 
 

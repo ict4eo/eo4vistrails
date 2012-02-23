@@ -40,6 +40,7 @@ except:
 r = robjects.r
 # vistrails
 from core.modules.vistrails_module import ModuleError
+from core.modules.basic_modules import List
 from packages.NumSciPy.Array import NDArray
 # eo4vistrails
 from packages.eo4vistrails.utils.synhigh import SyntaxSourceConfigurationWidget
@@ -70,13 +71,24 @@ class Rpy2Script(Script, ModuleHelperMixin):
 
         # Get the list of input ports so we can get there values
         inputDict = dict([(k, self.getInputFromPort(k)) for k in self.inputPorts])
-        
+                
         # Remove the script and node from the list
         if inputDict.has_key('source'):
             del(inputDict['source'])
         if inputDict.has_key('rpycnode'):
             del(inputDict['rpycnode'])
-
+        
+#        for p in self.inputPorts:
+#            for conn in self.inputPorts[p]:
+#                portType = self.getPortType(p, "input")
+#                print "input port %s has type %s"%(p, portType)
+#                print "object type %s"%type(inputDict[p])
+#                if not portType is None:
+#                    if isinstance(inputDict[p], list):
+#                        if not isinstance(portType, List) and not isinstance(inputDict[p], portType):
+#                            #worklist case
+#                            pass
+        
         # Check that if any are NDArrays we get the numpy array out
         for k in inputDict.iterkeys():
             if type(inputDict[k]) == NDArray:

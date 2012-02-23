@@ -56,15 +56,28 @@ def initialize(*args, **keywords):
                    namespace=mynamespace,
                    abstract=True)
 
-    #Add RPyCCode
     reg.add_module(RPyCHelper.RPyCCode,
-                   name = "RPyC Code",
+                   name = "RPyC Code Base",
                    configureWidgetType=PythonSourceConfigurationWidget,
-                   namespace=mynamespace)
+                   namespace=mynamespace,
+                   abstract=True)
     reg.add_input_port(RPyCHelper.RPyCCode, 'source',
                        basic_modules.String)
     reg.add_output_port(RPyCHelper.RPyCCode, 'self',
                         basic_modules.Module)
+
+    #Add RPyCCode
+#    reg.add_module(RPyCHelper.RemotePythonCode,
+#                   name = "Remote Python Code",
+#                   configureWidgetType=PythonSourceConfigurationWidget,
+#                   namespace=mynamespace)
+
+    #Add RPyCCode
+    reg.add_module(RPyCHelper.RemotePythonCode,
+                   name = "RPyC Code",
+                   configureWidgetType=PythonSourceConfigurationWidget,
+                   namespace=mynamespace)
+
     reg.add_module(RPyCHelper.RPyC_C_Code,
                    name = "RPyC C Code",
                    configureWidgetType=PythonSourceConfigurationWidget,

@@ -31,6 +31,8 @@ This is the core module holding annotations and mixins,
 # global
 import copy
 from threading import Thread, currentThread, RLock
+from Queue import Queue
+
 # vistrails
 from core.modules.vistrails_module import Module, NotCacheable, \
         InvalidOutput, ModuleError, ModuleErrors, ModuleBreakpoint
@@ -43,43 +45,66 @@ class ThreadSafeMixin(object):
     
     def __init__(self):
         self.computeLock = RLock()
-        #self.getLock = RLock()
 
-    def globalThread(self, module):
+    def globalThread(self, module, exceptionQ=None):
         """TODO Write docstring."""
         global globalThreadLock
         globalThreadLock.acquire()
-        module.update()
-        globalThreadLock.release()
-
+        try:
+            module.update()
+            globalThreadLock.release()
+        except ModuleError, me:
+            globalThreadLock.release()
+            if exceptionQ is not None:
+                exceptionQ.put(me)
+            raise me
+    
     def updateUpstream(self):
+        print self, "Called Me"
         """TODO Write docstring."""
+        #ae = None
         threadList = []
-        foundFirstModule = False
-
+        exceptionQ = Queue()
+        #foundFirstModule = False
         for connectorList in self.inputPorts.itervalues():
             for connector in connectorList:
-                if not foundFirstModule:
-                    foundFirstModule = True
-                    firstModule = connector.obj
-                elif isinstance(connector.obj, ThreadSafeMixin):
-                    thread = Thread(target=connector.obj.lockedUpdate)
+                #if not foundFirstModule:
+                #    foundFirstModule = True
+                #    firstModule = connector.obj
+                #el
+                if isinstance(connector.obj, ThreadSafeMixin):
+                    thread = Thread(target=connector.obj.lockedUpdate, kwargs={"exceptionQ":exceptionQ})
                     thread.start()
                     threadList.append(thread)
                 else:
-                    thread = Thread(target=self.globalThread, args=(connector.obj,))
+                    thread = Thread(target=self.globalThread, args=(connector.obj,), kwargs={"exceptionQ":exceptionQ})
                     thread.start()
                     threadList.append(thread)
-
-        if foundFirstModule:
-            if isinstance(firstModule, ThreadSafeMixin):
-                firstModule.lockedUpdate()
-            else:
-                self.globalThread(firstModule)
-
-        for thread in threadList:
-            thread.join()
-
+        
+#        try:
+#            if foundFirstModule:
+#                if isinstance(firstModule, ThreadSafeMixin):
+#                    firstModule.lockedUpdate()
+#                else:
+#                    self.globalThread(firstModule)
+#        except ModuleError, me:
+#            ae = me
+        stillWaiting = True
+        while stillWaiting:
+            stillWaiting = False                        
+            for thread in threadList:
+                thread.join(0.1)
+                if thread.isAlive():
+                    stillWaiting = True
+            if stillWaiting:
+                self.logging.begin_update(self)
+            
+        #if ae is not None:
+        #    raise ae
+        #el
+        if exceptionQ.qsize() > 0:
+            raise exceptionQ.get()
+        
         for iport, connectorList in copy.copy(self.inputPorts.items()):
             for connector in connectorList:
                 if connector.obj.get_output(connector.port) is InvalidOutput:
@@ -90,52 +115,27 @@ class ThreadSafeMixin(object):
         Check if the module is up-to-date then update the
         modules. Report to the logger if available.
         """
+        global globalThreadLock        
         try:
-            global globalThreadLock
             globalThreadLock.release()
             self.lockedUpdate()
             globalThreadLock.acquire()
         except RuntimeError, re:
             self.lockedUpdate()
-            pass
+        except ModuleError, me:
+            globalThreadLock.acquire()
+            raise me
 
-    def lockedUpdate(self):
+    def lockedUpdate(self, exceptionQ=None):
         """TODO Write docstring."""
         print self, "get compute lock"
-        self.logging.begin_update(self)
         with self.computeLock:
-            self.updateUpstream()
-            if self.upToDate:
-                if not self.computed:
-                    self.logging.update_cached(self)
-                    self.computed = True
-                return
-            self.logging.begin_compute(self)
             try:
-                if self.is_breakpoint:
-                    raise ModuleBreakpoint(self)
-                self.compute()
-                self.computed = True
+                Module.update(self)
             except ModuleError, me:
-                if hasattr(me.module, 'interpreter'):
-                    raise
-                else:
-                    msg = "A dynamic module raised an exception: '%s'"
-                    msg %= str(me)
-                    raise ModuleError(self, msg)
-            except ModuleErrors:
-                raise
-            except KeyboardInterrupt, e:
-                raise ModuleError(self, 'Interrupted by user')
-            except ModuleBreakpoint:
-                raise
-            except Exception, e:
-                import traceback
-                traceback.print_exc()
-                raise ModuleError(self, 'Uncaught exception: "%s"' % str(e))
-            self.upToDate = True
-            self.logging.end_update(self)
-            self.logging.signalSuccess(self)
+                if exceptionQ is not None:
+                    exceptionQ.put(me)
+                raise me
         print self, "release compute lock"
 
 class Fork(ThreadSafeMixin, NotCacheable, Module):

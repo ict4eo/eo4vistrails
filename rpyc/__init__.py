@@ -32,6 +32,6 @@ parallel and distributed processing to VisTrails.
 #    revision = out[out.find('Revision'):out.find('\n', out.find('Revision'))][10:]
 #except:
 #    revision = 0
-revision = 22
+revision = 40
 version = '0.1.%s' % revision
 pass

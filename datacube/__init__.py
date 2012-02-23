@@ -34,6 +34,6 @@ identifier = 'za.co.csir.eo4vistrails'
 #    revision = out[out.find('Revision'):out.find('\n', out.find('Revision'))][10:]
 #except:
 #    revision = 1
-revision = 1
+revision = 2
 version='0.0.%s'%revision
 pass
