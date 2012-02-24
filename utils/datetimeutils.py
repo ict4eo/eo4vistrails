@@ -32,6 +32,7 @@ from datetime import datetime, tzinfo, timedelta
 import re
 # thirdparty
 from matplotlib import dates
+from numpy import array, ma
 
 ZERO = timedelta(0)
 HOUR = timedelta(hours=1)
@@ -57,7 +58,8 @@ class FixedOffset(tzinfo):
     def dst(self, dt):
         return ZERO
 
-def to_matplotlib_date(self, string, date_format='%Y-%m-%d', missing=1e-10):
+
+def to_matplotlib_date(string, date_format='%Y-%m-%d', missing=1e-10):
     """Return a matplotlib date from a string, in the specified format,
     or 'almost zero' if invalid.
 
@@ -135,13 +137,19 @@ def parse_datetime(string):
         .html
     """
     # Pre-checks on string data
-    #print "datetimeutils:135", string
     if string is None:
         return None
     else:
         string = str(string)
+    # convert UTC- into Python format
     if 'T' in string:
-        string = string.replace('T', ' ')  # convert UTC-format into Python format
+        string = string.replace('T', ' ')
+    if 'Z' in string:
+        if string[len(string) - 1] == 'Z':  # no time-zone info
+            string = string.replace('Z', '')
+        else:
+            string = string.replace('Z', '+')
+    # standard separators
     if '/' in string:
         string = string.replace('/', '-')
 
@@ -162,7 +170,7 @@ def parse_datetime(string):
     else:
         m = re.match(r'(.*?)(?:\.(\d+))?(([-+]\d{1,2}):(\d{2}))?$', string)
         datestr, fractional, tzname, tzhour, tzmin = m.groups()
-    #print "datetimeutils:160", string, '/n', datestr, '*', tzname, '*', tzhour, '*', tzmin
+    #print "dtu:167", datestr, '*', tzname, '*', tzhour, '*', tzmin
 
     # Create tzinfo object representing the timezone
     # expressed in the input string.  The names we give
@@ -181,7 +189,10 @@ def parse_datetime(string):
 
     # Convert the date/time field into a python datetime
     # object.
-    x = datetime.strptime(datestr, "%Y-%m-%d %H:%M:%S")
+    try:
+        x = datetime.strptime(datestr, "%Y-%m-%d %H:%M:%S")
+    except ValueError:
+        x = datetime.strptime(datestr, "%Y-%m-%d")
 
     # Convert the fractional second portion into a count
     # of microseconds.
@@ -195,11 +206,12 @@ def parse_datetime(string):
     return x.replace(microsecond=int(fractional), tzinfo=tz)
 
 
-def list_to_dates(self, items, date_format='%Y-%m-%d'):
+def list_to_dates(items, date_format='%Y-%m-%d', missing=1e-10):
     """Convert a list into a list of masked date values, with each date
     in the specified date format.
     """
+    #print "dtu:211", items
     if not items:
         return None
-    x_data = [self.to_date(x, date_format) for x in items]
-    return ma.masked_values(x_data, 1e-10)  # ignore missing data
+    x_data = [to_matplotlib_date(x, date_format) for x in items]
+    return ma.masked_values(x_data, missing)  # ignore missing data

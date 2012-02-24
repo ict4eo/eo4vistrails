@@ -51,6 +51,7 @@ from packages.pylab.plot import MplPlot, MplPlotConfigurationWidget
 # eo4vistrails
 from packages.eo4vistrails.utils.DropDownListWidget import ComboBoxWidget
 from packages.eo4vistrails.lib.plots.windrose.windrose import WindroseAxes
+from packages.eo4vistrails.utils.datetimeutils import list_to_dates
 # local
 
 
@@ -134,22 +135,12 @@ class ParentPlot(NotCacheable, Module):
         else:
             return data
 
-    def list_to_dates(self, items, date_format='%Y-%m-%d'):
-        """Convert a list into a list of masked date values, with each date
-        in the specified date format.
-        """
-        if not items:
-            return None
-        x_data = [self.to_date(x, date_format) for x in items]
-        return ma.masked_values(x_data, 1e-8)  # ignore missing data
-
     def all_the_same(self, vals):
-        ''' Test if vals is an iterable whose elements are all equal.
+        """Test if vals is an iterable whose elements are all equal.
 
         Notes:
          *  http://mail.python.org/pipermail/tutor/2004-November/033394.html
-        '''
-
+        """
         i = iter(vals)  # Raises TypeError if vals is not a sequence
         try:
             first = i.next()
@@ -427,7 +418,7 @@ class SinglePlot(ParentPlot):
                 pylab.ylabel(self.getInputFromPort('yAxis_label'))
 
             if plot_type == 'date':
-                x_data_m = self.list_to_dates(xyData[0], date_format)
+                x_data_m = list_to_dates(xyData[0], date_format)
                 pylab.plot_date(x_data_m, y_data_m, xdate=True,
                                 marker=marker_type,
                                 markerfacecolor=self.facecolor)
@@ -512,7 +503,7 @@ class MultiPlot(ParentPlot):
                 data_sets = [data_sets]
         else:
             data_sets = []
-        #print "plot:498", data_sets
+        #print "plot:505", data_sets
 
         fig = pylab.figure()
         pylab.setp(fig, facecolor='w')  # background color
@@ -529,7 +520,7 @@ class MultiPlot(ParentPlot):
         if data_sets:
             x_series, y_series = self.series(data_sets)
             for key, dataset in enumerate(x_series):
-                #print "plot:515 xdata", key, x_series[key]
+                #print "plot:523 xdata", key, x_series[key]
 
                 # infinite 'loop' through set of available markers
                 marker_number = key - (max_markers * int(key / max_markers)) - 1
@@ -537,16 +528,16 @@ class MultiPlot(ParentPlot):
 
                 # Y AXIS DATA
                 y_data_m = self.list_to_floats(y_series[key])
-                print "plot:523 ydata", key, y_data_m
+                print "plot:531 ydata", key, y_data_m
 
                 # X-AXIS DATA
                 if plot_type in ('scatter', 'line'):
                     x_data_m = self.list_to_floats(x_series[key])
                 elif plot_type in ('date'):
-                    x_data_m = self.list_to_dates(x_series[key], date_format)
+                    x_data_m = list_to_dates(x_series[key], date_format)
                 else:
                     raise NameError('Plot_type %s  is undefined.' % plot_type)
-                print "plot:532 ydata", key, x_data_m
+                print "plot:540 ydata", key, x_data_m
 
                 if plot_type == 'date':
                     ax.plot_date(x_data_m, y_data_m, xdate=True,

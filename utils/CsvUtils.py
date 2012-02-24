@@ -200,8 +200,10 @@ class CsvFilter(ThreadSafeMixin, Module):
     """Read CSV file and filter data according to specific parameters.
 
     Input ports:
-        fullfilename:
-            a full directory path and filename to be read
+        file_in:
+            an optional file object to be read
+        filename_in:
+            an optional full directory path and filename to be read
         delimiter:
             an optional item delimiter (defaults to a ",")
         sample_set:
@@ -311,14 +313,22 @@ class CsvFilter(ThreadSafeMixin, Module):
             self.raiseError('Cannot create HTML file: %s' % str(e))
             return None
 
-    def create_csv(self, data_list, heading=False, delimiter=','):
+    def create_csv(self, data_list, heading=False,
+                   delimiter=',', quotechar=None):
         """Create a CSV file from a 'list of lists'."""
-        #print "csvutils.319:", type(data_list), data_list[-10:]
+        #print "csvutils.319:", type(data_list), data_list[-5:]
         output_file = self.interpreter.filePool.create_file(suffix='.csv')
         try:
-            csvfile = csv.writer(open(output_file.name, 'w'),
+            quoting = csv.QUOTE_NONNUMERIC
+            if quotechar:
+                csvfile = csv.writer(open(output_file.name, 'w'),
                                  delimiter=delimiter,
-                                 quotechar="'")
+                                 quoting=quoting,
+                                 quotechar=quotechar)
+            else:
+                csvfile = csv.writer(open(output_file.name, 'w'),
+                                 delimiter=delimiter,
+                                 quoting=quoting)
             if len(data_list) > 0:
                 try:
                     csvfile.writerows(data_list)
@@ -426,9 +436,16 @@ class CsvFilter(ThreadSafeMixin, Module):
         else:
             return list  # empty list
 
+    def to_num(self, str):
+        try:
+            return float(str)
+        except ValueError, TypeError:
+            pass
+        return str
+
     def compute(self):
-        file_in =  self.getInputFromPort('file_in')
-        fullname = self.getInputFromPort('filename_in')
+        file_in =  self.forceGetInputFromPort('file_in', None)
+        fullname = self.forceGetInputFromPort('filename_in', "")
         delimiter = self.forceGetInputFromPort('delimiter', ",")
         sample = self.forceGetInputFromPort("sample_set", False)
         transpose = self.forceGetInputFromPort("transpose", False)
@@ -455,18 +472,20 @@ class CsvFilter(ThreadSafeMixin, Module):
 
         if filename:
             try:
-                csvfile = csv.reader(open(filename, 'r'), delimiter=delimiter)
-                #print "csvutils.452:", header_in, header_out
+                # U == universal newline mode; overcome issues with weird files
+                csvfile = csv.reader(open(filename, 'rU'), delimiter=delimiter)
+                #print "csvutils.470:", header_in, header_out
                 for key, row in enumerate(csvfile):
+                    #all rows are read in as a list of strings
                     if key == 0 and header_in and not header_out:
                         # skip header row
-                        #print "csvutils:462 - skip header_out", key
+                        #print "csvutils:472 - skip header_out", key
                         pass
                     elif key > 9  and sample:
                         # have the sample data now...
                         break
                     else:
-                        #print "csvutils.468: data", key, row
+                        #print "csvutils.481: data", key, row
                         if not cols_list:
                             if not rows_list:
                                 list_of_lists.append(row)
@@ -483,13 +502,13 @@ class CsvFilter(ThreadSafeMixin, Module):
                                     if k + 1 in cols_list:
                                         row_out.append(c)
                                 list_of_lists.append(row_out)
-                #print "csvutils.488:pre_transpose ", list_of_lists
+                # convert list-of-lists back to numbers, where possible
+                list_of_lists = [[self.to_num(a) for a in b] \
+                                 for b in list_of_lists]
                 if transpose:
                     list_of_lists = self.transpose_array(list_of_lists)
-                #print "csvutils.487:post_transpose ", list_of_lists
                 if flatten:
                     list_of_lists = self.flatten_list(list_of_lists)
-                #print "csvutils.490:post_flatten ", list_of_lists
                 self.setResult('dataset', list_of_lists)
                 if 'html_file' in self.outputPorts:
                     self.setResult('html_file', self.create_html(
@@ -505,3 +524,5 @@ class CsvFilter(ThreadSafeMixin, Module):
             except Exception, e:
                 self.raiseError('Unable to run compute: %s' % str(e))
             csvfile = None
+        else:
+            self.raiseError('Invalid or missing input file/filename')

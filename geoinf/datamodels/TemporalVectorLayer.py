@@ -270,7 +270,7 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
                 om_sampling_point = doc.elem_tag_nested(om_feature,
                                                       'SamplingPoint',
                                                       doc.get_ns('sa'))
-                #print "TLT:125", om_sampling_point
+                #print "TVL:125", om_sampling_point
                 if om_sampling_point and len(om_sampling_point) == 1:
                     id = doc.elem_attr_value(om_feature, 'xlink:href')
                     if not id:
@@ -294,7 +294,14 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
                 if values:
                     val_set = values.split(block)
                     for val in val_set:
-                        value_list.append(val.split(token))
+                        vals = []
+                        items = val.split(token)
+                        for item in items:
+                            try:
+                                vals.append(float(item))
+                            except:
+                                vals.append(item)
+                        value_list.append(vals)
                 # store results
                 result['observation'] = observation
                 result['sampling_point'] = sampling_point
@@ -305,7 +312,7 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
         return results
 
     def to_csv(self, filename_out, header=True,
-               delimiter=',', quotechar='"', missing_value=None):
+               delimiter=',', quotechar=None, missing_value=None):
         """Transform GML to create a CSV representation of the time-series data.
 
         Requires:
@@ -313,7 +320,7 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
          *  header flag - if header row required (defaults to TRUE)
          *  delimiter  - character between each field (defaults to ,)
          *  quote - character; if None then the CSV file writer has the
-           QUOTE_MINIMAL flag
+            QUOTE_MINIMAL flag
          *  missing_value - a place-holder to be subsituted for missing data
 
         Returns:
@@ -335,18 +342,24 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
         if not GML_file:
             self.raiseError('No GML file specified from which to extract data')
         results = self.extract_time_series(GML_file)  # get data & metadata
-        #print "TVL:313", results[0]
-
+        #print "TVL:338", results
+        """
         if quotechar:
             quoting = csv.QUOTE_NONNUMERIC
         else:
             quoting = csv.QUOTE_MINIMAL
+        """
+        quoting = csv.QUOTE_NONNUMERIC
         file_out = open(filename_out, "w")
-        csv_writer = csv.writer(file_out,
+        if quotechar:
+            csv_writer = csv.writer(file_out,
                                 delimiter=delimiter,
                                 quotechar=quotechar,
                                 quoting=quoting)
-
+        else:
+            csv_writer = csv.writer(file_out,
+                                    delimiter=delimiter,
+                                    quoting=quoting)
         if header:
             common = ['Observation', 'Feature', 'Sample Point', 'Geometry']
             #only take field names from FIRST member
@@ -450,8 +463,11 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
             for datum in result['data']:
                 if missing_value:
                     for item in datum:
-                        if GML_NO_DATA in item:
-                            item.replace(GML_NO_DATA, missing_value)
+                        try:
+                            if GML_NO_DATA in item:
+                                item.replace(GML_NO_DATA, missing_value)
+                        except TypeError:
+                            pass  # ignore non-strings
                 # extract key field values from datum
                 #print "TVL:456 datum", datum
                 time = day = lat = lon = None

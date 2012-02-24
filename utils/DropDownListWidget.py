@@ -108,6 +108,7 @@ class DateFormatComboBoxWidget(ComboBoxWidget):
     _KEY_VALUES = {'YYYY-MM-DD': '%Y-%m-%d',
                    'MM-DD-YYYY': '%m-%d-%Y',
                    'YYYY-MM-DD HH:MM:SS': '%Y-%m-%d %H:%M:%S',
+                   'YYYY-MM-DD HH:MM:SSZ': '%Y-%m-%d %H:%M:%SZ',
                    'YYYY-M-MDDTHH:MM:SS.n': '%Y-%m-%dT%H:%M:%S.%f'}
 
 
