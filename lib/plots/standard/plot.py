@@ -89,6 +89,7 @@ class ParentPlot(NotCacheable, Module):
         else:
             return ''
 
+    '''
     def to_date(self, string, date_format='%Y-%m-%d'):
         """Return a matplotlib date from a string, in the specified format,
         or 'almost zero' if invalid.
@@ -120,6 +121,7 @@ class ParentPlot(NotCacheable, Module):
             except ValueError, e:
                 raise ModuleError(self, e)
         return self.MISSING
+    '''
 
     def list_to_floats(self, items, mask=True):
         """Convert a list into a list of floating point values.
@@ -405,7 +407,10 @@ class SinglePlot(ParentPlot):
             self.facecolor = 'r'
 
         xyData = self.forceGetInputListFromPort('xyData')
-        #print "plot:400", xyData
+        # flatten if double [[ wrapped
+        if len(xyData) == 1 and type(xyData[0]) == list:
+            xyData = xyData[0]
+        print "plot:410", xyData
         if xyData and len(xyData) == 2:
             y_data_m = self.list_to_floats(xyData[1])
             fig = pylab.figure()
@@ -498,12 +503,18 @@ class MultiPlot(ParentPlot):
         plot_type = self.forceGetInputFromPort('plot', 'scatter')
         date_format = self.forceGetInputFromPort('date_format', '%Y-%m-%d')
         if self.hasInputFromPort('xyData'):
-            data_sets = self.getInputFromPort('xyData')
+            #data_sets = self.getInputFromPort('xyData')
+            data_sets_list = self.getInputListFromPort('xyData')
+            if len(data_sets_list) == 1 and type(data_sets_list[0]) == list:
+                data_sets = [data_sets_list][0]
+            else:
+                data_sets = data_sets_list
             if type(data_sets) != list:
                 data_sets = [data_sets]
         else:
             data_sets = []
-        #print "plot:505", data_sets
+        print "plot:509 data_set", data_sets
+        print "plot:510 data_set list", data_sets_list
 
         fig = pylab.figure()
         pylab.setp(fig, facecolor='w')  # background color
@@ -519,6 +530,9 @@ class MultiPlot(ParentPlot):
 
         if data_sets:
             x_series, y_series = self.series(data_sets)
+            #print "plot:526 x-series", x_series
+            #print "plot:527 y-series", y_series
+
             for key, dataset in enumerate(x_series):
                 #print "plot:523 xdata", key, x_series[key]
 
@@ -528,7 +542,7 @@ class MultiPlot(ParentPlot):
 
                 # Y AXIS DATA
                 y_data_m = self.list_to_floats(y_series[key])
-                print "plot:531 ydata", key, y_data_m
+                #print "plot:531 ydata_m", key, y_data_m
 
                 # X-AXIS DATA
                 if plot_type in ('scatter', 'line'):
@@ -537,7 +551,7 @@ class MultiPlot(ParentPlot):
                     x_data_m = list_to_dates(x_series[key], date_format)
                 else:
                     raise NameError('Plot_type %s  is undefined.' % plot_type)
-                print "plot:540 ydata", key, x_data_m
+                #print "plot:542 xdata_m", key, x_data_m
 
                 if plot_type == 'date':
                     ax.plot_date(x_data_m, y_data_m, xdate=True,

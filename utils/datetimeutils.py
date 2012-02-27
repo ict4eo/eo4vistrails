@@ -59,39 +59,24 @@ class FixedOffset(tzinfo):
         return ZERO
 
 
-def to_matplotlib_date(string, date_format='%Y-%m-%d', missing=1e-10):
-    """Return a matplotlib date from a string, in the specified format,
-    or 'almost zero' if invalid.
-
-    Notes:
-     *  Ignores time-zone settings appended with a +  or T because
-        datetime.strptime cannot process those "as is".
+def list_to_dates(items, date_format='%Y-%m-%d', missing=1e-10):
+    """Convert a list into a list of masked date values, with each date
+    in the specified date format.
     """
-    if string:
-        """
-        string = str(string)
-        # remove time zone
-        if '+' in string:
-            dt = string.split('+')
-            _date = dt[0]
-        elif 'Z' in string:
-            dt = string.split('Z')
-            _date = dt[0]
-        else:
-            _date = string
-        # change separators to defaults
-        if 'T' in _date:
-            _date = _date.replace('T', ' ')
-        if '/' in _date:
-            _date = _date.replace('/', '-')
+    print "dtu:66", items
+    if not items:
+        return None
+    x_data = [to_matplotlib_date(x, date_format) for x in items]
+    return ma.masked_values(x_data, missing)  # ignore missing data
 
-        try:
-            return dates.date2num(datetime.strptime(_date, date_format))
-        except ValueError, e:
-            raise ValueError(e)
-        """
-        return dates.date2num(parse_datetime(string))
-    return missing
+
+def get_date(string, date_format='%Y-%m-%d', missing=1e-10):
+    """Return a formatted date from a string."""
+    if string:
+        _dt = parse_datetime(string)
+        return _dt.strftime(date_format)
+    else:
+        return None
 
 
 def get_date_and_time(datetime_string, date_format="%Y-%m-%d",
@@ -112,6 +97,14 @@ def get_date_and_time(datetime_string, date_format="%Y-%m-%d",
         _dt_python = parse_datetime(_dt)
         return (_dt_python.strftime(date_format),
                _dt_python.strftime(time_format))
+
+
+def to_matplotlib_date(string, missing=1e-10):
+    """Return a matplotlib date from a string, or 'almost zero' if invalid.
+    """
+    if string:
+        return dates.date2num(parse_datetime(string))
+    return missing
 
 
 def parse_datetime(string):
@@ -204,14 +197,3 @@ def parse_datetime(string):
     # Return updated datetime object with microseconds and
     # timezone information.
     return x.replace(microsecond=int(fractional), tzinfo=tz)
-
-
-def list_to_dates(items, date_format='%Y-%m-%d', missing=1e-10):
-    """Convert a list into a list of masked date values, with each date
-    in the specified date format.
-    """
-    #print "dtu:211", items
-    if not items:
-        return None
-    x_data = [to_matplotlib_date(x, date_format) for x in items]
-    return ma.masked_values(x_data, missing)  # ignore missing data

@@ -276,7 +276,10 @@ class CsvFilter(ThreadSafeMixin, Module):
         """Raise a VisTrails error."""
         import traceback
         traceback.print_exc()
-        raise ModuleError(self, msg + ': %s' % str(error))
+        if error:
+            raise ModuleError(self, msg + ': %s' % str(error))
+        else:
+            raise ModuleError(self, msg)
 
     def transpose_array(self, lists):
         """Swap rows and columns from a 'list of lists'.
@@ -358,15 +361,16 @@ class CsvFilter(ThreadSafeMixin, Module):
          *  A list of paired tuples if valid inputs, else None
 
         """
+        #print "csv:361", lists
         pair_list = []
         if pairs:
             try:
                 item_list = pairs.split(';')
-                #print "csv:339", item_list
+                #print "csv:365", item_list
                 for key, item in enumerate(item_list):
                     if ',' in item:
                         pair_values = item.split(',')
-                        #print "   csv:343", item, pair_values
+                        #print "   csv:369", item, pair_values
                         x = lists[int(pair_values[0]) - 1]
                         y = lists[int(pair_values[1]) - 1]
                         for key, i in enumerate(x):
@@ -459,7 +463,7 @@ class CsvFilter(ThreadSafeMixin, Module):
         list_of_lists = []
         cols_list = self.get_filter_specs(filter_cols)
         rows_list = self.get_filter_specs(filter_rows)
-        #print "csvutils.441: ", cols_list, rows_list
+        #print "csvutils.463: ", cols_list, rows_list
         if not header_in:
             header_out = False  # cannot process a row that is not there...
 
@@ -474,18 +478,20 @@ class CsvFilter(ThreadSafeMixin, Module):
             try:
                 # U == universal newline mode; overcome issues with weird files
                 csvfile = csv.reader(open(filename, 'rU'), delimiter=delimiter)
-                #print "csvutils.470:", header_in, header_out
+                cols_checked = False
+                COL_MSG = "The column filter values exceed the number of columns in the file's row."
+                #print "csvutils.478:", header_in, header_out
                 for key, row in enumerate(csvfile):
                     #all rows are read in as a list of strings
                     if key == 0 and header_in and not header_out:
                         # skip header row
-                        #print "csvutils:472 - skip header_out", key
+                        #print "csvutils:482 - skip header_out", key
                         pass
                     elif key > 9  and sample:
                         # have the sample data now...
                         break
                     else:
-                        #print "csvutils.481: data", key, row
+                        #print "  csvutils.494: data", key, row
                         if not cols_list:
                             if not rows_list:
                                 list_of_lists.append(row)
@@ -497,11 +503,17 @@ class CsvFilter(ThreadSafeMixin, Module):
                                 pass
                             else:
                                 row_out = []
+                                if not cols_checked:
+                                    if all(col <= len(row) for col in cols_list):
+                                        cols_checked = True
+                                    else:
+                                        self.raiseError(COL_MSG)
                                 # filter each column
                                 for k, c in enumerate(row):
                                     if k + 1 in cols_list:
                                         row_out.append(c)
                                 list_of_lists.append(row_out)
+                #print "csvutils.506: lists_0", list_of_lists
                 # convert list-of-lists back to numbers, where possible
                 list_of_lists = [[self.to_num(a) for a in b] \
                                  for b in list_of_lists]
@@ -519,8 +531,11 @@ class CsvFilter(ThreadSafeMixin, Module):
                                                     list_of_lists,
                                                     header_out, delimiter))
                 if 'datapairs' in self.outputPorts:
-                    self.setResult('datapairs', self.create_paired_tuples(
-                                                    pairs, list_of_lists))
+                    if pairs:
+                        self.setResult('datapairs', self.create_paired_tuples(
+                                                        pairs, list_of_lists))
+                    else:
+                        self.raiseError('No pairs settings on input port')
             except Exception, e:
                 self.raiseError('Unable to run compute: %s' % str(e))
             csvfile = None

@@ -371,10 +371,12 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
                     _field += ' []'
                 common.append(_field)
             csv_writer.writerow(common)
-
-        for index, result in enumerate(results):
+        print "tvl:374"
+        for result in results:
             # write to file
-            for datum in result['data']:
+            for index, datum in enumerate(result['data']):
+                if index > 8670:
+                    print "tvl:379", index, datum
                 if missing_value:
                     for item in datum:
                         if GML_NO_DATA in item:
@@ -382,7 +384,7 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
                 datum.insert(0, result['feature']['geometry'])
                 datum.insert(0, result['sampling_point']['id'])
                 datum.insert(0, result['feature']['id'])
-                datum.insert(0, result['observation']['id'])
+                datum.insert(0, result['observation']['id']) # TEST ADD index here!
                 csv_writer.writerow(datum)
         return file_out
 
