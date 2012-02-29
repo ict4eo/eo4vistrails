@@ -47,7 +47,7 @@ name = 'eo4vistrails'
 #    revision = out[out.find('Revision'):out.find('\n', out.find('Revision'))][10:]
 #except:
 #    revision = 1
-revision = 1
+revision = 2
 version='0.1.%s'%revision
 
 author_list = 'tvanzyl,gmcferren,bcwele,dhohls,pshabangu,bsibolla'
@@ -82,7 +82,8 @@ def package_requirements():
 
 def package_dependencies():
     return ['edu.utah.sci.vistrails.spreadsheet',
-            'edu.utah.sci.vistrails.numpyscipy']
+            'edu.utah.sci.vistrails.numpyscipy',
+            'edu.utah.sci.vistrails.control_flow']
 #    import core.packagemanager
 #    manager = core.packagemanager.get_package_manager()
 #    if manager.has_package('edu.utah.sci.vistrails.spreadsheet'):

@@ -26,6 +26,7 @@
 #############################################################################
 """This module ???
 """
+debug = False
 # library
 from script import Script
 import urllib
@@ -111,8 +112,8 @@ class Rpy2Script(Script, ModuleHelperMixin):
         #Converting R result to Python type
         rResult = self.rPyConversion(resultVar)
 
-        outputDict = dict([(k, None)
-                           for k in self.outputPorts])
+        outputDict = dict([(k, None) for k in self.outputPorts])
+        
         del(outputDict['self'])
         #assigning converted R result to output port
         for k in outputDict.iterkeys():
@@ -131,9 +132,9 @@ class Rpy2Script(Script, ModuleHelperMixin):
                         self.setResult(k, robjects.globalenv[k][0])
                     elif str(self.getPortType(k)) == "<class 'core.modules.vistrails_module.List'>" \
                     or str(self.getPortType(k)) == "<class 'packages.NumSciPy.Array.NDArray'>" :
-                        print "setting output numpy array"
+                        if debug: print "setting output numpy array"
                         outArray = NDArray()
-                        outArray.set_array(numpy.asarray(robjects.globalenv[k]))                    
+                        outArray.set_array(numpy.asarray(robjects.globalenv[k]))
                         self.setResult(k, outArray)
                     elif self.getPortType(k) == type(rResult):
                         self.setResult(k, rResult)

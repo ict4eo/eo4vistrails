@@ -26,6 +26,7 @@
 #############################################################################
 """This module holds a rpycnode type that can be passed around between modules.
 """
+debug = False
 #History
 #Created by Terence van Zyl
 
@@ -97,9 +98,9 @@ class RasterLang(RPyCCode):
         
         for k in outputDict.iterkeys():
             if locals_.has_key(k) and not locals_[k] is None:
-                print "%s == %s  -> %s"%(self.getPortType(k), NDArray, issubclass(NDArray, self.getPortType(k)))
+                if debug: print "%s == %s  -> %s"%(self.getPortType(k), NDArray, issubclass(NDArray, self.getPortType(k)))
                 if issubclass(self.getPortType(k), NDArray):
-                    print "got %s of type %s"%(k, type(locals_[k]))
+                    if debug: print "got %s of type %s"%(k, type(locals_[k]))
                     outArray = NDArray()
                     outArray.set_array(numpy.asarray(locals_[k]))
                     self.setResult(k, outArray)
@@ -147,13 +148,13 @@ class layerAsArray(RasterlangModule, RPyCModule):
         RasterlangModule.__init__(self)
 
     def preCompute(self):
-        print "In preCompute"
+        if debug: print "In preCompute"
         layer = self.getInputFromPort('Raster Layer')
-        print "layer: %s"%layer
+        if debug: print "layer: %s"%layer
         g = gdal.Open(str(layer.source()))
-        print "g: %s"%g
+        if debug: print "g: %s"%g
         #TODO: Need to check the ctype that the image is
-        print "trying to allocate shared memory"
+        if debug: print "trying to allocate shared memory"
         self.allocateSharedMemoryArray('numpy array', ctypes.c_float, (g.RasterYSize,g.RasterXSize))
     
     def compute(self):
@@ -234,17 +235,17 @@ class SaveArrayToRaster(NotCacheable, RasterlangModule, RPyCModule):
         RasterlangModule.__init__(self)
 
     def compute(self):
-        print 'output file'
+        if debug: print 'output file'
         outfile = self.getInputFromPort('output file')
-        print 'numpy array'
+        if debug: print 'numpy array'
         ndarray = self.getInputFromPort('numpy array')
-        print 'prototype'
+        if debug: print 'prototype'
         prototype = self.getInputFromPort('prototype')
-        print 'format'
+        if debug: print 'format'
         outformat = self.getInputFromPort('format')
         
         if prototype.noDatavalue:
-            print "protoype nodata", prototype.noDatavalue
+            if debug: print "protoype nodata", prototype.noDatavalue
         
         writeImage(ndarray.get_array(), prototype, outfile.name, outformat)
         
@@ -292,8 +293,8 @@ def writeImage(arrayData, prototype, path, format):
         nbands = dims[0]
 
     #lookup the data type from the array and do the mapping
-    print "----------------------------------------------"
-    print "arraytype:  %s dtype: %s, type: %s, gdaltype: %s"%(type(arrayData), arrayData.dtype, arrayData.dtype.type, gdalnumeric.NumericTypeCodeToGDALTypeCode(arrayData.dtype.type))
+    if debug: print "----------------------------------------------"
+    if debug: print "arraytype:  %s dtype: %s, type: %s, gdaltype: %s"%(type(arrayData), arrayData.dtype, arrayData.dtype.type, gdalnumeric.NumericTypeCodeToGDALTypeCode(arrayData.dtype.type))
     dst_ds = driver.Create(path, cols, rows, nbands, gdalnumeric.NumericTypeCodeToGDALTypeCode(arrayData.dtype.type) )
 
     dst_ds.SetGeoTransform( prototype.geotransform )
@@ -338,7 +339,7 @@ def fixLayerMinMax(layer):
             generateLookupTableFlag = False
             # compute the min and max for the current extent
             extentMin, extentMax = layer.computeMinimumMaximumEstimates( band )
-            print "min max color", extentMin, extentMax
+            if debug: print "min max color", extentMin, extentMax
             # set the layer min value for this band
             layer.setMinimumValue( band, extentMin, generateLookupTableFlag )
             # set the layer max value for this band

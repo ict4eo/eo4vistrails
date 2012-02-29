@@ -28,6 +28,8 @@
 
 This is the core module holding annotations and mixins,
 """
+debug = False
+
 # global
 import copy
 from threading import Thread, currentThread, RLock
@@ -35,7 +37,7 @@ from Queue import Queue
 
 # vistrails
 from core.modules.vistrails_module import Module, NotCacheable, \
-        InvalidOutput, ModuleError, ModuleErrors, ModuleBreakpoint
+        InvalidOutput, ModuleError
 
 global globalThreadLock
 globalThreadLock = RLock()
@@ -60,18 +62,12 @@ class ThreadSafeMixin(object):
             raise me
     
     def updateUpstream(self):
-        print self, "Called Me"
+        if debug: print self, "Called Me"
         """TODO Write docstring."""
-        #ae = None
         threadList = []
         exceptionQ = Queue()
-        #foundFirstModule = False
         for connectorList in self.inputPorts.itervalues():
             for connector in connectorList:
-                #if not foundFirstModule:
-                #    foundFirstModule = True
-                #    firstModule = connector.obj
-                #el
                 if isinstance(connector.obj, ThreadSafeMixin):
                     thread = Thread(target=connector.obj.lockedUpdate, kwargs={"exceptionQ":exceptionQ})
                     thread.start()
@@ -81,14 +77,6 @@ class ThreadSafeMixin(object):
                     thread.start()
                     threadList.append(thread)
         
-#        try:
-#            if foundFirstModule:
-#                if isinstance(firstModule, ThreadSafeMixin):
-#                    firstModule.lockedUpdate()
-#                else:
-#                    self.globalThread(firstModule)
-#        except ModuleError, me:
-#            ae = me
         stillWaiting = True
         while stillWaiting:
             stillWaiting = False                        
@@ -99,9 +87,6 @@ class ThreadSafeMixin(object):
             if stillWaiting:
                 self.logging.begin_update(self)
             
-        #if ae is not None:
-        #    raise ae
-        #el
         if exceptionQ.qsize() > 0:
             raise exceptionQ.get()
         
@@ -120,7 +105,7 @@ class ThreadSafeMixin(object):
             globalThreadLock.release()
             self.lockedUpdate()
             globalThreadLock.acquire()
-        except RuntimeError, re:
+        except RuntimeError:
             self.lockedUpdate()
         except ModuleError, me:
             globalThreadLock.acquire()
@@ -128,7 +113,7 @@ class ThreadSafeMixin(object):
 
     def lockedUpdate(self, exceptionQ=None):
         """TODO Write docstring."""
-        print self, "get compute lock"
+        if debug: print self, "get compute lock"
         with self.computeLock:
             try:
                 Module.update(self)
@@ -136,7 +121,7 @@ class ThreadSafeMixin(object):
                 if exceptionQ is not None:
                     exceptionQ.put(me)
                 raise me
-        print self, "release compute lock"
+        if debug: print self, "release compute lock"
 
 class Fork(ThreadSafeMixin, NotCacheable, Module):
     """TODO Write docstring."""
@@ -147,7 +132,6 @@ class Fork(ThreadSafeMixin, NotCacheable, Module):
 
     def test(self):
         print "this is a test"
-
 
 class ThreadTestModule(ThreadSafeMixin, NotCacheable, Module):
     """This Test Module is to check that ThreadSafe is working and also

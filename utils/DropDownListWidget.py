@@ -28,6 +28,7 @@
 define combobox widgets which can be attached to a module's port to provide
 simple (and controlled) selection of pre-defined options.
 """
+debug = False
 
 # thirdparty
 from PyQt4 import QtCore, QtGui
@@ -64,9 +65,9 @@ class ComboBoxWidget(QtGui.QComboBox, ConstantWidgetMixin):
         else:
             checkstr = param.strValue
 
-        print "1->", param.strValue
+        if debug: print "1->", param.strValue
         for (k, v) in self.getKeyValues().items():
-            print "2->", k, v
+            if debug: print "2->", k, v
             if str(v) == checkstr:
                 break
 

@@ -35,8 +35,8 @@ from core.modules.vistrails_module import Module, ModuleError
 # eo4vistrails
 from packages.NumSciPy.Array import NDArray
 from packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
+from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
 
-#@RPyCSafeModule()
 class CubeReaderHandle(Module):
     """HDF data cube initialisation."""
 
@@ -77,6 +77,9 @@ class ModisCubeReaderHandle(CubeReaderHandle):
     _output_ports = [('CubeReaderHandle', '(za.co.csir.eo4vistrails:CubeReaderHandle:datacube)'),
                      ('timeBand', '(edu.utah.sci.vistrails.basic:List)')]
 
+    def __init__(self):
+        CubeReaderHandle.__init__(self)
+
     def compute(self):
         if self.cubeInit():
             self.band = self.getInputFromPort('band')
@@ -87,7 +90,7 @@ class ModisCubeReaderHandle(CubeReaderHandle):
 
 
 @RPyCSafeModule()
-class CubeReader(Module):
+class CubeReader(ThreadSafeMixin, Module):
     """HDF data cube reader."""
 
     _input_ports = [('cubereader',
@@ -99,7 +102,7 @@ class CubeReader(Module):
     _output_ports = [('timeseries', '(edu.utah.sci.vistrails.numpyscipy:Numpy Array:numpy|array)')]
 
     def __init__(self):
-        #ThreadSafeMixin.__init__(self)
+        ThreadSafeMixin.__init__(self)
         Module.__init__(self)
 
     def getData(self, cube, offset):

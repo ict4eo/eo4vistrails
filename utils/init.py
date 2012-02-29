@@ -16,6 +16,7 @@ def initialize(*args, **keywords):
     from session import Session
     from ThreadSafe import Fork, ThreadTestModule
     from WebRequest import WebRequest
+    from Experiment import Timer
 
     reg = get_module_registry()
     utils_namespace = "utils"
@@ -58,6 +59,11 @@ def initialize(*args, **keywords):
                                         's',
                                         staticmethod(lambda x: type(x) == str),
                                         DropDownListWidget.DateFormatComboBoxWidget)
+
+    # Experiment
+    reg.add_module(Timer,
+               name="Workflow Timer",
+               namespace=utils_namespace)
 
     reg.add_module(DateFormatComboBox,
                    namespace=utils_namespace)
