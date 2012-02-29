@@ -85,7 +85,6 @@ class TextDataWriter(ThreadSafeMixin, Module):
             _file = self.interpreter.filePool.create_file(suffix=".%s" % data_output_type)
             filename = _file.name
         if data_output_type == 'csv':
-            print "datawriter:88"
             file_out = vector_layer.to_csv(filename_out=filename)
         elif data_output_type == 'odv':
             file_out = vector_layer.to_odv(filename_out=filename)

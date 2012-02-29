@@ -270,59 +270,64 @@ class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
 
     def okTriggered(self, checked=False, functions=[]): # ,checked=False, functions=[] in parent?
         """Extends method defined in SpatialTemporalConfigurationWidget."""
-        #print OK Triggered in OgcConfigurationWidget (line 271)"
-        full_url = self.ogc_common_widget.line_edit_OGC_url.text()
-        if '?' in full_url:
-            parts = full_url.split('?')
-            self.url = parts[0]
-        else:
-            self.url = full_url
+        #print OK Triggered in OgcConfigurationWidget (line 273)"
 
         # constructRequest() method must be fully defined in sub-class
-        result = self.constructRequest()
-        print "OgcConfigurationWidget:283", type(result), result
+        base_url = str(self.ogc_common_widget.line_edit_OGC_url.text())
+        if '?' in base_url:
+            parts = base_url.split('?')
+            self.url = parts[0]
+        else:
+            self.url = base_url
+        result = self.constructRequest(self.url)
+        #print "OgcConfigurationWidget:285", type(result), result
         self.request_type = result.get('request_type', None)
         self.data = result.get('data', None)
         self.full_url = result.get('full_url', None)
         self.layername = result.get('layername', None)
         if not self.data:
-            self.data = self.full_url
-        #print "OgcConfigurationWidget.py:287", self.request_type, self.layername,'\nURL:',self.full_url,'\nDATA:',self.data
+            self.data = self.full_url  # for GET requests
+        #print "OgcConfigurationWidget.py:291", self.request_type, self.url,\
+        #      '\nLayer:',self.layername,'\nURL:',self.full_url,'\nDATA:',self.data
 
         # must not set ports if nothing has been specified, or
         # if there was a problem constructing the request
-        if self.data and self.request_type:
+        if self.request_type and self.data:
             functions.append(
                 (init.OGC_URL_PORT, [self.url]),)
             if self.layername:
                 functions.append(
                     (init.OGC_LAYERNAME_PORT, [self.layername]),)
-            if self.request_type == 'GET':
+            if self.full_url and self.request_type == 'GET':
                 functions.append(
-                    (init.OGC_GET_REQUEST_PORT, [self.data]),)
-            elif self.request_type == 'POST':
+                    (init.OGC_GET_REQUEST_PORT, [self.full_url]),)
+            elif self.data and self.request_type == 'POST':
                 functions.append(
                     (init.OGC_POST_DATA_PORT, [self.data]),)
             else:
                 raise ModuleError(
                     self,
-                    'Unknown OgcConfigurationWidget request type' + ': %s' %
+                    'Unknown or invalid OgcConfigurationWidget request: %s' %
                         str(self.request_type))
             # see: gui.vistrails_controller.py
-            #print "OgcConfigurationWidget:309/n", functions
+            #print "OgcConfigurationWidget:313/n", functions
             self.controller.update_ports_and_functions(
                 self.module.id, [], [], functions)
             SpatialTemporalConfigurationWidget.okTriggered(self, functions)
         else:
-            self.showWarning('The service is not sufficiently specified')
+            self.showWarning('The OGC service is not sufficiently specified.')
 
-    def constructRequest(self):
+    def constructRequest(self, URL):
         """Overwrite in a subclass to set the service specific parameters.
 
-        Return a dictionary of results:
-          * request type (GET/POST)
-          * data (for a POST)
-          * full_url (for a GET)
-          * layer name (for WFS, WCS)
+        Requires:
+            A valid URL (pointing to an OGC web service)
+
+        Returns:
+            a dictionary of results:
+              * request type (GET and POST)
+              * data (for a POST)
+              * full_url (for a GET)
+              * layername (for WFS, WCS)
         """
         return {}

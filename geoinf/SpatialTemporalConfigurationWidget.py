@@ -374,26 +374,39 @@ class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
             self.temporal_widget.getTimeEnd(),)
 
     def getBoundingBox(self):
-        """Return a tuple containing box co-ordinates.
+        """Return a tuple containing valid box co-ordinates, or None.
         Format: top-left X, top-left Y, bottom-left X, bottom-left Y
 
         """
-        return (
-            self.spatial_widget.bbox_tlx.text(),
-            self.spatial_widget.bbox_tly.text(),
-            self.spatial_widget.bbox_brx.text(),
-            self.spatial_widget.bbox_bry.text())
+        try:
+            if float(spatial_widget.bbox_tlx.text()) and \
+               float(spatial_widget.bbox_tly.text()) and \
+               float(spatial_widget.bbox_brx.text()) and \
+               float(spatial_widget.bbox_bry.text()):
+                return (
+                    self.spatial_widget.bbox_tlx.text(),
+                    self.spatial_widget.bbox_tly.text(),
+                    self.spatial_widget.bbox_brx.text(),
+                    self.spatial_widget.bbox_bry.text())
+        except:
+            return None
 
     def getBoundingBoxString(self):
-        """Return a comma-delimited string containing box co-ordinates."""
+        """Return a comma-delimited string containing valid box co-ordinates,
+        or None.
+
+        """
         bbox = self.getBoundingBox()
-        return str(bbox[0]) + ',' + str(bbox[1]) + ',' + \
-               str(bbox[2]) + ',' + str(bbox[3])
+        if bbox:
+            return str(bbox[0]) + ',' + str(bbox[1]) + ',' + \
+                   str(bbox[2]) + ',' + str(bbox[3])
+        else:
+            return None
 
     def okTriggered(self, checked=False, functions=[]):
         """ okTriggered(checked: bool, functions: array) -> None
         Extend in a subclass to set configuration on the module ports
 
         """
-        #print "OK Triggered in SpatialTemporalConfigurationWidget (line 405)"
+        #print "OK Triggered in SpatialTemporalConfigurationWidget (line 411)"
         self.close()

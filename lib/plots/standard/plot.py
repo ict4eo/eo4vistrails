@@ -410,7 +410,7 @@ class SinglePlot(ParentPlot):
         # flatten if double [[ wrapped
         if len(xyData) == 1 and type(xyData[0]) == list:
             xyData = xyData[0]
-        print "plot:410", xyData
+        #print "plot:413", xyData
         if xyData and len(xyData) == 2:
             y_data_m = self.list_to_floats(xyData[1])
             fig = pylab.figure()
@@ -513,8 +513,8 @@ class MultiPlot(ParentPlot):
                 data_sets = [data_sets]
         else:
             data_sets = []
-        print "plot:509 data_set", data_sets
-        print "plot:510 data_set list", data_sets_list
+        #print "plot:516 data_set", data_sets
+        #print "plot:517 data_set list", data_sets_list
 
         fig = pylab.figure()
         pylab.setp(fig, facecolor='w')  # background color

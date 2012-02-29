@@ -34,8 +34,8 @@ from PyQt4 import QtCore, QtGui
 #from qgis.core import *
 #from qgis.gui import *
 # vistrails
-from core.modules.vistrails_module import Module, ModuleError
 from core.modules.module_configure import StandardModuleConfigurationWidget
+from core.modules.vistrails_module import Module, ModuleError
 # eo4vistrails
 from packages.eo4vistrails.geoinf.datamodels.Feature import FeatureModel
 # local
@@ -203,12 +203,6 @@ class SosCommonWidget(QtGui.QWidget):
         self.cbRequest = QtGui.QComboBox()
         self.detailsLayout.addWidget(self.cbRequest, 11, 1)
 
-        """
-        self.cbRequest.addItem('GetFeatureOfInterest')
-        self.cbRequest.addItem('GetObservation')
-        self.cbRequest.addItem('DescribeSensor')
-        """
-
         # local signals
         self.connect(
             self.lbxOfferings,
@@ -227,9 +221,7 @@ class SosCommonWidget(QtGui.QWidget):
             self.lblBR_Y.text())
 
     def getTimeIntervalOffering(self):
-        """Return a tuple containing begin / end in universal time.
-
-        """
+        """Return a tuple containing begin / end in universal time."""
         return (
             self.lblStartTime.text(),
             self.lblEndTime.text(),)
@@ -322,7 +314,8 @@ class SosCommonWidget(QtGui.QWidget):
                 self.lbxOfferings.addItem(item)
 
 
-class SOSConfigurationWidget(OgcConfigurationWidget, StandardModuleConfigurationWidget):
+class SOSConfigurationWidget(OgcConfigurationWidget,
+                             StandardModuleConfigurationWidget):
     """makes use of code style from OgcConfigurationWidget"""
 
     def __init__(self, module, controller, parent=None):
@@ -332,7 +325,6 @@ class SOSConfigurationWidget(OgcConfigurationWidget, StandardModuleConfiguration
         OgcConfigurationWidget.__init__(self, module, controller, parent)
         # pass in parent widget i.e. OgcCommonWidget class
         self.config = SosCommonWidget(self.module, self.ogc_common_widget)
-        #print "SOS:325", type(self.module), "\n", self.module
 
         # map widgets to ports to enable storing of their settings
         port_widget = {
@@ -343,7 +335,7 @@ class SOSConfigurationWidget(OgcConfigurationWidget, StandardModuleConfiguration
         #  "functions" are VisTrails internal representation of ports at design time
         for function in self.module.functions:
             if function.name in port_widget:
-                #print "SOS:336", function.name, function.params[0].strValue
+                #print "SOS:338", function.name, function.params[0].strValue
                 port_widget[function.name].setText(function.params[0].strValue)
 
         # move parent tab to first place
@@ -391,12 +383,13 @@ class SOSConfigurationWidget(OgcConfigurationWidget, StandardModuleConfiguration
                             % srsURN, error='')
         return srs
 
-    def constructRequest(self):
+    def constructRequest(self, URL):
         """Return an XML-encoded request from configuration parameters
 
         Overwrites method defined in OgcConfigurationWidget.
         """
         result = {}
+        sos_url = URL
         data = ''
         rType = self.config.cbRequest.currentText()
         try:

@@ -63,7 +63,7 @@ def list_to_dates(items, date_format='%Y-%m-%d', missing=1e-10):
     """Convert a list into a list of masked date values, with each date
     in the specified date format.
     """
-    print "dtu:66", items
+    #print "dtu:66", items
     if not items:
         return None
     x_data = [to_matplotlib_date(x, date_format) for x in items]

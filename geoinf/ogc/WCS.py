@@ -358,12 +358,12 @@ class WCSConfigurationWidget(OgcConfigurationWidget):
                 QtGui.QApplication.UnicodeUTF8))
         self.tabs.setCurrentIndex(0)
 
-    def constructRequest(self):
+    def constructRequest(self, URL):
         """Returns request from configuration parameters;
         Overwrites method defined in OgcConfigurationWidget.
         """
         result = {}
-        wcs_url = self.url # defined in OgcConfigurationWidget : okTriggered()
+        wcs_url = URL
         WCSversion = str(self.ogc_common_widget.launchversion.currentText())
         selectedCoverageId = str(self.wcs_config_widget.dcLayerId.text())
         width = str(self.wcs_config_widget.dcWidth.text())

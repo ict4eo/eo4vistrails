@@ -270,7 +270,7 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
                 om_sampling_point = doc.elem_tag_nested(om_feature,
                                                       'SamplingPoint',
                                                       doc.get_ns('sa'))
-                #print "TVL:125", om_sampling_point
+                #print "TVL:375", om_sampling_point
                 if om_sampling_point and len(om_sampling_point) == 1:
                     id = doc.elem_attr_value(om_feature, 'xlink:href')
                     if not id:
@@ -342,13 +342,7 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
         if not GML_file:
             self.raiseError('No GML file specified from which to extract data')
         results = self.extract_time_series(GML_file)  # get data & metadata
-        #print "TVL:338", results
-        """
-        if quotechar:
-            quoting = csv.QUOTE_NONNUMERIC
-        else:
-            quoting = csv.QUOTE_MINIMAL
-        """
+        #print "TVL:345", results
         quoting = csv.QUOTE_NONNUMERIC
         file_out = open(filename_out, "w")
         if quotechar:
@@ -360,6 +354,7 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
             csv_writer = csv.writer(file_out,
                                     delimiter=delimiter,
                                     quoting=quoting)
+
         if header:
             common = ['Observation', 'Feature', 'Sample Point', 'Geometry']
             #only take field names from FIRST member
@@ -371,12 +366,10 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
                     _field += ' []'
                 common.append(_field)
             csv_writer.writerow(common)
-        print "tvl:374"
+
         for result in results:
             # write to file
             for index, datum in enumerate(result['data']):
-                if index > 8670:
-                    print "tvl:379", index, datum
                 if missing_value:
                     for item in datum:
                         if GML_NO_DATA in item:
@@ -384,8 +377,10 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
                 datum.insert(0, result['feature']['geometry'])
                 datum.insert(0, result['sampling_point']['id'])
                 datum.insert(0, result['feature']['id'])
-                datum.insert(0, result['observation']['id']) # TEST ADD index here!
+                datum.insert(0, result['observation']['id'])
                 csv_writer.writerow(datum)
+
+        file_out.close()
         return file_out
 
     def to_odv(self, filename_out, missing_value=-1e10):
