@@ -60,17 +60,17 @@ def initialize(*args, **keywords):
                                         staticmethod(lambda x: type(x) == str),
                                         DropDownListWidget.DateFormatComboBoxWidget)
 
-    # Experiment
-    reg.add_module(Timer,
-               name="Workflow Timer",
-               namespace=utils_namespace)
-
     reg.add_module(DateFormatComboBox,
                    namespace=utils_namespace)
 
     # ==========================================================================
     # Standard Modules - Ports defined here
     # ==========================================================================
+
+    # Experiment
+    reg.add_module(Timer,
+               name="Workflow Timer",
+               namespace=utils_namespace)
 
     # Fork
     reg.add_module(Fork,
