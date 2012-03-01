@@ -1,0 +1,549 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>GeoInf &mdash; EO4VisTrails v1.0.0 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="EO4VisTrails v1.0.0 documentation" href="index.html" />
+    <link rel="up" title="Packages" href="packages.html" />
+    <link rel="next" title="Lib" href="lib.html" />
+    <link rel="prev" title="DataCube" href="datacube.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="lib.html" title="Lib"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="datacube.html" title="DataCube"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">EO4VisTrails v1.0.0 documentation</a> &raquo;</li>
+          <li><a href="packages.html" accesskey="U">Packages</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="geoinf">
+<h1>GeoInf<a class="headerlink" href="#geoinf" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+<ul class="simple">
+</ul>
+</div>
+<span class="target" id="module-geoinf"></span><p>This package provides GIS capabilities for eo4vistrails.
+In particular, provides GRASS, PostGIS, OGC clients and some 
+visualisation capabilities through the QGIS API.</p>
+<div class="section" id="module-geoinf.datamodels">
+<span id="datamodels"></span><h2>DataModels<a class="headerlink" href="#module-geoinf.datamodels" title="Permalink to this headline">¶</a></h2>
+<p>This package provides consistent internal data models for feature, raster
+and time-series data. Proposes use of gdal, ogr (or GeoJson) and hdf</p>
+<div class="section" id="module-geoinf.datamodels.Test">
+<span id="test"></span><h3>Test!<a class="headerlink" href="#module-geoinf.datamodels.Test" title="Permalink to this headline">¶</a></h3>
+<p>This module provides a test bed for helping with Sphinx document generation.</p>
+<dl class="class">
+<dt id="geoinf.datamodels.Test.TestModel">
+<em class="property">class </em><tt class="descclassname">geoinf.datamodels.Test.</tt><tt class="descname">TestModel</tt><a class="headerlink" href="#geoinf.datamodels.Test.TestModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is a Sphinx Documentation Test</p>
+<dl class="method">
+<dt id="geoinf.datamodels.Test.TestModel.FirstMethod">
+<tt class="descname">FirstMethod</tt><big>(</big><big>)</big><a class="headerlink" href="#geoinf.datamodels.Test.TestModel.FirstMethod" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is Method First</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="geoinf.datamodels.Test.TestModel.TableBigMethod">
+<tt class="descname">TableBigMethod</tt><big>(</big><em>big_table</em>, <em>keys</em>, <em>other_silly_variable=None</em><big>)</big><a class="headerlink" href="#geoinf.datamodels.Test.TestModel.TableBigMethod" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetches rows from a Bigtable.</p>
+<p>Retrieves rows pertaining to the given keys from the Table instance
+represented by big_table.  Silly things may happen if
+other_silly_variable is not None.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><dl class="first last docutils">
+<dt>big_table:</dt>
+<dd>An open Bigtable Table instance.</dd>
+<dt>keys:</dt>
+<dd>A sequence of strings representing the key of each table row
+to fetch.</dd>
+<dt>other_silly_variable:</dt>
+<dd>Another optional variable, that has a much longer name than
+the other args, and which does nothing.</dd>
+</dl>
+</dd>
+<dt>Returns:</dt>
+<dd><p class="first">A dict mapping keys to the corresponding table row data
+fetched. Each row is represented as a tuple of strings. For
+example:</p>
+<dl class="docutils">
+<dt>{&#8216;Serak&#8217;: (&#8216;Rigel VII&#8217;, &#8216;Preparer&#8217;),</dt>
+<dd>&#8216;Zim&#8217;: (&#8216;Irk&#8217;, &#8216;Invader&#8217;),
+&#8216;Lrrr&#8217;: (&#8216;Omicron Persei 8&#8217;, &#8216;Emperor&#8217;)}</dd>
+</dl>
+<p class="last">If a key from the keys argument is missing from the dictionary,
+then that row was not found in the table.</p>
+</dd>
+<dt>Raises:</dt>
+<dd>IOError: An error occurred accessing the bigtable.Table object.</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-geoinf.datamodels.Feature">
+<span id="feature"></span><h3>Feature<a class="headerlink" href="#module-geoinf.datamodels.Feature" title="Permalink to this headline">¶</a></h3>
+<p>This module provides an generic OGC Simple Features data model via OGR.
+All eo4vistrails modules dealing with feature data must extend one of the
+provided classes.</p>
+<dl class="class">
+<dt id="geoinf.datamodels.Feature.FeatureModel">
+<em class="property">class </em><tt class="descclassname">geoinf.datamodels.Feature.</tt><tt class="descname">FeatureModel</tt><a class="headerlink" href="#geoinf.datamodels.Feature.FeatureModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is a common representation of Vector/Feature
+data, sourced from numerous places {postgis, shapefiles, wfs&#8217;s, gml, etc.}
+Representation is provided by the GDAL/OGR (OGR) library.</p>
+<p>Classes that implement this module are expected to generate the
+internal OGR objects. Optionally, they may expose ports that
+serialise the OGR objects, but that is more likely to take place
+via external serialisers.</p>
+<dl class="method">
+<dt id="geoinf.datamodels.Feature.FeatureModel.compute">
+<tt class="descname">compute</tt><big>(</big><big>)</big><a class="headerlink" href="#geoinf.datamodels.Feature.FeatureModel.compute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Overriden by subclasses - typically where the
+conversion to an OGR Dataset takes place</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="geoinf.datamodels.Feature.FeatureModelGeometryComparitor">
+<em class="property">class </em><tt class="descclassname">geoinf.datamodels.Feature.</tt><tt class="descname">FeatureModelGeometryComparitor</tt><a class="headerlink" href="#geoinf.datamodels.Feature.FeatureModelGeometryComparitor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performs geometry comparisons between OGR Geoms.</p>
+<p>Assumes same projection. Is only a double input comparison
+i.e. geomA | geomB. Supports the following comparisons:-</p>
+<ul class="simple">
+<li>geomA | geomB : individual geometries compared -&gt; geomB | None</li>
+<li>geomA | geomSetB : individual geometry compared to a set of geometries -&gt; [geomB&#8217;s] | None</li>
+<li>geomSetA | geomB : set of geometries compared to individual geometry -&gt; [geomA&#8217;s] | None</li>
+<li>geomSetA | geomSetB : set of geometries compared to a set of geometries -&gt; [(geomA, geomB)] | None</li>
+</ul>
+<p>Operators supported :-</p>
+<p>Predicates: Contains, Crosses, Disjoint, Equal, Intersect, Overlaps, Touches, Within</p>
+<p>For other purposes later:-</p>
+<ul>
+<li><dl class="first docutils">
+<dt>Constructors: Buffer, Centroid, Clone, ConvexHull, Difference, Intersection,</dt>
+<dd><p class="first last">SymmetricDifference, Union</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>Editors: AddPoint, AddPoint_2D, CloseRings, FlattenTo2D, GetPoint, GetPoint_2D,</dt>
+<dd><p class="first last">Segmentize, SetCoordinateDimension, SetPoint, SetPoint_2D, Transform,
+TransformTo</p>
+</dd>
+</dl>
+</li>
+<li><p class="first">Calcs: Distance, GetArea, GetBoundary, GetEnvelope,</p>
+</li>
+<li><dl class="first docutils">
+<dt>Info: GetCoordinateDimension , GetDimension, GetGeometryCount, GetGeometryName,</dt>
+<dd><p class="first last">GetGeometryRef, GetGeometryType, GetPointCount, GetSpatialReference,GetX,
+GetY, GetZ IsEmpty, IsRing, IsSimple, IsValid</p>
+</dd>
+</dl>
+</li>
+</ul>
+</dd></dl>
+
+<dl class="class">
+<dt id="geoinf.datamodels.Feature.FileFeatureModel">
+<em class="property">class </em><tt class="descclassname">geoinf.datamodels.Feature.</tt><tt class="descname">FileFeatureModel</tt><a class="headerlink" href="#geoinf.datamodels.Feature.FileFeatureModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Persists a FeatureModel to disk at a user specified location.</p>
+<p>Likely outputs via OGR would be:
+{shapefile, a postgis database dump, a CSV file ,a GML file, a KML file or GeoJSON}</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="geoinf.datamodels.Feature.MemFeatureModel">
+<em class="property">class </em><tt class="descclassname">geoinf.datamodels.Feature.</tt><tt class="descname">MemFeatureModel</tt><a class="headerlink" href="#geoinf.datamodels.Feature.MemFeatureModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retains a copy of an OGR dataset in memory.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="geoinf.datamodels.Feature.initialize">
+<tt class="descclassname">geoinf.datamodels.Feature.</tt><tt class="descname">initialize</tt><big>(</big><em>*args</em>, <em>**keywords</em><big>)</big><a class="headerlink" href="#geoinf.datamodels.Feature.initialize" title="Permalink to this definition">¶</a></dt>
+<dd><p>sets everything up</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-geoinf.datamodels.GeoJSON">
+<span id="geostrings"></span><h3>GeoStrings<a class="headerlink" href="#module-geoinf.datamodels.GeoJSON" title="Permalink to this headline">¶</a></h3>
+<p>This module holds a GeoJSON type that can be passed around between modules.</p>
+<dl class="class">
+<dt id="geoinf.datamodels.GeoJSON.GJFeature">
+<em class="property">class </em><tt class="descclassname">geoinf.datamodels.GeoJSON.</tt><tt class="descname">GJFeature</tt><a class="headerlink" href="#geoinf.datamodels.GeoJSON.GJFeature" title="Permalink to this definition">¶</a></dt>
+<dd><p>Container class for the geojson.Feature class</p>
+</dd></dl>
+
+</div>
+<div class="section" id="qgslayer">
+<h3>QgsLayer<a class="headerlink" href="#qgslayer" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="module-geoinf.datamodels.QgsLayerWriter">
+<span id="qgslayerwriter"></span><h3>QgsLayerWriter<a class="headerlink" href="#module-geoinf.datamodels.QgsLayerWriter" title="Permalink to this headline">¶</a></h3>
+<p>This module provides a means for saving raster and vector data to file,
+in the format defined by QGIS.</p>
+<dl class="class">
+<dt id="geoinf.datamodels.QgsLayerWriter.QgsLayerWriter">
+<em class="property">class </em><tt class="descclassname">geoinf.datamodels.QgsLayerWriter.</tt><tt class="descname">QgsLayerWriter</tt><a class="headerlink" href="#geoinf.datamodels.QgsLayerWriter.QgsLayerWriter" title="Permalink to this definition">¶</a></dt>
+<dd><p>This module will create a file from a QGIS layer</p>
+<dl class="method">
+<dt id="geoinf.datamodels.QgsLayerWriter.QgsLayerWriter.compute">
+<tt class="descname">compute</tt><big>(</big><big>)</big><a class="headerlink" href="#geoinf.datamodels.QgsLayerWriter.QgsLayerWriter.compute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Execute the module to create the output</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="geoinf.datamodels.QgsLayerWriter.QgsLayerWriter.raiseError">
+<tt class="descname">raiseError</tt><big>(</big><em>msg</em>, <em>error=''</em><big>)</big><a class="headerlink" href="#geoinf.datamodels.QgsLayerWriter.QgsLayerWriter.raiseError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Raise a VisTrails error.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="geoinf.datamodels.QgsLayerWriter.QgsLayerWriter.write_raster_layer">
+<tt class="descname">write_raster_layer</tt><big>(</big><em>layer</em>, <em>filename</em>, <em>filetype=None</em>, <em>encoding=None</em><big>)</big><a class="headerlink" href="#geoinf.datamodels.QgsLayerWriter.QgsLayerWriter.write_raster_layer" title="Permalink to this definition">¶</a></dt>
+<dd><p>TODO IN FUTURE Write a QGIS raster layer to disk</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="geoinf.datamodels.QgsLayerWriter.QgsLayerWriter.write_vector_layer">
+<tt class="descname">write_vector_layer</tt><big>(</big><em>layer</em>, <em>filename</em>, <em>filetype='SHP'</em>, <em>encoding=None</em><big>)</big><a class="headerlink" href="#geoinf.datamodels.QgsLayerWriter.QgsLayerWriter.write_vector_layer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write a QGIS vector layer to disk</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-geoinf.datamodels.Raster">
+<span id="raster"></span><h3>Raster<a class="headerlink" href="#module-geoinf.datamodels.Raster" title="Permalink to this headline">¶</a></h3>
+<p>This module provides a generic coverage/raster data model via GDAL.
+All eo4vistrails modules dealing with raster data must extend this class.</p>
+<dl class="class">
+<dt id="geoinf.datamodels.Raster.RasterModel">
+<em class="property">class </em><tt class="descclassname">geoinf.datamodels.Raster.</tt><tt class="descname">RasterModel</tt><a class="headerlink" href="#geoinf.datamodels.Raster.RasterModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>TO DO - add docstring</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="geoinf.datamodels.Raster.initialize">
+<tt class="descclassname">geoinf.datamodels.Raster.</tt><tt class="descname">initialize</tt><big>(</big><em>*args</em>, <em>**keywords</em><big>)</big><a class="headerlink" href="#geoinf.datamodels.Raster.initialize" title="Permalink to this definition">¶</a></dt>
+<dd><p>sets everything up</p>
+</dd></dl>
+
+</div>
+<div class="section" id="temporalvectorlayer">
+<h3>TemporalVectorLayer<a class="headerlink" href="#temporalvectorlayer" title="Permalink to this headline">¶</a></h3>
+</div>
+</div>
+<div class="section" id="module-geoinf.grass">
+<span id="grass"></span><h2>GRASS<a class="headerlink" href="#module-geoinf.grass" title="Permalink to this headline">¶</a></h2>
+<p>This package provides GRASS (<a class="reference external" href="http://grass.osgeo.org/">http://grass.osgeo.org/</a>) capabilities for eo4vistrails.
+GRASS commands are executed via the subprocess module</p>
+<div class="section" id="module-geoinf.grass.GrassSession">
+<span id="grasssession"></span><h3>GrassSession<a class="headerlink" href="#module-geoinf.grass.GrassSession" title="Permalink to this headline">¶</a></h3>
+<p>This module provides a Session object for defining a connection to GRASS
+Defines a temporary GRASS location on either a local or cloud machine.
+Defines and maintains a list of the layers available.</p>
+<dl class="docutils">
+<dt>Also see:</dt>
+<dd><ul class="first last simple">
+<li><a class="reference external" href="http://grass.osgeo.org/programming6/pythonlib.html">http://grass.osgeo.org/programming6/pythonlib.html</a></li>
+<li><a class="reference external" href="http://grass.osgeo.org/wiki/GRASS_and_Python">http://grass.osgeo.org/wiki/GRASS_and_Python</a></li>
+</ul>
+</dd>
+</dl>
+<dl class="class">
+<dt id="geoinf.grass.GrassSession.GrassSession">
+<em class="property">class </em><tt class="descclassname">geoinf.grass.GrassSession.</tt><tt class="descname">GrassSession</tt><a class="headerlink" href="#geoinf.grass.GrassSession.GrassSession" title="Permalink to this definition">¶</a></dt>
+<dd><p>TO DO - add docstring</p>
+<dl class="method">
+<dt id="geoinf.grass.GrassSession.GrassSession.readLayers">
+<tt class="descname">readLayers</tt><big>(</big><em>layertype</em><big>)</big><a class="headerlink" href="#geoinf.grass.GrassSession.GrassSession.readLayers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads info on layers available in current GRASS location
+requires a string for the layername and a string, one of{&#8216;v&#8217;, &#8216;r&#8217;}
+to denote the type</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="geoinf.grass.GrassSession.GrassSession.updateLayers">
+<tt class="descname">updateLayers</tt><big>(</big><em>layername</em>, <em>layertype</em><big>)</big><a class="headerlink" href="#geoinf.grass.GrassSession.GrassSession.updateLayers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Updates info on layers available in current GRASS location
+requires a string for the layername and a string, one of{&#8216;v&#8217;, &#8216;r&#8217;}
+to denote the type</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="geoinf.grass.GrassSession.GrassSessionConfigurationWidget">
+<em class="property">class </em><tt class="descclassname">geoinf.grass.GrassSession.</tt><tt class="descname">GrassSessionConfigurationWidget</tt><a class="headerlink" href="#geoinf.grass.GrassSession.GrassSessionConfigurationWidget" title="Permalink to this definition">¶</a></dt>
+<dd><p>TO DO - add docstring</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="geoinf.grass.GrassSession.initialize">
+<tt class="descclassname">geoinf.grass.GrassSession.</tt><tt class="descname">initialize</tt><big>(</big><em>*args</em>, <em>**keywords</em><big>)</big><a class="headerlink" href="#geoinf.grass.GrassSession.initialize" title="Permalink to this definition">¶</a></dt>
+<dd><p>sets everything up</p>
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="module-geoinf.ogc">
+<span id="ogc"></span><h2>OGC<a class="headerlink" href="#module-geoinf.ogc" title="Permalink to this headline">¶</a></h2>
+<p>This package provides OGC capabilities for eo4vistrails.
+In particular, provides WFS, WCS and SOS clients through 
+the owslib (<a class="reference external" href="http://gispython.org/owslib">http://gispython.org/owslib</a>) library, and hence 
+has a dependency thereupon. owslib is dependent on libxml 
+or elementree</p>
+<div class="section" id="module-geoinf.ogc.Common">
+<span id="common"></span><h3>Common<a class="headerlink" href="#module-geoinf.ogc.Common" title="Permalink to this headline">¶</a></h3>
+<p>This module provides a small api for fetching the service and dealing with
+OGC (Open Geospatial Consortium) Web Service Metadata which is common to the
+various services (via owslib).</p>
+<dl class="docutils">
+<dt>Requirements:</dt>
+<dd>owslib 0.3.4</dd>
+<dt>NOTE:</dt>
+<dd><dl class="first last docutils">
+<dt>As at 2010-11-09, you will need to patch version 0.3.4b for owslib sos.py:</dt>
+<dd><cite>self.filters=filter.Filter_Capabilities(val)</cite></dd>
+<dt>should be:</dt>
+<dd><cite>self.filters=filter.FilterCapabilities(val)</cite></dd>
+</dl>
+</dd>
+</dl>
+</div>
+<div class="section" id="ogcservice">
+<h3>OgcService<a class="headerlink" href="#ogcservice" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="module-geoinf.ogc.PortConfigurationWidget">
+<span id="portconfigurationwidget"></span><h3>PortConfigurationWidget<a class="headerlink" href="#module-geoinf.ogc.PortConfigurationWidget" title="Permalink to this headline">¶</a></h3>
+<p>This module provides general OGC (Open Geospatial Consortium) Web Service
+selection widgets for configuring geoinf.ogc modules.</p>
+<p>This refers primarily to GetCapabilities requests</p>
+<dl class="class">
+<dt id="geoinf.ogc.PortConfigurationWidget.PortConfigurationWidget">
+<em class="property">class </em><tt class="descclassname">geoinf.ogc.PortConfigurationWidget.</tt><tt class="descname">PortConfigurationWidget</tt><big>(</big><em>module</em>, <em>controller</em>, <em>parent=None</em><big>)</big><a class="headerlink" href="#geoinf.ogc.PortConfigurationWidget.PortConfigurationWidget" title="Permalink to this definition">¶</a></dt>
+<dd><p>PortConfigurationWidget is the configuration widget for a
+specifying any number of input (output) ports and the type of each port.
+Then compose (decompose) a tuple of those inputs as a result.</p>
+<p>When subclassing StandardModuleConfigurationWidget, there are
+only two things we need to care about:</p>
+<ol class="arabic">
+<li><p class="first">The builder will provide the VistrailController (through the
+constructor) associated with the pipeline the module is in. The
+configuration widget can use the controller to change the
+current vistrail such as delete connections, add/delete module
+port...</p>
+</li>
+<li><p class="first">The builder also provide the current Module object (through the
+constructor) of the module. This is the instance of the module
+in the pipeline. Changes to this Module object usually will not
+result a new version in the current Vistrail. Such changes are
+change the visibility of input/output ports on the builder,
+change module color.</p>
+<p>Each module has a local set of input and output ports that may
+change, unlike those stored by the global registry. The same
+module can have different types of input ports at two different
+time in the same vistrail.</p>
+</li>
+</ol>
+<p>That&#8217;s it, the rest of the widget will be just like a regular Qt
+widget.</p>
+<dl class="method">
+<dt id="geoinf.ogc.PortConfigurationWidget.PortConfigurationWidget.createButtons">
+<tt class="descname">createButtons</tt><big>(</big><big>)</big><a class="headerlink" href="#geoinf.ogc.PortConfigurationWidget.PortConfigurationWidget.createButtons" title="Permalink to this definition">¶</a></dt>
+<dd><p>createButtons() -&gt; None
+Create and connect signals to Ok &amp; Cancel button</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="geoinf.ogc.PortConfigurationWidget.PortConfigurationWidget.getRegistryPorts">
+<tt class="descname">getRegistryPorts</tt><big>(</big><em>registry</em>, <em>type</em><big>)</big><a class="headerlink" href="#geoinf.ogc.PortConfigurationWidget.PortConfigurationWidget.getRegistryPorts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return list of tuples containing port types and descriptors</p>
+<dl class="docutils">
+<dt>Example:</dt>
+<dd>from core.modules.module_registry import get_module_registry
+registry = get_module_registry()
+port_name_sigstring = self.getRegistryPorts(registry, &#8216;input&#8217;)</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="geoinf.ogc.PortConfigurationWidget.PortConfigurationWidget.okTriggered">
+<tt class="descname">okTriggered</tt><big>(</big><em>checked=False</em><big>)</big><a class="headerlink" href="#geoinf.ogc.PortConfigurationWidget.PortConfigurationWidget.okTriggered" title="Permalink to this definition">¶</a></dt>
+<dd><p>okTriggered(checked: bool) -&gt; None
+Update vistrail controller and module when the user click Ok</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="geoinf.ogc.PortConfigurationWidget.PortConfigurationWidget.sizeHint">
+<tt class="descname">sizeHint</tt><big>(</big><big>)</big><a class="headerlink" href="#geoinf.ogc.PortConfigurationWidget.PortConfigurationWidget.sizeHint" title="Permalink to this definition">¶</a></dt>
+<dd><p>sizeHint() -&gt; QSize
+Return the recommended size of the configuration window</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="geoinf.ogc.PortConfigurationWidget.PortConfigurationWidget.updateVistrail">
+<tt class="descname">updateVistrail</tt><big>(</big><big>)</big><a class="headerlink" href="#geoinf.ogc.PortConfigurationWidget.PortConfigurationWidget.updateVistrail" title="Permalink to this definition">¶</a></dt>
+<dd><p>Cause the added/deleted ports to be set for this instance of the
+Module.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="sos">
+<h3>SOS<a class="headerlink" href="#sos" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="wcs">
+<h3>WCS<a class="headerlink" href="#wcs" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="wfs">
+<h3>WFS<a class="headerlink" href="#wfs" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="wps">
+<h3>WPS<a class="headerlink" href="#wps" title="Permalink to this headline">¶</a></h3>
+</div>
+</div>
+<div class="section" id="postgis">
+<h2>PostGIS<a class="headerlink" href="#postgis" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id1">
+<h3>PostGIS<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">GeoInf</a><ul>
+<li><a class="reference internal" href="#module-geoinf.datamodels">DataModels</a><ul>
+<li><a class="reference internal" href="#module-geoinf.datamodels.Test">Test!</a></li>
+<li><a class="reference internal" href="#module-geoinf.datamodels.Feature">Feature</a></li>
+<li><a class="reference internal" href="#module-geoinf.datamodels.GeoJSON">GeoStrings</a></li>
+<li><a class="reference internal" href="#qgslayer">QgsLayer</a></li>
+<li><a class="reference internal" href="#module-geoinf.datamodels.QgsLayerWriter">QgsLayerWriter</a></li>
+<li><a class="reference internal" href="#module-geoinf.datamodels.Raster">Raster</a></li>
+<li><a class="reference internal" href="#temporalvectorlayer">TemporalVectorLayer</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-geoinf.grass">GRASS</a><ul>
+<li><a class="reference internal" href="#module-geoinf.grass.GrassSession">GrassSession</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-geoinf.ogc">OGC</a><ul>
+<li><a class="reference internal" href="#module-geoinf.ogc.Common">Common</a></li>
+<li><a class="reference internal" href="#ogcservice">OgcService</a></li>
+<li><a class="reference internal" href="#module-geoinf.ogc.PortConfigurationWidget">PortConfigurationWidget</a></li>
+<li><a class="reference internal" href="#sos">SOS</a></li>
+<li><a class="reference internal" href="#wcs">WCS</a></li>
+<li><a class="reference internal" href="#wfs">WFS</a></li>
+<li><a class="reference internal" href="#wps">WPS</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#postgis">PostGIS</a><ul>
+<li><a class="reference internal" href="#id1">PostGIS</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="datacube.html"
+                        title="previous chapter">DataCube</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="lib.html"
+                        title="next chapter">Lib</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/geoinf.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="lib.html" title="Lib"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="datacube.html" title="DataCube"
+             >previous</a> |</li>
+        <li><a href="index.html">EO4VisTrails v1.0.0 documentation</a> &raquo;</li>
+          <li><a href="packages.html" >Packages</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Meraka.CSIR.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.1.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/graphics" >
+        <file>rastericon.xpm</file>
+    </qresource>
+</RCC>
