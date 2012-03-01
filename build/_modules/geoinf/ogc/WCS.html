@@ -1,0 +1,565 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>geoinf.ogc.WCS &mdash; EO4vistrails v1.0 documentation</title>
+    <link rel="stylesheet" href="../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="EO4vistrails v1.0 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">EO4vistrails v1.0 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for geoinf.ogc.WCS</h1><div class="highlight"><pre>
+<span class="c">###########################################################################</span>
+<span class="c">##</span>
+<span class="c">## Copyright (C) 2010 CSIR Meraka Institute. All rights reserved.</span>
+<span class="c">##</span>
+<span class="c">## eo4vistrails extends VisTrails, providing GIS/Earth Observation</span>
+<span class="c">## ingestion, pre-processing, transformation, analytic and visualisation</span>
+<span class="c">## capabilities . Included is the abilty to run code transparently in</span>
+<span class="c">## OpenNebula cloud environments. There are various software</span>
+<span class="c">## dependencies, but all are FOSS.</span>
+<span class="c">##</span>
+<span class="c">## This file may be used under the terms of the GNU General Public</span>
+<span class="c">## License version 2.0 as published by the Free Software Foundation</span>
+<span class="c">## and appearing in the file LICENSE.GPL included in the packaging of</span>
+<span class="c">## this file.  Please review the following to ensure GNU General Public</span>
+<span class="c">## Licensing requirements will be met:</span>
+<span class="c">## http://www.opensource.org/licenses/gpl-license.php</span>
+<span class="c">##</span>
+<span class="c">## If you are unsure which license is appropriate for your use (for</span>
+<span class="c">## instance, you are interested in developing a commercial derivative</span>
+<span class="c">## of VisTrails), please contact us at vistrails@sci.utah.edu.</span>
+<span class="c">##</span>
+<span class="c">## This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE</span>
+<span class="c">## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.</span>
+<span class="c">##</span>
+<span class="c">############################################################################</span>
+<span class="sd">&quot;&quot;&quot;This module provides an OGC (Open Geospatial Consortium) Web Coverage Service</span>
+<span class="sd">(WCS) Client via owslib.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c"># library</span>
+<span class="c"># third party</span>
+<span class="kn">from</span> <span class="nn">PyQt4</span> <span class="kn">import</span> <span class="n">QtCore</span><span class="p">,</span> <span class="n">QtGui</span>
+<span class="c"># vistrails</span>
+<span class="kn">from</span> <span class="nn">core.modules.vistrails_module</span> <span class="kn">import</span> <span class="n">Module</span><span class="p">,</span> <span class="n">new_module</span><span class="p">,</span> <span class="n">NotCacheable</span><span class="p">,</span> <span class="n">ModuleError</span>
+<span class="c"># eo4vistrails</span>
+<span class="kn">from</span> <span class="nn">packages.eo4vistrails.geoinf.datamodels.Raster</span> <span class="kn">import</span> <span class="n">RasterModel</span>
+<span class="kn">from</span> <span class="nn">packages.eo4vistrails.geoinf.SpatialTemporalConfigurationWidget</span> <span class="kn">import</span> \
+    <span class="n">SpatialTemporalConfigurationWidget</span><span class="p">,</span> <span class="n">SpatialWidget</span>
+<span class="kn">from</span> <span class="nn">packages.eo4vistrails.utils.WebRequest</span> <span class="kn">import</span> <span class="n">WebRequest</span>
+<span class="c"># local</span>
+<span class="kn">from</span> <span class="nn">OgcConfigurationWidget</span> <span class="kn">import</span> <span class="n">OgcConfigurationWidget</span>
+<span class="kn">from</span> <span class="nn">OgcService</span> <span class="kn">import</span> <span class="n">OGC</span>
+<span class="kn">import</span> <span class="nn">init</span>
+
+
+<div class="viewcode-block" id="WCS"><a class="viewcode-back" href="../../../geoinf.html#geoinf.ogc.WCS.WCS">[docs]</a><span class="k">class</span> <span class="nc">WCS</span><span class="p">(</span><span class="n">OGC</span><span class="p">,</span> <span class="n">RasterModel</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Override for base OGC service class</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">OGC</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">RasterModel</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">webRequest</span><span class="o">.</span><span class="n">_driver</span> <span class="o">=</span> <span class="s">&#39;WCS&#39;</span>
+
+</div>
+<div class="viewcode-block" id="WCSCommonWidget"><a class="viewcode-back" href="../../../geoinf.html#geoinf.ogc.WCS.WCSCommonWidget">[docs]</a><span class="k">class</span> <span class="nc">WCSCommonWidget</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QWidget</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The WCS module establishes and processes connection to a web-based OGC</span>
+<span class="sd">    (Open Geospatial Consortium) web coverage service.</span>
+
+<span class="sd">    Configuration allows the base URL for the service to be set and called.</span>
+<span class="sd">    Choosing the appropriate combination of specific service type and other</span>
+<span class="sd">    parameters, will cause the input port to be set with a specific POST call,</span>
+<span class="sd">    once the configuration interface is closed.</span>
+
+<span class="sd">    Running the workflow will cause the specific, parameterised WCS to be called</span>
+<span class="sd">    and output from the request to be available via the output port(s).</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ogc_widget</span><span class="p">,</span> <span class="n">spatial_widget</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set parameters for the WCS request.&quot;&quot;&quot;</span>
+        <span class="n">QtGui</span><span class="o">.</span><span class="n">QWidget</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setObjectName</span><span class="p">(</span><span class="s">&quot;WCSCommonWidget&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parent_widget</span> <span class="o">=</span> <span class="n">ogc_widget</span>
+        <span class="c">#self.service = self.parent_widget.service</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">contents</span> <span class="o">=</span> <span class="bp">None</span> <span class="c">#  only set in self.loadRequests()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">spatial_widget</span> <span class="o">=</span> <span class="n">spatial_widget</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">create_wcs_config_window</span><span class="p">()</span>
+
+        <span class="c"># listen for signals emitted by OgcCommonWidget class</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parent_widget</span><span class="p">,</span>
+            <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s">&#39;serviceActivated&#39;</span><span class="p">),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">loadRequests</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parent_widget</span><span class="p">,</span>
+            <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s">&#39;serviceDeactivated&#39;</span><span class="p">),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">removeRequests</span><span class="p">)</span>
+
+<div class="viewcode-block" id="WCSCommonWidget.create_wcs_config_window"><a class="viewcode-back" href="../../../geoinf.html#geoinf.ogc.WCS.WCSCommonWidget.create_wcs_config_window">[docs]</a>    <span class="k">def</span> <span class="nf">create_wcs_config_window</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;TO DO - add docstring&quot;&quot;&quot;</span>
+        <span class="c"># text for combo boxes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">SPATIAL_OFFERING</span> <span class="o">=</span> <span class="s">&#39;Use Coverage Bounding Box&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">SPATIAL_OWN</span> <span class="o">=</span> <span class="s">&#39;Use Own Bounding Box&#39;</span>
+        <span class="c"># add widgets here!</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mainLayout</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QHBoxLayout</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setLayout</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mainLayout</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">requestsGroupBox</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QGroupBox</span><span class="p">(</span><span class="s">&quot;WCS Request Coverages&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">requestsLayout</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QVBoxLayout</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">requestsGroupBox</span><span class="o">.</span><span class="n">setLayout</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">requestsLayout</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mainLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">requestsGroupBox</span><span class="p">)</span>
+        <span class="c"># add a horizontal split to split the window equally</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">split</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QSplitter</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">Vertical</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mainLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">split</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsGroupBox</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QGroupBox</span><span class="p">(</span><span class="s">&quot;WCS Coverage Details&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mainLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detailsGroupBox</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QGridLayout</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsGroupBox</span><span class="o">.</span><span class="n">setLayout</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="p">)</span>
+        <span class="c"># WCS Request offerings layout</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">requestLbx</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QListWidget</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">requestsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">requestLbx</span><span class="p">)</span>
+
+        <span class="c"># WCS Request details layout</span>
+        <span class="c"># Labels</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39;Coverage ID:&#39;</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39;Coverage Description:&#39;</span><span class="p">),</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39;BBox - data bounds:&#39;</span><span class="p">),</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39;ULX:&#39;</span><span class="p">),</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39;LRX:&#39;</span><span class="p">),</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39;ULY:&#39;</span><span class="p">),</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39;LRY:&#39;</span><span class="p">),</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39;BBox - Spatial Subset:&#39;</span><span class="p">),</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39;ULX:&#39;</span><span class="p">),</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39;LRX:&#39;</span><span class="p">),</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39;ULY:&#39;</span><span class="p">),</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39;LRY:&#39;</span><span class="p">),</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39;Width:&#39;</span><span class="p">),</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39;Height:&#39;</span><span class="p">),</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39;SRS:&#39;</span><span class="p">),</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39;Required Bands:&#39;</span><span class="p">),</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39;Required Output SRS:&#39;</span><span class="p">),</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39;Required Output Format:&#39;</span><span class="p">),</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39;Spatial Delimiter?&#39;</span><span class="p">),</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39;Required Request Type:&#39;</span><span class="p">),</span> <span class="mi">14</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+        <span class="c"># Data containers</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dcLayerId</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39;__&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dcLayerId</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dcLayerDescription</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39;__&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dcLayerDescription</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="c">#Bounding box - Grid Envelope</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dcULX</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QLineEdit</span><span class="p">(</span><span class="s">&#39; &#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dcULX</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span> <span class="c">#sets it not to be editable</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dcULX</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dcLRX</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QLineEdit</span><span class="p">(</span><span class="s">&#39; &#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dcLRX</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dcLRX</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dcULY</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QLineEdit</span><span class="p">(</span><span class="s">&#39; &#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dcULY</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dcULY</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dcLRY</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QLineEdit</span><span class="p">(</span><span class="s">&#39; &#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dcLRY</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dcLRY</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+
+        <span class="c">#Bounding Box Spatial subset</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ssULX</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39; &#39;</span><span class="p">)</span>
+        <span class="c">#self.ssULX.setEnabled(False) #sets it not to be editable</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ssULX</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ssLRX</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39; &#39;</span><span class="p">)</span>
+        <span class="c">#self.ssLRX.setEnabled(False)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ssLRX</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ssULY</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39; &#39;</span><span class="p">)</span>
+        <span class="c">#self.ssULY.setEnabled(False)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ssULY</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ssLRY</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39; &#39;</span><span class="p">)</span>
+        <span class="c">#self.ssLRY.setEnabled(False)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ssLRY</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">dcWidth</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39; &#39;</span><span class="p">)</span>
+        <span class="c">#self.dcWidth.setEnabled(False)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dcWidth</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dcHeight</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39; &#39;</span><span class="p">)</span>
+        <span class="c">#self.dcHeight.setEnabled(False)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dcHeight</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">dcSRS</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&#39;__&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dcSRS</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dcBandsreq</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QComboBox</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dcBandsreq</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dcSRSreq</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QComboBox</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dcSRSreq</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dcReqFormat</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QComboBox</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dcReqFormat</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dcRequestType</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QComboBox</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">cbSpatial</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QComboBox</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cbSpatial</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cbSpatial</span><span class="o">.</span><span class="n">addItem</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">SPATIAL_OFFERING</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cbSpatial</span><span class="o">.</span><span class="n">addItem</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">SPATIAL_OWN</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cbSpatial</span><span class="o">.</span><span class="n">addItem</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">detailsLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dcRequestType</span><span class="p">,</span> <span class="mi">14</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dcRequestType</span><span class="o">.</span><span class="n">addItem</span><span class="p">(</span><span class="s">&#39;DescribeCoverage&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dcRequestType</span><span class="o">.</span><span class="n">addItem</span><span class="p">(</span><span class="s">&#39;GetCoverage&#39;</span><span class="p">)</span>
+
+        <span class="c"># local signals</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">requestLbx</span><span class="p">,</span>
+            <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s">&quot;itemClicked(QListWidgetItem*)&quot;</span><span class="p">),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">coverageNameChanged</span><span class="p">)</span>
+
+        <span class="c">#for message box</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">arrowCursor</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QCursor</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">ArrowCursor</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="WCSCommonWidget.getBoundingBoxStringCoverage"><a class="viewcode-back" href="../../../geoinf.html#geoinf.ogc.WCS.WCSCommonWidget.getBoundingBoxStringCoverage">[docs]</a>    <span class="k">def</span> <span class="nf">getBoundingBoxStringCoverage</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return a comma-delimited string containing box co-ordinates.</span>
+
+<span class="sd">        Format: top-left X,Y  bottom-right X,Y</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">bbox</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">spatial_widget</span><span class="o">.</span><span class="n">getBoundingBox</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dcULX</span><span class="o">.</span><span class="n">text</span><span class="p">())</span> <span class="o">+</span> <span class="s">&#39;,&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dcLRX</span><span class="o">.</span><span class="n">text</span><span class="p">())</span> <span class="o">+</span> <span class="s">&#39;,&#39;</span>\
+            <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dcULY</span><span class="o">.</span><span class="n">text</span><span class="p">())</span> <span class="o">+</span> <span class="s">&#39;,&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dcLRY</span><span class="o">.</span><span class="n">text</span><span class="p">())</span>
+</div>
+<div class="viewcode-block" id="WCSCommonWidget.removeRequests"><a class="viewcode-back" href="../../../geoinf.html#geoinf.ogc.WCS.WCSCommonWidget.removeRequests">[docs]</a>    <span class="k">def</span> <span class="nf">removeRequests</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Remove all details when no WCS is selected.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clearRequests</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">requestLbx</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="c">#pass</span>
+</div>
+<div class="viewcode-block" id="WCSCommonWidget.clearRequests"><a class="viewcode-back" href="../../../geoinf.html#geoinf.ogc.WCS.WCSCommonWidget.clearRequests">[docs]</a>    <span class="k">def</span> <span class="nf">clearRequests</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;To reset the values in the fields&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dcLayerId</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="s">&#39;-&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dcLayerDescription</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="s">&#39;-&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dcULX</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="s">&#39;-&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dcLRX</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="s">&#39;-&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dcULY</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="s">&#39;-&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dcLRY</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="s">&#39;-&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dcSRS</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="s">&#39;-&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dcSRSreq</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dcReqFormat</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="c">#self.dcRequestType.clear()</span>
+</div>
+<div class="viewcode-block" id="WCSCommonWidget.coverageNameChanged"><a class="viewcode-back" href="../../../geoinf.html#geoinf.ogc.WCS.WCSCommonWidget.coverageNameChanged">[docs]</a>    <span class="k">def</span> <span class="nf">coverageNameChanged</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Update offering details containers when new offering selected.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clearRequests</span><span class="p">()</span>
+        <span class="c">#populate other coverage dependent parameters</span>
+        <span class="n">selected_coverageName</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">requestLbx</span><span class="o">.</span><span class="n">selectedItems</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_widget</span><span class="o">.</span><span class="n">service</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_widget</span><span class="o">.</span><span class="n">service</span><span class="o">.</span><span class="n">service_valid</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">content</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">selected_coverageName</span> <span class="o">==</span> <span class="n">content</span><span class="p">:</span>
+
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">selected_coverageName</span><span class="p">)]</span><span class="o">.</span><span class="n">grid</span><span class="p">:</span>
+                        <span class="n">grid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">selected_coverageName</span><span class="p">)]</span><span class="o">.</span><span class="n">grid</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">dcWidth</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">grid</span><span class="o">.</span><span class="n">highlimits</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">dcHeight</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">grid</span><span class="o">.</span><span class="n">highlimits</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+
+                    <span class="sd">&quot;&quot;&quot; NOTE (by Derek Hohls, 2011/2/22):</span>
+
+<span class="sd">                    Accessing and interpreting axis information to extract</span>
+<span class="sd">                    meaning about bands is NOT a trivial operation.  See pages</span>
+<span class="sd">                    37 and 38 (and preceding) in the OGC WCS spec. (ref:</span>
+<span class="sd">                    07-067r5_Web_Coverage_Service_WCS_version_1.1_Corrigendum_2.pdf)</span>
+
+<span class="sd">                    For the purpose of extracting images, this module assumes</span>
+<span class="sd">                    that the two values encoded in &lt;gml:high&gt;&lt;/gml:high&gt; element</span>
+<span class="sd">                    represent the expected width/height of the image.</span>
+
+<span class="sd">                    It is not known at present how to extract reasonable values</span>
+<span class="sd">                    for the spatial resolution (resX and resY).</span>
+
+<span class="sd">                    Time limits are also quite &quot;fiddly&quot; and still need to be</span>
+<span class="sd">                    addressed.</span>
+
+<span class="sd">                    &quot;&quot;&quot;</span>
+
+                    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">                    print &quot;wcs.py:233 coverage\n&quot;,selected_coverageName</span>
+<span class="sd">                    print &quot;wcs.py:236 grid info:&quot;, grid.dimension, \</span>
+<span class="sd">                            type(grid.dimension), grid.axislabels, \</span>
+<span class="sd">                            grid.highlimits, grid.lowlimits</span>
+<span class="sd">                    print &quot;wcs.py:239 timelimits:&quot;, \</span>
+<span class="sd">                        self.contents[str(selected_coverageName)].timelimits</span>
+<span class="sd">                    print &quot;wcs.py:240 timepositions:&quot;, \</span>
+<span class="sd">                        self.contents[str(selected_coverageName)].timepositions</span>
+<span class="sd">                    &quot;&quot;&quot;</span>
+
+                    <span class="bp">self</span><span class="o">.</span><span class="n">dcLayerId</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">selected_coverageName</span><span class="p">)]</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">dcLayerDescription</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">selected_coverageName</span><span class="p">)]</span><span class="o">.</span><span class="n">title</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">dcULX</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">selected_coverageName</span><span class="p">)]</span><span class="o">.</span><span class="n">boundingBoxWGS84</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span> <span class="c"># 1st item in bbox tuple</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">dcLRX</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">selected_coverageName</span><span class="p">)]</span><span class="o">.</span><span class="n">boundingBoxWGS84</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">dcULY</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">selected_coverageName</span><span class="p">)]</span><span class="o">.</span><span class="n">boundingBoxWGS84</span><span class="p">[</span><span class="mi">2</span><span class="p">]))</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">dcLRY</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">selected_coverageName</span><span class="p">)]</span><span class="o">.</span><span class="n">boundingBoxWGS84</span><span class="p">[</span><span class="mi">3</span><span class="p">]))</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">dcSRS</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">selected_coverageName</span><span class="p">)]</span><span class="o">.</span><span class="n">supportedCRS</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                    <span class="c">#self.dcSRSreq.addItems(self.contents[str(selected_coverageName)].supportedCRS)  # spectral bands</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">dcSRSreq</span><span class="o">.</span><span class="n">addItems</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">selected_coverageName</span><span class="p">)]</span><span class="o">.</span><span class="n">supportedCRS</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">dcReqFormat</span><span class="o">.</span><span class="n">addItems</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">selected_coverageName</span><span class="p">)]</span><span class="o">.</span><span class="n">supportedFormats</span><span class="p">)</span> <span class="c"># returns a list of values that are unpacked into a combobo</span>
+                    <span class="c">#print self.contents [str(selected_coverageName)].supportedFormats# .__dict__[&#39;_service&#39;].__dict__[&#39;contents&#39;][&#39;sf:sfdem&#39;].__dict__[&#39;_elem&#39;]#.supportedFormats</span>
+
+        <span class="c">#display spatial subset in WCS window and set warning if data out of bounds</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ssULX</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">spatial_widget</span><span class="o">.</span><span class="n">bbox_tlx</span><span class="o">.</span><span class="n">text</span><span class="p">()))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ssULY</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">spatial_widget</span><span class="o">.</span><span class="n">bbox_tly</span><span class="o">.</span><span class="n">text</span><span class="p">()))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ssLRX</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">spatial_widget</span><span class="o">.</span><span class="n">bbox_brx</span><span class="o">.</span><span class="n">text</span><span class="p">()))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ssLRY</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">spatial_widget</span><span class="o">.</span><span class="n">bbox_bry</span><span class="o">.</span><span class="n">text</span><span class="p">()))</span>
+
+        <span class="c">#call to check spatial subset coordinates:</span>
+        <span class="c">#   see SpatialTemporalConfigurationWidget for checkCoords()</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">spatial_widget</span><span class="o">.</span><span class="n">checkCoords</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">getBoundingBoxLayer</span><span class="p">())</span>
+        <span class="k">if</span> <span class="n">message</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">showWarning</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="WCSCommonWidget.getBoundingBoxLayer"><a class="viewcode-back" href="../../../geoinf.html#geoinf.ogc.WCS.WCSCommonWidget.getBoundingBoxLayer">[docs]</a>    <span class="k">def</span> <span class="nf">getBoundingBoxLayer</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return a tuple containing box co-ordinates for selected layer.</span>
+<span class="sd">        Format: top-left X, top-left Y, bottom-left X, bottom-left Y</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dcULX</span><span class="o">.</span><span class="n">text</span><span class="p">(),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dcULY</span><span class="o">.</span><span class="n">text</span><span class="p">(),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dcLRX</span><span class="o">.</span><span class="n">text</span><span class="p">(),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dcLRY</span><span class="o">.</span><span class="n">text</span><span class="p">())</span>
+</div>
+<div class="viewcode-block" id="WCSCommonWidget.showWarning"><a class="viewcode-back" href="../../../geoinf.html#geoinf.ogc.WCS.WCSCommonWidget.showWarning">[docs]</a>    <span class="k">def</span> <span class="nf">showWarning</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Show user a warning dialog.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setCursor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">arrowCursor</span><span class="p">)</span>
+        <span class="n">QtGui</span><span class="o">.</span><span class="n">QMessageBox</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s">&quot;Error&quot;</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QMessageBox</span><span class="o">.</span><span class="n">Ok</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="WCSCommonWidget.loadRequests"><a class="viewcode-back" href="../../../geoinf.html#geoinf.ogc.WCS.WCSCommonWidget.loadRequests">[docs]</a>    <span class="k">def</span> <span class="nf">loadRequests</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; loadRequest() -&gt; None</span>
+<span class="sd">        uses service data to populate the config widget populate fields</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_widget</span><span class="o">.</span><span class="n">service</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_widget</span><span class="o">.</span><span class="n">service</span><span class="o">.</span><span class="n">service_valid</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">contents</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_widget</span><span class="o">.</span><span class="n">service</span><span class="o">.</span><span class="n">service</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="s">&#39;contents&#39;</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">content</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">requestLbx</span><span class="o">.</span><span class="n">addItems</span><span class="p">([</span><span class="n">content</span><span class="p">])</span>
+
+</div></div>
+<div class="viewcode-block" id="WCSConfigurationWidget"><a class="viewcode-back" href="../../../geoinf.html#geoinf.ogc.WCS.WCSConfigurationWidget">[docs]</a><span class="k">class</span> <span class="nc">WCSConfigurationWidget</span><span class="p">(</span><span class="n">OgcConfigurationWidget</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;makes use of code style from OgcConfigurationWidget&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">,</span> <span class="n">controller</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">OgcConfigurationWidget</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">,</span> <span class="n">controller</span><span class="p">,</span> <span class="n">parent</span><span class="p">)</span>
+        <span class="c"># pass in parent widget i.e. OgcCommonWidget class and SpatialWidget Class to read changed coords</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wcs_config_widget</span> <span class="o">=</span> <span class="n">WCSCommonWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ogc_common_widget</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">spatial_widget</span><span class="p">)</span>
+        <span class="c"># tabs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tabs</span><span class="o">.</span><span class="n">insertTab</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">wcs_config_widget</span><span class="p">,</span> <span class="s">&quot;&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tabs</span><span class="o">.</span><span class="n">setTabText</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tabs</span><span class="o">.</span><span class="n">indexOf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wcs_config_widget</span><span class="p">),</span>
+            <span class="n">QtGui</span><span class="o">.</span><span class="n">QApplication</span><span class="o">.</span><span class="n">translate</span><span class="p">(</span>
+                <span class="s">&quot;OgcConfigurationWidget&quot;</span><span class="p">,</span>
+                <span class="s">&quot;WCS Specific Metadata&quot;</span><span class="p">,</span>
+                <span class="bp">None</span><span class="p">,</span>
+                <span class="n">QtGui</span><span class="o">.</span><span class="n">QApplication</span><span class="o">.</span><span class="n">UnicodeUTF8</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">tabs</span><span class="o">.</span><span class="n">setTabToolTip</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tabs</span><span class="o">.</span><span class="n">indexOf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wcs_config_widget</span><span class="p">),</span>
+            <span class="n">QtGui</span><span class="o">.</span><span class="n">QApplication</span><span class="o">.</span><span class="n">translate</span><span class="p">(</span>
+                <span class="s">&quot;OgcConfigurationWidget&quot;</span><span class="p">,</span>
+                <span class="s">&quot;Select WCS-specific parameters&quot;</span><span class="p">,</span>
+                <span class="bp">None</span><span class="p">,</span>
+                <span class="n">QtGui</span><span class="o">.</span><span class="n">QApplication</span><span class="o">.</span><span class="n">UnicodeUTF8</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tabs</span><span class="o">.</span><span class="n">setCurrentIndex</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+<div class="viewcode-block" id="WCSConfigurationWidget.constructRequest"><a class="viewcode-back" href="../../../geoinf.html#geoinf.ogc.WCS.WCSConfigurationWidget.constructRequest">[docs]</a>    <span class="k">def</span> <span class="nf">constructRequest</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns request from configuration parameters;</span>
+<span class="sd">        Overwrites method defined in OgcConfigurationWidget.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">wcs_url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">url</span> <span class="c"># defined in OgcConfigurationWidget : okTriggered()</span>
+        <span class="n">WCSversion</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ogc_common_widget</span><span class="o">.</span><span class="n">launchversion</span><span class="o">.</span><span class="n">currentText</span><span class="p">())</span>
+        <span class="n">selectedCoverageId</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wcs_config_widget</span><span class="o">.</span><span class="n">dcLayerId</span><span class="o">.</span><span class="n">text</span><span class="p">())</span>
+        <span class="n">width</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wcs_config_widget</span><span class="o">.</span><span class="n">dcWidth</span><span class="o">.</span><span class="n">text</span><span class="p">())</span>
+        <span class="n">height</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wcs_config_widget</span><span class="o">.</span><span class="n">dcHeight</span><span class="o">.</span><span class="n">text</span><span class="p">())</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+
+        <span class="c"># check for data in comboBoxes</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">bands</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wcs_config_widget</span><span class="o">.</span><span class="n">dcBandsreq</span><span class="o">.</span><span class="n">currentText</span><span class="p">()</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">bands</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">coord_system</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wcs_config_widget</span><span class="o">.</span><span class="n">dcSRSreq</span><span class="o">.</span><span class="n">currentText</span><span class="p">()</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">coord_system</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">formats</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wcs_config_widget</span><span class="o">.</span><span class="n">dcReqFormat</span><span class="o">.</span><span class="n">currentText</span><span class="p">()</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">formats</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">spatial_limit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wcs_config_widget</span><span class="o">.</span><span class="n">cbSpatial</span><span class="o">.</span><span class="n">currentText</span><span class="p">()</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">spatial_limit</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="c"># spatial</span>
+        <span class="k">if</span> <span class="n">spatial_limit</span><span class="p">:</span>  <span class="c"># spatial parameters</span>
+            <span class="k">if</span> <span class="n">spatial_limit</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">wcs_config_widget</span><span class="o">.</span><span class="n">SPATIAL_OWN</span><span class="p">:</span>
+                <span class="c"># see SpatialTemporalConfigurationWidget</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">bbox</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">spatial_widget</span><span class="o">.</span><span class="n">getBoundingBoxString</span><span class="p">()</span>
+            <span class="k">elif</span> <span class="n">spatial_limit</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">wcs_config_widget</span><span class="o">.</span><span class="n">SPATIAL_OFFERING</span><span class="p">:</span>
+                <span class="c"># see WcsCommonWidget (this module)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">bbox</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wcs_config_widget</span><span class="o">.</span><span class="n">getBoundingBoxStringCoverage</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">()</span>
+                <span class="k">raise</span> <span class="n">ModuleError</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="p">,</span>
+                    <span class="s">&#39;Unknown WCS bounding box type&#39;</span> <span class="o">+</span> <span class="s">&#39;: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">error</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">bbox</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="c"># details per request type:</span>
+        <span class="n">rType</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wcs_config_widget</span><span class="o">.</span><span class="n">dcRequestType</span><span class="o">.</span><span class="n">currentText</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">rType</span> <span class="o">==</span> <span class="s">&#39;DescribeCoverage&#39;</span><span class="p">:</span>
+            <span class="sd">&quot;&quot;&quot;was trying to get the contents of getDescribeCoverage to display</span>
+<span class="sd">            in xml format on the terminal, but that does not working becasue</span>
+<span class="sd">            getDescribeCoverage only returns an element tree object not the</span>
+<span class="sd">            actual xml - see the printed result on the terminal -</span>
+<span class="sd">            therefore we can only get a url out of this request see code below -</span>
+<span class="sd">            I stand to be corrected if my research findings are wrong?</span>
+
+<span class="sd">            NOTE:</span>
+<span class="sd">            A URL is actually all we want to get - this is the configuration</span>
+<span class="sd">            part of the workflow - once it is executed then the XML data will be</span>
+<span class="sd">            created and it is then up to &quot;downstream&quot; components connected to</span>
+<span class="sd">            this one to handle the XML.</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="n">myWCS</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wcs_config_widget</span><span class="o">.</span><span class="n">parent_widget</span><span class="o">.</span><span class="n">service</span><span class="o">.</span><span class="n">service</span>
+            <span class="n">description</span> <span class="o">=</span> <span class="n">myWCS</span><span class="o">.</span><span class="n">getDescribeCoverage</span><span class="p">(</span><span class="n">selectedCoverageId</span><span class="p">)</span>
+            <span class="c">#describe_doc= description.read()</span>
+            <span class="c">#print &quot;wcs.py:426&quot;, description</span>
+
+            <span class="n">wcs_url</span> <span class="o">+=</span> \
+            <span class="s">&quot;?SERVICE=WCS&quot;</span> <span class="o">+</span> \
+            <span class="s">&quot;&amp;version=&quot;</span> <span class="o">+</span> <span class="n">WCSversion</span> <span class="o">+</span> \
+            <span class="s">&quot;&amp;request=DescribeCoverage&quot;</span> <span class="o">+</span> \
+            <span class="s">&quot;&amp;COVERAGE=&quot;</span> <span class="o">+</span> <span class="n">selectedCoverageId</span>
+            <span class="n">result</span><span class="p">[</span><span class="s">&#39;request_type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;GET&#39;</span>
+            <span class="n">result</span><span class="p">[</span><span class="s">&#39;full_url&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">wcs_url</span>
+
+        <span class="k">elif</span> <span class="n">rType</span> <span class="o">==</span> <span class="s">&#39;GetCoverage&#39;</span><span class="p">:</span>
+            <span class="n">myWCS</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wcs_config_widget</span><span class="o">.</span><span class="n">parent_widget</span><span class="o">.</span><span class="n">service</span><span class="o">.</span><span class="n">service</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="n">myWCS</span><span class="o">.</span><span class="n">getCoverage</span><span class="p">(</span>
+                <span class="n">identifier</span><span class="o">=</span><span class="n">selectedCoverageId</span><span class="p">,</span>
+                <span class="n">bbox</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bbox</span><span class="p">,</span>
+                <span class="n">crs</span><span class="o">=</span><span class="n">coord_system</span><span class="p">,</span>
+                <span class="n">format</span><span class="o">=</span><span class="n">formats</span><span class="p">)</span>
+            <span class="c"># TO DO - update this to handle files as per VisTrails &quot;filePool&quot;</span>
+            <span class="c"># http://www.vistrails.org/index.php/UsersGuideVisTrailsPackages#Dealing_with_command_line_tools_and_side_effects</span>
+            <span class="c"># derek-&gt;bolelang -- but why do we want to do this???</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="s">&#39;myfile.&#39;</span> <span class="o">+</span> <span class="n">formats</span><span class="p">,</span> <span class="s">&#39;wb&#39;</span><span class="p">)</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+            <span class="n">wcs_url</span> <span class="o">+=</span> \
+                <span class="s">&quot;?SERVICE=WCS&quot;</span> <span class="o">+</span> \
+                <span class="s">&quot;&amp;version=&quot;</span> <span class="o">+</span> <span class="n">WCSversion</span> <span class="o">+</span> \
+                <span class="s">&quot;&amp;request=GetCoverage&quot;</span> <span class="o">+</span> \
+                <span class="s">&quot;&amp;COVERAGE=&quot;</span> <span class="o">+</span> <span class="n">selectedCoverageId</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bbox</span><span class="p">:</span>
+                <span class="c">#print &quot;wcs.py:455 bbox=&quot;, self.bbox</span>
+                <span class="n">wcs_url</span> <span class="o">+=</span> <span class="s">&quot;&amp;bbox=&quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">bbox</span> <span class="o">+</span> \
+                    <span class="s">&quot;&amp;crs=&quot;</span> <span class="o">+</span> <span class="n">coord_system</span>
+            <span class="n">wcs_url</span> <span class="o">+=</span> \
+                <span class="s">&quot;&amp;format=&quot;</span> <span class="o">+</span> <span class="n">formats</span> <span class="o">+</span> \
+                <span class="s">&quot;&amp;width=&quot;</span> <span class="o">+</span> <span class="n">width</span> <span class="o">+</span> \
+                <span class="s">&quot;&amp;height=&quot;</span> <span class="o">+</span> <span class="n">height</span>
+                <span class="c">#&quot;&amp;resx=10&amp;resy=10&quot;</span>
+                <span class="c">#TO DO -- allow user to specify resX and resY or height/width</span>
+            <span class="n">result</span><span class="p">[</span><span class="s">&#39;request_type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;GET&#39;</span>
+            <span class="n">result</span><span class="p">[</span><span class="s">&#39;full_url&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">wcs_url</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ModuleError</span><span class="p">(</span>
+                <span class="bp">self</span><span class="p">,</span>
+                <span class="s">&#39;Unknown WCS request type&#39;</span> <span class="o">+</span> <span class="s">&#39;: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">rType</span><span class="p">))</span>
+
+        <span class="n">result</span><span class="p">[</span><span class="s">&#39;layername&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">selectedCoverageId</span>
+        <span class="k">return</span> <span class="n">result</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">EO4vistrails v1.0 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, Meraka Institute, CSIR.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.1.
+    </div>
+  </body>
+</html>

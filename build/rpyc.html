@@ -1,0 +1,236 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>RPyC &mdash; EO4vistrails v1.0 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="EO4vistrails v1.0 documentation" href="index.html" />
+    <link rel="up" title="Modules" href="modules.html" />
+    <link rel="next" title="Utils" href="utils.html" />
+    <link rel="prev" title="GeoInf" href="geoinf.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="utils.html" title="Utils"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="geoinf.html" title="GeoInf"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">EO4vistrails v1.0 documentation</a> &raquo;</li>
+          <li><a href="modules.html" accesskey="U">Modules</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-rpyc">
+<span id="rpyc"></span><h1>RPyC<a class="headerlink" href="#module-rpyc" title="Permalink to this headline">¶</a></h1>
+<p>This full package extends VisTrails, providing GIS/Earth Observation 
+ingestion, pre-processing, transformation, analytic and visualisation 
+capabilities . Included is the abilty to run code transparently in 
+OpenNebula cloud environments.</p>
+<div class="section" id="id1">
+<h2>RPyC<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<span class="target" id="module-rpyc.RPyC"></span><p>This module is the core; holding annotations and mixins.</p>
+<dl class="class">
+<dt id="rpyc.RPyC.RPyCModule">
+<em class="property">class </em><tt class="descclassname">rpyc.RPyC.</tt><tt class="descname">RPyCModule</tt><a class="reference internal" href="_modules/rpyc/RPyC.html#RPyCModule"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rpyc.RPyC.RPyCModule" title="Permalink to this definition">¶</a></dt>
+<dd><p>This forms the basis for ensuring that rpyc-based modules have the correct
+input ports.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="rpyc.RPyC.RPyCSafeMixin">
+<em class="property">class </em><tt class="descclassname">rpyc.RPyC.</tt><tt class="descname">RPyCSafeMixin</tt><a class="reference internal" href="_modules/rpyc/RPyC.html#RPyCSafeMixin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rpyc.RPyC.RPyCSafeMixin" title="Permalink to this definition">¶</a></dt>
+<dd><p>This module provides a developer with dummy versions
+of each of the methods that a module would normally supply.</p>
+<p>An instance of a RPyC module created in VisTrails will have the proper
+vistrails module mixed in by the annotation. On a RPyC node
+the dummy verion is used to instantiate a shadow of the original
+module. The shadow&#8217;s methods are linked back to the original module.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="rpyc.RPyC.RPyCSafeModule">
+<em class="property">class </em><tt class="descclassname">rpyc.RPyC.</tt><tt class="descname">RPyCSafeModule</tt><big>(</big><em>requiredVisPackages=</em><span class="optional">[</span><span class="optional">]</span><big>)</big><a class="reference internal" href="_modules/rpyc/RPyC.html#RPyCSafeModule"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rpyc.RPyC.RPyCSafeModule" title="Permalink to this definition">¶</a></dt>
+<dd><p>RPyCSafeModule executes the compute method on a RPyC node.</p>
+<p>This annotation mixes in the code needed to ensure both threadsafe execution
+and rpyc safe execution.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-rpyc.RPyCHelper">
+<span id="rpychelper"></span><h2>RPyCHelper<a class="headerlink" href="#module-rpyc.RPyCHelper" title="Permalink to this headline">¶</a></h2>
+<p>This module holds some helper classes to make working with rpyc easier.
+It also has the rpyc remote code that is used for ???.</p>
+<dl class="class">
+<dt id="rpyc.RPyCHelper.RPyCCode">
+<em class="property">class </em><tt class="descclassname">rpyc.RPyCHelper.</tt><tt class="descname">RPyCCode</tt><a class="reference internal" href="_modules/rpyc/RPyCHelper.html#RPyCCode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rpyc.RPyCHelper.RPyCCode" title="Permalink to this definition">¶</a></dt>
+<dd><p>This module that executes an arbitrary piece of Python code remotely.</p>
+<dl class="method">
+<dt id="rpyc.RPyCHelper.RPyCCode.compute">
+<tt class="descname">compute</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/rpyc/RPyCHelper.html#RPyCCode.compute"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rpyc.RPyCHelper.RPyCCode.compute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Vistrails Module Compute, Entry Point Refer, to Vistrails Docs</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="rpyc.RPyCHelper.RPyCCode.run_code">
+<tt class="descname">run_code</tt><big>(</big><em>code_str</em>, <em>conn</em>, <em>use_input=False</em>, <em>use_output=False</em><big>)</big><a class="reference internal" href="_modules/rpyc/RPyCHelper.html#RPyCCode.run_code"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rpyc.RPyCHelper.RPyCCode.run_code" title="Permalink to this definition">¶</a></dt>
+<dd><p>Runs a piece of code as a VisTrails module.</p>
+<p>Use_input and use_output control whether to use the input port
+and output port dictionary as local variables inside the execution.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="rpyc.RPyCHelper.RPyCCode.run_code_orig">
+<tt class="descname">run_code_orig</tt><big>(</big><em>code_str</em>, <em>use_input=False</em>, <em>use_output=False</em><big>)</big><a class="reference internal" href="_modules/rpyc/RPyCHelper.html#RPyCCode.run_code_orig"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rpyc.RPyCHelper.RPyCCode.run_code_orig" title="Permalink to this definition">¶</a></dt>
+<dd><p>run_code runs a piece of code as a VisTrails module.
+use_input and use_output control whether to use the inputport
+and output port dictionary as local variables inside the
+execution.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="rpyc.RPyCHelper.RPyCNodeWidget">
+<em class="property">class </em><tt class="descclassname">rpyc.RPyCHelper.</tt><tt class="descname">RPyCNodeWidget</tt><big>(</big><em>param</em>, <em>parent=None</em><big>)</big><a class="reference internal" href="_modules/rpyc/RPyCHelper.html#RPyCNodeWidget"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rpyc.RPyCHelper.RPyCNodeWidget" title="Permalink to this definition">¶</a></dt>
+<dd><p>TODO: Add docstring</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="rpyc.RPyCHelper.RPyC_C_Code">
+<em class="property">class </em><tt class="descclassname">rpyc.RPyCHelper.</tt><tt class="descname">RPyC_C_Code</tt><a class="reference internal" href="_modules/rpyc/RPyCHelper.html#RPyC_C_Code"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rpyc.RPyCHelper.RPyC_C_Code" title="Permalink to this definition">¶</a></dt>
+<dd><p>TODO: Add doc.</p>
+<dl class="method">
+<dt id="rpyc.RPyCHelper.RPyC_C_Code.run_code">
+<tt class="descname">run_code</tt><big>(</big><em>code_str</em>, <em>conn</em>, <em>use_input=False</em>, <em>use_output=False</em><big>)</big><a class="reference internal" href="_modules/rpyc/RPyCHelper.html#RPyC_C_Code.run_code"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rpyc.RPyCHelper.RPyC_C_Code.run_code" title="Permalink to this definition">¶</a></dt>
+<dd><p>Runs a piece of code as a VisTrails module.</p>
+<p>Use_input and use_output control whether to use the input port
+and output port dictionary as local variables inside the execution.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="rpyc.RPyCHelper.RPyC_C_Code.run_code_orig">
+<tt class="descname">run_code_orig</tt><big>(</big><em>code_str</em>, <em>use_input=False</em>, <em>use_output=False</em><big>)</big><a class="reference internal" href="_modules/rpyc/RPyCHelper.html#RPyC_C_Code.run_code_orig"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rpyc.RPyCHelper.RPyC_C_Code.run_code_orig" title="Permalink to this definition">¶</a></dt>
+<dd><p>Runs a piece of code as a VisTrails module.</p>
+<p>Use_input and use_output control whether to use the input port
+and output port dictionary as local variables inside the execution.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="rpyc.RPyCHelper.RpyCNodie">
+<em class="property">class </em><tt class="descclassname">rpyc.RPyCHelper.</tt><tt class="descname">RpyCNodie</tt><a class="reference internal" href="_modules/rpyc/RPyCHelper.html#RpyCNodie"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rpyc.RPyCHelper.RpyCNodie" title="Permalink to this definition">¶</a></dt>
+<dd><p>TODO: Add docstring</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-rpyc.Shared">
+<span id="shared"></span><h2>Shared<a class="headerlink" href="#module-rpyc.Shared" title="Permalink to this headline">¶</a></h2>
+<p>This module is a globals dummy module.</p>
+<p>The variable isRemoteRPyCNode is set in this module to allow remote and local
+nodes to become aware of whether they are the master node or not</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">RPyC</a><ul>
+<li><a class="reference internal" href="#id1">RPyC</a></li>
+<li><a class="reference internal" href="#module-rpyc.RPyCHelper">RPyCHelper</a></li>
+<li><a class="reference internal" href="#module-rpyc.Shared">Shared</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="geoinf.html"
+                        title="previous chapter">GeoInf</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="utils.html"
+                        title="next chapter">Utils</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/rpyc.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="utils.html" title="Utils"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="geoinf.html" title="GeoInf"
+             >previous</a> |</li>
+        <li><a href="index.html">EO4vistrails v1.0 documentation</a> &raquo;</li>
+          <li><a href="modules.html" >Modules</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, Meraka Institute, CSIR.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.1.
+    </div>
+  </body>
+</html>

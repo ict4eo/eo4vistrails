@@ -1,0 +1,505 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>geoinf.postgis.PostGIS &mdash; EO4vistrails v1.0 documentation</title>
+    <link rel="stylesheet" href="../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="EO4vistrails v1.0 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">EO4vistrails v1.0 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for geoinf.postgis.PostGIS</h1><div class="highlight"><pre>
+<span class="c">###########################################################################</span>
+<span class="c">##</span>
+<span class="c">## Copyright (C) 2010 CSIR Meraka Institute. All rights reserved.</span>
+<span class="c">##</span>
+<span class="c">## eo4vistrails extends VisTrails, providing GIS/Earth Observation</span>
+<span class="c">## ingestion, pre-processing, transformation, analytic and visualisation</span>
+<span class="c">## capabilities . Included is the abilty to run code transparently in</span>
+<span class="c">## OpenNebula cloud environments. There are various software</span>
+<span class="c">## dependencies, but all are FOSS.</span>
+<span class="c">##</span>
+<span class="c">## This file may be used under the terms of the GNU General Public</span>
+<span class="c">## License version 2.0 as published by the Free Software Foundation</span>
+<span class="c">## and appearing in the file LICENSE.GPL included in the packaging of</span>
+<span class="c">## this file.  Please review the following to ensure GNU General Public</span>
+<span class="c">## Licensing requirements will be met:</span>
+<span class="c">## http://www.opensource.org/licenses/gpl-license.php</span>
+<span class="c">##</span>
+<span class="c">## If you are unsure which license is appropriate for your use (for</span>
+<span class="c">## instance, you are interested in developing a commercial derivative</span>
+<span class="c">## of VisTrails), please contact us at vistrails@sci.utah.edu.</span>
+<span class="c">##</span>
+<span class="c">## This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE</span>
+<span class="c">## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.</span>
+<span class="c">##</span>
+<span class="c">############################################################################</span>
+<span class="sd">&quot;&quot;&quot;This module provides PostGIS clients via psycopg2.</span>
+
+<span class="sd">This module is *not* a SQL Builder - it assumes you know SQL and, in particular,</span>
+<span class="sd">spatial SQL as provided by PostGIS.</span>
+
+<span class="sd">This module provides a session i.e. a postgis connection, and allows manually-</span>
+<span class="sd">created SQL queries to be executed against the chosen database.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c"># library</span>
+<span class="c"># third party</span>
+<span class="kn">import</span> <span class="nn">psycopg2</span>
+<span class="kn">from</span> <span class="nn">psycopg2</span> <span class="kn">import</span> <span class="n">ProgrammingError</span>
+
+<span class="kn">from</span> <span class="nn">packages.eo4vistrails.geoinf.datamodels.QgsLayer</span> <span class="kn">import</span> <span class="n">QgsVectorLayer</span>
+<span class="kn">from</span> <span class="nn">packages.eo4vistrails.utils.DataRequest</span> <span class="kn">import</span> <span class="n">PostGISRequest</span>
+<span class="kn">from</span> <span class="nn">packages.eo4vistrails.rpyc.RPyC</span> <span class="kn">import</span> <span class="n">RPyCModule</span><span class="p">,</span> <span class="n">RPyCSafeModule</span>
+<span class="kn">from</span> <span class="nn">packages.eo4vistrails.utils.ThreadSafe</span> <span class="kn">import</span> <span class="n">ThreadSafeMixin</span>
+<span class="kn">from</span> <span class="nn">packages.eo4vistrails.utils.Array</span> <span class="kn">import</span> <span class="n">NDArray</span>
+<span class="kn">from</span> <span class="nn">packages.eo4vistrails.utils.session</span> <span class="kn">import</span> <span class="n">Session</span>
+
+<span class="kn">from</span> <span class="nn">core.modules.vistrails_module</span> <span class="kn">import</span> <span class="n">ModuleError</span><span class="p">,</span> <span class="n">NotCacheable</span><span class="p">,</span> <span class="n">Module</span>
+<span class="kn">from</span> <span class="nn">core.modules.source_configure</span> <span class="kn">import</span> <span class="n">SourceConfigurationWidget</span>
+<span class="kn">from</span> <span class="nn">core.system</span> <span class="kn">import</span> <span class="n">touch</span>
+
+<span class="kn">import</span> <span class="nn">urllib</span>
+
+
+<div class="viewcode-block" id="PostGisSession"><a class="viewcode-back" href="../../../geoinf.html#geoinf.postgis.PostGIS.PostGisSession">[docs]</a><span class="k">class</span> <span class="nc">PostGisSession</span><span class="p">(</span><span class="n">Session</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Responsible for making a connection to a postgis database.</span>
+
+<span class="sd">    Ultimately, objects of this class will need to be passed from</span>
+<span class="sd">    execution step to execution step, so may need to be a constant?</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">Session</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+<div class="viewcode-block" id="PostGisSession.compute"><a class="viewcode-back" href="../../../geoinf.html#geoinf.postgis.PostGIS.PostGisSession.compute">[docs]</a>    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;fetches psycopg connection&#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">host</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">forceGetInputFromPort</span><span class="p">(</span><span class="s">&#39;postgisHost&#39;</span><span class="p">,</span> <span class="s">&#39;localhost&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">port</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">forceGetInputFromPort</span><span class="p">(</span><span class="s">&#39;postgisPort&#39;</span><span class="p">,</span> <span class="s">&#39;5432&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">user</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">forceGetInputFromPort</span><span class="p">(</span><span class="s">&#39;postgisUser&#39;</span><span class="p">,</span> <span class="s">&#39;default&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pwd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">forceGetInputFromPort</span><span class="p">(</span><span class="s">&#39;postgisPassword&#39;</span><span class="p">,</span> <span class="s">&#39;default&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">database</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">forceGetInputFromPort</span><span class="p">(</span><span class="s">&#39;postgisDatabase&#39;</span><span class="p">,</span> <span class="s">&#39;default&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connectstr</span> <span class="o">=</span> <span class="s">&quot;host=&quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span> <span class="o">+</span> <span class="s">&quot; dbname=&quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">database</span> <span class="o">+</span> \
+                          <span class="s">&quot; user=&quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">user</span> <span class="o">+</span> <span class="s">&quot; password=&quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">pwd</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setResult</span><span class="p">(</span><span class="s">&quot;PostGisSession&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+
+</div></div>
+<span class="nd">@RPyCSafeModule</span><span class="p">()</span>
+<div class="viewcode-block" id="PostGisNumpyReturningCursor"><a class="viewcode-back" href="../../../geoinf.html#geoinf.postgis.PostGIS.PostGisNumpyReturningCursor">[docs]</a><span class="k">class</span> <span class="nc">PostGisNumpyReturningCursor</span><span class="p">(</span><span class="n">ThreadSafeMixin</span><span class="p">,</span> <span class="n">RPyCModule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns data in the form of a eo4vistrails FeatureModel if user binds to self output port&quot;&quot;&quot;</span>
+    <span class="c">#multi inheritance of module subclasses is problematic</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">RPyCModule</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">ThreadSafeMixin</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Will need to fetch a PostGisSession object on its input port</span>
+<span class="sd">        Overrides supers method&quot;&quot;&quot;</span>
+        <span class="n">pgsession</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getInputFromPort</span><span class="p">(</span><span class="s">&quot;PostGisSessionObject&quot;</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="kn">import</span> <span class="nn">random</span>
+            <span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">()</span>
+            <span class="n">pgconn</span> <span class="o">=</span> <span class="n">psycopg2</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">pgsession</span><span class="o">.</span><span class="n">connectstr</span><span class="p">)</span>
+            <span class="n">curs</span> <span class="o">=</span> <span class="n">pgconn</span><span class="o">.</span><span class="n">cursor</span><span class="p">(</span><span class="s">&#39;VISTRAILS&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10000</span><span class="p">)))</span>
+            <span class="n">sql_input</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">unquote</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">forceGetInputFromPort</span><span class="p">(</span><span class="s">&#39;source&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)))</span>
+            <span class="sd">&#39;&#39;&#39;here we substitute input port values within the source&#39;&#39;&#39;</span>
+            <span class="n">parameters</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputPorts</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;source&#39;</span><span class="p">,</span> <span class="s">&#39;PostGisSessionObject&#39;</span><span class="p">,</span> <span class="s">&#39;rpycnode&#39;</span><span class="p">,</span> <span class="s">&#39;self&#39;</span><span class="p">]:</span>
+                    <span class="n">v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getInputFromPort</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+                    <span class="n">parameters</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+            <span class="n">curs</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">sql_input</span><span class="p">,</span> <span class="n">parameters</span><span class="p">)</span>
+
+            <span class="kn">import</span> <span class="nn">numpy</span>
+            <span class="n">rec</span> <span class="o">=</span> <span class="n">curs</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">rec</span><span class="p">:</span>
+                <span class="n">dtype</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="n">sameType</span> <span class="o">=</span> <span class="bp">True</span>
+                <span class="n">firstType</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">rec</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">rec</span><span class="p">:</span>
+                    <span class="c">#If they not all the same type just remeber as False</span>
+                    <span class="n">sameType</span> <span class="o">=</span> <span class="n">sameType</span> <span class="ow">and</span> <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="o">==</span> <span class="n">firstType</span><span class="p">)</span>
+                    <span class="c">#TODO: What about dates? How should they be handled.</span>
+                    <span class="n">dtype</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">curs</span><span class="o">.</span><span class="n">description</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="nb">type</span><span class="p">(</span><span class="n">item</span><span class="p">)))</span>
+                    <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">curs</span><span class="o">.</span><span class="n">scroll</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+                <span class="n">out</span> <span class="o">=</span> <span class="n">NDArray</span><span class="p">()</span>
+                <span class="n">npRecArray</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">fromiter</span><span class="p">(</span><span class="n">curs</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
+                <span class="c">#TODO QUESTION: Is this meaningful in all cases, should we be doing this</span>
+                <span class="k">if</span> <span class="n">sameType</span><span class="p">:</span>
+                    <span class="n">npArray</span> <span class="o">=</span> <span class="n">npRecArray</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">firstType</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">npRecArray</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+                    <span class="n">out</span><span class="o">.</span><span class="n">set_array</span><span class="p">(</span><span class="n">npArray</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">out</span><span class="o">.</span><span class="n">set_array</span><span class="p">(</span><span class="n">npRecArray</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">setResult</span><span class="p">(</span><span class="s">&#39;nummpyArray&#39;</span><span class="p">,</span> <span class="n">out</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">ModuleError</span><span class="p">,</span> <span class="p">(</span><span class="n">PostGisNumpyReturningCursor</span><span class="p">,</span> <span class="s">&quot;no records returned&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+            <span class="c">#print &quot;PostGIS:130 &quot;, ex</span>
+            <span class="k">raise</span> <span class="n">ModuleError</span><span class="p">,</span> <span class="p">(</span><span class="n">PostGisNumpyReturningCursor</span><span class="p">,</span> <span class="s">&quot;Could not execute SQL Statement&quot;</span><span class="p">)</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="n">curs</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="n">pgconn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+</div>
+<span class="nd">@RPyCSafeModule</span><span class="p">()</span>
+<div class="viewcode-block" id="PostGisFeatureReturningCursor"><a class="viewcode-back" href="../../../geoinf.html#geoinf.postgis.PostGIS.PostGisFeatureReturningCursor">[docs]</a><span class="k">class</span> <span class="nc">PostGisFeatureReturningCursor</span><span class="p">(</span><span class="n">ThreadSafeMixin</span><span class="p">,</span> <span class="n">RPyCModule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns data in the form of a eo4vistrails FeatureModel</span>
+<span class="sd">    if user binds to self output port</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c">#multi inheritance of module subclasses is a problem #TO DO: clarify this!</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">RPyCModule</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">ThreadSafeMixin</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Will need to fetch a PostGisSession object on its input port</span>
+<span class="sd">        Overrides supers method&quot;&quot;&quot;</span>
+        <span class="n">pgsession</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getInputFromPort</span><span class="p">(</span><span class="s">&quot;PostGisSessionObject&quot;</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">sql_input</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">unquote</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">forceGetInputFromPort</span><span class="p">(</span><span class="s">&#39;source&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)))</span>
+            <span class="sd">&#39;&#39;&#39;here we substitute input port values within the source&#39;&#39;&#39;</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputPorts</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;source&#39;</span><span class="p">,</span> <span class="s">&#39;PostGisSessionObject&#39;</span><span class="p">,</span> <span class="s">&#39;rpycnode&#39;</span><span class="p">,</span> <span class="s">&#39;self&#39;</span><span class="p">]:</span>
+                    <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getInputFromPort</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+                    <span class="n">sql_input</span> <span class="o">=</span> <span class="n">sql_input</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">value</span><span class="o">.</span><span class="n">__str__</span><span class="p">())</span>
+            <span class="n">postGISRequest</span> <span class="o">=</span> <span class="n">PostGISRequest</span><span class="p">()</span>
+            <span class="n">postGISRequest</span><span class="o">.</span><span class="n">setConnection</span><span class="p">(</span><span class="n">pgsession</span><span class="o">.</span><span class="n">host</span><span class="p">,</span>
+                              <span class="n">pgsession</span><span class="o">.</span><span class="n">port</span><span class="p">,</span>
+                              <span class="n">pgsession</span><span class="o">.</span><span class="n">database</span><span class="p">,</span>
+                              <span class="n">pgsession</span><span class="o">.</span><span class="n">user</span><span class="p">,</span>
+                              <span class="n">pgsession</span><span class="o">.</span><span class="n">pwd</span><span class="p">)</span>
+            <span class="n">postGISRequest</span><span class="o">.</span><span class="n">setDataSource</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span>      <span class="c">#schema must be blank</span>
+                              <span class="s">&#39;(&#39;</span> <span class="o">+</span> <span class="n">sql_input</span> <span class="o">+</span> <span class="s">&#39;)&#39;</span><span class="p">,</span>
+                              <span class="s">&#39;the_geom&#39;</span><span class="p">,</span>         <span class="c">#TODO: assuming the_geom, this must be looked up</span>
+                              <span class="s">&#39;&#39;</span><span class="p">,</span>                 <span class="c">#where clause must be blank</span>
+                              <span class="s">&#39;gid&#39;</span><span class="p">)</span>              <span class="c">#TODO: assuming gid, this must be looked up</span>
+            <span class="c">#select * from ba_modis_giglio limit 10000</span>
+            <span class="c">#TODO: make sure that the user can select a layer name or we generate a random one</span>
+            <span class="n">qgsVectorLayer</span> <span class="o">=</span> <span class="n">QgsVectorLayer</span><span class="p">(</span>
+                <span class="n">postGISRequest</span><span class="o">.</span><span class="n">get_uri</span><span class="p">(),</span>
+                <span class="n">postGISRequest</span><span class="o">.</span><span class="n">get_layername</span><span class="p">(),</span>
+                <span class="n">postGISRequest</span><span class="o">.</span><span class="n">get_driver</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">setResult</span><span class="p">(</span><span class="s">&#39;PostGISRequest&#39;</span><span class="p">,</span> <span class="n">postGISRequest</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">setResult</span><span class="p">(</span><span class="s">&#39;QgsVectorLayer&#39;</span><span class="p">,</span> <span class="n">qgsVectorLayer</span><span class="p">)</span>
+
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+            <span class="c">#print &quot;PostGIS:180 &quot;, ex</span>
+            <span class="k">raise</span> <span class="n">ModuleError</span><span class="p">,</span> <span class="p">(</span><span class="n">PostGisFeatureReturningCursor</span><span class="p">,</span> \
+                                 <span class="s">&quot;Could not execute SQL Statement&quot;</span><span class="p">)</span>
+
+</div>
+<span class="nd">@RPyCSafeModule</span><span class="p">()</span>
+<div class="viewcode-block" id="PostGisBasicReturningCursor"><a class="viewcode-back" href="../../../geoinf.html#geoinf.postgis.PostGIS.PostGisBasicReturningCursor">[docs]</a><span class="k">class</span> <span class="nc">PostGisBasicReturningCursor</span><span class="p">(</span><span class="n">ThreadSafeMixin</span><span class="p">,</span> <span class="n">RPyCModule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns data in the form of a python list (as per psycopg2).</span>
+<span class="sd">    Only one dataset per module is allowed, defined by the SQL</span>
+<span class="sd">    statement in the editor</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">RPyCModule</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">ThreadSafeMixin</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Fetches and executes a PostGisSession object on the input port</span>
+
+<span class="sd">        Overrides supers method&quot;&quot;&quot;</span>
+        <span class="n">pgsession</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getInputFromPort</span><span class="p">(</span><span class="s">&quot;PostGisSessionObject&quot;</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">pgconn</span> <span class="o">=</span> <span class="n">psycopg2</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">pgsession</span><span class="o">.</span><span class="n">connectstr</span><span class="p">)</span>
+            <span class="n">curs</span> <span class="o">=</span> <span class="n">pgconn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+            <span class="n">sql_input</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">unquote</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">forceGetInputFromPort</span><span class="p">(</span><span class="s">&#39;source&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)))</span>
+            <span class="sd">&#39;&#39;&#39;here we substitute input port values within the source&#39;&#39;&#39;</span>
+            <span class="n">parameters</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputPorts</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;source&#39;</span><span class="p">,</span> <span class="s">&#39;PostGisSessionObject&#39;</span><span class="p">,</span> <span class="s">&#39;rpycnode&#39;</span><span class="p">,</span> <span class="s">&#39;self&#39;</span><span class="p">]:</span>
+                    <span class="n">v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getInputFromPort</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+                    <span class="n">parameters</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+            <span class="c">#print &quot;PostGIS:212 &quot;, curs.mogrify(sql_input, parameters)</span>
+            <span class="n">curs</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">sql_input</span><span class="p">,</span> <span class="n">parameters</span><span class="p">)</span>
+            <span class="n">sql_return_list</span> <span class="o">=</span> <span class="n">curs</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">setResult</span><span class="p">(</span><span class="s">&#39;records&#39;</span><span class="p">,</span> <span class="n">sql_return_list</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+            <span class="c">#print &quot;PostGIS:217 &quot;, ex</span>
+            <span class="k">raise</span> <span class="n">ModuleError</span><span class="p">,</span> <span class="p">(</span><span class="n">PostGisFeatureReturningCursor</span><span class="p">,</span>\
+                                 <span class="s">&quot;Could not execute SQL Statement&quot;</span><span class="p">)</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="n">curs</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="n">pgconn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="c">#set output port to receive this list</span>
+
+</div>
+<span class="nd">@RPyCSafeModule</span><span class="p">()</span>
+<div class="viewcode-block" id="PostGisNonReturningCursor"><a class="viewcode-back" href="../../../geoinf.html#geoinf.postgis.PostGIS.PostGisNonReturningCursor">[docs]</a><span class="k">class</span> <span class="nc">PostGisNonReturningCursor</span><span class="p">(</span><span class="n">NotCacheable</span><span class="p">,</span> <span class="n">ThreadSafeMixin</span><span class="p">,</span> <span class="n">RPyCModule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns a list of result strings to indicate success or failure.</span>
+
+<span class="sd">    Usually to be used as a way to do an insert, update, delete operation</span>
+<span class="sd">    on the database, for example</span>
+
+<span class="sd">    Unlike the &#39;returning&#39; cursors, can support multiple SQL statements,</span>
+<span class="sd">    separated by a &#39;;&#39; (as expected by PostgreSQL)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">RPyCModule</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">ThreadSafeMixin</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c">#print &quot;PostGIS:242 &quot;, &quot;Hello&quot;</span>
+        <span class="sd">&quot;&quot;&quot;Will need to fetch a PostGisSession object on its input port</span>
+<span class="sd">        Overrides supers method&quot;&quot;&quot;</span>
+        <span class="n">pgsession</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getInputFromPort</span><span class="p">(</span><span class="s">&quot;PostGisSessionObject&quot;</span><span class="p">)</span>
+        <span class="c">#print pgsession</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c"># we could be dealing with multiple requests here,</span>
+            <span class="c">#   so parse string and execute requests one by one</span>
+            <span class="n">pgconn</span> <span class="o">=</span> <span class="n">psycopg2</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">pgsession</span><span class="o">.</span><span class="n">connectstr</span><span class="p">)</span>
+            <span class="c">#print pgconn</span>
+            <span class="n">curs</span> <span class="o">=</span> <span class="n">pgconn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+            <span class="c">#print curs</span>
+            <span class="n">resultstatus</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">sql_input</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">unquote</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">forceGetInputFromPort</span><span class="p">(</span><span class="s">&#39;source&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)))</span>
+            <span class="k">for</span> <span class="n">query</span> <span class="ow">in</span> <span class="n">sql_input</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&quot;;&quot;</span><span class="p">):</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">query</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">values</span> <span class="o">=</span> <span class="p">{}</span>
+                    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputPorts</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;source&#39;</span><span class="p">,</span> <span class="s">&#39;PostGisSessionObject&#39;</span><span class="p">,</span> <span class="s">&#39;rpycnode&#39;</span><span class="p">,</span> <span class="s">&#39;self&#39;</span><span class="p">]:</span>
+                            <span class="n">values</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getInputFromPort</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+                    <span class="n">theLen</span> <span class="o">=</span> <span class="mi">0</span>
+                    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">values</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="ow">in</span> <span class="p">[</span><span class="nb">list</span><span class="p">]:</span>
+                            <span class="k">if</span> <span class="n">theLen</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                                <span class="n">theLen</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+                            <span class="k">if</span> <span class="n">theLen</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="o">!=</span> <span class="n">theLen</span><span class="p">:</span>
+                                <span class="c">#print &quot;PostGIS:268&quot; k, v, theLen</span>
+                                <span class="k">raise</span> <span class="n">ModuleError</span><span class="p">,</span> <span class="p">(</span><span class="n">PostGisNonReturningCursor</span><span class="p">,</span>\
+                                         <span class="s">&quot;All list like params must have same length&quot;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">theLen</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">parameters</span> <span class="o">=</span> <span class="p">[{}</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="n">theLen</span><span class="p">)]</span>
+                        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">theLen</span><span class="p">):</span>
+                            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">values</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                                <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="ow">in</span> <span class="p">[</span><span class="nb">list</span><span class="p">]:</span>
+                                    <span class="n">parameters</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                                <span class="k">else</span><span class="p">:</span>
+                                    <span class="n">parameters</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+                        <span class="c">#print &quot;PostGIS:279 &quot;, &quot;about to execute many&quot;</span>
+                        <span class="n">curs</span><span class="o">.</span><span class="n">executemany</span><span class="p">(</span><span class="n">query</span> <span class="o">+</span> <span class="s">&quot;;&quot;</span><span class="p">,</span> <span class="n">parameters</span><span class="p">)</span>
+                        <span class="n">pgconn</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+                        <span class="n">resultstatus</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">curs</span><span class="o">.</span><span class="n">statusmessage</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">parameters</span> <span class="o">=</span> <span class="p">{}</span>
+                        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">values</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                            <span class="n">parameters</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+                        <span class="n">curs</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span> <span class="o">+</span> <span class="s">&quot;;&quot;</span><span class="p">,</span> <span class="n">parameters</span><span class="p">)</span>
+                        <span class="n">pgconn</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+                        <span class="n">resultstatus</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">curs</span><span class="o">.</span><span class="n">statusmessage</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">setResult</span><span class="p">(</span><span class="s">&#39;status&#39;</span><span class="p">,</span> <span class="n">resultstatus</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+            <span class="c">#print &quot;PostGIS:292 &quot;,ex</span>
+            <span class="k">raise</span> <span class="n">ModuleError</span><span class="p">,</span> <span class="p">(</span><span class="n">PostGisFeatureReturningCursor</span><span class="p">,</span> \
+                                 <span class="s">&quot;Could not execute SQL Statement&quot;</span><span class="p">)</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="n">curs</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="n">pgconn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+</div>
+<span class="nd">@RPyCSafeModule</span><span class="p">()</span>
+<div class="viewcode-block" id="PostGisCopyFrom"><a class="viewcode-back" href="../../../geoinf.html#geoinf.postgis.PostGIS.PostGisCopyFrom">[docs]</a><span class="k">class</span> <span class="nc">PostGisCopyFrom</span><span class="p">(</span><span class="n">NotCacheable</span><span class="p">,</span> <span class="n">ThreadSafeMixin</span><span class="p">,</span> <span class="n">RPyCModule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Copies from CSV file to a table</span>
+<span class="sd">        http://initd.org/psycopg/docs/cursor.html#cursor.copy_from</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_input_ports</span> <span class="o">=</span> <span class="p">[(</span><span class="s">&#39;PostGisSessionObject&#39;</span><span class="p">,</span> <span class="s">&#39;(za.co.csir.eo4vistrails:PostGisSession:postGIS)&#39;</span><span class="p">),</span>
+                     <span class="p">(</span><span class="s">&#39;fullfilepath&#39;</span><span class="p">,</span> <span class="s">&#39;(edu.utah.sci.vistrails.basic:String)&#39;</span><span class="p">),</span>
+                     <span class="p">(</span><span class="s">&#39;headers&#39;</span><span class="p">,</span> <span class="s">&#39;(edu.utah.sci.vistrails.basic:List)&#39;</span><span class="p">),</span>
+                     <span class="p">(</span><span class="s">&#39;delimiter&#39;</span><span class="p">,</span> <span class="s">&#39;(edu.utah.sci.vistrails.basic:String)&#39;</span><span class="p">,</span> <span class="bp">True</span><span class="p">,</span> <span class="s">&#39;</span><span class="se">\t</span><span class="s">&#39;</span><span class="p">),</span>
+                     <span class="p">(</span><span class="s">&#39;nullvalue&#39;</span><span class="p">,</span> <span class="s">&#39;(edu.utah.sci.vistrails.basic:String)&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">,</span> <span class="s">&#39;\N&#39;</span><span class="p">),</span>
+                     <span class="p">(</span><span class="s">&#39;tablename&#39;</span><span class="p">,</span> <span class="s">&#39;(edu.utah.sci.vistrails.basic:String)&#39;</span><span class="p">),</span>
+                     <span class="p">]</span>
+    <span class="n">_output_ports</span> <span class="o">=</span> <span class="p">[(</span><span class="s">&#39;status&#39;</span><span class="p">,</span> <span class="s">&#39;(edu.utah.sci.vistrails.basic:List)&#39;</span><span class="p">),</span>
+                     <span class="p">(</span><span class="s">&#39;self&#39;</span><span class="p">,</span> <span class="s">&#39;(edu.utah.sci.vistrails.basic:Module)&#39;</span><span class="p">)]</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">RPyCModule</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">ThreadSafeMixin</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Will need to fetch a PostGisSession object on its input port</span>
+<span class="sd">        Overrides supers method&quot;&quot;&quot;</span>
+        <span class="n">pgsession</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getInputFromPort</span><span class="p">(</span><span class="s">&quot;PostGisSessionObject&quot;</span><span class="p">)</span>
+        <span class="c">#print &quot;PostGIS:325 &quot;, pgsession</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c"># we could be dealing with multiple requests here,</span>
+            <span class="c">#   so parse string and execute requests one by one</span>
+            <span class="n">pgconn</span> <span class="o">=</span> <span class="n">psycopg2</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">pgsession</span><span class="o">.</span><span class="n">connectstr</span><span class="p">)</span>
+            <span class="c">#print &quot;PostGIS:330 &quot;, pgconn</span>
+            <span class="n">curs</span> <span class="o">=</span> <span class="n">pgconn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+            <span class="c">#print &quot;PostGIS:332 &quot;, curs</span>
+            <span class="n">resultstatus</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">csvfile</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getInputFromPort</span><span class="p">(</span><span class="s">&#39;fullfilepath&#39;</span><span class="p">)</span>
+            <span class="n">csvheader</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">forceGetInputFromPort</span><span class="p">(</span><span class="s">&#39;headers&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+            <span class="n">csvdelimiter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">forceGetInputFromPort</span><span class="p">(</span><span class="s">&#39;delimiter&#39;</span><span class="p">,</span> <span class="s">&#39;</span><span class="se">\t</span><span class="s">&#39;</span><span class="p">)</span>
+            <span class="n">csvnullvalue</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">forceGetInputFromPort</span><span class="p">(</span><span class="s">&#39;nullvalue&#39;</span><span class="p">,</span> <span class="s">&#39;\N&#39;</span><span class="p">)</span>
+            <span class="n">tablename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getInputFromPort</span><span class="p">(</span><span class="s">&#39;tablename&#39;</span><span class="p">)</span>
+            <span class="n">thefile</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">csvfile</span><span class="p">,</span> <span class="s">&quot;r&quot;</span><span class="p">)</span>
+            <span class="n">curs</span><span class="o">.</span><span class="n">copy_from</span><span class="p">(</span><span class="n">thefile</span><span class="p">,</span> <span class="n">tablename</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="n">csvdelimiter</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="n">csvnullvalue</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">csvheader</span><span class="p">)</span>
+            <span class="n">pgconn</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+            <span class="n">resultstatus</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">curs</span><span class="o">.</span><span class="n">statusmessage</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">setResult</span><span class="p">(</span><span class="s">&#39;status&#39;</span><span class="p">,</span> <span class="n">resultstatus</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+            <span class="c">#print &quot;PostGIS:345 &quot;, ex</span>
+            <span class="k">raise</span> <span class="n">ModuleError</span><span class="p">,</span> <span class="p">(</span><span class="n">PostGisFeatureReturningCursor</span><span class="p">,</span>\
+                                 <span class="s">&quot;Could not execute SQL Statement&quot;</span><span class="p">)</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="n">curs</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="n">pgconn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+</div>
+<span class="nd">@RPyCSafeModule</span><span class="p">()</span>
+<div class="viewcode-block" id="PostGisCopyTo"><a class="viewcode-back" href="../../../geoinf.html#geoinf.postgis.PostGIS.PostGisCopyTo">[docs]</a><span class="k">class</span> <span class="nc">PostGisCopyTo</span><span class="p">(</span><span class="n">NotCacheable</span><span class="p">,</span> <span class="n">ThreadSafeMixin</span><span class="p">,</span> <span class="n">Module</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Copies from CSV file to a table</span>
+<span class="sd">        http://initd.org/psycopg/docs/cursor.html#cursor.copy_from</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_input_ports</span> <span class="o">=</span> <span class="p">[(</span><span class="s">&#39;PostGisSessionObject&#39;</span><span class="p">,</span> <span class="s">&#39;(za.co.csir.eo4vistrails:PostGisSession:postGIS)&#39;</span><span class="p">),</span>
+                     <span class="p">(</span><span class="s">&#39;fullfilepath&#39;</span><span class="p">,</span> <span class="s">&#39;(edu.utah.sci.vistrails.basic:String)&#39;</span><span class="p">),</span>
+                     <span class="p">(</span><span class="s">&#39;headers&#39;</span><span class="p">,</span> <span class="s">&#39;(edu.utah.sci.vistrails.basic:List)&#39;</span><span class="p">),</span>
+                     <span class="p">(</span><span class="s">&#39;delimiter&#39;</span><span class="p">,</span> <span class="s">&#39;(edu.utah.sci.vistrails.basic:String)&#39;</span><span class="p">,</span> <span class="bp">True</span><span class="p">,</span> <span class="s">&#39;</span><span class="se">\t</span><span class="s">&#39;</span><span class="p">),</span>
+                     <span class="p">(</span><span class="s">&#39;nullvalue&#39;</span><span class="p">,</span> <span class="s">&#39;(edu.utah.sci.vistrails.basic:String)&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">,</span> <span class="s">&#39;\N&#39;</span><span class="p">),</span>
+                     <span class="p">(</span><span class="s">&#39;tablename&#39;</span><span class="p">,</span> <span class="s">&#39;(edu.utah.sci.vistrails.basic:String)&#39;</span><span class="p">),</span>
+                     <span class="p">]</span>
+    <span class="n">_output_ports</span> <span class="o">=</span> <span class="p">[(</span><span class="s">&#39;status&#39;</span><span class="p">,</span> <span class="s">&#39;(edu.utah.sci.vistrails.basic:List)&#39;</span><span class="p">),</span>
+                     <span class="p">(</span><span class="s">&#39;self&#39;</span><span class="p">,</span> <span class="s">&#39;(edu.utah.sci.vistrails.basic:Module)&#39;</span><span class="p">)]</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">Module</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">ThreadSafeMixin</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Will need to fetch a PostGisSession object on its input port</span>
+<span class="sd">        Overrides supers method&quot;&quot;&quot;</span>
+        <span class="n">pgsession</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getInputFromPort</span><span class="p">(</span><span class="s">&quot;PostGisSessionObject&quot;</span><span class="p">)</span>
+        <span class="c">#print &quot;PostGIS:328 &quot;, pgsession</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c"># we could be dealing with multiple requests here,</span>
+            <span class="c">#   so parse string and execute requests one by one</span>
+            <span class="n">pgconn</span> <span class="o">=</span> <span class="n">psycopg2</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">pgsession</span><span class="o">.</span><span class="n">connectstr</span><span class="p">)</span>
+            <span class="c">#print &quot;PostGIS:383 &quot;, pgconn</span>
+            <span class="n">curs</span> <span class="o">=</span> <span class="n">pgconn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+            <span class="c">#print &quot;PostGIS:385 &quot;, curs</span>
+            <span class="n">resultstatus</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">csvfile</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getInputFromPort</span><span class="p">(</span><span class="s">&#39;fullfilepath&#39;</span><span class="p">)</span>
+            <span class="n">csvheader</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">forceGetInputFromPort</span><span class="p">(</span><span class="s">&#39;headers&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+            <span class="n">csvdelimiter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">forceGetInputFromPort</span><span class="p">(</span><span class="s">&#39;delimiter&#39;</span><span class="p">,</span> <span class="s">&#39;</span><span class="se">\t</span><span class="s">&#39;</span><span class="p">)</span>
+            <span class="n">csvnullvalue</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">forceGetInputFromPort</span><span class="p">(</span><span class="s">&#39;nullvalue&#39;</span><span class="p">,</span> <span class="s">&#39;\N&#39;</span><span class="p">)</span>
+            <span class="n">tablename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getInputFromPort</span><span class="p">(</span><span class="s">&#39;tablename&#39;</span><span class="p">)</span>
+            <span class="n">touch</span><span class="p">(</span><span class="n">csvfile</span><span class="p">)</span>
+            <span class="n">thefile</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">csvfile</span><span class="p">,</span> <span class="s">&quot;w&quot;</span><span class="p">)</span>
+            <span class="n">curs</span><span class="o">.</span><span class="n">copy_to</span><span class="p">(</span><span class="n">thefile</span><span class="p">,</span> <span class="n">tablename</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="n">csvdelimiter</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="n">csvnullvalue</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">csvheader</span><span class="p">)</span>
+            <span class="n">pgconn</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+            <span class="n">resultstatus</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">curs</span><span class="o">.</span><span class="n">statusmessage</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">setResult</span><span class="p">(</span><span class="s">&#39;status&#39;</span><span class="p">,</span> <span class="n">resultstatus</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+            <span class="c">#print &quot;PostGIS:399 &quot;, ex</span>
+            <span class="k">raise</span> <span class="n">ModuleError</span><span class="p">,</span> <span class="p">(</span><span class="n">PostGisFeatureReturningCursor</span><span class="p">,</span>\
+                                 <span class="s">&quot;Could not execute SQL Statement&quot;</span><span class="p">)</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="n">curs</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="n">pgconn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+</div>
+<span class="k">class</span> <span class="nc">_SQLSourceConfigurationWidget</span><span class="p">(</span><span class="n">SourceConfigurationWidget</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;THIS CLASS IS NOT IN USE&quot;&quot;&quot;</span>
+    <span class="k">pass</span>
+    <span class="sd">&#39;&#39;&#39;removed by tvz so as to allow for parameterisation of SQL queries&#39;&#39;&#39;</span>
+
+    <span class="c">#def __init__(self, module, controller, parent=None):</span>
+    <span class="c">#    SourceConfigurationWidget.__init__(self, module, controller, None,</span>
+    <span class="c">#                                       False, False, parent)</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">EO4vistrails v1.0 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, Meraka Institute, CSIR.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.1.
+    </div>
+  </body>
+</html>
