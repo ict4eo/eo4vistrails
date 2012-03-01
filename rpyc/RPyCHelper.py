@@ -27,6 +27,7 @@
 """This module holds some helper classes to make working with rpyc easier.
 It also has the rpyc remote code that is used for ???.
 """
+debug = False
 #History
 #Terence van Zyl, 15 Dec 2010, Version 1.0
 
@@ -149,10 +150,10 @@ class RPyCCode(ModuleHelperMixin, ThreadSafeMixin, RPyCModule):
         def execute(s):
             exec s in locals_
 
-        print "Starting executing in main thread"
+        if debug: print "Starting executing in main thread"
         self.run_code_common(locals_, execute, code_str, use_input, use_output,
                              pre_code_string, post_code_string)
-        print "Finished executing in main thread"
+        if debug: print "Finished executing in main thread"
         
 #    def _original_compute(self):
     def compute(self):
@@ -211,7 +212,7 @@ class RPyC_C_Code(RPyCCode):
                         'registry': reg,
                         'self': self})
 
-        print "Starting executing in main thread"
+        if debug: print "Starting executing in main thread"
 
         from scipy.weave import inline
         from scipy.weave.converters import blitz
@@ -231,13 +232,13 @@ class RPyC_C_Code(RPyCCode):
         keys = inputDict.keys() + outputDict.keys()
 
         err = inline(code_str, keys, type_converters=blitz, compiler='gcc')
-        print err
+        if debug: print err
         #exec code_str in locals_, locals_
         if use_output:
             for k in outputDict.iterkeys():
                 if locals_[k] != None:
                     self.setResult(k, locals_[k])
-        print "Finished executing in main thread"
+        if debug: print "Finished executing in main thread"
 
     def run_code(self, code_str, conn, use_input=False, use_output=False):
         """
