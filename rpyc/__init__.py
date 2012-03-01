@@ -32,7 +32,7 @@ parallel and distributed processing to VisTrails.
 #    revision = out[out.find('Revision'):out.find('\n', out.find('Revision'))][10:]
 #except:
 #    revision = 0
-identifier = 'za.co.csir.eo4vistrails'
+identifier = 'za.co.csir.eo4vistrails.rpyc'
 name = 'rpyc'
 
 revision = 46
