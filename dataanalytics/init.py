@@ -34,8 +34,8 @@ def initialize(*args, **keywords):
     """Called by higher level inits to ensure that regsitration with
     VisTrails takes place."""
     from core.modules.module_registry import get_module_registry
+    
     import PySAL
-
     reg = get_module_registry()
     mynamespace = "pysal"
 
@@ -56,15 +56,16 @@ def initialize(*args, **keywords):
                    configureWidgetType=Rasterlang.RasterSourceConfigurationWidget,
                    namespace=mynamespace)
 
-    import Networkx
-    mynamespace = "networkx"
+    #TODO: Move Networkx to own package
+    #import Networkx
+    #mynamespace = "networkx"
 
      #Add Networkx
-    reg.add_module(Networkx.Graph,
-                   namespace=mynamespace)
+    #reg.add_module(Networkx.Graph,
+    #               namespace=mynamespace)
 
-    reg.add_module(Networkx.connected_components,
-                   namespace=mynamespace)
+    #reg.add_module(Networkx.connected_components,
+    #               namespace=mynamespace)
 
     import script
     mynamespace = "utils"
@@ -73,15 +74,16 @@ def initialize(*args, **keywords):
                    namespace=mynamespace,
                    abstract=True)
     
-    import povray
-    mynamespace = "povray"
-    reg.add_module(povray.PovRayScript,
-                   name="povRay Script",
-                   namespace=mynamespace,
-                   configureWidgetType=povray.PovRaySourceConfigurationWidget)
-    reg.add_module(povray.PovRayConfig,
-                   name="povRay Config",
-                   namespace=mynamespace)
+    #TODO: Move povray to own package
+    #import povray
+    #mynamespace = "povray"
+    #reg.add_module(povray.PovRayScript,
+    #               name="povRay Script",
+    #               namespace=mynamespace,
+    #               configureWidgetType=povray.PovRaySourceConfigurationWidget)
+    #reg.add_module(povray.PovRayConfig,
+    #               name="povRay Config",
+    #               namespace=mynamespace)
 
     import octave
     mynamespace = "octave"
@@ -89,20 +91,6 @@ def initialize(*args, **keywords):
                    name="Octave Script",
                    namespace=mynamespace,
                    configureWidgetType=octave.OctaveSourceConfigurationWidget)
-
-#    import rstats
-#    mynamespace = "r"
-#    reg.add_module(rstats.RScript,
-#                   name="R Script",
-#                   namespace=mynamespace,
-#                   configureWidgetType=rstats.RSourceConfigurationWidget)
-
-#    import r   
-#    mynamespace = "r"
-#    reg.add_module(r.RScriptExec,
-#                   name="R Script Exec",
-#                   namespace=mynamespace,
-#                   configureWidgetType=r.RSourceConfigurationWidget)
                    
     import rpy2Stats
     mynamespace="r"
