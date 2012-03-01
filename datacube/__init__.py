@@ -27,7 +27,9 @@
 In particular, provides a generic session object for connecting to cloud environments, 
 GIS environments and statistical environments.
 """
-identifier = 'za.co.csir.eo4vistrails'
+identifier = 'za.co.csir.eo4vistrails.hitempo'
+name = 'hitempo'
+
 #import subprocess
 #try:
 #    out = subprocess.check_output(['svn', 'info', __path__[0]])
