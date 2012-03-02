@@ -82,7 +82,7 @@ class ThreadSafeMixin(object):
         while stillWaiting:
             stillWaiting = False                        
             for thread in threadList:
-                thread.join(1.0)
+                thread.join(0.5)
                 if thread.isAlive():
                     stillWaiting = True
             if stillWaiting:
