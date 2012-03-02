@@ -32,6 +32,7 @@ debug = False
 
 # global
 import copy
+import sys
 from threading import Thread, currentThread, RLock
 from Queue import Queue
 
@@ -55,11 +56,11 @@ class ThreadSafeMixin(object):
         try:
             module.update()
             globalThreadLock.release()
-        except ModuleError, me:
+        except ModuleError:
             globalThreadLock.release()
             if exceptionQ is not None:
-                exceptionQ.put(me)
-            raise me
+                exceptionQ.put(sys.exc_info())
+            raise
     
     def updateUpstream(self):
         if debug: print self, "Called Me"
@@ -88,7 +89,8 @@ class ThreadSafeMixin(object):
                 self.logging.begin_update(self)
             
         if exceptionQ.qsize() > 0:
-            raise exceptionQ.get()
+            exec_info = exceptionQ.get()
+            raise exec_info[0], exec_info[1], exec_info[2]
         
         for iport, connectorList in copy.copy(self.inputPorts.items()):
             for connector in connectorList:
@@ -107,9 +109,9 @@ class ThreadSafeMixin(object):
             globalThreadLock.acquire()
         except RuntimeError:
             self.lockedUpdate()
-        except ModuleError, me:
+        except ModuleError:
             globalThreadLock.acquire()
-            raise me
+            raise
 
     def lockedUpdate(self, exceptionQ=None):
         """TODO Write docstring."""
@@ -117,10 +119,10 @@ class ThreadSafeMixin(object):
         with self.computeLock:
             try:
                 Module.update(self)
-            except ModuleError, me:
+            except ModuleError:
                 if exceptionQ is not None:
-                    exceptionQ.put(me)
-                raise me
+                    exceptionQ.put(sys.exc_info())
+                raise
         if debug: print self, "release compute lock"
 
 class Fork(ThreadSafeMixin, NotCacheable, Module):
