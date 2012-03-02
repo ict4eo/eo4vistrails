@@ -545,7 +545,7 @@ class RPyCSafeMixin(ModuleHelperMixin):
                     if debug: print "joined"
                 self.conn = None
                 self.shadow = None
-            gc.collect()
+            gc.collect()            
             raise
             
 
@@ -567,7 +567,7 @@ class RPyCSafeMixin(ModuleHelperMixin):
                 if debug: print "has type:", type(connector.obj)
                 if debug: print "ip: %s, port: %s"%(netref_ip, netref_port)
                 if debug: print "shared mem object: %s"%(shmemobj,)
-                if debug: print ""                    
+                if debug: print "------"
                 if namespace.has_key('DummyConnector'):
                     module.inputPorts[port][i] = namespace['DummyConnector'](connector.obj, connector.port, shmemobj, oid, netref_ip, netref_port)
                 else:
