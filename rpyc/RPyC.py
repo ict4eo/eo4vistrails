@@ -536,7 +536,7 @@ class RPyCSafeMixin(ModuleHelperMixin):
                 if not self.multiWorkerSupported:
                     return
                     
-        except Exception as e:
+        except:
             if self.conn:
                 self.conn.close()
                 if debug: print "closed"
@@ -546,7 +546,7 @@ class RPyCSafeMixin(ModuleHelperMixin):
                 self.conn = None
                 self.shadow = None
             gc.collect()
-            raise e
+            raise
             
 
     def _setupDummyInputs(self, module, namespace):
