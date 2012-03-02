@@ -50,7 +50,8 @@ from packages.eo4vistrails.rpyc.RPyC import RPyCModule, RPyCSafeModule
 # local
 from QgsLayer import QgsVectorLayer
 
-GML_NO_DATA = "noData"  # string used by GML to indicate missing data
+# strings that may be used by GML to indicate missing data
+GML_NO_DATA_LIST = ["noData", "None", "Null", "NULL"]
 
 
 class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
@@ -372,9 +373,10 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
                 # write to file
                 for index, datum in enumerate(result['data']):
                     if missing_value:
-                        for item in datum:
-                            if GML_NO_DATA in item:
-                                item.replace(GML_NO_DATA, missing_value)
+                        for key, item in enumerate(datum):
+                            #print "TVL:377", type(item), item
+                            if not item or item in GML_NO_DATA_LIST:
+                                datum[key] = missing_value
                     datum.insert(0, result['feature']['geometry'])
                     datum.insert(0, result['sampling_point']['id'])
                     datum.insert(0, result['feature']['id'])
@@ -464,8 +466,8 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
                     if missing_value:
                         for item in datum:
                             try:
-                                if GML_NO_DATA in item:
-                                    item.replace(GML_NO_DATA, missing_value)
+                                if not item or item in GML_NO_DATA_LIST:
+                                    item.replace(GML_NO_DATA_LIST, missing_value)
                             except TypeError:
                                 pass  # ignore non-strings
                     # extract key field values from datum

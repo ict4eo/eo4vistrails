@@ -41,6 +41,7 @@ from packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
 from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
 from packages.eo4vistrails.utils.DropDownListWidget import ComboBoxWidget
 
+
 @RPyCSafeModule()
 class TextDataWriter(ThreadSafeMixin, Module):
     """Utility for creating a text file from a temporal vector layer.
@@ -54,10 +55,12 @@ class TextDataWriter(ThreadSafeMixin, Module):
         data_output_type:
             pre-set data output type
             * csv - standard CSV (uses column_header_list)
-            * odv - ocean data view (uses its own columns; see http://odv.awi.de/
+            * odv - ocean data view (uses its own columns; see
+              http://odv.awi.de/
         column_header_list:
             optional list of column headings
-
+        missing_value:
+            optional value to be used to replace any missing or null values
 
     Output ports:
         created_file:
@@ -65,10 +68,16 @@ class TextDataWriter(ThreadSafeMixin, Module):
 
     """
 
-    _input_ports = [('vector_layer', '(za.co.csir.eo4vistrails:Temporal Vector Layer:data)'),
-                    ('filename', '(edu.utah.sci.vistrails.basic:String)'),
-                    ('column_header_list', '(edu.utah.sci.vistrails.basic:List)'),
-                    ('data_output_type', '(za.co.csir.eo4vistrails:Data Output Type:utils)')]
+    _input_ports = [('vector_layer',
+                     '(za.co.csir.eo4vistrails:Temporal Vector Layer:data)'),
+                    ('filename',
+                     '(edu.utah.sci.vistrails.basic:String)'),
+                    ('column_header_list',
+                     '(edu.utah.sci.vistrails.basic:List)'),
+                    ('missing_value',
+                     '(edu.utah.sci.vistrails.basic:String)'),
+                    ('data_output_type',
+                     '(za.co.csir.eo4vistrails:Data Output Type:utils)')]
     _output_ports = [('created_file', '(edu.utah.sci.vistrails.basic:File)')]
 
     def __init__(self):
@@ -80,16 +89,21 @@ class TextDataWriter(ThreadSafeMixin, Module):
         filename = self.forceGetInputFromPort('filename', None)
         data_output_type = self.forceGetInputFromPort('data_output_type', 'csv')
         column_headers = self.forceGetInputFromPort('column_header_list', [])
+        missing_value = self.forceGetInputFromPort('missing_value', None)
 
         if not filename:
-            _file = self.interpreter.filePool.create_file(suffix=".%s" % data_output_type)
+            _file = self.interpreter.filePool.create_file(suffix=".%s" % \
+                                                          data_output_type)
             filename = _file.name
         if data_output_type == 'csv':
-            file_out = vector_layer.to_csv(filename_out=filename)
+            file_out = vector_layer.to_csv(filename_out=filename,
+                                           missing_value=missing_value)
         elif data_output_type == 'odv':
-            file_out = vector_layer.to_odv(filename_out=filename)
+            file_out = vector_layer.to_odv(filename_out=filename,
+                                           missing_value=missing_value)
         elif data_output_type == 'dat':
-            file_out = vector_layer.to_csv(filename_out=filename)
+            file_out = vector_layer.to_csv(filename_out=filename,
+                                           missing_value=missing_value)
         else:
             raise ModuleError(self, 'Unknown Data Output Type')
 
@@ -98,9 +112,9 @@ class TextDataWriter(ThreadSafeMixin, Module):
 
 class DataWriterTypeComboBoxWidget(ComboBoxWidget):
     """Types of specialised data writing options."""
-    _KEY_VALUES = { 'Ocean Data View':'odv',
-                   'Comma-separated':'csv',
-                   'R data file':'dat'}
+    _KEY_VALUES = {'Ocean Data View': 'odv',
+                   'Comma-separated': 'csv',
+                   'R data file': 'dat'}
 
 DataWriterTypeComboBox = basic_modules.new_constant('Data Output Type',
                                         staticmethod(str),
