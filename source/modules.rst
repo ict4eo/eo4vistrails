@@ -1,35 +1,55 @@
+.. EO4vistrails documentation module file, created by Derek Hohls
+
 =======
 Modules
 =======
 
-.. toctree::
-   :maxdepth: 3
 
-   dataanalytics
-   geoinf
-   rpyc
-   utils
+:mod:`Lib` Package
+==================
+
+.. automodule:: lib
+    :members:
+    :undoc-members:
+    :inherited-members:
+    :show-inheritance:
+
+mod:`Plots` Module
+------------------
+
+.. automodule:: lib.plots
+    :members:
+    :undoc-members:
+    :inherited-members:
+    :show-inheritance:
+
+Lib Plots Standard
+~~~~~~~~~~~~~~~~~~
+
+.. automodule:: lib.plots.standard
+    :members:
+    :undoc-members:
+    :inherited-members:
+    :show-inheritance:
+
+Lib Plots Windrose
+~~~~~~~~~~~~~~~~~~
+
+.. automodule:: lib.plots.windrose
+    :members:
+    :undoc-members:
+    :inherited-members:
+    :show-inheritance:
+
+.. autoclass:: WindroseAxes
+    :members:
+    :undoc-members:
+
 
 DataAnalytics
 =============
 
 .. automodule:: dataanalytics
-   :members:
+    :members:
+    :undoc-members:
 
-GeoInf
-======
-
-.. automodule:: geoinf
-   :members:
-
-RPyC
-====
-
-.. automodule:: rpyc
-   :members:
-
-Utils
-=====
-
-.. automodule:: utils
-   :members:

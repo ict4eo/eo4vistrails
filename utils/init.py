@@ -11,12 +11,14 @@ def initialize(*args, **keywords):
     from DataTransformations import InputStream,  pgSQLMergeInsert
     from DataWriter import TextDataWriter, \
          DataWriterTypeComboBox
+    from Experiment import Timer
+    from FTP import FTPReader
     from ListFilter import ListFilter
     from Random import Random
     from session import Session
     from ThreadSafe import Fork, ThreadTestModule
     from WebRequest import WebRequest
-    from Experiment import Timer
+
 
     reg = get_module_registry()
     utils_namespace = "utils"
@@ -169,6 +171,10 @@ def initialize(*args, **keywords):
                    namespace=utils_namespace)
 
     reg.add_module(CsvFilter,
+                   namespace=utils_namespace)
+
+    # FTP
+    reg.add_module(FTPReader,
                    namespace=utils_namespace)
 
     reg.add_module(InputStream,

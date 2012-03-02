@@ -32,7 +32,6 @@ debug = False
 
 # global
 import copy
-import sys
 from threading import Thread, currentThread, RLock
 from Queue import Queue
 
@@ -56,11 +55,11 @@ class ThreadSafeMixin(object):
         try:
             module.update()
             globalThreadLock.release()
-        except ModuleError:
+        except ModuleError, me:
             globalThreadLock.release()
             if exceptionQ is not None:
-                exceptionQ.put(sys.exc_info())
-            raise
+                exceptionQ.put(me)
+            raise me
     
     def updateUpstream(self):
         if debug: print self, "Called Me"
@@ -82,15 +81,14 @@ class ThreadSafeMixin(object):
         while stillWaiting:
             stillWaiting = False                        
             for thread in threadList:
-                thread.join(0.5)
+                thread.join(0.1)
                 if thread.isAlive():
                     stillWaiting = True
             if stillWaiting:
                 self.logging.begin_update(self)
             
-        if exceptionQ.qsize() > 0:            
-            exc_info = exceptionQ.get()
-            raise exc_info[0], exc_info[1], exc_info[2]
+        if exceptionQ.qsize() > 0:
+            raise exceptionQ.get()
         
         for iport, connectorList in copy.copy(self.inputPorts.items()):
             for connector in connectorList:
@@ -109,9 +107,9 @@ class ThreadSafeMixin(object):
             globalThreadLock.acquire()
         except RuntimeError:
             self.lockedUpdate()
-        except ModuleError:
+        except ModuleError, me:
             globalThreadLock.acquire()
-            raise
+            raise me
 
     def lockedUpdate(self, exceptionQ=None):
         """TODO Write docstring."""
@@ -119,10 +117,10 @@ class ThreadSafeMixin(object):
         with self.computeLock:
             try:
                 Module.update(self)
-            except ModuleError:
+            except ModuleError, me:
                 if exceptionQ is not None:
-                    exceptionQ.put(sys.exc_info())
-                raise
+                    exceptionQ.put(me)
+                raise me
         if debug: print self, "release compute lock"
 
 class Fork(ThreadSafeMixin, NotCacheable, Module):

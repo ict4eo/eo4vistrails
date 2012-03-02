@@ -4,14 +4,14 @@
    contain the root `toctree` directive.
 
 ============================
-EO4vistrails's Documentation
+EO4VisTrails's Documentation
 ============================
 
 Contents:
 ---------
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 10
 
    overview
    modules
