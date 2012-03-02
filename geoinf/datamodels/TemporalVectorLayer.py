@@ -343,45 +343,48 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
             self.raiseError('No GML file specified from which to extract data')
         results = self.extract_time_series(GML_file)  # get data & metadata
         #print "TVL:345", results
-        quoting = csv.QUOTE_NONNUMERIC
-        file_out = open(filename_out, "w")
-        if quotechar:
-            csv_writer = csv.writer(file_out,
-                                delimiter=delimiter,
-                                quotechar=quotechar,
-                                quoting=quoting)
-        else:
-            csv_writer = csv.writer(file_out,
+        if results and results[0]['fields']:
+            quoting = csv.QUOTE_NONNUMERIC
+            file_out = open(filename_out, "w")
+            if quotechar:
+                csv_writer = csv.writer(file_out,
                                     delimiter=delimiter,
+                                    quotechar=quotechar,
                                     quoting=quoting)
+            else:
+                csv_writer = csv.writer(file_out,
+                                        delimiter=delimiter,
+                                        quoting=quoting)
 
-        if header:
-            common = ['Observation', 'Feature', 'Sample Point', 'Geometry']
-            #only take field names from FIRST member
-            for field in results[0]['fields']:
-                _field = field['name']
-                if field['units']:
-                    _field += ' [' + field['units'] + ']'
-                else:
-                    _field += ' []'
-                common.append(_field)
-            csv_writer.writerow(common)
+            if header:
+                common = ['Observation', 'Feature', 'Sample Point', 'Geometry']
+                #only take field names from FIRST member
+                for field in results[0]['fields']:
+                    _field = field['name']
+                    if field['units']:
+                        _field += ' [' + field['units'] + ']'
+                    else:
+                        _field += ' []'
+                    common.append(_field)
+                csv_writer.writerow(common)
 
-        for result in results:
-            # write to file
-            for index, datum in enumerate(result['data']):
-                if missing_value:
-                    for item in datum:
-                        if GML_NO_DATA in item:
-                            item.replace(GML_NO_DATA, missing_value)
-                datum.insert(0, result['feature']['geometry'])
-                datum.insert(0, result['sampling_point']['id'])
-                datum.insert(0, result['feature']['id'])
-                datum.insert(0, result['observation']['id'])
-                csv_writer.writerow(datum)
+            for result in results:
+                # write to file
+                for index, datum in enumerate(result['data']):
+                    if missing_value:
+                        for item in datum:
+                            if GML_NO_DATA in item:
+                                item.replace(GML_NO_DATA, missing_value)
+                    datum.insert(0, result['feature']['geometry'])
+                    datum.insert(0, result['sampling_point']['id'])
+                    datum.insert(0, result['feature']['id'])
+                    datum.insert(0, result['observation']['id'])
+                    csv_writer.writerow(datum)
 
-        file_out.close()
-        return file_out
+            file_out.close()
+            return file_out
+        else:
+            return None
 
     def to_odv(self, filename_out, missing_value=-1e10):
         """Transform GML to create a ODV representation of the time-series data.
@@ -417,86 +420,86 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
         if not GML_file:
             self.raiseError('No GML file specified from which to extract data')
         results = self.extract_time_series(GML_file)  # get data & metadata
-        #print "TVL:385", results[0]
+        #print "TVL:425", results[0]
+        if results and results[0]['fields']:
+            file_out = open(filename_out, "w")
+            csv_writer = csv.writer(file_out,
+                                    delimiter=',',
+                                    quotechar='"',
+                                    quoting=csv.QUOTE_NONNUMERIC)
+            header = ["Cruise", "Station", "Type", "mon/day/yr", "hh:mm:ss",
+                      "Lon (°E)", "Lat (°N)", "Bot. Depth [m]"]
 
-        file_out = open(filename_out, "w")
-        csv_writer = csv.writer(file_out,
-                                delimiter=',',
-                                quotechar='"',
-                                quoting=csv.QUOTE_NONNUMERIC)
-        header = ["Cruise", "Station", "Type", "mon/day/yr", "hh:mm:ss",
-                  "Lon (°E)", "Lat (°N)", "Bot. Depth [m]"]
-
-        key_fields = [-1, -1, -1, -1]  # correspond to: date/time, lat, lon, depth
-        #only take field names from FIRST member
-        for field in results[0]['fields']:
-            _field = field['name']
-            key = field['ID']
-            # extract and record key fields used for OVD
-            time_names = ['time', 'esecs']
-            depth_names = ['depth', 'z-position']
-            lat_names = ['latitude', 'y-position']
-            lon_names = ['longitude', 'x-position']
-            if True in [_field.lower().__contains__(x) for x in time_names]:
-                key_fields[0] = key
-            elif True in [_field.lower().__contains__(x) for x in lat_names]:
-                key_fields[1] = key
-            elif True in [_field.lower().__contains__(x) for x in lon_names]:
-                key_fields[2] = key
-            elif True in [_field.lower().__contains__(x) for x in depth_names]:
-                key_fields[3] = key
-            # ordinary (measured) variable fields
-            else:
-                if field['units']:
-                    _field += ' [' + field['units'] + ']'
+            key_fields = [-1, -1, -1, -1]  # correspond to: date/time, lat, lon, depth
+            #only take field names from FIRST member
+            for field in results[0]['fields']:
+                _field = field['name']
+                key = field['ID']
+                # extract and record key fields used for OVD
+                time_names = ['time', 'esecs']
+                depth_names = ['depth', 'z-position']
+                lat_names = ['latitude', 'y-position']
+                lon_names = ['longitude', 'x-position']
+                if True in [_field.lower().__contains__(x) for x in time_names]:
+                    key_fields[0] = key
+                elif True in [_field.lower().__contains__(x) for x in lat_names]:
+                    key_fields[1] = key
+                elif True in [_field.lower().__contains__(x) for x in lon_names]:
+                    key_fields[2] = key
+                elif True in [_field.lower().__contains__(x) for x in depth_names]:
+                    key_fields[3] = key
+                # ordinary (measured) variable fields
                 else:
-                    _field += ' []'
-                header.append(_field)
-        reverse_key_fields = sorted(key_fields, reverse=True)
-        csv_writer.writerow(header)
+                    if field['units']:
+                        _field += ' [' + field['units'] + ']'
+                    else:
+                        _field += ' []'
+                    header.append(_field)
+            reverse_key_fields = sorted(key_fields, reverse=True)
+            csv_writer.writerow(header)
 
-        #print "TVL:446", results[0]['fields'], key_fields
-        for index, result in enumerate(results):
-            for datum in result['data']:
-                if missing_value:
-                    for item in datum:
-                        try:
-                            if GML_NO_DATA in item:
-                                item.replace(GML_NO_DATA, missing_value)
-                        except TypeError:
-                            pass  # ignore non-strings
-                # extract key field values from datum
-                #print "TVL:456 datum", datum
-                time = day = lat = lon = None
-                depth = 0
-                for key, value in enumerate(datum):
-                    if key in key_fields:
-                        if key_fields[key] == 0:  # time
-                            date_time = get_date_and_time(datum[key],
-                                                          date_format="%m/%d/%Y")
-                            day, time = date_time[0], date_time[1]
-                        # NOTE !!! no formatting is performed on lat/lon fields...
-                        if key_fields[key] == 1:  # lat
-                            lat = datum[key]
-                        if key_fields[key] == 2:  # lon
-                            lon = datum[key]
-                        if key_fields[key] == 3:  # depth
-                            depth = datum[key]
-                # remove key field values from datum array, in REVERSE position
-                for kf in reverse_key_fields:
-                    datum.pop(kf)
-                # add in key field values at the start of the datum array
-                datum.insert(0, depth)
-                datum.insert(0, lat)
-                datum.insert(0, lon)
-                datum.insert(0, time)
-                datum.insert(0, day)
-                datum.insert(0, "*")
-                datum.insert(0, result['sampling_point']['id'])
-                datum.insert(0, result['observation']['procedure'])
-                #datum.insert(0, result['observation']['id'])
-                csv_writer.writerow(datum)
-        return file_out
+            #print "TVL:466", results[0]['fields'], key_fields
+            for index, result in enumerate(results):
+                for datum in result['data']:
+                    if missing_value:
+                        for item in datum:
+                            try:
+                                if GML_NO_DATA in item:
+                                    item.replace(GML_NO_DATA, missing_value)
+                            except TypeError:
+                                pass  # ignore non-strings
+                    # extract key field values from datum
+                    #print "TVL:476 datum", datum
+                    time = day = lat = lon = None
+                    depth = 0
+                    for key, value in enumerate(datum):
+                        if key in key_fields:
+                            if key_fields[key] == 0:  # time
+                                date_time = get_date_and_time(datum[key],
+                                                              date_format="%m/%d/%Y")
+                                day, time = date_time[0], date_time[1]
+                            # NOTE !!! no formatting is performed on lat/lon fields...
+                            if key_fields[key] == 1:  # lat
+                                lat = datum[key]
+                            if key_fields[key] == 2:  # lon
+                                lon = datum[key]
+                            if key_fields[key] == 3:  # depth
+                                depth = datum[key]
+                    # remove key field values from datum array, in REVERSE position
+                    for kf in reverse_key_fields:
+                        datum.pop(kf)
+                    # add in key field values at the start of the datum array
+                    datum.insert(0, depth)
+                    datum.insert(0, lat)
+                    datum.insert(0, lon)
+                    datum.insert(0, time)
+                    datum.insert(0, day)
+                    datum.insert(0, "*")
+                    datum.insert(0, result['sampling_point']['id'])
+                    datum.insert(0, result['observation']['procedure'])
+                    #datum.insert(0, result['observation']['id'])
+                    csv_writer.writerow(datum)
+            return file_out
 
     def to_numpy(self):
         """Transform GML to create a numpy array of the time-series data.

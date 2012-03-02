@@ -90,7 +90,7 @@ class FTPReader(Module):
 
         try:
             f = ftplib.FTP(self.server)
-            print 'FTP:93 Connected to host "%s"' % self.server
+            #print 'FTP:93 Connected to host "%s"' % self.server
         except (socket.error, socket.gaierror), e:
             e = 'Cannot reach "%s"' % self.server
             raise ModuleError(self, e)
@@ -98,7 +98,7 @@ class FTPReader(Module):
         if self.username and self.password:
             try:
                 f.login(self.username, self.password)
-                print 'FTP:99 Logged in as "%s"' % self.username
+                #print 'FTP:99 Logged in as "%s"' % self.username
             except ftplib.error_perm:
                 e = 'Unable to login with given username and password'
                 f.quit()
@@ -106,7 +106,7 @@ class FTPReader(Module):
         else:
             try:
                 f.login()
-                print 'FTP:109 Logged in as "anonymous"'
+                #print 'FTP:109 Logged in as "anonymous"'
             except ftplib.error_perm:
                 e = 'Cannot login anonymously'
                 f.quit()
@@ -114,7 +114,7 @@ class FTPReader(Module):
 
         try:
             f.cwd(self.directory)
-            print 'FTP:117 Changed to "%s" folder' % self.directory
+            #print 'FTP:117 Changed to "%s" folder' % self.directory
         except ftplib.error_perm:
             e = 'Cannot change to directory "%s"' % self.directory
             f.quit()
@@ -131,12 +131,12 @@ class FTPReader(Module):
                     fileObj = basic_modules.File()
                     fileObj.name = _file
                     f_out = open(_file, 'wb')
-                    print 'FTP:134', fileObj, fileObj.name
+                    #print 'FTP:134', fileObj, fileObj.name
                 else:
                     fileObj = self.interpreter.filePool.create_file()
                     self.filename_out = fileObj.name
                     f_out = open(self.filename_out, 'wb')
-                    print 'FTP:138', fileObj, fileObj.name
+                    #print 'FTP:138', fileObj, fileObj.name
             except:
                 e = 'Unable to create output file "%s"' % self.filename_out
                 f_out.close()
@@ -145,9 +145,9 @@ class FTPReader(Module):
             f.retrbinary('RETR %s' % self.filename, f_out.write)
             f_out.close()
             f.quit()
-            self.setResult('transferred_file:', fileObj)
-            print 'FTP:148 Downloaded "%s" from current dir as "%s"' % \
-                    (self.filename, self.filename_out)
+            self.setResult('transferred_file', fileObj)
+            #print 'FTP:148 Downloaded "%s" from current dir as "%s"' % \
+            #        (self.filename, self.filename_out)
         except ftplib.error_perm:
             e = 'Cannot read file "%s"' % self.filename
             os.unlink(self.filename)

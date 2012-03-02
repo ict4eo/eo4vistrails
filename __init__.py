@@ -58,7 +58,7 @@ import resource
 from core.system import packages_directory
 sys.path = [os.path.join(packages_directory(), 'eo4vistrails/lib')] + sys.path
 
-resource.setrlimit(resource.RLIMIT_NOFILE,(resource.getrlimit(resource.RLIMIT_NOFILE)[1], 4096))
+# CAUSES ERROR! resource.setrlimit(resource.RLIMIT_NOFILE,(resource.getrlimit(resource.RLIMIT_NOFILE)[1], 4096))
 
 def package_requirements():
     import core.requirements
