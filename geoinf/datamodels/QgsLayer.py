@@ -183,7 +183,8 @@ class QgsRasterLayer(QgsMapLayer, qgis.core.QgsRasterLayer):
         QgsMapLayer.__init__(self)
         if uri and layername:
             qgis.core.QgsRasterLayer.__init__(self, uri, layername)
-        self.SUPPORTED_DRIVERS = ['WCS', 'gdl']
+        # WMS? http://qgis.org/pyqgis-cookbook/loadlayer.html#raster-layers
+        self.SUPPORTED_DRIVERS = ['WCS', 'gdl', 'WMS']
         self.ownNotSupported = True
 
     def compute(self):
@@ -195,38 +196,41 @@ class QgsRasterLayer(QgsMapLayer, qgis.core.QgsRasterLayer):
             dataReq = self.forceGetInputFromPort('dataRequest', None)
             theProj = self.forceGetInputFromPort('EPSG Code', None)
 
-            #print "Qgslayer:188-thefile", thefile
-            #print "Qgslayer:189-thefile name", thefile.name
-            #print "Qgslayer:190-projection", theProj
+            #print "Qgslayer:198-thefile", thefile
+            #print "Qgslayer:199-dataReq", dataReq
+            #print "Qgslayer:199-thefile name", thefile.name
+            #print "Qgslayer:201-projection", theProj
 
             if thefile:
                 isFILE = (thefile.name != '')
+            else:
+                isFILE = False
+
             isQGISSuported = isinstance(dataReq, DataRequest) and \
                             dataReq.get_driver() in self.SUPPORTED_DRIVERS
+
+            print "Qgslayer:211-dataReq", dataReq, type(dataReq)
+            print "Qgslayer:212-dataReq.get_driver()", dataReq.get_driver()
 
             if isFILE:
                 thefilepath = thefile.name
                 thefilename = QFileInfo(thefilepath).fileName()
-
                 #globalQgsLock.acquire()
                 qgis.core.QgsRasterLayer.__init__(
                     self,
                     thefilepath,
                     thefilename)
                 #globalQgsLock.release()
-
                 if theProj:
                     self.setCrs(qgis.core.QgsCoordinateReferenceSystem(theProj))
 
             elif isQGISSuported:
-
                 #globalQgsLock.acquire()
                 qgis.core.QgsRasterLayer.__init__(
                     self,
                     dataReq.get_uri(),
                     dataReq.get_layername())
                 #globalQgsLock.release()
-
                 if theProj:
                     self.setCrs(qgis.core.QgsCoordinateReferenceSystem(theProj))
 

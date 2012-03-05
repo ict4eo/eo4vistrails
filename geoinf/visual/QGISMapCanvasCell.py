@@ -196,8 +196,8 @@ class QGISMapCanvasCellWidget(QCellWidget):
              QgsRasterLayer.MultiBandSingleBandPseudoColor,
              QgsRasterLayer.MultiBandSingleBandGray,
              QgsRasterLayer.SingleBandPseudoColor ]
-        allowedRgbStyles = [ QgsRasterLayer.MultiBandColor ]        
-        
+        allowedRgbStyles = [ QgsRasterLayer.MultiBandColor ]
+
         (inputLayers, crsDest) = inputPorts
         if type(inputLayers) != list:
             inputLayers = [inputLayers]
@@ -216,7 +216,7 @@ class QGISMapCanvasCellWidget(QCellWidget):
         # Add layers to canvas
         mapCanvasLayers = []
         for layer in inputLayers:
-            if layer.isValid():
+            if layer and layer.isValid():
                 # Add layer to the registry (one registry for ALL maps ???)
                 QgsMapLayerRegistry.instance().addMapLayer(layer, True)
                 # Set up the map canvas layer
@@ -289,18 +289,19 @@ class QGISMapCanvasCellWidget(QCellWidget):
                         layer.setCacheImage( None )
                         # make sure the layer is redrawn
                         layer.triggerRepaint()
+
         # Add widget for layer control to canvas
         #~self.explorerListWidget.clear()
         #print "self.explorerListWidget count", self.explorerListWidget.count()
-
-        # get layernames from inputLayers, and use them as labells in explorerListWidget
-        for lyr in inputLayers:
-            item = QtGui.QListWidgetItem()
-            item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
-            item.setCheckState(QtCore.Qt.Checked)
-            #~self.explorerListWidget.addItem(item)
-            self.widget = QtGui.QLabel(lyr.name())
-            #~self.explorerListWidget.setItemWidget(item, self.widget)
+        # get layernames from inputLayers as labels in explorerListWidget
+        for layer in inputLayers:
+            if layer and layer.isValid():
+                item = QtGui.QListWidgetItem()
+                item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
+                item.setCheckState(QtCore.Qt.Checked)
+                #~self.explorerListWidget.addItem(item)
+                self.widget = QtGui.QLabel(layer.name())
+                #~self.explorerListWidget.setItemWidget(item, self.widget)
         #~self.explorerListWidget.itemClicked.connect(self.on_listWidget_itemClicked)
 
     def on_listWidget_itemClicked(self, item):
