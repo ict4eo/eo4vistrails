@@ -184,7 +184,7 @@ class QgsRasterLayer(QgsMapLayer, qgis.core.QgsRasterLayer):
         if uri and layername:
             qgis.core.QgsRasterLayer.__init__(self, uri, layername)
         # WMS? http://qgis.org/pyqgis-cookbook/loadlayer.html#raster-layers
-        self.SUPPORTED_DRIVERS = ['WCS', 'gdl', 'WMS']
+        self.SUPPORTED_DRIVERS = ['WCS', 'gdl', 'wms']
         self.ownNotSupported = True
 
     def compute(self):
