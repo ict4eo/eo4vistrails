@@ -312,8 +312,8 @@ def writeImage(arrayData, prototype, path, format):
         dst_ds_rb = dst_ds.GetRasterBand(1)
         if prototype.noDatavalue:
             dst_ds_rb.SetNoDataValue(prototype.noDatavalue)
-        dst_ds_rb.SetColorInterpretation(gdalconst.GCI_GrayIndex)
-        dst_ds_rb.SetColorTable(gdal.ColorTable(gdalconst.GPI_Gray))
+        dst_ds_rb.SetRasterColorInterpretation(gdalconst.GCI_GrayIndex)
+        dst_ds_rb.SetRasterColorTable(gdal.ColorTable(gdalconst.GPI_Gray))
         dst_ds_rb.WriteArray(arrayData)
     
     dst_ds = None

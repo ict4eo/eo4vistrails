@@ -69,14 +69,15 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
     """
 
     def __init__(self, uri=None, layername=None, driver=None):
-        QgsVectorLayer.__init__(self)
-        if uri and layername and driver:
-            qgis.core.QgsVectorLayer.__init__(self, uri, layername, driver)
+        QgsVectorLayer.__init__(self, uri, layername, driver)
+        #if uri and layername and driver:
+        #    qgis.core.QgsVectorLayer.__init__(self, uri, layername, driver)
         self.SUPPORTED_DRIVERS += ['OM', 'HDF']  # add new supported types
         self.time_series = {}
         self.results_file = None
 
     def compute(self):
+        print "Compute of TVL called"
         """Execute the module to create the output"""
         fileObj = None
         try:

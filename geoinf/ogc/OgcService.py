@@ -31,6 +31,7 @@
 import init
 import random
 # third-party
+from PyQt4.QtCore import QFileInfo
 # vistrails
 from core.modules.vistrails_module import \
      NotCacheable, ModuleError
@@ -152,11 +153,14 @@ class OGC(NotCacheable):
                 self.setResult(init.VECTOR_PORT, qgsVectorLayer)
 
             if init.TEMPORAL_VECTOR_PORT in self.outputPorts:
-                temporalVectorLayer = TemporalVectorLayer(
-                    self.url, self.layername, self.webRequest.get_driver())
-                #print "OgcService:157 - TemporalVectorLayer", TemporalVectorLayer
                 _results_file = write_gml_data(self.webRequest.data)
-                #print "OgcService:159", _results, _results.name
+                #print "OgcService:159", _results_file, _results_file.name, self.layername
+                self.thefilename = QFileInfo(_results_file.name).fileName()
+                temporalVectorLayer = TemporalVectorLayer(
+                    _results_file.name, _results_file.name, "ogr")
+                #temporalVectorLayer = TemporalVectorLayer(
+                #    self.url, self.layername, self.webRequest.get_driver())
+                #print "OgcService:157 - TemporalVectorLayer", TemporalVectorLayer
                 if _results_file:
                     temporalVectorLayer.results_file = _results_file.name
                 self.setResult(init.TEMPORAL_VECTOR_PORT, temporalVectorLayer)

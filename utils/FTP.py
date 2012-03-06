@@ -119,9 +119,9 @@ class FTPReader(Module):
             e = 'Cannot change to directory "%s"' % self.directory
             f.quit()
             raise ModuleError(self, e)
-
-        try:
-            fileObj = None
+        
+        fileObj = None
+        try:            
             # create output file
             try:
                 if self.directory_out:

@@ -38,6 +38,7 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from qgis.core import *
 from qgis.gui import *
+
 # vistrails
 import core.modules.module_registry
 from core.modules.vistrails_module import Module, ModuleError
@@ -197,7 +198,7 @@ class QGISMapCanvasCellWidget(QCellWidget):
              QgsRasterLayer.MultiBandSingleBandGray,
              QgsRasterLayer.SingleBandPseudoColor ]
         allowedRgbStyles = [ QgsRasterLayer.MultiBandColor ]
-
+        
         (inputLayers, crsDest) = inputPorts
         if type(inputLayers) != list:
             inputLayers = [inputLayers]
@@ -216,24 +217,23 @@ class QGISMapCanvasCellWidget(QCellWidget):
         # Add layers to canvas
         mapCanvasLayers = []
         for layer in inputLayers:
-            if layer and layer.isValid():
+            if layer.isValid():
                 # Add layer to the registry (one registry for ALL maps ???)
                 QgsMapLayerRegistry.instance().addMapLayer(layer, True)
                 # Set up the map canvas layer
                 cl = QgsMapCanvasLayer(layer)
                 mapCanvasLayers.append(cl)
-                # Set extent to the extent of our layer
-                self.canvas.setExtent(layer.extent())
-                self.canvas.enableAntiAliasing(True)
-                self.canvas.freeze(False)
-                self.canvas.setLayerSet(mapCanvasLayers)
-                self.canvas.refresh()
-                self.update()
                 # populate mylist with inputLayers's items
                 self.mylist.append(layer)
                 # test if the layer is a raster from a local file (not a wms)
                 if layer.type() == layer.RasterLayer: # and ( not layer.usesProvider() ):
                     # Test if the raster is single band greyscale
+                    #layer.setMinimumMaximumUsingLastExtent()
+                    #layer.setContrastEnhancementAlgorithm(QgsContrastEnhancement.StretchToMinimumMaximum)
+                    #layer.setCacheImage( None )
+                    #layer.setStandardDeviations( 0.0 )
+                    # make sure the layer is redrawn
+                    #layer.triggerRepaint()                                        
                     if layer.drawingStyle() in allowedGreyStyles:
                         #Everything looks fine so set stretch and exit
                         #For greyscale layers there is only ever one band
@@ -255,6 +255,7 @@ class QGISMapCanvasCellWidget(QCellWidget):
                         # ensure any cached render data for this layer is cleared
                         layer.setCacheImage( None )
                         # make sure the layer is redrawn
+                        layer.setContrastEnhancementAlgorithm(QgsContrastEnhancement.StretchToMinimumMaximum)
                         layer.triggerRepaint()
                     elif layer.drawingStyle() in allowedRgbStyles:
                         #Everything looks fine so set stretch and exit
@@ -288,20 +289,27 @@ class QGISMapCanvasCellWidget(QCellWidget):
                         # ensure any cached render data for this layer is cleared
                         layer.setCacheImage( None )
                         # make sure the layer is redrawn
+                        layer.setContrastEnhancementAlgorithm(QgsContrastEnhancement.StretchToMinimumMaximum)
                         layer.triggerRepaint()
-
+                # Set extent to the extent of our layer
+                self.canvas.setExtent(layer.extent())
+                self.canvas.enableAntiAliasing(True)
+                self.canvas.freeze(False)
+                self.canvas.setLayerSet(mapCanvasLayers)
+                self.canvas.refresh()
+                self.update()
         # Add widget for layer control to canvas
         #~self.explorerListWidget.clear()
         #print "self.explorerListWidget count", self.explorerListWidget.count()
-        # get layernames from inputLayers as labels in explorerListWidget
-        for layer in inputLayers:
-            if layer and layer.isValid():
-                item = QtGui.QListWidgetItem()
-                item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
-                item.setCheckState(QtCore.Qt.Checked)
-                #~self.explorerListWidget.addItem(item)
-                self.widget = QtGui.QLabel(layer.name())
-                #~self.explorerListWidget.setItemWidget(item, self.widget)
+
+        # get layernames from inputLayers, and use them as labells in explorerListWidget
+        for lyr in inputLayers:
+            item = QtGui.QListWidgetItem()
+            item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
+            item.setCheckState(QtCore.Qt.Checked)
+            #~self.explorerListWidget.addItem(item)
+            self.widget = QtGui.QLabel(lyr.name())
+            #~self.explorerListWidget.setItemWidget(item, self.widget)
         #~self.explorerListWidget.itemClicked.connect(self.on_listWidget_itemClicked)
 
     def on_listWidget_itemClicked(self, item):
