@@ -68,7 +68,10 @@ class WebRequest(DataRequest):
         return self._layername
 
     def compute(self):
-        """Execute the module to create the output"""
+        """Overwrite method in DataRequest to execute the module
+        and create the output"""
+        # access data from DataRequest input ports
+        DataRequest.compute(self)
         # separate URL
         try:
             self.url = self.getInputFromPort('urls')
@@ -84,7 +87,7 @@ class WebRequest(DataRequest):
             request = self.getInputFromPort('request')
             self.url = request.url
             self.data = request.data
-            #print "\nWebRequest:78\n url:%s\n data: %s" % (self.url,self.data)
+            #print "\nWebRequest:90\n url:%s\n data: %s" % (self.url,self.data)
         except:
             pass
         # execute request IF required
@@ -124,7 +127,7 @@ class WebRequest(DataRequest):
                 response = urllib2.urlopen(req)
             except:
                 try:
-                    #print "WebRequest:127 - ignoring proxy..."
+                    #print "WebRequest:130 - ignoring proxy..."
                     proxy_support = urllib2.ProxyHandler({})  # disables proxy
                     opener = urllib2.build_opener(proxy_support)
                     urllib2.install_opener(opener)

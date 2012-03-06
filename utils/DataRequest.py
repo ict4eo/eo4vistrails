@@ -39,6 +39,10 @@ from core.modules.vistrails_module import Module, NotCacheable, ModuleError
 class DataRequest(NotCacheable, Module):
     """TO DO: Add doc string"""
 
+    _input_ports = [('uri', '(edu.utah.sci.vistrails.basic:String)'),
+                    ('layername', '(edu.utah.sci.vistrails.basic:String)'),
+                    ('driver', '(edu.utah.sci.vistrails.basic:String)')]
+
     def __init__(self, uri=None, layername=None, driver=None):
         Module.__init__(self)
         self._uri = uri
@@ -64,10 +68,6 @@ class DataRequest(NotCacheable, Module):
         self._uri = self.forceGetInputFromPort('uri', None)
         self._layername = self.forceGetInputFromPort('layername', None)
         self._driver = self.forceGetInputFromPort('driver', None)
-
-    _input_ports = [('uri', '(edu.utah.sci.vistrails.basic:String)'),
-                    ('layername', '(edu.utah.sci.vistrails.basic:String)'),
-                    ('driver', '(edu.utah.sci.vistrails.basic:String)')]
 
 
 class PostGISRequest(DataRequest, QgsDataSourceURI):
