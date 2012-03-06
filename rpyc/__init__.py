@@ -37,4 +37,45 @@ name = 'rpyc'
 
 revision = 46
 version = '0.1.%s' % revision
-pass
+
+author_list = 'tvanzyl,gmcferren,bcwele,dhohls,pshabangu,bsibolla,mugu'
+
+import sys
+import os.path
+import resource
+from core.system import packages_directory
+
+#Uncomment this line if you are running out of files
+#resource.setrlimit(resource.RLIMIT_NOFILE,(resource.getrlimit(resource.RLIMIT_NOFILE)[1], 4096))
+
+def package_requirements():
+    import core.requirements
+    #if not core.requirements.python_module_exists('owslib'):
+    #    raise core.requirements.MissingRequirement('owslib') #??? still true
+    #if not core.requirements.python_module_exists('qgis'):
+    #    raise core.requirements.MissingRequirement('qgis')
+    #if not core.requirements.python_module_exists('psycopg2'):
+    #    raise core.requirements.MissingRequirement('psycopg2')
+    #if not core.requirements.python_module_exists('pysal'):
+    #    raise core.requirements.MissingRequirement('pysal')
+    #if not core.requirements.python_module_exists('networkx'):
+    #    raise core.requirements.MissingRequirement('networkx')
+    if not core.requirements.python_module_exists('numpy'):
+        raise core.requirements.MissingRequirement('numpy')
+    if not core.requirements.python_module_exists('rpyc'):
+        raise core.requirements.MissingRequirement('rpyc')
+    #if not core.requirements.python_module_exists('osgeo'):
+    #    raise core.requirements.MissingRequirement('osgeo')
+    #if not core.requirements.python_module_exists('qtermwidget'):
+    #    raise core.requirements.MissingRequirement('qtermwidget')
+
+
+def package_dependencies():
+    return ['edu.utah.sci.vistrails.spreadsheet',
+            'edu.utah.sci.vistrails.numpyscipy']
+#    import core.packagemanager
+#    manager = core.packagemanager.get_package_manager()
+#    if manager.has_package('edu.utah.sci.vistrails.spreadsheet'):
+#        return ['edu.utah.sci.vistrails.spreadsheet']
+#    else:
+
