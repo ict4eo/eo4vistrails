@@ -37,9 +37,9 @@ from RPyC import RPyCSafeMixin, RPyCModule, RPyCSafeModule
 # vistrails
 from core.modules.vistrails_module import ModuleError, NotCacheable
 from core.utils import VistrailsInternalError
-from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
-# eo4vistrails
 
+# eo4vistrails
+from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
 from packages.eo4vistrails.utils.ModuleHelperMixin import ModuleHelperMixin
 # local
 
