@@ -85,9 +85,10 @@ class WebRequest(DataRequest):
         # request (combined data and URL)
         try:
             request = self.getInputFromPort('request')
-            self.url = request.url
-            self.data = request.data
-            #print "\nWebRequest:90\n url:%s\n data: %s" % (self.url,self.data)
+            if request:
+                self.url = request.url
+                self.data = request.data
+            #print "WebRequest:93\n url:%s\n data: %s" % (self.url,self.data)
         except:
             pass
         # execute request IF required

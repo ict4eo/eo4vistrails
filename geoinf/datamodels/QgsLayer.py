@@ -34,7 +34,7 @@ from PyQt4.QtCore import QFileInfo
 # vistrails
 from core.modules.vistrails_module import Module, ModuleError, NotCacheable
 # eo4vistrails
-from packages.eo4vistrails.utils.DataRequest import DataRequest
+from packages.eo4vistrails.utils.WebRequest import WebRequest
 from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
 from packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
 from packages.eo4vistrails.utils.DropDownListWidget import ComboBoxWidget
@@ -121,53 +121,48 @@ class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
         #global globalQgsLock
 
         try:
-            thefile = self.forceGetInputFromPort('file', None)
-            dataReq = self.forceGetInputFromPort('dataRequest', None)
+            theFile = self.forceGetInputFromPort('file', None)
+            webReq = self.forceGetInputFromPort('webrequest', None)
             theProj = self.forceGetInputFromPort('EPSG Code', None)
-            self.layer_file = thefile
+            self.layer_file = theFile
+            uri = webReq.get_uri()
+            layername = webReq.get_layername()
+            driver = webReq.get_driver()
 
             try:
-                isFILE = (thefile != None) and (thefile.name != '')
+                isFILE = (theFile != None) and (theFile.name != '')
             except AttributeError:
-                isFILE = (thefile.name != '')
+                isFILE = (theFile.name != '')
 
             #Note this is case sensitive -> "WFS"
-            isQGISSuported = isinstance(dataReq, DataRequest) and \
-                            dataReq.get_driver() in self.SUPPORTED_DRIVERS
+            isQGISSuported = isinstance(webReq, WebRequest) and \
+                            driver in self.SUPPORTED_DRIVERS
 
             if isFILE:
-                thefilepath = thefile.name
-                thefilename = QFileInfo(thefilepath).fileName()
-
+                file_path = theFile.name
+                file_name = QFileInfo(file_path).fileName()
                 #globalQgsLock.acquire()
-                qgis.core.QgsVectorLayer.__init__(
-                    self,
-                    thefilepath,
-                    thefilename,
-                    "ogr")
+                qgis.core.QgsVectorLayer.__init__(self,
+                                                  file_path, file_name, "ogr")
                 #globalQgsLock.release()
-
                 if theProj:
                     self.setCrs(qgis.core.QgsCoordinateReferenceSystem(theProj))
+
             elif isQGISSuported:
-
                 #globalQgsLock.acquire()
-                qgis.core.QgsVectorLayer.__init__(
-                    self,
-                    dataReq.get_uri(),
-                    dataReq.get_layername(),
-                    dataReq.get_driver())
+                qgis.core.QgsVectorLayer.__init__(self,
+                                                  uri, layername, driver)
                 #globalQgsLock.release()
-
                 if theProj:
                     self.setCrs(qgis.core.QgsCoordinateReferenceSystem(theProj))
+
             else:
-                if dataReq:
+                if webReq:
                     self.raiseError('Vector Layer Driver %s not supported' %
-                                    str(dataReq.get_driver()))
+                                    driver)
                 else:
                     pass
-                    self.raiseError('No valid data request')
+                    self.raiseError('No valid request')
 
             self.setResult('value', self)
         except Exception, e:
@@ -183,61 +178,65 @@ class QgsRasterLayer(QgsMapLayer, qgis.core.QgsRasterLayer):
         QgsMapLayer.__init__(self)
         if uri and layername:
             qgis.core.QgsRasterLayer.__init__(self, uri, layername)
-        # WMS? http://qgis.org/pyqgis-cookbook/loadlayer.html#raster-layers
-        self.SUPPORTED_DRIVERS = ['WCS', 'gdl', 'wms']
+        # WMS: http://qgis.org/pyqgis-cookbook/loadlayer.html#raster-layers
+        self.SUPPORTED_DRIVERS = ['WCS', 'gdl', 'WMS']
         self.ownNotSupported = True
 
     def compute(self):
         """Execute the module to create the output"""
-        global globalQgsLock
+        #global globalQgsLock
 
         try:
-            thefile = self.forceGetInputFromPort('file', None)
-            dataReq = self.forceGetInputFromPort('dataRequest', None)
+            theFile = self.forceGetInputFromPort('file', None)
+            webReq = self.forceGetInputFromPort('webrequest', None)
             theProj = self.forceGetInputFromPort('EPSG Code', None)
+            uri = webReq.get_uri()
+            layername = webReq.get_layername()
+            driver = webReq.get_driver()
 
-            #print "Qgslayer:198-thefile", thefile
-            #print "Qgslayer:199-dataReq", dataReq
-            #print "Qgslayer:199-thefile name", thefile.name
-            #print "Qgslayer:201-projection", theProj
+            """
+            if theFile:
+                print "Qgslayer:199-theFile", theFile, theFile.name
+            print "Qgslayer:200-webReq", type(webReq), webReq
+            print "Qgslayer:201-projection", theProj
+            print "Qgslayer:202-uri", uri
+            print "Qgslayer:203-layername", layername
+            print "Qgslayer:204-driver", driver
+            """
 
-            if thefile:
-                isFILE = (thefile.name != '')
+            if theFile:
+                isFILE = (theFile.name != '')
             else:
                 isFILE = False
 
-            isQGISSuported = isinstance(dataReq, DataRequest) and \
-                            dataReq.get_driver() in self.SUPPORTED_DRIVERS
+            isQGISSuported = isinstance(webReq, WebRequest) and \
+                            driver in self.SUPPORTED_DRIVERS
 
-            print "Qgslayer:211-dataReq", dataReq, type(dataReq)
-            print "Qgslayer:212-dataReq.get_driver()", dataReq.get_driver()
+            #print "Qgslayer:215-isQGISSuported", isQGISSuported
 
             if isFILE:
-                thefilepath = thefile.name
-                thefilename = QFileInfo(thefilepath).fileName()
+                file_path = theFile.name
+                file_name = QFileInfo(file_path).fileName()
                 #globalQgsLock.acquire()
-                qgis.core.QgsRasterLayer.__init__(
-                    self,
-                    thefilepath,
-                    thefilename)
+                qgis.core.QgsRasterLayer.__init__(self,
+                                                  file_path, file_name)
                 #globalQgsLock.release()
                 if theProj:
                     self.setCrs(qgis.core.QgsCoordinateReferenceSystem(theProj))
 
             elif isQGISSuported:
                 #globalQgsLock.acquire()
-                qgis.core.QgsRasterLayer.__init__(
-                    self,
-                    dataReq.get_uri(),
-                    dataReq.get_layername())
+                # NB - cannot use uri, layername, driver as args
+                qgis.core.QgsRasterLayer.__init__(self,
+                                                  uri, layername)
                 #globalQgsLock.release()
                 if theProj:
                     self.setCrs(qgis.core.QgsCoordinateReferenceSystem(theProj))
 
             else:
-                if dataReq:
+                if webReq:
                     self.raiseError('Raster Layer Driver %s not supported' %
-                                str(dataReq.get_driver()))
+                                    driver)
                 else:
                     self.raiseError('Raster Layer is not specified.')
 

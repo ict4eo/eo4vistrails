@@ -79,8 +79,8 @@ def initialize(*args, **keywords):
 
     # QgsMapLayer
     reg.add_module(QgsLayer.QgsMapLayer, namespace=mynamespace, abstract=True)
-    reg.add_input_port(QgsLayer.QgsMapLayer, 'file', File)
-    reg.add_input_port(QgsLayer.QgsMapLayer, 'dataRequest', DataRequest)
+    reg.add_input_port(QgsLayer.QgsMapLayer, "file", File)
+    reg.add_input_port(QgsLayer.QgsMapLayer, "webrequest", WebRequest)
     #reg.add_output_port(QgsLayer.QgsMapLayer, "value", QgsLayer.QgsMapLayer)
 
     # QgsLayers
@@ -98,7 +98,7 @@ def initialize(*args, **keywords):
     # QgsLayerWriter
     reg.add_module(QgsLayerWriter.QgsLayerWriter, namespace=mynamespace)
     reg.add_input_port(QgsLayerWriter.QgsLayerWriter, "value", QgsLayer.QgsVectorLayer)
-    reg.add_input_port(QgsLayerWriter.QgsLayerWriter, 'file', File)
+    reg.add_input_port(QgsLayerWriter.QgsLayerWriter, "file", File)
 
     # misc.
     reg.add_module(GeoString, namespace=mynamespace, abstract=True)

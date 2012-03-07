@@ -53,7 +53,10 @@ class DataRequest(NotCacheable, Module):
         """Raise a VisTrails error."""
         import traceback
         traceback.print_exc()
-        raise ModuleError(self, msg + ': %s' % str(error))
+        if error:
+            raise ModuleError(self, msg + ': %s' % str(error))
+        else:
+            raise ModuleError(self, msg)
 
     def get_uri(self):
         return self._uri
