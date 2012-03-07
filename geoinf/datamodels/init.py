@@ -80,7 +80,7 @@ def initialize(*args, **keywords):
     # QgsMapLayer
     reg.add_module(QgsLayer.QgsMapLayer, namespace=mynamespace, abstract=True)
     reg.add_input_port(QgsLayer.QgsMapLayer, "file", File)
-    reg.add_input_port(QgsLayer.QgsMapLayer, "webrequest", WebRequest)
+    reg.add_input_port(QgsLayer.QgsMapLayer, "datarequest", DataRequest)
     #reg.add_output_port(QgsLayer.QgsMapLayer, "value", QgsLayer.QgsMapLayer)
 
     # QgsLayers
