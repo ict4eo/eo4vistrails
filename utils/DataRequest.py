@@ -37,7 +37,10 @@ from core.modules.vistrails_module import Module, NotCacheable, ModuleError
 
 
 class DataRequest(NotCacheable, Module):
-    """TO DO: Add doc string"""
+    """The most basic request type really just an abstract class within
+       the request type hierachy. Other request types such as WebRequest
+       and PostGISrequest should inherit from it. DataRequest is an absteract 
+       module"""
 
     _input_ports = [('uri', '(edu.utah.sci.vistrails.basic:String)'),
                     ('layername', '(edu.utah.sci.vistrails.basic:String)'),
