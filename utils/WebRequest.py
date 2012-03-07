@@ -43,8 +43,13 @@ from DataRequest import DataRequest
 class WebRequest(DataRequest):
     """This module will process a web-based request.
 
-    * With only the 'urls' port set, the module will execute a GET request.
-    * With the 'data' port set as well, the module will execute a POST request.
+    Input Ports:
+     *  With only the 'urls' port set, the module will execute a GET request.
+     *  With the 'data' port also set, the module will execute a POST request.
+     *  RunRequest will cause the request to be executed; if not set, then
+        downstream modules can access the settings and perform the request as
+        required.
+
     """
 
     def __init__(self, url=None, data=None, runTheRequest=False, timeout=180):
@@ -88,7 +93,7 @@ class WebRequest(DataRequest):
             if request:
                 self.url = request.url
                 self.data = request.data
-            #print "WebRequest:93\n url:%s\n data: %s" % (self.url,self.data)
+            #print "WebRequest:92\n url:%s\n data: %s" % (self.url,self.data)
         except:
             pass
         # execute request IF required

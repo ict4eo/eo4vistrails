@@ -37,14 +37,16 @@ from core.modules.vistrails_module import Module, NotCacheable, ModuleError
 
 
 class DataRequest(NotCacheable, Module):
-    """The most basic request type really just an abstract class within
-       the request type hierachy. Other request types such as WebRequest
-       and PostGISrequest should inherit from it. DataRequest is an absteract 
-       module"""
+    """DataRequest is the topmost, abstract class in the request type hierachy.
 
-    """These input ports reflect exaclty the QGisMapLayer frameworks inputs
-       since the qgis framework forms the foundation of our data layer this 
-       makes sense"""    
+    Other request types such as WebRequest and PostGISrequest inherit from it.
+
+    The input ports reflect exactly the QgsMapLayer framework inputs,
+    because the QGIS framework forms the foundation of the data layer - see:
+    http://qgis.org/api/classQgsMapLayer.html
+
+    """
+
     _input_ports = [('uri', '(edu.utah.sci.vistrails.basic:String)'),
                     ('layername', '(edu.utah.sci.vistrails.basic:String)'),
                     ('driver', '(edu.utah.sci.vistrails.basic:String)')]

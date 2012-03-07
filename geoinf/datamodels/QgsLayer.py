@@ -69,8 +69,6 @@ class QgsMapLayer(Module, NotCacheable):
         It is not threadsafe and has race conditions on the qgis drivers
     """
 
-    #_input_ports = [('EPSG Code', '(za.co.csir.eo4vistrails:EPSG Code:data)')]
-
     def __init__(self):
         #ThreadSafeMixin.__init__(self)
         Module.__init__(self)
@@ -103,7 +101,15 @@ class QgsMapLayer(Module, NotCacheable):
 
 
 class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
-    """Create a QGIS vector layer.
+    """Create a QGIS vector layer from either a Data Request or a file.
+
+    Vector Layer Drivers (set in the Data Request) can be any of:
+     *  WFS: Web Feature Service
+     *  ogr: multiple vector formats - see http://www.gdal.org/ogr/
+     *  postgres: Postgresql/PostGIS database
+
+    Note that these driver names *are* case-sensitive.
+
     """
 
     def __init__(self, uri=None, layername=None, driver=None):
@@ -121,24 +127,22 @@ class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
         #global globalQgsLock
 
         try:
-            thefile = self.forceGetInputFromPort('file', None)
-            dataReq = self.forceGetInputFromPort('dataRequest', None)
+            theFile = self.forceGetInputFromPort('file', None)
+            dataReq = self.forceGetInputFromPort('datarequest', None)
             theProj = self.forceGetInputFromPort('EPSG Code', None)
-            self.layer_file = thefile
+            self.layer_file = theFile
 
             try:
-                isFILE = (thefile != None) and (thefile.name != '')
+                isFILE = (theFile != None) and (theFile.name != '')
             except AttributeError:
-                isFILE = (thefile.name != '')
+                isFILE = (theFile.name != '')
 
-            #Note this is case sensitive -> "WFS"
             isQGISSuported = isinstance(dataReq, DataRequest) and \
                             dataReq.get_driver() in self.SUPPORTED_DRIVERS
 
             if isFILE:
-                thefilepath = thefile.name
+                thefilepath = theFile.name
                 thefilename = QFileInfo(thefilepath).fileName()
-
                 #globalQgsLock.acquire()
                 qgis.core.QgsVectorLayer.__init__(
                     self,
@@ -146,11 +150,10 @@ class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
                     thefilename,
                     "ogr")
                 #globalQgsLock.release()
-
                 if theProj:
                     self.setCrs(qgis.core.QgsCoordinateReferenceSystem(theProj))
-            elif isQGISSuported:
 
+            elif isQGISSuported:
                 #globalQgsLock.acquire()
                 qgis.core.QgsVectorLayer.__init__(
                     self,
@@ -158,9 +161,9 @@ class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
                     dataReq.get_layername(),
                     dataReq.get_driver())
                 #globalQgsLock.release()
-
                 if theProj:
                     self.setCrs(qgis.core.QgsCoordinateReferenceSystem(theProj))
+
             else:
                 if dataReq:
                     self.raiseError('Vector Layer Driver %s not supported' %
@@ -176,7 +179,15 @@ class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
 
 @RPyCSafeModule()
 class QgsRasterLayer(QgsMapLayer, qgis.core.QgsRasterLayer):
-    """Create a QGIS raster layer.
+    """Create a QGIS raster layer from either a Data Request or a file.
+
+    Raster Layer Drivers (set in the Data Request) can be any of:
+     *  WCS: Web Coverage Service
+     *  wms: Web Mapping Service
+     *  gdl: GDAL
+
+    Note that these driver names *are* case-sensitive.
+
     """
 
     def __init__(self, uri=None, layername=None, driver=None):
@@ -192,28 +203,32 @@ class QgsRasterLayer(QgsMapLayer, qgis.core.QgsRasterLayer):
         #global globalQgsLock
 
         try:
-            thefile = self.forceGetInputFromPort('file', None)
-            dataReq = self.forceGetInputFromPort('dataRequest', None)
+            theFile = self.forceGetInputFromPort('file', None)
+            dataReq = self.forceGetInputFromPort('datarequest', None)
             theProj = self.forceGetInputFromPort('EPSG Code', None)
 
-            #print "Qgslayer:198-thefile", thefile
-            #print "Qgslayer:199-dataReq", dataReq
-            #print "Qgslayer:199-thefile name", thefile.name
-            #print "Qgslayer:201-projection", theProj
+            """
+            print "Qgslayer:200-dataReq", dataReq, type(dataReq)
+            if theFile:
+                print "Qgslayer:202-theFile", theFile
+                print "Qgslayer:203-theFile name", theFile.name
+            print "Qgslayer:204-projection", theProj
+            if dataReq:
+                print "Qgslayer:206-uri", dataReq.get_uri()
+                print "Qgslayer:207-layer", dataReq.get_layername()
+                print "Qgslayer:208-driver", dataReq.get_driver()
+            """
 
-            if thefile:
-                isFILE = (thefile.name != '')
+            if theFile:
+                isFILE = (theFile.name != '')
             else:
                 isFILE = False
 
             isQGISSuported = isinstance(dataReq, DataRequest) and \
                             dataReq.get_driver() in self.SUPPORTED_DRIVERS
 
-            #print "Qgslayer:211-dataReq", dataReq, type(dataReq)
-            #print "Qgslayer:212-dataReq.get_driver()", dataReq.get_driver()
-
             if isFILE:
-                thefilepath = thefile.name
+                thefilepath = theFile.name
                 thefilename = QFileInfo(thefilepath).fileName()
                 #globalQgsLock.acquire()
                 qgis.core.QgsRasterLayer.__init__(

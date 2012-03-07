@@ -198,7 +198,7 @@ class QGISMapCanvasCellWidget(QCellWidget):
              QgsRasterLayer.MultiBandSingleBandGray,
              QgsRasterLayer.SingleBandPseudoColor ]
         allowedRgbStyles = [ QgsRasterLayer.MultiBandColor ]
-        
+
         (inputLayers, crsDest) = inputPorts
         if type(inputLayers) != list:
             inputLayers = [inputLayers]
@@ -233,7 +233,7 @@ class QGISMapCanvasCellWidget(QCellWidget):
                     #layer.setCacheImage( None )
                     #layer.setStandardDeviations( 0.0 )
                     # make sure the layer is redrawn
-                    #layer.triggerRepaint()                                        
+                    #layer.triggerRepaint()
                     if layer.drawingStyle() in allowedGreyStyles:
                         #Everything looks fine so set stretch and exit
                         #For greyscale layers there is only ever one band
@@ -243,7 +243,7 @@ class QGISMapCanvasCellWidget(QCellWidget):
                         generateLookupTableFlag = False
                         # compute the min and max for the current extent
                         extentMin, extentMax = layer.computeMinimumMaximumEstimates( band )
-                        print "min max color", extentMin, extentMax
+                        print "QGISMapCanvas:246 min max color", extentMin, extentMax
                         # set the layer min value for this band
                         layer.setMinimumValue( band, extentMin, generateLookupTableFlag )
                         # set the layer max value for this band
