@@ -42,6 +42,9 @@ class DataRequest(NotCacheable, Module):
        and PostGISrequest should inherit from it. DataRequest is an absteract 
        module"""
 
+    """These input ports reflect exaclty the QGisMapLayer frameworks inputs
+       since the qgis framework forms the foundation of our data layer this 
+       makes sense"""    
     _input_ports = [('uri', '(edu.utah.sci.vistrails.basic:String)'),
                     ('layername', '(edu.utah.sci.vistrails.basic:String)'),
                     ('driver', '(edu.utah.sci.vistrails.basic:String)')]
