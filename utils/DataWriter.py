@@ -44,7 +44,7 @@ from packages.eo4vistrails.utils.DropDownListWidget import ComboBoxWidget
 
 @RPyCSafeModule()
 class TextDataWriter(ThreadSafeMixin, Module):
-    """Utility for creating a text file from a temporal vector layer.
+    """Utility for creating a text data file from a temporal vector layer.
 
     Input ports:
         vector_layer:
@@ -104,6 +104,10 @@ class TextDataWriter(ThreadSafeMixin, Module):
         elif data_output_type == 'dat':
             file_out = vector_layer.to_csv(filename_out=filename,
                                            missing_value=missing_value)
+        elif data_output_type == 'gml':
+            file_out = vector_layer.to_gml(filename_out=filename,
+                                           missing_value=missing_value)
+
         else:
             raise ModuleError(self, 'Unknown Data Output Type')
 
@@ -114,7 +118,8 @@ class DataWriterTypeComboBoxWidget(ComboBoxWidget):
     """Types of specialised data writing options."""
     _KEY_VALUES = {'Ocean Data View': 'odv',
                    'Comma-separated': 'csv',
-                   'R data file': 'dat'}
+                   'R data file': 'dat',
+                   'GML data': 'gml'}
 
 DataWriterTypeComboBox = basic_modules.new_constant('Data Output Type',
                                         staticmethod(str),

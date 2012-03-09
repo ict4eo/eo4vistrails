@@ -52,6 +52,11 @@ from QgsLayer import QgsVectorLayer
 
 # strings that may be used by GML to indicate missing data
 GML_NO_DATA_LIST = ["noData", "None", "Null", "NULL"]
+# strings that may be used by GML to indicate certain types of data
+GML_TIME_NAMES = ['time', 'esecs']
+GML_DEPTH_NAMES = ['depth', 'z-position']
+GML_LAT_NAMES = ['latitude', 'y-position']
+GML_LON_NAMES = ['longitude', 'x-position']
 
 
 class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
@@ -65,7 +70,8 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
     `self.results_file`
 
     Methods are provided to extract data from the GML file and return file(s)
-    containing data in various formats; e.g. "flat files" such as CSV, ODV.
+    containing data in various formats; e.g. "flat files" such as CSV, ODV,
+    or as plain GML (containing only location data)
     """
 
     def __init__(self, uri=None, layername=None, driver=None):
@@ -77,13 +83,12 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
         self.results_file = None
 
     def compute(self):
-        print "Compute of TVL called"
         """Execute the module to create the output"""
         fileObj = None
         try:
             thefile = self.forceGetInputFromPort('file', None)
             dataReq = self.forceGetInputFromPort('dataRequest', None)
-            #print "TVL:71 file,name", thefile, thefile.name
+            #print "TVL:85 file,name", thefile, thefile.name
 
             try:
                 isFILE = (thefile != None) and (thefile.name != '')
@@ -99,8 +104,8 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
                     self.results_file = self.thefilepath
                 else:
                     self.thefilepath = self.results_file
-                #print "TVL:87", self.thefilepath
-                #print "TVL:88", self.results_file
+                #print "TVL:101", self.thefilepath
+                #print "TVL:102", self.results_file
                 self.thefilename = QFileInfo(self.thefilepath).fileName()
                 qgis.core.QgsVectorLayer.__init__(
                     self,
@@ -134,7 +139,7 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
 
         Returns:
             a list with a field dictionary for each field, including:
-            *   ID
+            *   id
             *   name
             *   definition
             *   units
@@ -148,7 +153,7 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
                 if len(field) > 0:  # no.of nodes
                     child = field[0]  # any of: Time/Quantity/Text/Category
                     defn = doc.elem_attr_value(child, 'definition')
-                    field_set['ID'] = index
+                    field_set['id'] = index
                     field_set['definition'] = defn
                     field_set['name'] = name or defn
                     # units
@@ -169,7 +174,7 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
     def extract_procedure(self, doc=None, thefile=None):
         """Return the procedure from either a GML file or Observation element.
 
-        CAUTION!!! not tested...
+        *WARNING*:  This method has not been used or tested...
         """
         if thefile:
             doc = Parser(file=thefile, namespace="http://www.opengis.net/swe/1.0.1")
@@ -191,6 +196,67 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
             return (bnd_up + bnd_up)
         except:
             return ()
+
+    def extract_swe_values_GML(self, thefile, line=True):
+        """Parse SOS output and extract locations from swe:values as GML data.
+
+        Requires:
+            a GML document (or section thereof)
+            line selection (True/False) - if False, then points are returned
+
+        Returns:
+            a string, with lat/lon data wrapped as elements in a GML line
+        """
+        doc = Parser(file=thefile, namespace="http://www.opengis.net/swe/1.0.1")
+        GML = ''
+        om_members = doc.tags('member', doc.get_ns('om'))
+        for om_member in om_members:
+            om_obs = doc.elem_tag(om_member,
+                                  'Observation',
+                                  doc.get_ns('om'))
+            # process results...
+            om_obs_result = doc.elem_tag(om_member,
+                                       'Observation/result',
+                                       doc.get_ns('om'))
+            if om_obs_result:
+                # meta data - field information
+                fields = doc.elem_tags(
+                    om_obs_result,
+                    'DataArray/elementType/DataRecord/field')
+                fields = self.extract_field_data(doc, fields)
+                # locate lat/lon fields
+                lat, lon = -1, -1
+                for key, field in enumerate(fields):
+                    if True in [field['name'].lower().__contains__(x) \
+                                for x in GML_LAT_NAMES]:
+                        lat = key
+                    if True in [field['name'].lower().__contains__(x) \
+                                for x in GML_LON_NAMES]:
+                        lon = key
+                # extract lat/lon data
+                if lat > -1 and lon > -1:
+                    textblock = doc.elem_tag(
+                        om_obs_result,
+                        'DataArray/encoding/TextBlock')
+                    block = doc.elem_attr_value(textblock, 'blockSeparator')
+                    token = doc.elem_attr_value(textblock, 'tokenSeparator')
+                    values = doc.elem_tag_value(om_obs_result, 'DataArray/values')
+                    if values:
+                        val_set = values.split(block)
+                        for val in val_set:
+                            items = val.split(token)
+                            try:
+                                if line:
+                                    GML = GML + '%s %s ' % (items[lat], items[lon])
+                                else:
+                                    GML = GML + '<gml:Point><gml:pos>%s %s</gml:pos></gml:Point>\n' % (items[lat], items[lon])
+                            except:
+                                pass
+                        if GML:
+                            if line:
+                                return '<gml:LineString><gml:posList>%s\
+                                        </gml:posList></gml:LineString>' % GML
+        return GML
 
     def extract_time_series(self, thefile):
         """Parse a SOS GML file and extract time series and other meta data.
@@ -243,8 +309,8 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
                     id = doc.elem_attr_value(om_feature, 'id',
                                              doc.get_ns('gml'))
                 feature['id'] = id
-                feature['name'] = None  # attempt to find a name ...???
-                # get feature geomtry
+                feature['name'] = None  # attempt to find a name ...TODO???
+                # get feature geometry
                 om_point = doc.elem_tag_nested(om_feature,
                                                'Point',
                                                doc.get_ns('gml'))
@@ -257,7 +323,7 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
                         geom_value = doc.elem_tag_value(om_point,
                                                         'coordinates',
                                                         doc.get_ns('gml'))
-                    # convert to WKT (well known text format)
+                    # convert to WKT (Well Known Text) format
                     if geom_value:
                         points = geom_value.split(' ')
                         point = ogr.Geometry(ogr.wkbPoint)
@@ -272,7 +338,7 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
                 om_sampling_point = doc.elem_tag_nested(om_feature,
                                                       'SamplingPoint',
                                                       doc.get_ns('sa'))
-                #print "TVL:375", om_sampling_point
+                #print "TVL:325", om_sampling_point
                 if om_sampling_point and len(om_sampling_point) == 1:
                     id = doc.elem_attr_value(om_feature, 'xlink:href')
                     if not id:
@@ -309,9 +375,38 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
                 result['sampling_point'] = sampling_point
                 result['feature'] = feature
                 result['data'] = value_list
-                #print "extract_time_series:333", result
+                #print "extract_time_series:363", result
                 results.append(result)
         return results
+
+    def to_gml(self, filename_out, header=True,
+               delimiter=',', quotechar=None, missing_value=None):
+        """Transform GML to create a GML representation all spatial data.
+        """
+        HEADER = """<om:ObservationCollection
+                    xmlns:om="http://www.opengis.net/om/1.0"
+                    xmlns:swe="http://www.opengis.net/swe/1.0.1"
+                    xmlns:gml="http://www.opengis.net/gml"
+                    xmlns:xlink="http://www.w3.org/1999/xlink"
+                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                    xsi:schemaLocation="http://www.opengis.net/om/1.0
+                        http://schemas.opengis.net/om/1.0.0/om.xsd">"""
+        FOOTER = '</om:ObservationCollection>\n'
+        GML_file = self.results_file
+        if not GML_file:
+            self.raiseError('No GML file specified from which to extract data')
+        results = self.extract_swe_values_GML(GML_file)
+        #point_results = self.extract_swe_values_GML(GML_file, False)
+        #print "TVL:399:gml", point_results
+        if results:
+            file_out = open(filename_out, "w")
+            file_out.write(HEADER)
+            file_out.write(results)
+            file_out.write(FOOTER)
+            file_out.close()
+            return file_out
+        else:
+            return None
 
     def to_csv(self, filename_out, header=True,
                delimiter=',', quotechar=None, missing_value=None):
@@ -344,7 +439,7 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
         if not GML_file:
             self.raiseError('No GML file specified from which to extract data')
         results = self.extract_time_series(GML_file)  # get data & metadata
-        #print "TVL:345", results
+        #print "TVL:395", results
         if results and results[0]['fields']:
             quoting = csv.QUOTE_NONNUMERIC
             file_out = open(filename_out, "w")
@@ -375,7 +470,7 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
                 for index, datum in enumerate(result['data']):
                     if missing_value:
                         for key, item in enumerate(datum):
-                            #print "TVL:377", type(item), item
+                            #print "TVL:427", type(item), item
                             if not item or item in GML_NO_DATA_LIST:
                                 datum[key] = missing_value
                     datum.insert(0, result['feature']['geometry'])
@@ -423,7 +518,7 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
         if not GML_file:
             self.raiseError('No GML file specified from which to extract data')
         results = self.extract_time_series(GML_file)  # get data & metadata
-        #print "TVL:425", results[0]
+        #print "TVL:475", results[0]
         if results and results[0]['fields']:
             file_out = open(filename_out, "w")
             csv_writer = csv.writer(file_out,
@@ -437,19 +532,15 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
             #only take field names from FIRST member
             for field in results[0]['fields']:
                 _field = field['name']
-                key = field['ID']
+                key = field['id']
                 # extract and record key fields used for OVD
-                time_names = ['time', 'esecs']
-                depth_names = ['depth', 'z-position']
-                lat_names = ['latitude', 'y-position']
-                lon_names = ['longitude', 'x-position']
-                if True in [_field.lower().__contains__(x) for x in time_names]:
+                if True in [_field.lower().__contains__(x) for x in GML_TIME_NAMES]:
                     key_fields[0] = key
-                elif True in [_field.lower().__contains__(x) for x in lat_names]:
+                elif True in [_field.lower().__contains__(x) for x in GML_LAT_NAMES]:
                     key_fields[1] = key
-                elif True in [_field.lower().__contains__(x) for x in lon_names]:
+                elif True in [_field.lower().__contains__(x) for x in GML_LON_NAMES]:
                     key_fields[2] = key
-                elif True in [_field.lower().__contains__(x) for x in depth_names]:
+                elif True in [_field.lower().__contains__(x) for x in GML_DEPTH_NAMES]:
                     key_fields[3] = key
                 # ordinary (measured) variable fields
                 else:
@@ -461,7 +552,7 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
             reverse_key_fields = sorted(key_fields, reverse=True)
             csv_writer.writerow(header)
 
-            #print "TVL:466", results[0]['fields'], key_fields
+            #print "TVL:516", results[0]['fields'], key_fields
             for index, result in enumerate(results):
                 for datum in result['data']:
                     if missing_value:
@@ -472,7 +563,7 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
                             except TypeError:
                                 pass  # ignore non-strings
                     # extract key field values from datum
-                    #print "TVL:476 datum", datum
+                    #print "TVL:526 datum", datum
                     time = day = lat = lon = None
                     depth = 0
                     for key, value in enumerate(datum):
