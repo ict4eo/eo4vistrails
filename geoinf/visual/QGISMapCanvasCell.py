@@ -70,8 +70,7 @@ class QGISMapCanvasCell(SpreadsheetCell): #(ThreadSafeMixin, SpreadsheetCell):
         if self.hasInputFromPort("baselayer"):
             self.base_layer = self.getInputFromPort("baselayer")
             if self.base_layer:
-                #print "base_layer id/type/crs :", self.base_layer.getLayerID()
-                #    self.type(base_layer), self.base_layer.crs()
+                print "QGISMapCanvas:74", self.base_layer.results_file
                 try:
                     self.crsDest = \
                         QgsCoordinateReferenceSystem(self.base_layer.crs())
@@ -132,9 +131,9 @@ class QGISMapCanvasCellWidget(QCellWidget):
         # create layer explorer pane
         self.explorer = QDockWidget("Layers")
         self.explorer.resize(60, 100)
-        #~self.explorerListWidget = QtGui.QListWidget()
-        #~self.explorerListWidget.setObjectName("listWidget")
-        #~self.explorer.setWidget(self.explorerListWidget)
+        self.explorerListWidget = QtGui.QListWidget()#~
+        self.explorerListWidget.setObjectName("listWidget")#~
+        self.explorer.setWidget(self.explorerListWidget)#~
 
         # create map tools
         self.toolPan = QgsMapToolPan(self.canvas,)
@@ -299,7 +298,7 @@ class QGISMapCanvasCellWidget(QCellWidget):
                 self.canvas.refresh()
                 self.update()
         # Add widget for layer control to canvas
-        #~self.explorerListWidget.clear()
+        self.explorerListWidget.clear()#~
         #print "self.explorerListWidget count", self.explorerListWidget.count()
 
         # get layernames from inputLayers, and use them as labells in explorerListWidget
@@ -307,10 +306,10 @@ class QGISMapCanvasCellWidget(QCellWidget):
             item = QtGui.QListWidgetItem()
             item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
             item.setCheckState(QtCore.Qt.Checked)
-            #~self.explorerListWidget.addItem(item)
+            self.explorerListWidget.addItem(item)#~
             self.widget = QtGui.QLabel(lyr.name())
-            #~self.explorerListWidget.setItemWidget(item, self.widget)
-        #~self.explorerListWidget.itemClicked.connect(self.on_listWidget_itemClicked)
+            self.explorerListWidget.setItemWidget(item, self.widget)#~
+        self.explorerListWidget.itemClicked.connect(self.on_listWidget_itemClicked)#~
 
     def on_listWidget_itemClicked(self, item):
         """TO DO: Add doc string"""

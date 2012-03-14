@@ -61,7 +61,7 @@ GML_LON_NAMES = ['longitude', 'x-position']
 
 class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
     # TO DO - OMIT qgis.core.QgsVectorLayer
-    """Create an extended vector layer, based on QGIS vector layer.
+    """Create an extended vector layer, based on a QGIS vector layer.
 
     Associated data is stored, and can be referenced, in a local file.
 
@@ -76,8 +76,7 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
 
     def __init__(self, uri=None, layername=None, driver=None):
         QgsVectorLayer.__init__(self, uri, layername, driver)
-        #if uri and layername and driver:
-        #    qgis.core.QgsVectorLayer.__init__(self, uri, layername, driver)
+        #print "TVL:79 - in layer creation",
         self.SUPPORTED_DRIVERS += ['OM', 'HDF']  # add new supported types
         self.time_series = {}
         self.results_file = None
@@ -88,7 +87,7 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
         try:
             thefile = self.forceGetInputFromPort('file', None)
             dataReq = self.forceGetInputFromPort('dataRequest', None)
-            #print "TVL:85 file,name", thefile, thefile.name
+            #print "TVL:91 file,name", thefile, thefile.name
 
             try:
                 isFILE = (thefile != None) and (thefile.name != '')
@@ -104,8 +103,8 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
                     self.results_file = self.thefilepath
                 else:
                     self.thefilepath = self.results_file
-                #print "TVL:101", self.thefilepath
-                #print "TVL:102", self.results_file
+                #print "TVL:107", self.thefilepath
+                #print "TVL:108", self.results_file
                 self.thefilename = QFileInfo(self.thefilepath).fileName()
                 qgis.core.QgsVectorLayer.__init__(
                     self,
@@ -381,7 +380,7 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
 
     def to_gml(self, filename_out, header=True,
                delimiter=',', quotechar=None, missing_value=None):
-        """Transform GML to create a GML representation all spatial data.
+        """Transform GML to create a GML representation of all spatial data.
         """
         HEADER = """<om:ObservationCollection
                     xmlns:om="http://www.opengis.net/om/1.0"

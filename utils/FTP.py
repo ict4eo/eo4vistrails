@@ -119,38 +119,46 @@ class FTPReader(Module):
             e = 'Cannot change to directory "%s"' % self.directory
             f.quit()
             raise ModuleError(self, e)
-        
+
         fileObj = None
-        try:            
+        try:
             # create output file
             try:
                 if self.directory_out:
+                    if not os.path.exists(self.directory_out):
+                        os.makedirs(self.directory_out)
                     if not self.filename_out:
                         self.filename_out = self.filename
                     _file = self.directory_out + self.filename_out
                     fileObj = basic_modules.File()
                     fileObj.name = _file
                     f_out = open(_file, 'wb')
-                    #print 'FTP:134', fileObj, fileObj.name
+                    #print 'FTP:136', fileObj, fileObj.name
                 else:
                     fileObj = self.interpreter.filePool.create_file()
                     self.filename_out = fileObj.name
                     f_out = open(self.filename_out, 'wb')
-                    #print 'FTP:138', fileObj, fileObj.name
+                    #print 'FTP:141', fileObj, fileObj.name
             except:
                 e = 'Unable to create output file "%s"' % self.filename_out
-                f_out.close()
+                try:
+                    f_out.close()
+                except:
+                    pass
                 raise ModuleError(self, e)
             # read file from server
             f.retrbinary('RETR %s' % self.filename, f_out.write)
             f_out.close()
             f.quit()
             self.setResult('transferred_file', fileObj)
-            #print 'FTP:148 Downloaded "%s" from current dir as "%s"' % \
+            #print 'FTP:154 Downloaded "%s" from current dir as "%s"' % \
             #        (self.filename, self.filename_out)
         except ftplib.error_perm:
             e = 'Cannot read file "%s"' % self.filename
             os.unlink(self.filename)
-            f_out.close()
+            try:
+                f_out.close()
+            except:
+                pass
             f.quit()
             raise ModuleError(self, e)

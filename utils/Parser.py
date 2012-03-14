@@ -119,18 +119,24 @@ except ImportError:
 
 
 class Parser(object):
-    """This module provides utility methods to parse an XML file.
+    """This module provides utility methods to parse an XML datastream.
     """
 
-    def __init__(self, file=None, url=None, namespace=KEY_NAMESPACE):
+    def __init__(self, file=None, url=None, data=None, namespace=KEY_NAMESPACE):
         self.url = url
         self.file = file
+        self.data = data
         self.namespace = namespace or KEY_NAMESPACE
         self.xml = None
         if self.file:
             f = open(self.file)
             self.xml = etree.fromstring(f.read())
-        #TO DO: add capability to open XML from a URL - see lib/owslib/ows.py - def openURL()
+        elif self.data:
+            self.xml = etree.fromstring(data)
+        elif self.url:
+            pass
+            #TO DO: add capability to open XML from a URL -
+            #       see lib/owslib/ows.py - def openURL()
 
     def tag(self, item, namespace=None):
         """Return a tag as an element object, based on XML document."""
@@ -224,7 +230,7 @@ class Parser(object):
         return result
 
     def elem_tags(self, element, item, namespace=None):
-        """Return  a set of tags as element objects, for a given element."""
+        """Return a set of tags as element objects, for a given element."""
         if not namespace:
             namespace = self.namespace
         try:
@@ -240,10 +246,9 @@ class Parser(object):
     def nspath(self, path, namespace=None):
         """Prefix the given path with the given namespace identifier.
 
-        Parameters
-        ----------
-         * path: ElementTree API Compatible path expression
-         * ns: the XML namespace URI.
+        Parameters:
+         *  path: ElementTree API Compatible path expression
+         *  ns: the XML namespace URI.
         """
         if path is None:
             return None
@@ -262,11 +267,9 @@ class Parser(object):
     def elem_find(self, element, nss=()):
         """Wraps etree.find to search MULTIPLE namespaces
 
-        Parameters
-        ----------
-         * element: name of element
-         * nss:  a tuple of possible XML namespace URIs
-
+        Parameters:
+         *  element: name of element
+         *  nss:  a tuple of possible XML namespace URIs
         """
         if name is None:
             return None
@@ -286,13 +289,12 @@ class Parser(object):
     def testXMLValue(self, val, attrib=False):
         """Test that the XML value exists
 
-        Parameters
-        ----------
-         * val: the value to be tested
-         Returns
-        --------
-         * if exists return val.text
-         * not exists returns None
+        Parameters:
+         *  val: the value to be tested
+
+        Returns:
+         *  exists: returns val.text
+         *  not exists: returns None
         """
         if val is not None:
             if attrib == True:
@@ -305,10 +307,9 @@ class Parser(object):
     def xmlvalid(self, xml, xsd):
         """Test whether an XML document is valid against an XSD Schema
 
-        Parameters
-        ----------
-         * xml: XML content
-         * xsd: pointer to XML Schema (local file path or URL)
+        Parameters:
+         *  xml: XML content
+         *  xsd: pointer to XML Schema (local file path or URL)
         """
         xsd1 = etree.parse(xsd)
         xsd2 = etree.XMLSchema(xsd1)
