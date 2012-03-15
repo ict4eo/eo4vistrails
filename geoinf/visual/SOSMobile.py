@@ -195,7 +195,7 @@ class SOSMobile(ThreadSafeMixin, Module):
                     GML = ""
                     if not line:
                         multipoint = ET.SubElement(leaf, "gml:MultiPoint")
-                        #multipoint.set("srsName", "EPSG:4326")  # TOD - get srs from Feature?
+                        multipoint.set("srsName", "EPSG:4326")  # TOD - get srs from Feature?
                     if _values and _values[0].text and lat > -1 and lon > -1:
                         #print "SOSMobile:200 ... processing values"
                         val_set = _values[0].text.split(block)
@@ -208,9 +208,9 @@ class SOSMobile(ThreadSafeMixin, Module):
                                                                 "gml:pointMember")
                                     point = ET.SubElement(pointmember, "gml:Point")
                                     pos = ET.SubElement(point, "gml:pos")
-                                    pos.text = '%s %s' % (items[lat], items[lon])
+                                    pos.text = '%s %s' % (items[lon], items[lat])
                                 else:
-                                    GML = GML + '%s %s ' % (items[lat], items[lon])
+                                    GML = GML + '%s %s ' % (items[lon], items[lat])
                             except:
                                 pass
                         if line and GML:

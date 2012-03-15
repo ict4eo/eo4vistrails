@@ -57,7 +57,7 @@ QgsApplication.setPrefixPath("/usr", True)
 QgsApplication.initQgis()
 
 
-class QGISMapCanvasCell(SpreadsheetCell): #(ThreadSafeMixin, SpreadsheetCell):
+class QGISMapCanvasCell(SpreadsheetCell):  # ( ThreadSafeMixin, SpreadsheetCell):
     """TO DO: Add doc string
     """
 
@@ -70,7 +70,7 @@ class QGISMapCanvasCell(SpreadsheetCell): #(ThreadSafeMixin, SpreadsheetCell):
         if self.hasInputFromPort("baselayer"):
             self.base_layer = self.getInputFromPort("baselayer")
             if self.base_layer:
-                print "QGISMapCanvas:74", self.base_layer.results_file
+                #print "QGISMapCanvas:74", self.base_layer.results_file
                 try:
                     self.crsDest = \
                         QgsCoordinateReferenceSystem(self.base_layer.crs())
@@ -122,35 +122,38 @@ class QGISMapCanvasCellWidget(QCellWidget):
                         "/mActionPan.png"), "Pan", self)
 
         # create toolbar
-        self.toolbar = QToolBar() #"Canvas actions",
+        self.toolbar = QToolBar()
         self.toolbar.addAction(actionAddLayer)
         self.toolbar.addAction(actionZoomIn)
         self.toolbar.addAction(actionZoomOut)
         self.toolbar.addAction(actionPan)
 
-        # create layer explorer pane
-        self.explorer = QDockWidget("Layers")
-        self.explorer.resize(60, 100)
-        self.explorerListWidget = QtGui.QListWidget()#~
-        self.explorerListWidget.setObjectName("listWidget")#~
-        self.explorer.setWidget(self.explorerListWidget)#~
-
-        # create map tools
-        self.toolPan = QgsMapToolPan(self.canvas,)
-        self.toolPan.setAction(actionPan)
-        self.toolZoomIn = QgsMapToolZoom(self.canvas, False) # false == in
-        self.toolZoomIn.setAction(actionZoomIn)
-        self.toolZoomOut = QgsMapToolZoom(self.canvas, True) # true == out
-        self.toolZoomOut.setAction(actionZoomOut)
-
-        # layerList explorer
+        # layerList explorer#~
         self.GroupBoxLyrExplorer = QtGui.QGroupBox("")
         self.vboxLyrExplorer = QtGui.QVBoxLayout()
         self.GroupBoxLyrExplorer.setLayout(self.vboxLyrExplorer)
         self.mainLayout.addWidget(self.GroupBoxLyrExplorer)
         self.label = QtGui.QLabel("")
         self.vboxLyrExplorer.addWidget(self.label)
+        # create layer explorer dock#~
+        self.explorer = QDockWidget("Layers")#~
+        self.explorer.resize(60, 100)#~
         self.vboxLyrExplorer.addWidget(self.explorer)
+        # create layer explorer pane#~
+        self.explorerListWidget = QtGui.QListWidget()#~
+        self.explorerListWidget.setObjectName("listWidget")#~
+        self.explorer.setWidget(self.explorerListWidget)#~
+        # create layer explorer signal#~
+        self.explorerListWidget.itemClicked.connect(
+            self.on_listWidget_itemClicked)#~
+
+        # create map tools
+        self.toolPan = QgsMapToolPan(self.canvas,)
+        self.toolPan.setAction(actionPan)
+        self.toolZoomIn = QgsMapToolZoom(self.canvas, False)  # false == in
+        self.toolZoomIn.setAction(actionZoomIn)
+        self.toolZoomOut = QgsMapToolZoom(self.canvas, True)  # true == out
+        self.toolZoomOut.setAction(actionZoomOut)
 
         # toolbar and canvas layout
         self.GroupBoxToolBarMapCanvas = QtGui.QGroupBox("")
@@ -160,7 +163,7 @@ class QGISMapCanvasCellWidget(QCellWidget):
         self.vboxToolBarMapCanvas.addWidget(self.toolbar)
         self.vboxToolBarMapCanvas.addWidget(self.canvas)
 
-        # set signals
+        # set map processing signals
         self.connect(actionAddLayer, SIGNAL("activated()"), self.addLayer)
         self.connect(actionZoomIn, SIGNAL("activated()"), self.zoomIn)
         self.connect(actionZoomOut, SIGNAL("activated()"), self.zoomOut)
@@ -189,14 +192,15 @@ class QGISMapCanvasCellWidget(QCellWidget):
         self.canvas.setMapTool(self.toolPan)
 
     def updateContents(self, inputPorts):
-        """ updateContents(inputPorts: tuple) -> None
-        Updates the contents with a new, changed filename
+        """Updates the contents with a new, changed filename
+
+        updateContents(inputPorts: tuple) -> None
         """
-        allowedGreyStyles = [ QgsRasterLayer.SingleBandGray,
+        allowedGreyStyles = [QgsRasterLayer.SingleBandGray,
              QgsRasterLayer.MultiBandSingleBandPseudoColor,
              QgsRasterLayer.MultiBandSingleBandGray,
-             QgsRasterLayer.SingleBandPseudoColor ]
-        allowedRgbStyles = [ QgsRasterLayer.MultiBandColor ]
+             QgsRasterLayer.SingleBandPseudoColor]
+        allowedRgbStyles = [QgsRasterLayer.MultiBandColor]
 
         (inputLayers, crsDest) = inputPorts
         if type(inputLayers) != list:
@@ -210,9 +214,9 @@ class QGISMapCanvasCellWidget(QCellWidget):
         #   NB raster layers cannot be projected in QGIS 1.6 and earlier
         myrender = self.canvas.mapRenderer()
         myrender.setProjectionsEnabled(True)
-        #print self.canvas.hasCrsTransformEnabled()
         if crsDest:
             myrender.setDestinationCrs(crsDest)
+
         # Add layers to canvas
         mapCanvasLayers = []
         for layer in inputLayers:
@@ -225,10 +229,12 @@ class QGISMapCanvasCellWidget(QCellWidget):
                 # populate mylist with inputLayers's items
                 self.mylist.append(layer)
                 # test if the layer is a raster from a local file (not a wms)
-                if layer.type() == layer.RasterLayer: # and ( not layer.usesProvider() ):
+                if layer.type() == layer.RasterLayer:
+                    # and ( not layer.usesProvider() ):
                     # Test if the raster is single band greyscale
                     #layer.setMinimumMaximumUsingLastExtent()
-                    #layer.setContrastEnhancementAlgorithm(QgsContrastEnhancement.StretchToMinimumMaximum)
+                    #layer.setContrastEnhancementAlgorithm(
+                    #   QgsContrastEnhancement.StretchToMinimumMaximum)
                     #layer.setCacheImage( None )
                     #layer.setStandardDeviations( 0.0 )
                     # make sure the layer is redrawn
@@ -236,31 +242,32 @@ class QGISMapCanvasCellWidget(QCellWidget):
                     if layer.drawingStyle() in allowedGreyStyles:
                         #Everything looks fine so set stretch and exit
                         #For greyscale layers there is only ever one band
-                        band = layer.bandNumber( layer.grayBandName() ) # base 1 counting in gdal
+                        # base 1 counting in gdal
+                        band = layer.bandNumber(layer.grayBandName())
                         extentMin = 0.0
                         extentMax = 0.0
                         generateLookupTableFlag = False
                         # compute the min and max for the current extent
-                        extentMin, extentMax = layer.computeMinimumMaximumEstimates( band )
-                        print "QGISMapCanvas:246 min max color", extentMin, extentMax
+                        extentMin, extentMax = layer.computeMinimumMaximumEstimates(band)
+                        #print "QGISMapCanvas:246 min max color", extentMin, extentMax
                         # set the layer min value for this band
-                        layer.setMinimumValue( band, extentMin, generateLookupTableFlag )
+                        layer.setMinimumValue(band, extentMin, generateLookupTableFlag)
                         # set the layer max value for this band
-                        layer.setMaximumValue( band, extentMax, generateLookupTableFlag )
+                        layer.setMaximumValue(band, extentMax, generateLookupTableFlag)
                         # ensure that stddev is set to zero
-                        layer.setStandardDeviations( 0.0 )
+                        layer.setStandardDeviations(0.0)
                         # let the layer know that the min max are user defined
-                        layer.setUserDefinedGrayMinimumMaximum( True )
+                        layer.setUserDefinedGrayMinimumMaximum(True)
                         # ensure any cached render data for this layer is cleared
-                        layer.setCacheImage( None )
+                        layer.setCacheImage(None)
                         # make sure the layer is redrawn
                         layer.setContrastEnhancementAlgorithm(QgsContrastEnhancement.StretchToMinimumMaximum)
                         layer.triggerRepaint()
                     elif layer.drawingStyle() in allowedRgbStyles:
                         #Everything looks fine so set stretch and exit
-                        redBand = layer.bandNumber( layer.redBandName() )
-                        greenBand = layer.bandNumber( layer.greenBandName() )
-                        blueBand = layer.bandNumber( layer.blueBandName() )
+                        redBand = layer.bandNumber(layer.redBandName())
+                        greenBand = layer.bandNumber(layer.greenBandName())
+                        blueBand = layer.bandNumber(layer.blueBandName())
                         extentRedMin = 0.0
                         extentRedMax = 0.0
                         extentGreenMin = 0.0
@@ -269,47 +276,39 @@ class QGISMapCanvasCellWidget(QCellWidget):
                         extentBlueMax = 0.0
                         generateLookupTableFlag = False
                         # compute the min and max for the current extent
-                        extentRedMin, extentRedMax = layer.computeMinimumMaximumEstimates( redBand )
-                        extentGreenMin, extentGreenMax = layer.computeMinimumMaximumEstimates( greenBand )
-                        extentBlueMin, extentBlueMax = layer.computeMinimumMaximumEstimates( blueBand )
+                        extentRedMin, extentRedMax = layer.computeMinimumMaximumEstimates(redBand)
+                        extentGreenMin, extentGreenMax = layer.computeMinimumMaximumEstimates(greenBand)
+                        extentBlueMin, extentBlueMax = layer.computeMinimumMaximumEstimates(blueBand)
                         # set the layer min max value for the red band
-                        layer.setMinimumValue( redBand, extentRedMin, generateLookupTableFlag )
-                        layer.setMaximumValue( redBand, extentRedMax, generateLookupTableFlag )
+                        layer.setMinimumValue(redBand, extentRedMin, generateLookupTableFlag)
+                        layer.setMaximumValue(redBand, extentRedMax, generateLookupTableFlag)
                         # set the layer min max value for the red band
-                        layer.setMinimumValue( greenBand, extentGreenMin, generateLookupTableFlag )
-                        layer.setMaximumValue( greenBand, extentGreenMax, generateLookupTableFlag )
+                        layer.setMinimumValue(greenBand, extentGreenMin, generateLookupTableFlag)
+                        layer.setMaximumValue(greenBand, extentGreenMax, generateLookupTableFlag)
                         # set the layer min max value for the red band
-                        layer.setMinimumValue( blueBand, extentBlueMin, generateLookupTableFlag )
-                        layer.setMaximumValue( blueBand, extentBlueMax, generateLookupTableFlag )
+                        layer.setMinimumValue(blueBand, extentBlueMin, generateLookupTableFlag)
+                        layer.setMaximumValue(blueBand, extentBlueMax, generateLookupTableFlag)
                         # ensure that stddev is set to zero
-                        layer.setStandardDeviations( 0.0 )
+                        layer.setStandardDeviations(0.0)
                         # let the layer know that the min max are user defined
-                        layer.setUserDefinedRGBMinimumMaximum( True )
+                        layer.setUserDefinedRGBMinimumMaximum(True)
                         # ensure any cached render data for this layer is cleared
-                        layer.setCacheImage( None )
+                        layer.setCacheImage(None)
                         # make sure the layer is redrawn
                         layer.setContrastEnhancementAlgorithm(QgsContrastEnhancement.StretchToMinimumMaximum)
-                        layer.triggerRepaint()
                 # Set extent to the extent of our layer
                 self.canvas.setExtent(layer.extent())
-                self.canvas.enableAntiAliasing(True)
-                self.canvas.freeze(False)
-                self.canvas.setLayerSet(mapCanvasLayers)
-                self.canvas.refresh()
-                self.update()
-        # Add widget for layer control to canvas
-        self.explorerListWidget.clear()#~
-        #print "self.explorerListWidget count", self.explorerListWidget.count()
+                layer.triggerRepaint()
 
-        # get layernames from inputLayers, and use them as labells in explorerListWidget
-        for lyr in inputLayers:
-            item = QtGui.QListWidgetItem()
-            item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
-            item.setCheckState(QtCore.Qt.Checked)
-            self.explorerListWidget.addItem(item)#~
-            self.widget = QtGui.QLabel(lyr.name())
-            self.explorerListWidget.setItemWidget(item, self.widget)#~
-        self.explorerListWidget.itemClicked.connect(self.on_listWidget_itemClicked)#~
+        self.set_layer_labels(inputLayers)#~
+
+        # Set extent to the extent of ALL layers
+        #self.canvas.zoomFullExtent() ??? not valid function
+        self.canvas.enableAntiAliasing(True)
+        self.canvas.freeze(False)
+        self.canvas.setLayerSet(mapCanvasLayers)
+        self.canvas.refresh()
+        #self.update()  # ???
 
     def on_listWidget_itemClicked(self, item):
         """TO DO: Add doc string"""
@@ -324,48 +323,47 @@ class QGISMapCanvasCellWidget(QCellWidget):
     def searchLayerIndex(self, item):
         """TO DO: Add doc string"""
         selected_layer = item.listWidget().itemWidget(item).text()
-        for lyrIndx in self.mylist:
+        for lyrIndex in self.mylist:
             # store the index of layer
-            indxValue = self.mylist.index(lyrIndx)
-            if selected_layer == str(lyrIndx.name()):
-                self.toggleLayer(indxValue)
+            indexValue = self.mylist.index(lyrIndex)
+            if selected_layer == str(lyrIndex.name()):
+                self.toggleLayer(indexValue)
 
     def toggleLayer(self, lyrNr):
-        """TO DO: Add doc string"""
+        """Set layer transparency on/off"""
         lyr = self.canvas.layer(lyrNr)
         if lyr:
             cTran = lyr.getTransparency()
             lyr.setTransparency(0 if cTran > 100 else 255)
             self.canvas.refresh()
 
+    def set_layer_labels(self, inputLayers):
+        """Create and display a set of layer labels."""
+        self.explorerListWidget.clear()#~
+        #print "self.explorerListWidget count", self.explorerListWidget.count()
+        # get layernames from inputLayers, and use them as labels in explorerListWidget
+        for lyr in inputLayers:
+            item = QtGui.QListWidgetItem()
+            item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
+            item.setCheckState(QtCore.Qt.Checked)
+            self.explorerListWidget.addItem(item)#~
+            self.widget = QtGui.QLabel(lyr.name())
+            self.explorerListWidget.setItemWidget(item, self.widget)#~
+
     '''
     def getLayerNames(self):
-
         """Return list of names of all layers in QgsMapLayerRegistry"""
         layermap = QgsMapLayerRegistry.instance().mapLayers()
-
         layerlist = []
-
         #if mapCanvasLayers == "all":
-
         for name, layer in layermap.iteritems():
-
             layerlist.append(layer.name())
-
             #layerlist.insert(0,layer.name())
-
         print "layers in QgsMapLayerRegistry in GetLayers Methods"
-
         for lyr in layerlist:
-
             x = layerlist.index(lyr)
-
             print lyr , x
-
-
-
         else:
-
             for name, layer in layermap.iteritems():
                 if layer.type() == QgsMapLayer.VectorLayer:
                     if layer.geometryType() in mapCanvasLayers:
@@ -373,6 +371,5 @@ class QGISMapCanvasCellWidget(QCellWidget):
                 elif layer.type() == QgsMapLayer.RasterLayer:
                     if "Raster" in inputLayers:
                         layerlist.append(layer.name())
-
         return layerlist
     '''
