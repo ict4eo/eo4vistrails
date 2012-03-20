@@ -26,6 +26,7 @@
 ############################################################################
 """The `datacube` module ???
 """
+debug = True
 # library
 import os.path
 # third party
@@ -36,6 +37,7 @@ from core.modules.vistrails_module import Module, ModuleError
 from packages.NumSciPy.Array import NDArray
 from packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
 from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
+from threading import Lock
 
 class CubeReaderHandle(Module):
     """HDF data cube initialisation."""
@@ -45,10 +47,9 @@ class CubeReaderHandle(Module):
                       '(za.co.csir.eo4vistrails:CubeReaderHandle:datacube)')]
 
     def __init__(self):
-        #ThreadSafeMixin.__init__(self)
         Module.__init__(self)
-
-    def cubeInit(self):
+        
+    def cubeInit(self):        
         cubefile = self.getInputFromPort('cubefile')
         cubefile_path = cubefile.name
         if not os.path.isfile(cubefile_path):
@@ -65,13 +66,16 @@ class CubeReaderHandle(Module):
             self.setResult('CubeReaderHandle', self)
 
 @RPyCSafeModule()
-class ModisCubeReaderHandle(CubeReaderHandle):
+class ModisCubeReaderHandle(ThreadSafeMixin, CubeReaderHandle):
     """MODIS HDF data cube initialisation.
 
     Assumes that the cube contains a single band, initialises both it
     and the time band.
     """
 
+    #moduleLock = Lock()
+    alock = Lock()
+    
     _input_ports = [('cubefile', '(edu.utah.sci.vistrails.basic:File)'),
                     ('band', '(edu.utah.sci.vistrails.basic:String)')]
     _output_ports = [('CubeReaderHandle', '(za.co.csir.eo4vistrails:CubeReaderHandle:datacube)'),
@@ -79,14 +83,18 @@ class ModisCubeReaderHandle(CubeReaderHandle):
 
     def __init__(self):
         CubeReaderHandle.__init__(self)
+        ThreadSafeMixin.__init__(self)
 
     def compute(self):
-        if self.cubeInit():
-            self.band = self.getInputFromPort('band')
-            self.time = self.cube['/TIME'][0]
-            self.data = self.cube[self.band]
-            self.setResult('CubeReaderHandle', self)
-            self.setResult('timeBand', self.time)
+        with ModisCubeReaderHandle.alock:
+            if debug: print self, "in compute"
+            if self.cubeInit():
+                self.band = self.getInputFromPort('band')
+                self.time = self.cube['/TIME'][0]
+                self.data = self.cube[self.band]
+                self.setResult('CubeReaderHandle', self)
+                self.setResult('timeBand', self.time)
+            if debug: print self, "out compute"
 
 
 @RPyCSafeModule()
@@ -102,8 +110,8 @@ class CubeReader(ThreadSafeMixin, Module):
     _output_ports = [('timeseries', '(edu.utah.sci.vistrails.numpyscipy:Numpy Array:numpy|array)')]
 
     def __init__(self):
-        ThreadSafeMixin.__init__(self)
         Module.__init__(self)
+        ThreadSafeMixin.__init__(self)        
 
     def getData(self, cube, offset):
         return cube.data[offset]

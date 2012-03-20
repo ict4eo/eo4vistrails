@@ -238,17 +238,20 @@ class QGISMapCanvasCellWidget(QCellWidget):
                     #layer.setCacheImage( None )
                     #layer.setStandardDeviations( 0.0 )
                     # make sure the layer is redrawn
-                    #layer.triggerRepaint()
+                    #layer.triggerRepaint()                    
                     if layer.drawingStyle() in allowedGreyStyles:
                         #Everything looks fine so set stretch and exit
                         #For greyscale layers there is only ever one band
                         # base 1 counting in gdal
                         band = layer.bandNumber(layer.grayBandName())
-                        extentMin = 0.0
-                        extentMax = 0.0
+                        #extentMin = 0.0
+                        #extentMax = 0.0
                         generateLookupTableFlag = False
                         # compute the min and max for the current extent
-                        extentMin, extentMax = layer.computeMinimumMaximumEstimates(band)
+                        #extentMin, extentMax = layer.computeMinimumMaximumEstimates(band)
+                        #if extentMin == 0 and extentMax == 0:
+                        extentMin = -1
+                        extentMax = 1
                         #print "QGISMapCanvas:246 min max color", extentMin, extentMax
                         # set the layer min value for this band
                         layer.setMinimumValue(band, extentMin, generateLookupTableFlag)
@@ -261,8 +264,6 @@ class QGISMapCanvasCellWidget(QCellWidget):
                         # ensure any cached render data for this layer is cleared
                         layer.setCacheImage(None)
                         # make sure the layer is redrawn
-                        layer.setContrastEnhancementAlgorithm(QgsContrastEnhancement.StretchToMinimumMaximum)
-                        layer.triggerRepaint()
                     elif layer.drawingStyle() in allowedRgbStyles:
                         #Everything looks fine so set stretch and exit
                         redBand = layer.bandNumber(layer.redBandName())
@@ -295,7 +296,8 @@ class QGISMapCanvasCellWidget(QCellWidget):
                         # ensure any cached render data for this layer is cleared
                         layer.setCacheImage(None)
                         # make sure the layer is redrawn
-                        layer.setContrastEnhancementAlgorithm(QgsContrastEnhancement.StretchToMinimumMaximum)
+                    layer.setContrastEnhancementAlgorithm(QgsContrastEnhancement.StretchToMinimumMaximum)
+                    layer.triggerRepaint()
                 # Set extent to the extent of our layer
                 self.canvas.setExtent(layer.extent())
                 layer.triggerRepaint()

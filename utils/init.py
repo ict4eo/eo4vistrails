@@ -1,7 +1,21 @@
-def initialize(*args, **keywords):
-    from core.modules.module_registry import get_module_registry
-    from core.modules import basic_modules
+from core.modules.module_registry import get_module_registry
 
+#################################################################################
+## An useful register function for control modules
+#################################################################################
+def registerControl(module):
+    """This function is used to register the control modules. In this way, all of
+    them will have the same style and shape."""
+    
+    reg = get_module_registry()
+    utils_namespace = "utils"    
+    reg.add_module(module, moduleRightFringe=[(0.0,0.0),(0.25,0.5),(0.0,1.0)],\
+                   moduleLeftFringe=[(0.0,0.0),(0.0,1.0)], namespace=utils_namespace)
+
+def initialize(*args, **keywords):    
+    from core.modules import basic_modules
+    from core.modules.vistrails_module import Module
+    
     import DropDownListWidget
 
     from Array import NDArrayEO
@@ -16,7 +30,7 @@ def initialize(*args, **keywords):
     from ListFilter import ListFilter
     from Random import Random
     from session import Session
-    from ThreadSafe import Fork, ThreadTestModule
+    from ThreadSafe import Fork, ThreadTestModule, ThreadSafeFold, ThreadSafeMap
     from WebRequest import WebRequest
 
 
@@ -156,6 +170,20 @@ def initialize(*args, **keywords):
         WebRequest,
         'out',
         basic_modules.Variant)
+
+
+    # ==========================================================================
+    # Control Flow Modules - 
+    # ==========================================================================
+
+    registerControl(ThreadSafeFold)
+    registerControl(ThreadSafeMap)
+
+    reg.add_input_port(ThreadSafeFold, 'FunctionPort', (Module, ""))
+    reg.add_input_port(ThreadSafeFold, 'InputList', (basic_modules.List, ""))
+    reg.add_input_port(ThreadSafeFold, 'InputPort', (basic_modules.List, ""))
+    reg.add_input_port(ThreadSafeFold, 'OutputPort', (basic_modules.String, ""))
+    reg.add_output_port(ThreadSafeFold, 'Result', (basic_modules.Variant, ""))
 
     # ==========================================================================
     # Other Modules - without ports OR with locally defined ports
