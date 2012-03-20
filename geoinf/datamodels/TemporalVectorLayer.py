@@ -309,35 +309,63 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
                                              doc.get_ns('gml'))
                 feature['id'] = id
                 feature['name'] = None  # attempt to find a name ...TODO???
+
                 # get feature geometry
                 om_point = doc.elem_tag_nested(om_feature,
                                                'Point',
                                                doc.get_ns('gml'))
+                om_poly = doc.elem_tag_nested(om_feature,
+                                               'Polygon',
+                                               doc.get_ns('gml'))
+                #print "TVL:320", om_point, om_poly
+                geom_wkt = None
                 if om_point:
-                    geom_wkt = None
                     geom_value = doc.elem_tag_value(om_point[0],
                                                     'pos',
                                                     doc.get_ns('gml'))
                     if not geom_value:
-                        geom_value = doc.elem_tag_value(om_point,
+                        geom_value = doc.elem_tag_value(om_point[0],
                                                         'coordinates',
                                                         doc.get_ns('gml'))
                     # convert to WKT (Well Known Text) format
                     if geom_value:
-                        points = geom_value.split(' ')
+                        points = geom_value.split(',')
+                        print "  ** points", points
                         point = ogr.Geometry(ogr.wkbPoint)
-                        point.AddPoint(float(points[0]), float(points[1]))
-                        geom_wkt = point.ExportToWkt()  # WKT format
-                    feature['geometry'] = geom_wkt
+                        if len(points) == 2:
+                            point.AddPoint(float(points[0]), float(points[1]))
+                            geom_wkt = point.ExportToWkt()
+                elif om_poly:
+                    for tag in om_poly:
+                        geom_value = doc.elem_tag_value(tag,
+                                                    'pos',
+                                                    doc.get_ns('gml'))
+                        if not geom_value:
+                            geom_value = doc.elem_tag_value(tag,
+                                                        'coordinates',
+                                                        doc.get_ns('gml'))
+                        if geom_value:
+                            break
+                    # convert to WKT (Well Known Text) format
+                    if geom_value:
+                        points = geom_value.split(' ')
+                        poly = ogr.Geometry(ogr.wkbPoly)
+                        for p in points:
+                            lat_lon = p.split(',')
+                            if len(lat_lon) == 2:
+                                poly.AddPoint(float(lat_lon[0]), float(lat_lon[1]))
+                        geom_wkt = poly.ExportToWkt()
                 else:
-                    feature['geometry'] = None
+                    pass  # could NOT detect feature geometry type ??? TODO
+                feature['geometry'] = geom_wkt
+
                 # look for a sample point id
                 #   sa:SamplingPoint as a nested child ...
                 sampling_point = {}
                 om_sampling_point = doc.elem_tag_nested(om_feature,
                                                       'SamplingPoint',
                                                       doc.get_ns('sa'))
-                #print "TVL:325", om_sampling_point
+                #print "TVL:365", om_sampling_point
                 if om_sampling_point and len(om_sampling_point) == 1:
                     id = doc.elem_attr_value(om_feature, 'xlink:href')
                     if not id:
@@ -374,7 +402,7 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
                 result['sampling_point'] = sampling_point
                 result['feature'] = feature
                 result['data'] = value_list
-                #print "extract_time_series:363", result
+                #print "TVL:405 extract_time_series", result
                 results.append(result)
         return results
 
@@ -438,7 +466,7 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
         if not GML_file:
             self.raiseError('No GML file specified from which to extract data')
         results = self.extract_time_series(GML_file)  # get data & metadata
-        #print "TVL:395", results
+        #print "TVL:441", results[0], results[1]
         if results and results[0]['fields']:
             quoting = csv.QUOTE_NONNUMERIC
             file_out = open(filename_out, "w")
@@ -469,7 +497,7 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
                 for index, datum in enumerate(result['data']):
                     if missing_value:
                         for key, item in enumerate(datum):
-                            #print "TVL:427", type(item), item
+                            #print "TVL:472", type(item), item
                             if not item or item in GML_NO_DATA_LIST:
                                 datum[key] = missing_value
                     datum.insert(0, result['feature']['geometry'])
@@ -517,7 +545,7 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
         if not GML_file:
             self.raiseError('No GML file specified from which to extract data')
         results = self.extract_time_series(GML_file)  # get data & metadata
-        #print "TVL:475", results[0]
+        #print "TVL:545", results[0]
         if results and results[0]['fields']:
             file_out = open(filename_out, "w")
             csv_writer = csv.writer(file_out,
@@ -551,7 +579,7 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
             reverse_key_fields = sorted(key_fields, reverse=True)
             csv_writer.writerow(header)
 
-            #print "TVL:516", results[0]['fields'], key_fields
+            #print "TVL:586", results[0]['fields'], key_fields
             for index, result in enumerate(results):
                 for datum in result['data']:
                     if missing_value:
@@ -562,7 +590,7 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
                             except TypeError:
                                 pass  # ignore non-strings
                     # extract key field values from datum
-                    #print "TVL:526 datum", datum
+                    #print "TVL:596 datum", datum
                     time = day = lat = lon = None
                     depth = 0
                     for key, value in enumerate(datum):
