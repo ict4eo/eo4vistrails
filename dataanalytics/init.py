@@ -98,5 +98,12 @@ def initialize(*args, **keywords):
                    name="Rpy2 Script",
                    namespace=mynamespace,
                    configureWidgetType=rpy2Stats.RSourceConfigurationWidget)
+                   
+    import pyDAP
+    mynamespace="pyDAP"
+    reg.add_module(pyDAP.pyDAP,
+                   name="pyDAP Client",
+                   namespace=mynamespace,
+                   configureWidgetType=pyDAP.pyDAPConfigurationWidget)
     
 
