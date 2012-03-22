@@ -25,15 +25,12 @@
 ##
 ############################################################################
 '''
-add brief description of what this pyDAP client does.
+    Read netcdf file from OpenDAP server.
 '''
-from PyQt4 import QtCore, QtGui
+from PyQt4 import QtCore, QtGui, Qt
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
-import sys
 import os
-from PyQt4 import Qt
-
 from core.modules.vistrails_module import Module, ModuleError
 from core.modules.module_configure import StandardModuleConfigurationWidget
 from pydap.client import open_url,open_dods
@@ -44,9 +41,7 @@ import numpy
 variableNames=[]
 
 class pyDAP(Module):
-    """
-    Read netcdf/hdf file from OpenDAP server.
-    """
+
     
     _input_ports = [('url', '(edu.utah.sci.vistrails.basic:String)'),
                     ('dataSlice', '(edu.utah.sci.vistrails.basic:String)')]
@@ -76,6 +71,7 @@ class pyDAPConfigurationWidget(StandardModuleConfigurationWidget):
         self.connect(self.ui.okButton,QtCore.SIGNAL("clicked()"),self.readData)
         self.connect(self.ui.cancelButton,QtCore.SIGNAL("clicked()"),SLOT("close()"))
         
+    #Populate netcdf file variables and dimensions into list to use to create tree for browsing file structure    
     def createRequest(self):
         self.data=open_url(str(self.ui.UrlLineEdit.text()))      
         self.dataKeys=self.data.keys()
@@ -98,8 +94,9 @@ class pyDAPConfigurationWidget(StandardModuleConfigurationWidget):
         self.ui.treeView.setModel(self.model)           
         self.model.setHorizontalHeaderLabels([self.tr("File Variables, Dims")])       
         layout = QtGui.QVBoxLayout()
-        layout.addWidget(self.ui.treeView)       
+        layout.addWidget(self.ui.treeView)
         
+    #create tree from netcdf file variables , dimensions and limits    
     def addItems(self, parent, elements):        
         count=3
         addColumnTest=False
@@ -121,8 +118,9 @@ class pyDAPConfigurationWidget(StandardModuleConfigurationWidget):
                 self.addItems(item, children)              
                 item.setData(0, QtCore.Qt.CheckStateRole)           
             if bounds != "[0:1:":
-                parent.appendRow(limit)        
-      
+                parent.appendRow(limit)
+                
+    #Construct request to get a slice of the data from remote netcdf file  
     def readData(self):      
         strVarsDims=""
         bounds=""
