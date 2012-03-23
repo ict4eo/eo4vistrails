@@ -87,17 +87,14 @@ class netcdf4ConfigurationWidget(StandardModuleConfigurationWidget):
             init.nc4File: self.ui.UrlLineEdit
         }        
         for function in self.module.functions:
-            if function.name in port_widget:
-                #print "SOS:338", function.name, function.params[0].strValue
+            if function.name in port_widget:                
                 port_widget[function.name].setText(function.params[0].strValue) 
-        #global nc4File       
-        #self.ui.UrlLineEdit.text=str(module.getInputFromPort("nc4File").name)
+
         self.connect(self.ui.fetchVarsButton,QtCore.SIGNAL("clicked()"),self.createRequest)
         self.connect(self.ui.okButton,QtCore.SIGNAL("clicked()"),self.readData)
         self.connect(self.ui.cancelButton,QtCore.SIGNAL("clicked()"),SLOT("close()"))
-        #self.create_config_window()
-    def createRequest(self):
-        #self.myFile=netCDF4.Dataset(str(),'r')
+       
+    def createRequest(self):        
         self.myFile=netCDF4.Dataset(str(self.ui.UrlLineEdit.text()),'r')
         self.keys=self.myFile.variables.keys()            
         dimensions=[]
@@ -149,23 +146,22 @@ class netcdf4ConfigurationWidget(StandardModuleConfigurationWidget):
         bounds=""
         allBounds=""
         countCheckedVars=0
-        try:
-            rows = self.model.rowCount()               
-            for i in range(0,self.model.rowCount()):          
-                node=self.model.item(i)            
-                if node.checkState()==2:
-                    
-                        retrieveVars=str(node.text())
-                        for j in range(0,node.rowCount()/2):
-                            bounds=node.child((((j+1)*2)-1))                            
-                            allBounds=allBounds+bounds.text()
-                        if countCheckedVars == 0:
-                            strVarsDims=strVarsDims+retrieveVars+allBounds
-                        else:
-                            strVarsDims=strVarsDims+","+retrieveVars+allBounds                 
-                        countCheckedVars=countCheckedVars+1
-        except:
-            ModuleError(netcdf4ConfigurationWidget, "Invalid Variable Dimension Bound")                  
+       
+        rows = self.model.rowCount()               
+        for i in range(0,self.model.rowCount()):          
+            node=self.model.item(i)            
+            if node.checkState()==2:
+                
+                    retrieveVars=str(node.text())
+                    for j in range(0,node.rowCount()/2):
+                        bounds=node.child((((j+1)*2)-1))                            
+                        allBounds=allBounds+bounds.text()
+                    if countCheckedVars == 0:
+                        strVarsDims=strVarsDims+retrieveVars+allBounds
+                    else:
+                        strVarsDims=strVarsDims+","+retrieveVars+allBounds                 
+                    countCheckedVars=countCheckedVars+1
+                      
         dataStore=[]       
         dataStore.append((init.varName, [str(retrieveVars)]),)
         dataStore.append((init.dimLimits, [str(allBounds)]),)
