@@ -77,13 +77,21 @@ class netcdf4ConfigurationWidget(StandardModuleConfigurationWidget):
 
     def __init__(self, module, controller, parent=None):
         StandardModuleConfigurationWidget.__init__(self, module, controller, parent)
+               
         self.title = module.name        
         self.setObjectName("netcdf4Widget")     
         self.parent_widget = module
         self.ui=Ui_netcdf4Form()        
         self.ui.setupUi(self)
-        #global nc4File
-        #self.ui.UrlLineEdit.text=str(nc4File.name)
+        port_widget = {
+            init.nc4File: self.ui.UrlLineEdit
+        }        
+        for function in self.module.functions:
+            if function.name in port_widget:
+                #print "SOS:338", function.name, function.params[0].strValue
+                port_widget[function.name].setText(function.params[0].strValue) 
+        #global nc4File       
+        #self.ui.UrlLineEdit.text=str(module.getInputFromPort("nc4File").name)
         self.connect(self.ui.fetchVarsButton,QtCore.SIGNAL("clicked()"),self.createRequest)
         self.connect(self.ui.okButton,QtCore.SIGNAL("clicked()"),self.readData)
         self.connect(self.ui.cancelButton,QtCore.SIGNAL("clicked()"),SLOT("close()"))

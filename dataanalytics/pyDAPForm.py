@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file '/home/mmtsetfwa/Documents/Cluva/pyDAP.ui'
 #
-# Created: Thu Jan 26 13:18:12 2012
+# Created: Fri Mar 23 14:38:20 2012
 #      by: PyQt4 UI code generator 4.8.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -55,9 +55,6 @@ class Ui_pyDAPForm(object):
         self.textMetadata.setGeometry(QtCore.QRect(0, 20, 291, 381))
         self.textMetadata.setObjectName(_fromUtf8("textMetadata"))
         self.tabWidget.addTab(self.tab, _fromUtf8(""))
-        self.tab_2 = QtGui.QWidget()
-        self.tab_2.setObjectName(_fromUtf8("tab_2"))
-        self.tabWidget.addTab(self.tab_2, _fromUtf8(""))
         self.okButton = QtGui.QPushButton(self.centralwidget)
         self.okButton.setGeometry(QtCore.QRect(560, 560, 97, 27))
         self.okButton.setObjectName(_fromUtf8("okButton"))
@@ -84,7 +81,6 @@ class Ui_pyDAPForm(object):
         self.fetchVarsButton.setText(QtGui.QApplication.translate("pyDAPForm", "Fetch", None, QtGui.QApplication.UnicodeUTF8))
         self.groupBox.setTitle(QtGui.QApplication.translate("pyDAPForm", "Metadata", None, QtGui.QApplication.UnicodeUTF8))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab), QtGui.QApplication.translate("pyDAPForm", "NetCDF File Variables", None, QtGui.QApplication.UnicodeUTF8))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_2), QtGui.QApplication.translate("pyDAPForm", "Variable Dimensions", None, QtGui.QApplication.UnicodeUTF8))
         self.okButton.setText(QtGui.QApplication.translate("pyDAPForm", "GetData", None, QtGui.QApplication.UnicodeUTF8))
         self.cancelButton.setText(QtGui.QApplication.translate("pyDAPForm", "Cancel", None, QtGui.QApplication.UnicodeUTF8))
         self.cancelButton.setShortcut(QtGui.QApplication.translate("pyDAPForm", "C", None, QtGui.QApplication.UnicodeUTF8))

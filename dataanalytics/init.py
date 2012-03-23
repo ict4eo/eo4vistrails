@@ -29,8 +29,10 @@ multicore parallel and distributed processing to VisTrails.
 """
 #History
 #Terence van Zyl, 15 Dec 2010, Version 1.0
+#Input ports
 dataSlice="dataSlice"
 url="url"
+nc4File="nc4File"
 varName="varName"
 dimLimits="dimLimits"
 def initialize(*args, **keywords):
