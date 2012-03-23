@@ -105,5 +105,12 @@ def initialize(*args, **keywords):
                    name="pyDAP Client",
                    namespace=mynamespace,
                    configureWidgetType=pyDAP.pyDAPConfigurationWidget)
+                   
+    import netcdf4
+    mynamespace="netcdf4"
+    reg.add_module(netcdf4.netcdf4Reader,
+                   name="netcdf4 Client",
+                   namespace=mynamespace,
+                   configureWidgetType=netcdf4.netcdf4ConfigurationWidget)
     
 
