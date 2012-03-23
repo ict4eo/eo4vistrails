@@ -29,7 +29,10 @@ multicore parallel and distributed processing to VisTrails.
 """
 #History
 #Terence van Zyl, 15 Dec 2010, Version 1.0
-
+dataSlice="dataSlice"
+url="url"
+varName="varName"
+dimLimits="dimLimits"
 def initialize(*args, **keywords):
     """Called by higher level inits to ensure that regsitration with
     VisTrails takes place."""
