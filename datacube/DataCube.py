@@ -74,7 +74,6 @@ class ModisCubeReaderHandle(ThreadSafeMixin, CubeReaderHandle):
     """
 
     #moduleLock = Lock()
-    alock = Lock()
     
     _input_ports = [('cubefile', '(edu.utah.sci.vistrails.basic:File)'),
                     ('band', '(edu.utah.sci.vistrails.basic:String)')]
@@ -86,15 +85,15 @@ class ModisCubeReaderHandle(ThreadSafeMixin, CubeReaderHandle):
         ThreadSafeMixin.__init__(self)
 
     def compute(self):
-        with ModisCubeReaderHandle.alock:
-            if debug: print self, "in compute"
-            if self.cubeInit():
-                self.band = self.getInputFromPort('band')
-                self.time = self.cube['/TIME'][0]
-                self.data = self.cube[self.band]
-                self.setResult('CubeReaderHandle', self)
-                self.setResult('timeBand', self.time)
-            if debug: print self, "out compute"
+        #with ModisCubeReaderHandle.alock:
+        if debug: print self, "in compute"
+        if self.cubeInit():
+            self.band = self.getInputFromPort('band')
+            self.time = self.cube['/TIME'][0]
+            self.data = self.cube[self.band]
+            self.setResult('CubeReaderHandle', self)
+            self.setResult('timeBand', self.time)
+        if debug: print self, "out compute"
 
 
 @RPyCSafeModule()

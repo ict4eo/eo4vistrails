@@ -37,6 +37,11 @@ from threading import Thread, currentThread, Lock, ThreadError, RLock, Event
 from Queue import Queue, LifoQueue, Empty
 from packages.controlflow.fold import *
 
+from core.modules.sub_module import Group
+from core.log.group_exec import GroupExec
+from core.log.loop_exec import LoopExec
+from core.log.module_exec import ModuleExec
+
 # vistrails
 from core.modules.vistrails_module import Module, NotCacheable, \
         InvalidOutput, ModuleError, ModuleBreakpoint, ModuleErrors
@@ -52,15 +57,12 @@ class ThreadSafeMixin(object):
     
     moduleLock = None
     interpreter = get_default_interpreter()
-    threadSafeFoldLock = RLock()
     
     def __init__(self):
         self.computeLock = Lock()
-        self.exceptionQ = Queue()
-        self.update_called = False
-        self.upstream_called_first = False
+        self.exceptionQ = Queue()        
 
-    def globalThread(self, connector_obj, method):
+    def globalThread(self, connector_obj, method, parent_execs):
         """Called by this method to ensure a global threadlock over all non
         threadsafe modules is maintained. This ensures only one of thme will
         execute at a time."""
@@ -68,119 +70,102 @@ class ThreadSafeMixin(object):
         try:
             with globalThreadLock:
                 if debug: print self.__class__.__name__, id(self), currentThread().name, "globalThread() With globalThreadLock for %s %s %s"%(connector_obj.__class__.__name__, id(connector_obj), method.__name__)
+                if parent_execs:
+                    ThreadSafeMixin.interpreter.parent_execs = parent_execs[:]
                 method()
         except ModuleError:
             self.exceptionQ.put(sys.exc_info())
             if debug: print self.__class__.__name__, id(self), currentThread().name, "globalThread() exception globalThreadLock for %s %s %s"%(connector_obj.__class__.__name__, id(connector_obj), method.__name__)
             raise
     
-    def updateUpstream(self, functionPort=False):
+    def updateUpstream(self, functionPort=False, parent_execs=None):
         """Alternate verions of Module UpdateUpstream that executes each upstream 
         module in its own thread."""
-        if not self.upstream_called_first and not self.update_called:
-            #This will only be true if the previous module never called our update
-            #must be a fold operation of sorts or some special control operation need to proceed with caution                
-            self.upstream_called_first = True
-        global globalThreadLock
-        has_global_thread_lock = globalThreadLock._is_owned()
-        try:
-            if has_global_thread_lock:
-                globalThreadLock.release()
-                if debug: print self.__class__.__name__, id(self), currentThread().name, "updateUpstream() Release globalThreadLock"
-            
-            threadList = []            
-            for port_name, connectorList in self.inputPorts.iteritems():
-                for connector in connectorList:
-                    if isinstance(connector.obj, ThreadSafeMixin):
-                        if functionPort and port_name == 'FunctionPort':
-                            target = connector.obj.updateUpstream
-                        else:
-                            target = connector.obj.update
-                        args = ()                    
+        threadList = []
+        for port_name, connectorList in self.inputPorts.iteritems():
+            for connector in connectorList:
+                if isinstance(connector.obj, ThreadSafeMixin):
+                    if functionPort and port_name == 'FunctionPort':
+                        target = connector.obj.updateUpstream
+                        args = (False, parent_execs)
                     else:
-                        if functionPort and port_name == 'FunctionPort':
-                            target = self.globalThread
-                            args = (connector.obj, connector.obj.updateUpstream)
-                        else:
-                            target = self.globalThread
-                            args = (connector.obj, connector.obj.update)
-
-                    thread = Thread(target=target, args=args)
-                    thread.start()
-                    threadList.append(thread)
-            
-            stillWaiting = True
-            while stillWaiting:
-                stillWaiting = False                        
-                for thread in threadList:
-                    thread.join(0.1)
-                    if thread.isAlive():
-                        stillWaiting = True
-                if stillWaiting:
-                    self.logging.begin_update(self)
+                        target = connector.obj.update
+                        args = (parent_execs,)
+                else:
+                    target = self.globalThread
+                    if functionPort and port_name == 'FunctionPort':
+                        args = (connector.obj, connector.obj.updateUpstream, parent_execs)
+                    else:
+                        args = (connector.obj, connector.obj.update, parent_execs)
                 
-            if self.exceptionQ.qsize() > 0:
-                exec_info = self.exceptionQ.get()
-                raise exec_info[0], exec_info[1], exec_info[2]
+                thread = Thread(target=target, args=args)
+                thread.start()
+                threadList.append(thread)
+        
+        stillWaiting = True
+        while stillWaiting:
+            stillWaiting = False                        
+            for thread in threadList:
+                thread.join(0.1)
+                if thread.isAlive():
+                    stillWaiting = True
+            if stillWaiting:
+                self.logging.begin_update(self)
             
-            for iport, connectorList in copy.copy(self.inputPorts.items()):
-                if functionPort and iport != 'FunctionPort':
-                    for connector in connectorList:
-                        if connector.obj.get_output(connector.port) is InvalidOutput:
-                            self.removeInputConnector(iport, connector)
-        finally:
-            if has_global_thread_lock:            
-                globalThreadLock.acquire()
-                if debug: print self.__class__.__name__, id(self), currentThread().name, "updateUpstream() Get globalThreadLock"
+        if self.exceptionQ.qsize() > 0:
+            exec_info = self.exceptionQ.get()
+            raise exec_info[0], exec_info[1], exec_info[2]
+        
+        for iport, connectorList in copy.copy(self.inputPorts.items()):
+            if functionPort and iport != 'FunctionPort':
+                for connector in connectorList:
+                    if connector.obj.get_output(connector.port) is InvalidOutput:
+                        self.removeInputConnector(iport, connector)
 
-    def update(self, parent_exec=None):
+    def update(self, parent_execs=None):
         """ update() -> None        
         Check if the module is up-to-date then update the
         modules. Report to the logger if available        
         """        
-        global globalThreadLock        
+        global globalThreadLock
         #TODO: hadle the case of a non threadsafe fold module
-        self.update_called = True
         has_global_thread_lock = globalThreadLock._is_owned()
-        if self.__class__.moduleLock:
-            lock = self.__class__.moduleLock
-            #if debug: print self, id(self), currentThread().name, "lock is of type module"
-        else:
-            lock = self.computeLock
-            #if debug: print self, id(self), currentThread().name, "lock is of type compute"
+        
+        if has_global_thread_lock:
+            assert(parent_execs is None)
+        
+        lock = self.computeLock if self.__class__.moduleLock is None else self.__class__.moduleLock
         try:
+            tmp_exec = None
             if has_global_thread_lock:
+                tmp_exec = ThreadSafeMixin.interpreter.parent_execs[:]
                 globalThreadLock.release()
                 if debug: print self.__class__.__name__, id(self), currentThread().name, "update() release globalThreadLock"
             with lock:
                 if debug: print self.__class__.__name__, id(self), currentThread().name, "update() with compute/module-Lock"
                 with globalThreadLock:
-                    if debug: print self.__class__.__name__, id(self), currentThread().name, "update() with globalThreadLock"                    
+                    if debug: print self.__class__.__name__, id(self), currentThread().name, "update() with globalThreadLock"
+                    # All wrapped up for thread safety                    
+                    if tmp_exec:
+                        ThreadSafeMixin.interpreter.parent_execs = tmp_exec[:]
+                    elif parent_execs:                        
+                        ThreadSafeMixin.interpreter.parent_execs = parent_execs[:]
+                    
                     self.logging.begin_update(self)
-                    self.unLockedGlobalMethod(self.updateUpstream)
+                    self.unLockedGlobalUpstream()
+
                     if self.upToDate:
                         if not self.computed:
                             self.logging.update_cached(self)
                             self.computed = True
                         return
-
-                    if parent_exec:
-                        ThreadSafeMixin.interpreter.parent_execs.append(parent_exec)
-                    # All wrapped up for thread safety
-                    with ThreadSafeMixin.threadSafeFoldLock:
-                        self.logging.begin_compute(self)
-
-                        if self.is_fold_module:
-                            ThreadSafeMixin.interpreter.parent_execs.pop()
-                        if self.is_fold_operator:
-                            loop_exec = ThreadSafeMixin.interpreter.parent_execs.pop()
-                        if parent_exec:
-                            ThreadSafeMixin.interpreter.parent_execs.pop()
-                        
+                    
+                    self.logging.begin_compute(self)
+                    
                     try:
                         if self.is_breakpoint:
                             raise ModuleBreakpoint(self)
-                        self.unLockedGlobalMethod(self.compute)
+                        self.unLockedGlobalCompute()
                         self.computed = True
                     except ModuleError, me:
                         if hasattr(me.module, 'interpreter'):
@@ -200,39 +185,62 @@ class ThreadSafeMixin(object):
                         traceback.print_exc()
                         raise ModuleError(self, 'Uncaught exception: "%s"' % str(e))
                     self.upToDate = True
-                    #These methods have been deffered so that they will execute in order
-                    with ThreadSafeMixin.threadSafeFoldLock:
-                        if self.is_fold_operator:
-                            ThreadSafeMixin.interpreter.parent_execs.append(loop_exec)
-                        if self.is_fold_module:
-                            ThreadSafeMixin.interpreter.parent_execs.append(self.module_exec)
-    
-                        self.logging.end_update(self)
-                        self.logging.signalSuccess(self)
+
+                    self.logging.end_update(self)
+                    self.logging.signalSuccess(self)
+
         except ModuleError:
             self.exceptionQ.put(sys.exc_info())
+            if debug: print self.__class__.__name__, id(self), currentThread().name, "update() Exception"
             raise
         finally:
             if has_global_thread_lock:
                 globalThreadLock.acquire()
+                ThreadSafeMixin.interpreter.parent_execs = tmp_exec[:]
                 if debug: print self.__class__.__name__, id(self), currentThread().name, "update() Get globalThreadLock"
 
-    def unLockedGlobalMethod(self, method):
+    def unLockedGlobalUpstream(self):
         """ update() -> None
         Check if the module is up-to-date then update the
         modules. Report to the logger if available.
         """
         global globalThreadLock
-        has_global_thread_lock = globalThreadLock._is_owned()
+        assert(globalThreadLock._is_owned() == True)
         try:
-            if has_global_thread_lock:
-                globalThreadLock.release()
-                if debug: print self.__class__.__name__, id(self), currentThread().name, "%s() Release globalThreadLock"%method.__name__
-            method()
+            upstream_parent_execs = ThreadSafeMixin.interpreter.parent_execs[:]
+            parent_execs = ThreadSafeMixin.interpreter.parent_execs[:]            
+            if debug: print self.__class__.__name__, id(self), currentThread().name, "updateUpstream() Release globalThreadLock"
+            globalThreadLock.release()
+            self.updateUpstream(parent_execs=upstream_parent_execs)
+        except:
+            if debug: print self.__class__.__name__, id(self), currentThread().name, "updateUpstream() Exception"
+            raise
         finally:
-            if has_global_thread_lock:
-                globalThreadLock.acquire()
-                if debug: print self.__class__.__name__, id(self), currentThread().name, "%s() Get globalThreadLock"%method.__name__
+            globalThreadLock.acquire()
+            ThreadSafeMixin.interpreter.parent_execs = parent_execs
+            if debug: print self.__class__.__name__, id(self), currentThread().name, "updateUpstream() Get globalThreadLock"
+
+    def unLockedGlobalCompute(self):
+        """ update() -> None
+        Check if the module is up-to-date then update the
+        modules. Report to the logger if available.
+        """
+        global globalThreadLock
+        assert(globalThreadLock._is_owned() == True)
+        try:
+            self.compute_parent_execs = ThreadSafeMixin.interpreter.parent_execs[:]
+            if debug: print self.__class__.__name__, id(self), currentThread().name, "unLockedGlobalCompute", self.compute_parent_execs
+            parent_execs = ThreadSafeMixin.interpreter.parent_execs[:]
+            if debug: print self.__class__.__name__, id(self), currentThread().name, "compute() Release globalThreadLock"
+            globalThreadLock.release()
+            self.compute()
+        except:
+            if debug: print self.__class__.__name__, id(self), currentThread().name, "compute() Exception"
+            raise
+        finally:
+            globalThreadLock.acquire()
+            ThreadSafeMixin.interpreter.parent_execs = parent_execs
+            if debug: print self.__class__.__name__, id(self), currentThread().name, "compute() Get globalThreadLock"
 
 class Fork(ThreadSafeMixin, NotCacheable, Module):
     """TODO Write docstring."""
@@ -245,14 +253,14 @@ class Fork(ThreadSafeMixin, NotCacheable, Module):
         print "this is a test"
 
 class ThreadSafeFold(ThreadSafeMixin, Fold):
-        
+    
     def __init__(self):
         Fold.__init__(self)
         ThreadSafeMixin.__init__(self)
+        self.compute_parent_execs = None
 
-    def updateUpstream(self):
-        #with ThreadSafeMixin.threadSafeFoldLock:
-        ThreadSafeMixin.updateUpstream(self, True)
+    def updateUpstream(self, parent_execs=None):        
+        ThreadSafeMixin.updateUpstream(self, True, parent_execs=parent_execs)
     
     def updateFunctionPort(self):
         """
@@ -304,20 +312,20 @@ class ThreadSafeFold(ThreadSafeMixin, Fold):
 
                     self.setInputValues(connector.obj, nameInput, element)
                 if isinstance(connector.obj, ThreadSafeMixin):
-                    connector.obj.update(self.module_exec)
+                    connector.obj.update(self.compute_parent_execs)
                 else:
-                    # we block all other fold operations that are not ThreadSafe 
-                    # Modules
+                    # we block all other fold operations that are not ThreadSafe Modules
                     global globalThreadLock
                     with globalThreadLock:
-                        with ThreadSafeMixin.threadSafeFoldLock:
-                            if debug: print self.__class__.__name__, id(self), currentThread().name, ThreadSafeMixin.interpreter.parent_execs, "pre append"
-                            ThreadSafeMixin.interpreter.parent_execs.append(self.module_exec)
-                            if debug: print self.__class__.__name__, id(self), currentThread().name, ThreadSafeMixin.interpreter.parent_execs, "post append"
+                        try:
+                            if debug: print self.__class__.__name__, id(self), currentThread().name, "updateFunctionPort", self.compute_parent_execs
+                            ThreadSafeMixin.interpreter.parent_execs = self.compute_parent_execs[:]
                             connector.obj.update()
-                            if debug: print self.__class__.__name__, id(self), currentThread().name, ThreadSafeMixin.interpreter.parent_execs, "pre pop"
-                            ThreadSafeMixin.interpreter.parent_execs.pop()
-                            if debug: print self.__class__.__name__, id(self), currentThread().name, ThreadSafeMixin.interpreter.parent_execs, "post pop"
+                        except:
+                            if debug: print self.__class__.__name__, id(self), currentThread().name, "exception!!!!!!!", ThreadSafeMixin.interpreter.parent_execs
+                            if isinstance(connector.obj, Group):
+                                if debug: print self.__class__.__name__, id(self), currentThread().name, "exception!!!!!!!", id(connector.obj)
+                            raise
                 
                 ## Getting the result from the output port
                 if nameOutput not in connector.obj.outputPorts:

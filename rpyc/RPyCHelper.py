@@ -43,7 +43,7 @@ from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
 from packages.eo4vistrails.utils.ModuleHelperMixin import ModuleHelperMixin
 # local
 
-class RPyCCode(ModuleHelperMixin, ThreadSafeMixin, RPyCModule):
+class RPyCCode(NotCacheable, ModuleHelperMixin, ThreadSafeMixin, RPyCModule):
     """
     This module that executes an arbitrary piece of Python code remotely.
     TODO: This code is not threadsafe. Terence needs to fix it
