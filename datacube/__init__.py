@@ -36,6 +36,6 @@ name = 'hitempo'
 #    revision = out[out.find('Revision'):out.find('\n', out.find('Revision'))][10:]
 #except:
 #    revision = 1
-revision = 8
+revision = 9
 version='0.0.%s'%revision
 pass

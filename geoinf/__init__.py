@@ -28,6 +28,6 @@ In particular, provides GRASS, PostGIS, OGC clients and some
 visualisation capabilities through the QGIS API.
 """
 identifier = 'za.co.csir.eo4vistrails'
-revision = 1
+revision = 2
 version='0.0.%s'%revision
 pass

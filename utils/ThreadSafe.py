@@ -347,7 +347,7 @@ class ThreadSafeMap(ThreadSafeFold):
 
         self.partialResult.append(self.elementResult)
             
-class ThreadTestModule(ThreadSafeMixin, NotCacheable, Module):
+class ThreadTestModule(ThreadSafeMixin,  Module): #NotCacheable,
     """This Test Module is to check that ThreadSafe is working and also
     provides a template for others to use ThreadSafe"""
         
