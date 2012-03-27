@@ -47,6 +47,7 @@ from packages.eo4vistrails.utils.DropDownListWidget import ComboBoxWidget
 import Shared
 
 import multiprocessing
+import multiprocessing.sharedctypes
 
 from rpyc import SocketStream, VoidService, BaseNetref
 from rpyc.utils.factory import connect_stream, connect
@@ -248,6 +249,9 @@ class RPyCSafeModule(object):
             self._requiredVisPackages.append("packages.vtk")
         if not "packages.NumSciPy" in self._requiredVisPackages:
             self._requiredVisPackages.append("packages.NumSciPy")
+        if not "packages.controlflow" in self._requiredVisPackages:
+            self._requiredVisPackages.append("packages.controlflow")
+
         
         clazz._requiredVisPackages = self._requiredVisPackages
 

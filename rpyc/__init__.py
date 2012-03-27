@@ -35,7 +35,7 @@ parallel and distributed processing to VisTrails.
 identifier = 'za.co.csir.eo4vistrails.rpyc'
 name = 'rpyc'
 
-revision = 47
+revision = 48
 version = '0.1.%s' % revision
 
 author_list = 'tvanzyl,gmcferren,bcwele,dhohls,pshabangu,bsibolla,mugu'

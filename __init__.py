@@ -47,7 +47,7 @@ name = 'eo4vistrails'
 #    revision = out[out.find('Revision'):out.find('\n', out.find('Revision'))][10:]
 #except:
 #    revision = 1
-revision = 2
+revision = 3
 version='0.1.%s'%revision
 
 author_list = 'tvanzyl,gmcferren,bcwele,dhohls,pshabangu,bsibolla'
