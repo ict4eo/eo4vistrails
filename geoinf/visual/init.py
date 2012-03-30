@@ -81,9 +81,14 @@ def initialize(*args, **keywords):
     reg.add_input_port(VectorLayerStyling, 'vector_layer',
                        QgsVectorLayer)
     reg.add_input_port(VectorLayerStyling, 'opacity',
-                       (basic_modules.Integer, 'The layer transparency (0->1)'))
+                       (basic_modules.Integer,
+                        'layer\'s percentage  transparency (0->100)'))
     reg.add_input_port(VectorLayerStyling, 'fill_color',
-                       (basic_modules.Color, 'The layer\'s fill color code'))
+                       (basic_modules.Color,
+                        'layer\'s fill color code'))
+    reg.add_input_port(VectorLayerStyling, 'name',
+                       (basic_modules.String,
+                        'layer\'s name'))
     reg.add_output_port(VectorLayerStyling, 'vector_layer',
                         QgsVectorLayer)
 

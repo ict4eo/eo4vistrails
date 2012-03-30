@@ -66,18 +66,29 @@ class LayerStyling(Module):
 
 
 class VectorLayerStyling(LayerStyling):
-    """Provides styling options for vector layers.
+    """Provides styling options for a vector layer.
 
-    See:
+    Input ports:
+        vector_layer:
+            the layer to be styled
+        layer_name:
+            the display name for the layer
+        opacity:
+            the percentage transparency for the layer (100 is no transparency)
+        fill_color:
+            the color with which to fill the layer
+
+    See also:
         http://www.qgis.org/pyqgis-cookbook/vector.html
     """
 
     def compute(self):
         vector_layer = self.getInputFromPort('vector_layer')
         opacity = self.forceGetInputFromPort('opacity', 100)
-        rgb_color = self.forceGetInputFromPort('fill_color', None)
-        if rgb_color:
-            symbol_color = self.RGBToHTMLColor(rgb_color.tuple)
+        layer_name = self.forceGetInputFromPort('name', None)
+        rgb_fill_color = self.forceGetInputFromPort('fill_color', None)
+        if rgb_fill_color:
+            symbol_color = self.RGBToHTMLColor(rgb_fill_color.tuple)
         else:
             symbol_color = (0.0, 0.0, 0.0)
         symbol_opacity = min(100, max(0, opacity)) / 100.0
@@ -88,15 +99,19 @@ class VectorLayerStyling(LayerStyling):
         # set symbol properties
         layer_symbol.setColor(QtGui.QColor(symbol_color))
         layer_symbol.setAlpha(symbol_opacity)
+        # TODO - find a way to add fill styling; might be different for point/line/poly
         # set layer renderer
         renderer_V2 = qgis.core.QgsSingleSymbolRendererV2(layer_symbol)
         vector_layer.setRendererV2(renderer_V2)
+        # layer props
+        if layer_name:
+            vector_layer.setLayerName(layer_name)
 
         self.setResult('vector_layer', vector_layer)
 
 
 class RasterLayerStyling(LayerStyling):
-    """Provides styling options for raster layers.
+    """Provides styling options for a raster layer.
 
     See:
         http://www.qgis.org/pyqgis-cookbook/raster.html
@@ -104,5 +119,5 @@ class RasterLayerStyling(LayerStyling):
 
     def compute(self):
         raster_layer = self.getInputFromPort('raster_layer')
-
+        #TO DO - create ports; read values; style layer
         self.setResult('raster_layer', raster_layer)
