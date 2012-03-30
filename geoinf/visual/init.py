@@ -34,13 +34,28 @@ def initialize(*args, **keywords):
     from packages.eo4vistrails.geoinf.visual.QGISMapCanvasCell import \
         QGISMapCanvasCell
     from packages.eo4vistrails.geoinf.visual.SOSMobile import SOSMobile
-    from packages.eo4vistrails.geoinf.datamodels.QgsLayer import QgsMapLayer
+    from packages.eo4vistrails.geoinf.visual.LayerStyling import LayerStyling,\
+        VectorLayerStyling, RasterLayerStyling
+    from packages.eo4vistrails.geoinf.datamodels.QgsLayer import QgsMapLayer,\
+        QgsVectorLayer, QgsRasterLayer
     from packages.eo4vistrails.geoinf.datamodels.TemporalVectorLayer import \
         TemporalVectorLayer
     from packages.spreadsheet import basic_widgets
 
     reg = get_module_registry()
     mynamespace = 'visualisation'
+
+    # ==========================================================================
+    # Abstract Modules - these MUST appear FIRST
+    # ==========================================================================
+
+    reg.add_module(LayerStyling,
+                   namespace=mynamespace,
+                   abstract=True)
+
+    # ==========================================================================
+    # Standard Modules - without ports OR with locally defined ports
+    # ==========================================================================
 
     #MapCanvas
     reg.add_module(QGISMapCanvasCell, namespace=mynamespace)
@@ -60,3 +75,21 @@ def initialize(*args, **keywords):
                        basic_modules.String)
     reg.add_output_port(SOSMobile, 'temporal_vector_layer',
                         TemporalVectorLayer)
+
+    #VectorLayerStyling
+    reg.add_module(VectorLayerStyling, namespace=mynamespace)
+    reg.add_input_port(VectorLayerStyling, 'vector_layer',
+                       QgsVectorLayer)
+    reg.add_input_port(VectorLayerStyling, 'opacity',
+                       (basic_modules.Integer, 'The layer transparency (0->1)'))
+    reg.add_input_port(VectorLayerStyling, 'fill_color',
+                       (basic_modules.Color, 'The layer\'s fill color code'))
+    reg.add_output_port(VectorLayerStyling, 'vector_layer',
+                        QgsVectorLayer)
+
+    #RasterLayerStyling
+    reg.add_module(RasterLayerStyling, namespace=mynamespace)
+    reg.add_input_port(RasterLayerStyling, 'raster_layer',
+                       QgsRasterLayer)
+    reg.add_output_port(RasterLayerStyling, 'raster_layer',
+                        QgsRasterLayer)
