@@ -26,7 +26,7 @@
 ############################################################################
 """The `datacube` module ???
 """
-debug = True
+debug = False
 # library
 import os.path
 # third party

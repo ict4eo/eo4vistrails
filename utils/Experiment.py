@@ -35,9 +35,24 @@ from time import time
 class Timer(NotCacheable, Module):
     """ Container class for the random class """
 
-    _input_ports = [('start flow', '(edu.utah.sci.vistrails.basic:Module)')]
+    _input_ports = [('file sink', '(edu.utah.sci.vistrails.basic:File)'),
+                    ('start flow', '(edu.utah.sci.vistrails.basic:Module)'),
+                    ('input 1', '(edu.utah.sci.vistrails.basic:Module)'),
+                    ('input 2', '(edu.utah.sci.vistrails.basic:Module)'),
+                    ('input 3', '(edu.utah.sci.vistrails.basic:Module)'),
+                    ('input 4', '(edu.utah.sci.vistrails.basic:Module)'),
+                    ('input 5', '(edu.utah.sci.vistrails.basic:Module)'),
+                    ('input 6', '(edu.utah.sci.vistrails.basic:Module)'),
+                    ('input 7', '(edu.utah.sci.vistrails.basic:Module)'),
+                    ('input 8', '(edu.utah.sci.vistrails.basic:Module)') ,                   
+                    ('input names', '(edu.utah.sci.vistrails.basic:List)')
+                    ]
 
-    _output_ports = [('total time', '(edu.utah.sci.vistrails.basic:Float)')                     ]
+    _output_ports = [('total time', '(edu.utah.sci.vistrails.basic:Float)'),
+                     #('header', '(edu.utah.sci.vistrails.basic:String)'),
+                     #('record', '(edu.utah.sci.vistrails.basic:String)'),
+                     ('report', '(edu.utah.sci.vistrails.basic:String)')
+                     ]
 
     def __init__(self):
         Module.__init__(self)
@@ -49,5 +64,38 @@ class Timer(NotCacheable, Module):
 
     def compute(self):
         end_time = time()
-        self.setResult("total time", end_time - self.start_time)
+        total_time = end_time - self.start_time
+        
+        file_sink = self.forceGetInputFromPort('file sink', None)
+                
+        values = []
+        for i in range(8):
+            value = self.forceGetInputFromPort('input %s'%(i+1), None)
+            if value:
+                values.append(value)
 
+        names = self.forceGetInputFromPort('input names')
+        names = names + ['_?_' for _ in xrange(len(values)-len(names))] + ['total_time']
+
+        report = ""
+        csv_report = ""
+
+        for value, name in zip(values, names[0:8]):
+            if value:
+                report += "%s:%s "%(name, value)
+                csv_report += "%s,"%value
+        report += "total_time:%s"%total_time
+        csv_report += "%s\n"%total_time        
+
+        if file_sink:
+            try:
+                file_sink_file = open(file_sink.name, "r+")
+            except IOError:
+                file_sink_file = open(file_sink.name, "w")
+                file_sink_file.write(",".join(names[0:8])+"\n")
+            file_sink_file.seek(0, 2)
+            file_sink_file.write(csv_report)
+            file_sink_file.close()
+        self.setResult("total time", total_time)        
+        self.setResult("report", report)
+        

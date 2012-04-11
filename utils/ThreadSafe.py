@@ -28,7 +28,8 @@
 
 This is the core module holding annotations and mixins,
 """
-debug = True
+#QT
+from PyQt4 import QtGui, QtCore
 
 # global
 import copy
@@ -48,19 +49,21 @@ from core.modules.vistrails_module import Module, NotCacheable, \
 
 from core.interpreter.default import get_default_interpreter
 
-
 global globalThreadLock
 globalThreadLock = RLock()
+
+debug = False
 
 class ThreadSafeMixin(object):
     """TODO Write docstring."""    
     
     moduleLock = None
     interpreter = get_default_interpreter()
+    mainThreadEventQ = Queue()
     
     def __init__(self):
         self.computeLock = Lock()
-        self.exceptionQ = Queue()        
+        self.exceptionQ = Queue()
 
     def globalThread(self, connector_obj, method, parent_execs):
         """Called by this method to ensure a global threadlock over all non
@@ -102,16 +105,20 @@ class ThreadSafeMixin(object):
                 thread.start()
                 threadList.append(thread)
         
-        stillWaiting = True
-        while stillWaiting:
-            stillWaiting = False                        
+        if currentThread().name == "MainThread":
+            stillWaiting = True
+            while stillWaiting:
+                stillWaiting = False
+                for thread in threadList:
+                    thread.join(0.01)
+                    if thread.isAlive():
+                        stillWaiting = True
+                QtCore.QCoreApplication.processEvents()
+        else:
+            #Not the main thread so just wait for all children to complete
             for thread in threadList:
-                thread.join(0.1)
-                if thread.isAlive():
-                    stillWaiting = True
-            if stillWaiting:
-                self.logging.begin_update(self)
-            
+                thread.join()
+        
         if self.exceptionQ.qsize() > 0:
             exec_info = self.exceptionQ.get()
             raise exec_info[0], exec_info[1], exec_info[2]
@@ -161,7 +168,6 @@ class ThreadSafeMixin(object):
                         return
                     
                     self.logging.begin_compute(self)
-                    
                     try:
                         if self.is_breakpoint:
                             raise ModuleBreakpoint(self)
@@ -206,9 +212,10 @@ class ThreadSafeMixin(object):
         """
         global globalThreadLock
         assert(globalThreadLock._is_owned() == True)
+        parent_execs = None
         try:
             upstream_parent_execs = ThreadSafeMixin.interpreter.parent_execs[:]
-            parent_execs = ThreadSafeMixin.interpreter.parent_execs[:]            
+            parent_execs = ThreadSafeMixin.interpreter.parent_execs[:]
             if debug: print self.__class__.__name__, id(self), currentThread().name, "updateUpstream() Release globalThreadLock"
             globalThreadLock.release()
             self.updateUpstream(parent_execs=upstream_parent_execs)
@@ -216,7 +223,7 @@ class ThreadSafeMixin(object):
             if debug: print self.__class__.__name__, id(self), currentThread().name, "updateUpstream() Exception"
             raise
         finally:
-            globalThreadLock.acquire()
+            globalThreadLock.acquire()            
             ThreadSafeMixin.interpreter.parent_execs = parent_execs
             if debug: print self.__class__.__name__, id(self), currentThread().name, "updateUpstream() Get globalThreadLock"
 

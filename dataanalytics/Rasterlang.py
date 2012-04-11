@@ -26,7 +26,6 @@
 #############################################################################
 """This module holds a rpycnode type that can be passed around between modules.
 """
-debug = False
 #History
 #Created by Terence van Zyl
 
@@ -37,16 +36,15 @@ from packages.eo4vistrails.geoinf.datamodels.QgsLayer import QgsRasterLayer
 from packages.eo4vistrails.utils.synhigh import SyntaxSourceConfigurationWidget
 from packages.NumSciPy.Array import NDArray
 
-from core.modules.vistrails_module import NotCacheable, Module
+# vistrails
+from core.modules.vistrails_module import ModuleError, NotCacheable, Module
 
 import gdalnumeric
 import gdal
 from gdal import gdalconst
 import ctypes
 
-class RasterlangModule(ThreadSafeMixin):
-    def __init__(self):
-        ThreadSafeMixin.__init__(self)
+debug = True
 
 @RPyCSafeModule()
 class RasterLang(RPyCCode):
@@ -100,11 +98,12 @@ class RasterLang(RPyCCode):
             if locals_.has_key(k) and not locals_[k] is None:
                 if debug: print "%s == %s  -> %s"%(self.getPortType(k), NDArray, issubclass(NDArray, self.getPortType(k)))
                 if issubclass(self.getPortType(k), NDArray):
-                    if debug: print "got %s of type %s"%(k, type(locals_[k]))
+                    if debug: print "NDArray, got %s of type %s"%(k, type(locals_[k]))
                     outArray = NDArray()
                     outArray.set_array(numpy.asarray(locals_[k]))
                     self.setResult(k, outArray)
                 elif issubclass(self.getPortType(k), QgsRasterLayer):
+                    if debug: print "QgsRasterLayer, got %s of type %s"%(k, type(locals_[k]))
                     #TODO: This should all be done using a gal inmemorybuffer but
                     #I dont have time now
                     fileDescript, fileName = mkstemp(suffix='.img', text=False)
@@ -118,6 +117,7 @@ class RasterLang(RPyCCode):
                     outlayer = QgsRasterLayer(fileName, k)
                     self.setResult(k, outlayer)
                 else:
+                    if debug: print "???, got %s of type %s"%(k, type(locals_[k]))
                     self.setResult(k, locals_[k])
     
     def compute(self):
@@ -137,7 +137,7 @@ class RasterSourceConfigurationWidget(SyntaxSourceConfigurationWidget):
                                                  displayedComboItems = displayedComboItems)
 
 @RPyCSafeModule()
-class layerAsArray(RasterlangModule, RPyCModule):
+class layerAsArray(ThreadSafeMixin, RPyCModule):
     """ Container class for the connected components command """
 
     _input_ports  = [('Raster Layer', '(za.co.csir.eo4vistrails:Raster Layer:data)')]
@@ -145,8 +145,8 @@ class layerAsArray(RasterlangModule, RPyCModule):
 
     def __init__(self):
         RPyCModule.__init__(self)
-        RasterlangModule.__init__(self)
-
+        ThreadSafeMixin.__init__(self)
+        
     def preCompute(self):
         if debug: print "In preCompute"
         layer = self.getInputFromPort('Raster Layer')
@@ -165,7 +165,7 @@ class layerAsArray(RasterlangModule, RPyCModule):
 
         self.setResult("numpy array", None, asNDArray=True)
 
-class RasterPrototype(RasterlangModule, Module):
+class RasterPrototype(ThreadSafeMixin, Module):
     """ Container class for the connected components command """
 
     _input_ports  = [('(XMin,YMax,XMax,YMin) Extent', '(edu.utah.sci.vistrails.basic:Float,edu.utah.sci.vistrails.basic:Float,edu.utah.sci.vistrails.basic:Float,edu.utah.sci.vistrails.basic:Float)'),
@@ -177,7 +177,7 @@ class RasterPrototype(RasterlangModule, Module):
     
     def __init__(self):
         Module.__init__(self)
-        RasterlangModule.__init__(self)
+        ThreadSafeMixin.__init__(self)
 
     def compute(self):
         self.wkt = self.forceGetInputFromPort('Spatial Reference System', None)
@@ -193,7 +193,7 @@ class RasterPrototype(RasterlangModule, Module):
         self.geotransform=(self.xmin,self.xres,0,self.ymax,0,-self.yres)
 
 @RPyCSafeModule()
-class arrayAsLayer(RasterlangModule, RPyCModule):
+class arrayAsLayer(ThreadSafeMixin, RPyCModule):
     """ Container class for the connected components command """
 
     _input_ports  = [('numpy array', '(edu.utah.sci.vistrails.numpyscipy:Numpy Array:numpy|array)'),
@@ -202,7 +202,7 @@ class arrayAsLayer(RasterlangModule, RPyCModule):
 
     def __init__(self):
         RPyCModule.__init__(self)
-        RasterlangModule.__init__(self)
+        ThreadSafeMixin.__init__(self)
 
     def clear(self):
         RPyCModule.clear(self)
@@ -219,7 +219,7 @@ class arrayAsLayer(RasterlangModule, RPyCModule):
         self.setResult("raster layer", outlayer)
 
 @RPyCSafeModule()
-class SaveArrayToRaster(NotCacheable, RasterlangModule, RPyCModule):
+class SaveArrayToRaster(NotCacheable, ThreadSafeMixin, RPyCModule):
     """ Container class for the connected components command """
 
     _input_ports  = [('numpy array', '(edu.utah.sci.vistrails.numpyscipy:Numpy Array:numpy|array)'),
@@ -232,7 +232,7 @@ class SaveArrayToRaster(NotCacheable, RasterlangModule, RPyCModule):
 
     def __init__(self):
         RPyCModule.__init__(self)
-        RasterlangModule.__init__(self)
+        ThreadSafeMixin.__init__(self)
 
     def compute(self):
         if debug: print 'output file'
@@ -271,7 +271,7 @@ def writeImage(arrayData, prototype, path, format):
     
     if arrayData shape is of length 3, then we have multibands (nbad,rows,cols), otherwise one band
     """
-        
+    
     driver = gdal.GetDriverByName( format )
     metadata = driver.GetMetadata()
     if metadata.has_key(gdal.DCAP_CREATE) \
@@ -291,9 +291,8 @@ def writeImage(arrayData, prototype, path, format):
         rows = dims[1]
         cols = dims[2]
         nbands = dims[0]
-
-    #lookup the data type from the array and do the mapping
-    if debug: print "----------------------------------------------"
+    
+    #lookup the data type from the array and do the mapping    
     if debug: print "arraytype:  %s dtype: %s, type: %s, gdaltype: %s"%(type(arrayData), arrayData.dtype, arrayData.dtype.type, gdalnumeric.NumericTypeCodeToGDALTypeCode(arrayData.dtype.type))
     dst_ds = driver.Create(path, cols, rows, nbands, gdalnumeric.NumericTypeCodeToGDALTypeCode(arrayData.dtype.type) )
 
@@ -310,74 +309,13 @@ def writeImage(arrayData, prototype, path, format):
                 dst_ds_rb.SetNoDataValue(prototype.nodatavalue)
     else:
         dst_ds_rb = dst_ds.GetRasterBand(1)
-        if prototype.noDatavalue:
-            dst_ds_rb.SetNoDataValue(prototype.noDatavalue)
-        dst_ds_rb.SetRasterColorInterpretation(gdalconst.GCI_GrayIndex)
-        dst_ds_rb.SetRasterColorTable(gdal.ColorTable(gdalconst.GPI_Gray))
+        #if prototype.noDatavalue:
+        #    dst_ds_rb.SetNoDataValue(prototype.noDatavalue)
+        #dst_ds_rb.SetRasterColorInterpretation(gdalconst.GCI_GrayIndex)
+        #dst_ds_rb.SetRasterColorTable(gdal.ColorTable(gdalconst.GPI_Gray))
         dst_ds_rb.WriteArray(arrayData)
     
     dst_ds = None
         
     return True
 
-def fixLayerMinMax(layer):
-    allowedGreyStyles = [ QgsRasterLayer.SingleBandGray,
-         QgsRasterLayer.MultiBandSingleBandPseudoColor,
-         QgsRasterLayer.MultiBandSingleBandGray,
-         QgsRasterLayer.SingleBandPseudoColor ]
-    allowedRgbStyles = [ QgsRasterLayer.MultiBandColor ]        
-
-    # test if the layer is a raster from a local file (not a wms)
-    if layer.type() == layer.RasterLayer: # and ( not layer.usesProvider() ):
-        # Test if the raster is single band greyscale
-        if layer.drawingStyle() in allowedGreyStyles:
-            #Everything looks fine so set stretch and exit
-            #For greyscale layers there is only ever one band
-            band = layer.bandNumber( layer.grayBandName() ) # base 1 counting in gdal
-            extentMin = 0.0
-            extentMax = 0.0
-            generateLookupTableFlag = False
-            # compute the min and max for the current extent
-            extentMin, extentMax = layer.computeMinimumMaximumEstimates( band )
-            if debug: print "min max color", extentMin, extentMax
-            # set the layer min value for this band
-            layer.setMinimumValue( band, extentMin, generateLookupTableFlag )
-            # set the layer max value for this band
-            layer.setMaximumValue( band, extentMax, generateLookupTableFlag )
-            # ensure that stddev is set to zero
-            layer.setStandardDeviations( 0.0 )
-            # let the layer know that the min max are user defined
-            layer.setUserDefinedGrayMinimumMaximum( True )
-            # ensure any cached render data for this layer is cleared
-            layer.setCacheImage( None )
-        elif layer.drawingStyle() in allowedRgbStyles:
-            #Everything looks fine so set stretch and exit
-            redBand = layer.bandNumber( layer.redBandName() )
-            greenBand = layer.bandNumber( layer.greenBandName() )
-            blueBand = layer.bandNumber( layer.blueBandName() )
-            extentRedMin = 0.0
-            extentRedMax = 0.0
-            extentGreenMin = 0.0
-            extentGreenMax = 0.0
-            extentBlueMin = 0.0
-            extentBlueMax = 0.0
-            generateLookupTableFlag = False
-            # compute the min and max for the current extent
-            extentRedMin, extentRedMax = layer.computeMinimumMaximumEstimates( redBand )
-            extentGreenMin, extentGreenMax = layer.computeMinimumMaximumEstimates( greenBand )
-            extentBlueMin, extentBlueMax = layer.computeMinimumMaximumEstimates( blueBand )
-            # set the layer min max value for the red band
-            layer.setMinimumValue( redBand, extentRedMin, generateLookupTableFlag )
-            layer.setMaximumValue( redBand, extentRedMax, generateLookupTableFlag )
-            # set the layer min max value for the red band
-            layer.setMinimumValue( greenBand, extentGreenMin, generateLookupTableFlag )
-            layer.setMaximumValue( greenBand, extentGreenMax, generateLookupTableFlag )
-            # set the layer min max value for the red band
-            layer.setMinimumValue( blueBand, extentBlueMin, generateLookupTableFlag )
-            layer.setMaximumValue( blueBand, extentBlueMax, generateLookupTableFlag )
-            # ensure that stddev is set to zero
-            layer.setStandardDeviations( 0.0 )
-            # let the layer know that the min max are user defined
-            layer.setUserDefinedRGBMinimumMaximum( True )
-            # ensure any cached render data for this layer is cleared
-            layer.setCacheImage( None )

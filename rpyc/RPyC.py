@@ -440,6 +440,7 @@ class RPyCSafeMixin(ModuleHelperMixin):
                 elif rpycnode[0] is None or rpycnode[0] in ['main', ''] or self.ownNotSupported:
                     self.workerNodeID = None
                     self.conn = None
+                    self.sharedMemOutputPorts = {}
                     self.preCompute()
                     
                 else:
