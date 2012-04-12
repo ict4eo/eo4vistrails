@@ -35,7 +35,8 @@ def initialize(*args, **keywords):
         QGISMapCanvasCell
     from packages.eo4vistrails.geoinf.visual.SOSMobile import SOSMobile
     from packages.eo4vistrails.geoinf.visual.LayerStyling import LayerStyling,\
-        VectorLayerStyling, RasterLayerStyling
+        VectorLayerStyling, RasterLayerStyling, \
+        QgsRasterLayerDrawingStyleComboBox
     from packages.eo4vistrails.geoinf.datamodels.QgsLayer import QgsMapLayer,\
         QgsVectorLayer, QgsRasterLayer
     from packages.eo4vistrails.geoinf.datamodels.TemporalVectorLayer import \
@@ -50,6 +51,11 @@ def initialize(*args, **keywords):
     # ==========================================================================
 
     reg.add_module(LayerStyling,
+                   namespace=mynamespace,
+                   abstract=True)
+
+    # abstract modules - drop-down lists
+    reg.add_module(QgsRasterLayerDrawingStyleComboBox,
                    namespace=mynamespace,
                    abstract=True)
 
@@ -78,23 +84,6 @@ def initialize(*args, **keywords):
 
     #VectorLayerStyling
     reg.add_module(VectorLayerStyling, namespace=mynamespace)
-    reg.add_input_port(VectorLayerStyling, 'vector_layer',
-                       QgsVectorLayer)
-    reg.add_input_port(VectorLayerStyling, 'opacity',
-                       (basic_modules.Integer,
-                        'layer\'s percentage  transparency (0->100)'))
-    reg.add_input_port(VectorLayerStyling, 'fill_color',
-                       (basic_modules.Color,
-                        'layer\'s fill color code'))
-    reg.add_input_port(VectorLayerStyling, 'name',
-                       (basic_modules.String,
-                        'layer\'s name'))
-    reg.add_output_port(VectorLayerStyling, 'vector_layer',
-                        QgsVectorLayer)
 
     #RasterLayerStyling
     reg.add_module(RasterLayerStyling, namespace=mynamespace)
-    reg.add_input_port(RasterLayerStyling, 'raster_layer',
-                       QgsRasterLayer)
-    reg.add_output_port(RasterLayerStyling, 'raster_layer',
-                        QgsRasterLayer)

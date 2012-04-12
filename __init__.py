@@ -37,6 +37,7 @@ OpenNebula cloud environments.
     # Derek Hohls (dhohls)
     # Petrus Shabangu (pshabangu)
     # Bolelang Sibolla (bsibolla)
+    # Mugu Mtsetfwa (mugu)
 
 identifier = 'za.co.csir.eo4vistrails'
 name = 'eo4vistrails'
@@ -50,7 +51,7 @@ name = 'eo4vistrails'
 revision = 3
 version='0.1.%s'%revision
 
-author_list = 'tvanzyl,gmcferren,bcwele,dhohls,pshabangu,bsibolla'
+author_list = 'tvanzyl,gmcferren,bcwele,dhohls,pshabangu,bsibolla,mmtsetfwa'
 
 import sys
 import os.path
