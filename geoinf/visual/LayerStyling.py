@@ -90,22 +90,14 @@ class VectorLayerStyling(LayerStyling):
 
     See also:
         http://www.qgis.org/pyqgis-cookbook/vector.html
-
-
-    _input_ports = [('vector_layer', '(za.co.csir.eo4vistrails:Vector Layer:data)'),
-                    ('opacity', '(edu.utah.sci.vistrails.basic:Integer)'),
-                    ('fill_color', '(edu.utah.sci.vistrails.basic:Color)'),
-                    ('label', '(edu.utah.sci.vistrails.basic:String)')]
-
     """
-
     _input_ports = [('vector_layer', '(za.co.csir.eo4vistrails:Vector Layer:data)'),
-                    ('label', '(edu.utah.sci.vistrails.basic:String)')]
-    _output_ports = [('vector_layer', ' (za.co.csir.eo4vistrails:Vector Layer:data)')]
+                    ('label', '(edu.utah.sci.vistrails.basic:String)'),
+                    ('opacity', '(edu.utah.sci.vistrails.basic:Integer)'),
+                    ('fill_color', '(edu.utah.sci.vistrails.basic:Color)')]
+    _output_ports = [('vector_layer', '(za.co.csir.eo4vistrails:Vector Layer:data)')]
 
     def compute(self):
-        pass
-        """
         vector_layer = self.getInputFromPort('vector_layer')
         opacity = self.forceGetInputFromPort('opacity', 100)
         layer_name = self.forceGetInputFromPort('label', None)
@@ -128,7 +120,7 @@ class VectorLayerStyling(LayerStyling):
             vector_layer.setLayerName(layer_name)
 
         self.setResult('vector_layer', vector_layer)
-        """
+
 
 class RasterLayerStyling(LayerStyling):
     """Provides styling options for a raster layer.
@@ -143,17 +135,14 @@ class RasterLayerStyling(LayerStyling):
 
     See:
         http://www.qgis.org/pyqgis-cookbook/raster.html
-
-
-    _input_ports = [('raster_layer', '(za.co.csir.eo4vistrails:Raster Layer:data)'),
-                    ('raster_style', '(za.co.csir.eo4vistrails:Raster Layer Drawing Style:visualisation)'),
-                    ('label', '(edu.utah.sci.vistrails.basic:String)')]
-    _output_ports = [('raster_layer', ' (za.co.csir.eo4vistrails:Raster Layer:data)')]
     """
+    _input_ports = [('raster_layer', '(za.co.csir.eo4vistrails:Raster Layer:data)'),
+                    ('label', '(edu.utah.sci.vistrails.basic:String)'),
+                    ('raster_style', '(za.co.csir.eo4vistrails:Raster Layer Drawing Style:visualisation)')]
+    _output_ports = [('raster_layer', '(za.co.csir.eo4vistrails:Raster Layer:data)')]
+
 
     def compute(self):
-        pass
-        """
         raster_layer = self.getInputFromPort('raster_layer')
         raster_style = self.forceGetInputFromPort('raster_style', None)
         layer_name = self.forceGetInputFromPort('label', None)
@@ -168,7 +157,7 @@ class RasterLayerStyling(LayerStyling):
             raster_layer.setLayerName(layer_name)
 
         self.setResult('raster_layer', raster_layer)
-        """
+
 
 class QgsRasterLayerDrawingStyleComboBoxWidget(ComboBoxWidget):
     """Constants used for setting drawing style for a QGIS raster layer."""
