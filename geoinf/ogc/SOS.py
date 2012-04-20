@@ -353,7 +353,7 @@ class SOSConfigurationWidget(OgcConfigurationWidget,
     """makes use of code style from OgcConfigurationWidget"""
 
     def __init__(self, module, controller, parent=None):
-        print "SOS:357 - SOS init function called"
+        print "\nSOS:357 - SOS init function called"
         # inherit parent module > access Module methods in core/vistrail/module.py
         StandardModuleConfigurationWidget.__init__(self, module,
                                                    controller, parent)
@@ -364,9 +364,11 @@ class SOSConfigurationWidget(OgcConfigurationWidget,
         # map strings to ports to enable storing of module settings
         port_widget = {
             init.OGC_URL_PORT: self.config.parent_widget.line_edit_OGC_url,
-            init.BOUNDS_PORT: self.config.lblTL_X,
             init.CONFIGURATION_PORT: self.config.parent_widget.configuration,
             init.OGC_CAPABILITIES_PORT: self.config.parent_widget.capabilities}
+
+        print "SOS:370", self.config.parent_widget.line_edit_OGC_url
+        print "SOS:371", self.config.parent_widget.capabilities
 
         # set corresponding port value for a configuration widget
         #  a "function" is VisTrails internal representation of a port (at design time)
@@ -653,22 +655,23 @@ class SOSConfigurationWidget(OgcConfigurationWidget,
                 'Unknown SOS request type' + ': %s' % str(rType))
         # xml header
         data = '<?xml version="1.0" encoding="UTF-8"?>\n' + data
-        #print "SOS:655 - data:\n", data  # show line breaks for testing !!!
+        #print "SOS:656 - data:\n", data  # show line breaks for testing !!!
         data = data.replace('\n', '')  # remove line breaks
         result['request_type'] = 'POST'
         result['data'] = data
         result['capabilities'] = self.config.parent_widget.capabilities
         # ensure that any variables stored here always have default values
+        # and that they are converted from PyQt4.QtCore.QString types
         result['configuration'] = {
-            'procedure': procedure,
-            'format': format,
-            'mode': mode,
-            'model': model,
-            'obs_prop': obs_prop,
-            'foi': foi,
-            'offering': offering,
-            'time_limit': time_limit,
-            'spatial_limit': spatial_limit,
+            'procedure': str(procedure),
+            'format': str(format),
+            'mode': str(mode),
+            'model': str(model),
+            'obs_prop': [str(prop) for prop in obs_prop],
+            'foi': str(foi),
+            'offering': str(offering),
+            'time_limit': str(time_limit),
+            'spatial_limit': str(spatial_limit),
             'time_range': time_range,  # tuple of start/end times
         }
         return result

@@ -8,7 +8,6 @@ OGC_POST_DATA_PORT = "PostData"
 OGC_GET_REQUEST_PORT = "GetRequest"
 OGC_REQUEST_PORT = "RequestURL"
 OGC_URL_PORT = "OGC_URL"
-BOUNDS_PORT = "BoundingBox"
 WPS_PROCESS_PORT = "WPS_process"
 CONFIGURATION_PORT = "Configuration"  # store user choices from config dialog
 OGC_CAPABILITIES_PORT = "Capabilities"  # store XML from GetCaps (local "cache")
@@ -58,10 +57,6 @@ def initialize(*args, **keywords):
         SOS,
         OGC_URL_PORT,
         (String, 'Request URL'))  # , True)
-    reg.add_input_port(
-        SOS,
-        BOUNDS_PORT,
-        (String, 'Bounding Box'), optional=True) # (String,String,String,String)
     reg.add_input_port(
         SOS,
         CONFIGURATION_PORT,

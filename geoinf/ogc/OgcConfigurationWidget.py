@@ -312,13 +312,11 @@ class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
                 functions.append(
                     (init.OGC_LAYERNAME_PORT, [self.layername]),)
             if self.capabilities:
-                print "\nOgcConfigurationWidget:314 caps", self.capabilities[:33]
+                print "\nOgcConfigurationWidget:315 caps", self.capabilities[:33]
                 functions.append(
                     (init.OGC_CAPABILITIES_PORT, [self.capabilities]),)
             if self.configuration:
-                print "\nOgcConfigurationWidget:318 config", self.configuration
-                print "OgcConfigurationWidget:320 ", type(self.configuration), \
-                    type(str(self.configuration))
+                print "\nOgcConfigurationWidget:319 config", self.configuration
                 functions.append(
                     (init.CONFIGURATION_PORT, [str(self.configuration)]),)
 
