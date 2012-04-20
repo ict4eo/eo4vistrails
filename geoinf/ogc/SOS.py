@@ -370,11 +370,13 @@ class SOSConfigurationWidget(OgcConfigurationWidget,
         print "SOS:370", self.config.parent_widget.line_edit_OGC_url
         print "SOS:371", self.config.parent_widget.capabilities
 
+        print port_widget
+        
         # set corresponding port value for a configuration widget
         #  a "function" is VisTrails internal representation of a port (at design time)
         for function in self.module.functions:
             print "SOS:374", function.name
-            if port_widget.get(function.name):
+            if port_widget.has_key(function.name):
                 print "SOS:376", port_widget[function.name]  #, function.params[0].strValue
                 try:
                     print "SOS:378", function.params[0].strValue
@@ -382,6 +384,7 @@ class SOSConfigurationWidget(OgcConfigurationWidget,
                     #print "SOS:380", function.name, port_widget[function.name]
                 except:
                     print "SOS:382", function.name
+                    port_widget[function.name] = function.params[0].strValue
                     #pass  # some port_widget values are NOT PyQT objects
 
         # move parent tab to first place
