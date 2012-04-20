@@ -35,10 +35,12 @@ from PyQt4 import QtCore, QtGui
 #from qgis.core import *
 #from qgis.gui import *
 # vistrails
-from core.modules.module_configure import StandardModuleConfigurationWidget
 from core.modules.vistrails_module import Module, ModuleError
 # eo4vistrails
 from packages.eo4vistrails.geoinf.datamodels.Feature import FeatureModel
+from packages.eo4vistrails.utils.ModuleHelperMixin import ModuleHelperMixin
+from packages.eo4vistrails.utils.widget_configuration import \
+    ExtendedModuleConfigurationWidget
 # local
 from OgcConfigurationWidget import OgcConfigurationWidget
 from OgcService import OGC
@@ -226,31 +228,67 @@ class SosCommonWidget(QtGui.QWidget):
             self.lblStartTime.text(),
             self.lblEndTime.text(),)
 
-    def restoreConfiguration(self):
+    def restoreConfiguration(self, configuration):
         """Restore all configuration choices previously made.
 
-        NB: These are saved as dictionary on an input port of the module.
+        NB: These are saved as a dictionary (but in string format) on an
+            input port of the module.
         """
-        config = self.parent_widget.configuration
-        if config:
+
+        def set_cbox(box, text):
+            """Set index for PyQT4 combo box, based on text."""
+            try:
+                i = box.findText(text)
+                if i >= 0:
+                    box.setCurrentIndex(i)
+                return True
+            except:
+                return False  # sorry, no.
+
+        def set_lbox(box, text):
+            """FIXME!"""
+            """Set index for PyQT4 list box, based on text."""
+            items = box.findItems(text) #TypeError: QListWidget.findItems(QString, Qt.MatchFlags): not enough arguments
+
+            item = items[0]
+            box.setCurrentItem(item)
+            return True
+            try:
+                items = box.findItems(text)
+                item = items[0]
+                box.setCurrentItem(item)
+                return True
+            except:
+                return False  # sorry, no.
+
+        try:
+            config = eval(configuration)
+        except:
+            config = None
+
+        if config and isinstance(config, dict):
+            pass
             """
-            self.lblTL_X.setText('-')
-            self.lblTL_Y.setText('-')
-            self.lblBR_X.setText('-')
-            self.lblBR_Y.setText('-')
-            """
+            # not done yet
+            #self.lblTL_X.setText('-')
+            #self.lblTL_Y.setText('-')
+            #self.lblBR_X.setText('-')
+            #self.lblBR_Y.setText('-')
             # self.lblSRS.setText('-') ???
-            """
+
+            # must call this first
+            if set_lbox(self.lbxOfferings, 'offering'):
+                self.offeringsChanged()
+
             tr = config.get('time_range') or (None, None)
             if tr[0]:
                 self.lblStartTime.setText(tr[0])
             if tr[1]:
                 self.lblEndTime.setText(tr[1])
 
-            i = self.cbProcedure.findText(config.get('procedure'))
-            if i>= 0: self.cbProcedure.setCurrentIndex(i)
+            set_cbox(self.cbProcedure, 'pocedure')
 
-
+            # other cboxs - need to do still
             self.cbRequest.clear()
             self.cbResponseFormat.clear()
             self.cbResponseMode.clear()
@@ -349,43 +387,27 @@ class SosCommonWidget(QtGui.QWidget):
 
 
 class SOSConfigurationWidget(OgcConfigurationWidget,
-                             StandardModuleConfigurationWidget):
+                             ExtendedModuleConfigurationWidget):
     """makes use of code style from OgcConfigurationWidget"""
 
     def __init__(self, module, controller, parent=None):
-        print "\nSOS:357 - SOS init function called"
         # inherit parent module > access Module methods in core/vistrail/module.py
-        StandardModuleConfigurationWidget.__init__(self, module,
+        ExtendedModuleConfigurationWidget.__init__(self, module,
                                                    controller, parent)
         OgcConfigurationWidget.__init__(self, module, controller, parent)
         # pass in parent widget i.e. OgcCommonWidget class
         self.config = SosCommonWidget(self.module, self.ogc_common_widget)
 
-        # map strings to ports to enable storing of module settings
-        port_widget = {
-            init.OGC_URL_PORT: self.config.parent_widget.line_edit_OGC_url,
-            init.CONFIGURATION_PORT: self.config.parent_widget.configuration,
-            init.OGC_CAPABILITIES_PORT: self.config.parent_widget.capabilities}
+        # retrieve values from input ports (created in OgcConfigurationWidget)
+        self.config.parent_widget.capabilities = self.getPortValue(init.OGC_CAPABILITIES_PORT)
+        self.configuration = self.getPortValue(init.CONFIGURATION_PORT)
+        self.config.parent_widget.line_edit_OGC_url.setText(
+            self.getPortValue(init.OGC_URL_PORT))
 
-        print "SOS:370", self.config.parent_widget.line_edit_OGC_url
-        print "SOS:371", self.config.parent_widget.capabilities
-
-        print port_widget
-        
-        # set corresponding port value for a configuration widget
-        #  a "function" is VisTrails internal representation of a port (at design time)
-        for function in self.module.functions:
-            print "SOS:374", function.name
-            if port_widget.has_key(function.name):
-                print "SOS:376", port_widget[function.name]  #, function.params[0].strValue
-                try:
-                    print "SOS:378", function.params[0].strValue
-                    port_widget[function.name].setText(function.params[0].strValue)
-                    #print "SOS:380", function.name, port_widget[function.name]
-                except:
-                    print "SOS:382", function.name
-                    port_widget[function.name] = function.params[0].strValue
-                    #pass  # some port_widget values are NOT PyQT objects
+        #restore existing capabilities & configuration
+        if self.config.parent_widget.capabilities:
+            self.config.parent_widget.load_capabilities()
+            self.config.restoreConfiguration(self.configuration)
 
         # move parent tab to first place
         self.tabs.insertTab(1, self.config, "")

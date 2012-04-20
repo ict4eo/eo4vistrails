@@ -6,12 +6,12 @@ Created on Thu Nov  3 15:15:50 2011
 """
 
 class ModuleHelperMixin(object):
-  
+
     def getPortType(self, portName, portType="output"):
         for i in self.moduleInfo['pipeline'].module_list:
             if i.id == self.moduleInfo['moduleId']:
                 for j in i.port_specs:
-                    if i.port_specs[j].type == portType and i.port_specs[j].name == portName:                        
+                    if i.port_specs[j].type == portType and i.port_specs[j].name == portName:
                         if str(type(i.port_specs[j].signature[0][0])) == "<netref class '__builtin__.type'>":
                             str_type = str(i.port_specs[j].signature[0][0])
                             str_type = str_type.split("'")[1]

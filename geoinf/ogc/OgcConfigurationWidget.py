@@ -177,6 +177,11 @@ class OgcCommonWidget(QtGui.QWidget):
 
     def fetchTriggered(self):
         """TO DO - add docstring"""
+        self.capabilities = None
+        self.load_capabilities()
+
+    def load_capabilities(self):
+        """TO DO - add docstring"""
         if self.line_edit_OGC_url.text() != "":
             #print "lvct" + str(self.launchversion.currentText())
             self.setCursor(self.waitCursor)
@@ -184,7 +189,8 @@ class OgcCommonWidget(QtGui.QWidget):
             self.service = OgcService(
                 self.line_edit_OGC_url.text(),
                 self.launchtype,
-                str(self.launchversion.currentText()))
+                str(self.launchversion.currentText()),
+                capabilities=self.capabilities)
             self.setCursor(self.arrowCursor)
             # populate metadata
             if not self.populate_metadata():
@@ -305,6 +311,8 @@ class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
         # must not set ports if nothing has been specified, or
         # if there was a problem constructing the request
         # NOTE: Only CONSTANT-type data can be saved to input ports !
+
+        #TODO - refactor and simplify code - possibly add method to utils/widget_configuration
         if self.request_type and self.data:
             functions.append(
                 (init.OGC_URL_PORT, [self.url]),)
@@ -312,11 +320,11 @@ class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
                 functions.append(
                     (init.OGC_LAYERNAME_PORT, [self.layername]),)
             if self.capabilities:
-                print "\nOgcConfigurationWidget:315 caps", self.capabilities[:33]
+                #print "\nOgcConfigurationWidget:315 caps", self.capabilities[:33]
                 functions.append(
                     (init.OGC_CAPABILITIES_PORT, [self.capabilities]),)
             if self.configuration:
-                print "\nOgcConfigurationWidget:319 config", self.configuration
+                #print "\nOgcConfigurationWidget:319 config", self.configuration
                 functions.append(
                     (init.CONFIGURATION_PORT, [str(self.configuration)]),)
 
@@ -340,7 +348,7 @@ class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
             self.showWarning('The OGC service is not sufficiently specified.')
 
     def constructRequest(self, URL):
-        """Overwrite in a subclass to set the service specific parameters.
+        """Overwrite in every subclass to set the service specific parameters.
 
         Requires:
             A valid URL (pointing to an OGC web service)
@@ -351,7 +359,7 @@ class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
               * data (for a POST)
               * full_url (for a GET)
               * layername (for WFS, WCS)
-              * capbilities (OGC GetCapabilities XML)
-              * configuration (dictionary of user-selected parameters)
+              * capabilities (OGC GetCapabilities XML)
+              * configuration (dictionary of user-selected options)
         """
         return {}
