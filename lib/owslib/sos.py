@@ -6,6 +6,12 @@
 #
 # Contact email: tomkralidis@hotmail.com
 # =============================================================================
+#
+# Authors : Derek Hohls <dhohls@csir.co.za>
+#
+# Contact email: dhohls@csir.co.za
+# =============================================================================
+
 
 """
 API for Sensor Observation Service (SOS) methods and metadata.
@@ -67,7 +73,7 @@ class SensorObservationService(object):
 
         self._open = urlopen
         if self.ignore_proxy:
-            #print "sos:70 - ignoring proxy..."
+            #print "sos:76 - ignoring proxy..."
             proxy_support = ProxyHandler({})  # disables proxy
             opener = build_opener(proxy_support)
             install_opener(opener)
@@ -114,6 +120,7 @@ class SensorObservationService(object):
         # ServiceIdentification
         val = self._capabilities.find('{http://www.opengis.net/ows/1.1}ServiceIdentification')
         self.identification = ows.ServiceIdentification(val)
+
         # ServiceProvider
         val = self._capabilities.find('{http://www.opengis.net/ows/1.1}ServiceProvider')
         self.provider = ows.ServiceProvider(val)
@@ -151,7 +158,7 @@ class SensorObservationService(object):
         if elem_set:
             for elem in elem_set:
                 if elem:
-                    #print  "owslib.sos.py:143", type(elem), "\n", elem
+                    #print  "owslib.sos.py:161", type(elem), "\n", elem
                     meta = ContentsMetadata(elem)
                     # attempt to find defaults at ObservationOfferingList level
                     if not meta.response_format:
@@ -165,7 +172,7 @@ class SensorObservationService(object):
                             elem_set, 'responseMode')
                     self.contents.append(meta)
         """
-        print "**elem_set**", elem_set
+        print "**owslib.sos.py:175 elem_set**", elem_set
         print "\n**contents**\n", self.contents
         for c in self.contents:
             items = c.__dict__
@@ -542,7 +549,7 @@ class SOSCapabilitiesReader:
 
         self._open = urlopen
         if self.ignore_proxy:
-            #print "sos:548 - ignoring proxy..."
+            #print "sos:552 - ignoring proxy..."
             proxy_support = ProxyHandler({})  # disables proxy
             opener = build_opener(proxy_support)
             install_opener(opener)

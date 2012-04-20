@@ -38,31 +38,54 @@ NOTE:
 
 """
 
+import xml.etree.cElementTree as etree
 import traceback
 from urllib2 import URLError
 try:
-        from owslib import wfs as wfs
-        from owslib import wcs as wcs
-        from owslib import sos as sos
+    from owslib import wfs as wfs
+    from owslib import wcs as wcs
+    from owslib import sos as sos
 except:
-        import owslib.wfs as wfs
-        import owslib.sos as sos
-        import owslib.wcs as wcs
+    import owslib.wfs as wfs
+    import owslib.sos as sos
+    import owslib.wcs as wcs
 
 
 class OgcService():
-    #########
-    ## namespace issues pervade wfs in owslib e.g.
-    ## cannot handle when geoserver shorcuts a namespace with an abbreviation
-    ## also wfs will never load a 1.1.0 instance, but it should be loaded as wfs200
-    #########
+    """TODO:  - add docstring / summary description
 
-    def __init__(self, service_url, service_type, service_version, timeout=180):
+    Parameters
+    ----------
+        service_url: string
+            URL for OGC service
+        service_type: string
+            'wfs', 'sos', 'wcs'
+        service_version: string
+            currently only version 1.0 for OGC services (but see Notes)
+        timeout: integer
+            in seconds - some lines/servers experiences slow speeds and/or the
+            XML being returned is in a large document, taking time to construct
+            (see inline comments about usage in different services)
+        capabilities:
+            a full capabilities document - if provided, no call will be made
+            by owslib to the service_url, and this will be used instead
+
+    Notes
+    -----
+      Namespace issues pervade wfs in owslib e.g.
+      * cannot handle when geoserver shortcuts a namespace with an abbreviation
+      * wfs will never load a 1.1.0 instance, but it should be loaded as wfs200
+    """
+
+    def __init__(self, service_url, service_type, service_version, timeout=180,
+                 capabilities=None):
         self.INVALID_OGC_TYPE_MESSAGE = \
             "Please provide an OGC Service Type: 'wfs', 'sos', or 'wcs'"
-        #print "OgcService():__init__:\nservice_url, service_type, service_version\n", \
+        #print "common:83:\nservice_url, service_type, service_version\n", \
             #service_url, '#', service_type, '#', service_version
         self.timeout = timeout  # seconds
+        self.capabilities = capabilities  # full capabilities document
+        self.service = None
         if service_url:
             service_url = str(service_url)
             # check for service and request key-value pairs;
@@ -112,23 +135,27 @@ class OgcService():
                 try:
                     if service_type.lower() == "sos":
                         # NB as of 2011-09-27, only owslib sos module
-                        # has been upgraded to handle timeouts
+                        # has been upgraded to handle timeout
                         try:
                             self.service = sos.SensorObservationService(
                                 service_url, service_version,
-                                timeout=self.timeout)
+                                timeout=self.timeout,
+                                xml=self.capabilities)
                         except URLError:
                             self.service = sos.SensorObservationService(
                                 service_url, service_version,
-                                timeout=self.timeout, ignore_proxy=True)
+                                timeout=self.timeout, ignore_proxy=True,
+                                xml=self.capabilities)
                         self.service_valid = True
                     elif service_type.lower() == "wfs":
                         self.service = wfs.WebFeatureService(
-                            service_url, service_version)
+                            service_url, service_version,
+                            xml=self.capabilities)
                         self.service_valid = True
                     elif service_type.lower() == "wcs":
                         self.service = wcs.WebCoverageService(
-                            service_url, service_version)
+                            service_url, service_version,
+                            xml=self.capabilities)
                         self.service_valid = True
                     else:
                         self.service_valid = False
@@ -142,7 +169,15 @@ class OgcService():
         self.service_url = service_url
         self.ini_service_type = service_type.lower()
         self.ini_service_version = service_version
+
         if self.service_valid:
+            # NOTE: '_capabilities' may change in future versions of owslib!  See:
+            #   http://www.mail-archive.com/community@lists.gispython.org/msg00840.html
+            #   http://lists.gispython.org/pipermail/community/2008-January/001502.html
+            elem = self.service._capabilities  # etree element
+            # extract XML containing "raw" GetCapabilities data
+            self.capabilities = etree.tostring(elem, encoding='utf-8')
+            #print "Common:180", self.capabilities
             # store metadata
             # this looks bizzare, but it is true...
             if service_type.lower() == "wfs" and service_version == "1.0.0":
@@ -255,35 +290,35 @@ class OgcService():
             if 'url' in provider_dict:
                 self.provider_url = provider_dict['url']
             if 'contact' in provider_dict:
-                if provider_dict['contact'].__dict__.has_key('name'):
+                if 'name' in provider_dict['contact'].__dict__:
                     self.provider_contact_name = provider_dict['contact'].__dict__['name']
-                if provider_dict['contact'].__dict__.has_key('position'):
+                if 'position' in provider_dict['contact'].__dict__:
                     self.provider_contact_position = provider_dict['contact'].__dict__['position']
-                if provider_dict['contact'].__dict__.has_key('role'):
+                if 'role' in provider_dict['contact'].__dict__:
                     self.provider_contact_role = provider_dict['contact'].__dict__['role']
-                if provider_dict['contact'].__dict__.has_key('organization'):
+                if 'organization' in provider_dict['contact'].__dict__:
                     self.provider_contact_organization = provider_dict['contact'].__dict__['organization']
-                if provider_dict['contact'].__dict__.has_key('address'):
+                if 'address' in provider_dict['contact'].__dict__:
                     self.provider_contact_address = provider_dict['contact'].__dict__['address']
-                if provider_dict['contact'].__dict__.has_key('city'):
+                if 'city' in provider_dict['contact'].__dict__:
                     self.provider_contact_city = provider_dict['contact'].__dict__['city']
-                if provider_dict['contact'].__dict__.has_key('region'):
+                if 'region' in provider_dict['contact'].__dict__:
                     self.provider_contact_region = provider_dict['contact'].__dict__['region']
-                if provider_dict['contact'].__dict__.has_key('postcode'):
+                if 'postcode' in provider_dict['contact'].__dict__:
                     self.provider_contact_postcode = provider_dict['contact'].__dict__['postcode']
-                if provider_dict['contact'].__dict__.has_key('country'):
+                if 'country' in provider_dict['contact'].__dict__:
                     self.provider_contact_country = provider_dict['contact'].__dict__['country']
-                if provider_dict['contact'].__dict__.has_key('phone'):
+                if 'phone' in provider_dict['contact'].__dict__:
                     self.provider_contact_phone = provider_dict['contact'].__dict__['phone']
-                if provider_dict['contact'].__dict__.has_key('fax'):
+                if 'fax' in provider_dict['contact'].__dict__:
                     self.provider_contact_fax = provider_dict['contact'].__dict__['fax']
-                if provider_dict['contact'].__dict__.has_key('site'):
+                if 'site' in provider_dict['contact'].__dict__:
                     self.provider_contact_site = provider_dict['contact'].__dict__['site']
-                if provider_dict['contact'].__dict__.has_key('email'):
+                if 'email' in provider_dict['contact'].__dict__:
                     self.provider_contact_email = provider_dict['contact'].__dict__['email']
-                if provider_dict['contact'].__dict__.has_key('hours'):
+                if 'hours' in provider_dict['contact'].__dict__:
                     self.provider_contact_hours = provider_dict['contact'].__dict__['hours']
-                if provider_dict['contact'].__dict__.has_key('instructions'):
+                if 'instructions' in provider_dict['contact'].__dict__:
                     self.provider_contact_instructions = provider_dict['contact'].__dict__['instructions']
 
         elif self.ini_service_type == "wfs":
@@ -297,35 +332,35 @@ class OgcService():
             if 'url' in provider_dict:
                 self.provider_url = provider_dict['url']
             if 'contact' in provider_dict:
-                if provider_dict['contact'].__dict__.has_key('name'):
+                if 'name' in provider_dict['contact'].__dict__:
                     self.provider_contact_name = provider_dict['contact'].__dict__['name']
-                if provider_dict['contact'].__dict__.has_key('position'):
+                if 'position' in provider_dict['contact'].__dict__:
                     self.provider_contact_position = provider_dict['contact'].__dict__['position']
-                if provider_dict['contact'].__dict__.has_key('role'):
+                if 'role' in provider_dict['contact'].__dict__:
                     self.provider_contact_role = provider_dict['contact'].__dict__['role']
-                if provider_dict['contact'].__dict__.has_key('organization'):
+                if 'organization' in provider_dict['contact'].__dict__:
                     self.provider_contact_organization = provider_dict['contact'].__dict__['organization']
-                if provider_dict['contact'].__dict__.has_key('address'):
+                if 'address' in provider_dict['contact'].__dict__:
                     self.provider_contact_address = provider_dict['contact'].__dict__['address']
-                if provider_dict['contact'].__dict__.has_key('city'):
+                if 'city' in provider_dict['contact'].__dict__:
                     self.provider_contact_city = provider_dict['contact'].__dict__['city']
-                if provider_dict['contact'].__dict__.has_key('region'):
+                if 'region' in provider_dict['contact'].__dict__:
                     self.provider_contact_region = provider_dict['contact'].__dict__['region']
-                if provider_dict['contact'].__dict__.has_key('postcode'):
+                if 'postcode' in provider_dict['contact'].__dict__:
                     self.provider_contact_postcode = provider_dict['contact'].__dict__['postcode']
-                if provider_dict['contact'].__dict__.has_key('country'):
+                if 'country' in provider_dict['contact'].__dict__:
                     self.provider_contact_country = provider_dict['contact'].__dict__['country']
-                if provider_dict['contact'].__dict__.has_key('phone'):
+                if 'phone' in provider_dict['contact'].__dict__:
                     self.provider_contact_phone = provider_dict['contact'].__dict__['phone']
-                if provider_dict['contact'].__dict__.has_key('fax'):
+                if 'fax' in provider_dict['contact'].__dict__:
                     self.provider_contact_fax = provider_dict['contact'].__dict__['fax']
-                if provider_dict['contact'].__dict__.has_key('site'):
+                if 'site' in provider_dict['contact'].__dict__:
                     self.provider_contact_site = provider_dict['contact'].__dict__['site']
-                if provider_dict['contact'].__dict__.has_key('email'):
+                if 'email' in provider_dict['contact'].__dict__:
                     self.provider_contact_email = provider_dict['contact'].__dict__['email']
-                if provider_dict['contact'].__dict__.has_key('hours'):
+                if 'hours' in provider_dict['contact'].__dict__:
                     self.provider_contact_hours = provider_dict['contact'].__dict__['hours']
-                if provider_dict['contact'].__dict__.has_key('instructions'):
+                if 'instructions' in provider_dict['contact'].__dict__:
                     self.provider_contact_instructions = provider_dict['contact'].__dict__['instructions']
 
         else:

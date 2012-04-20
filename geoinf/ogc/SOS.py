@@ -28,6 +28,7 @@ Service (SOS) client, making use of a local version of the owslib library.
 """
 
 # library
+import pickle
 import traceback
 # third party
 from PyQt4 import QtCore, QtGui
@@ -46,8 +47,7 @@ import init
 
 
 class SOS(OGC, FeatureModel):
-    """
-    Override for base OGC service class
+    """Override for base OGC service class
 
     """
 
@@ -211,8 +211,8 @@ class SosCommonWidget(QtGui.QWidget):
 
     def getBoundingBoxOffering(self):
         """Return a tuple containing box co-ordinates.
-        Format: top-left X, top-left Y, bottom-left X, bottom-left Y
 
+        Format: top-left X, top-left Y, bottom-left X, bottom-left Y
         """
         return (
             self.lblTL_X.text(),
@@ -221,10 +221,44 @@ class SosCommonWidget(QtGui.QWidget):
             self.lblBR_Y.text())
 
     def getTimeIntervalOffering(self):
-        """Return a tuple containing begin / end in universal time."""
+        """Return a tuple containing start / end in universal time."""
         return (
             self.lblStartTime.text(),
             self.lblEndTime.text(),)
+
+    def restoreConfiguration(self):
+        """Restore all configuration choices previously made.
+
+        NB: These are saved as dictionary on an input port of the module.
+        """
+        config = self.parent_widget.configuration
+        if config:
+            """
+            self.lblTL_X.setText('-')
+            self.lblTL_Y.setText('-')
+            self.lblBR_X.setText('-')
+            self.lblBR_Y.setText('-')
+            """
+            # self.lblSRS.setText('-') ???
+            """
+            tr = config.get('time_range') or (None, None)
+            if tr[0]:
+                self.lblStartTime.setText(tr[0])
+            if tr[1]:
+                self.lblEndTime.setText(tr[1])
+
+            i = self.cbProcedure.findText(config.get('procedure'))
+            if i>= 0: self.cbProcedure.setCurrentIndex(i)
+
+
+            self.cbRequest.clear()
+            self.cbResponseFormat.clear()
+            self.cbResponseMode.clear()
+            self.cbResultModel.clear()
+            self.lbObservedProperty.clear()
+            self.cbFOI.clear()
+            self.cbTime
+            """
 
     def removeOfferings(self):
         """Remove all offering details when no SOS is selected."""
@@ -319,6 +353,7 @@ class SOSConfigurationWidget(OgcConfigurationWidget,
     """makes use of code style from OgcConfigurationWidget"""
 
     def __init__(self, module, controller, parent=None):
+        print "SOS:357 - SOS init function called"
         # inherit parent module > access Module methods in core/vistrail/module.py
         StandardModuleConfigurationWidget.__init__(self, module,
                                                    controller, parent)
@@ -326,17 +361,26 @@ class SOSConfigurationWidget(OgcConfigurationWidget,
         # pass in parent widget i.e. OgcCommonWidget class
         self.config = SosCommonWidget(self.module, self.ogc_common_widget)
 
-        # map widgets to ports to enable storing of their settings
+        # map strings to ports to enable storing of module settings
         port_widget = {
             init.OGC_URL_PORT: self.config.parent_widget.line_edit_OGC_url,
-            init.BOUNDS_PORT: self.config.lblTL_X
-        }
-        # get and set corresponding port value for a configuration widget
-        #  "functions" are VisTrails internal representation of ports at design time
+            init.BOUNDS_PORT: self.config.lblTL_X,
+            init.CONFIGURATION_PORT: self.config.parent_widget.configuration,
+            init.OGC_CAPABILITIES_PORT: self.config.parent_widget.capabilities}
+
+        # set corresponding port value for a configuration widget
+        #  a "function" is VisTrails internal representation of a port (at design time)
         for function in self.module.functions:
-            if function.name in port_widget:
-                #print "SOS:338", function.name, function.params[0].strValue
-                port_widget[function.name].setText(function.params[0].strValue)
+            print "SOS:374", function.name
+            if port_widget.get(function.name):
+                print "SOS:376", port_widget[function.name]  #, function.params[0].strValue
+                try:
+                    print "SOS:378", function.params[0].strValue
+                    port_widget[function.name].setText(function.params[0].strValue)
+                    #print "SOS:380", function.name, port_widget[function.name]
+                except:
+                    print "SOS:382", function.name
+                    #pass  # some port_widget values are NOT PyQT objects
 
         # move parent tab to first place
         self.tabs.insertTab(1, self.config, "")
@@ -367,20 +411,20 @@ class SOSConfigurationWidget(OgcConfigurationWidget,
           * valid EPSG srsName string, or default of EPSG 4326 if not found
 
         Notes:
-          * Repalce with http://owslib.sourceforge.net/#crs-handling  ???
+          * Replace with http://owslib.sourceforge.net/#crs-handling  ???
         """
         srs = None
         try:
             srs_items = srsURN.split(':')
             code = srs_items[len(srs_items) - 1]
-            #print "SOS:372", srs_items, code
+            #print "SOS:427", srs_items, code
             if code and int(code) > 0:
                 return 'urn:ogc:def:crs:EPSG::' + code  # omit any version no.
             else:
                 return 'urn:ogc:def:crs:EPSG::4326'
         except:
             self.raiseError(self, 'Unable to construct valid srsName from %s'\
-                            % srsURN, error='')
+                            % srsURN)
         return srs
 
     def constructRequest(self, URL):
@@ -412,7 +456,7 @@ class SOSConfigurationWidget(OgcConfigurationWidget,
         obs_prop = []
         for item in self.config.lbObservedProperty.selectedItems():
             obs_prop.append(item.text())
-        #print "sos:423", obs_prop
+        #print "sos:456", obs_prop
 
         try:
             foi = self.config.cbFOI.currentText()
@@ -430,11 +474,14 @@ class SOSConfigurationWidget(OgcConfigurationWidget,
             spatial_limit = self.config.cbSpatial.currentText()
         except:
             spatial_limit = None
+
         # primary parameters
         WARNING_MUST = '%s must be chosen for a "%s" request.'
         WARNING_NOT = '%s must NOT be chosen for a "%s" request.'
         WARNING_CHOICE = 'Either %s or %s must be chosen for a "%s" request.'
         WARNING_ONLY_ONE = 'Cannot select both %s and %s for a "%s" request.'
+        # default (null) values for configuration storage
+        time_range = (None, None)
         # process by request type
         if rType == 'DescribeSensor':
             if procedure:
@@ -486,26 +533,26 @@ class SOSConfigurationWidget(OgcConfigurationWidget,
             if time_limit:  # time params
                 if time_limit == self.config.TIME_OWN:
                     # see SpatialTemporalConfigurationWidget
-                    timerange = self.getTimeInterval()
+                    time_range = self.getTimeInterval()
                 elif time_limit == self.config.TIME_OFFERING:
                     # see SpatialTemporalConfigurationWidget
-                    timerange = self.config.getTimeIntervalOffering()
-                #this code causing errors with ARC SOS ?
+                    time_range = self.config.getTimeIntervalOffering()
+                # FIXME this code causes errors with ARC SOS ???
                 data += '<eventTime>\n <ogc:TM_During>\n' + \
                     '  <ogc:PropertyName>om:samplingTime</ogc:PropertyName>' + \
                     '  <gml:TimePeriod>\n' + \
-                    '   <gml:beginPosition>' + timerange[0] + \
+                    '   <gml:beginPosition>' + time_range[0] + \
                     '</gml:beginPosition>\n' + \
-                    '   <gml:endPosition>' + timerange[1] + \
+                    '   <gml:endPosition>' + time_range[1] + \
                     '</gml:endPosition>\n' + \
                     '  </gml:TimePeriod>\n </ogc:TM_During>\n</eventTime>\n'
                 """
                 #this code does still not work with ARC SOS
                 data += '<eventTime>\n' + \
                     '  <gml:TimePeriod>\n' + \
-                    '   <gml:beginPosition>' + timerange[0] + \
+                    '   <gml:beginPosition>' + time_range[0] + \
                     '</gml:beginPosition>\n' + \
-                    '   <gml:endPosition>' + timerange[1] + \
+                    '   <gml:endPosition>' + time_range[1] + \
                     '</gml:endPosition>\n' + \
                     '  </gml:TimePeriod></eventTime>\n'
                 """
@@ -606,26 +653,25 @@ class SOSConfigurationWidget(OgcConfigurationWidget,
                 'Unknown SOS request type' + ': %s' % str(rType))
         # xml header
         data = '<?xml version="1.0" encoding="UTF-8"?>\n' + data
-        #print "SOS:590 - data:\n", data  # show line breaks for testing !!!
+        #print "SOS:655 - data:\n", data  # show line breaks for testing !!!
         data = data.replace('\n', '')  # remove line breaks
         result['request_type'] = 'POST'
         result['data'] = data
-        #result['bounds'] = "10" TEST
+        result['capabilities'] = self.config.parent_widget.capabilities
+        # ensure that any variables stored here always have default values
+        result['configuration'] = {
+            'procedure': procedure,
+            'format': format,
+            'mode': mode,
+            'model': model,
+            'obs_prop': obs_prop,
+            'foi': foi,
+            'offering': offering,
+            'time_limit': time_limit,
+            'spatial_limit': spatial_limit,
+            'time_range': time_range,  # tuple of start/end times
+        }
         return result
-
-
-    '''
-    # attempting to store data on the input ports so as to re-use when editing.
-    def okTriggered(self): # ,checked=False, functions=None in parent?
-        """Extends method defined in SpatialTemporalConfigurationWidget."""
-        #print "=== OK Triggered in SOSConfigurationWidget (line 569)"
-        self.bounds = "10"  #result.get('bounds', None)
-        if self.bounds:
-            # functions is unknown here...???
-            functions.append(
-                (init.BOUNDS_PORT, [self.bounds]),)
-        OGCConfigurationWidget.okTriggered(self, functions)
-    '''
 
     '''
     # HTTP POST _ worth considering for incremental display of capabilities ??

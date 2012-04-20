@@ -10,6 +10,8 @@ OGC_REQUEST_PORT = "RequestURL"
 OGC_URL_PORT = "OGC_URL"
 BOUNDS_PORT = "BoundingBox"
 WPS_PROCESS_PORT = "WPS_process"
+CONFIGURATION_PORT = "Configuration"  # store user choices from config dialog
+OGC_CAPABILITIES_PORT = "Capabilities"  # store XML from GetCaps (local "cache")
 
 # output ports
 URL_PORT = "URL"
@@ -26,7 +28,7 @@ DATA_RESULT_PORT = "WPS_data"
 def initialize(*args, **keywords):
     """TO DO: Add doc string"""
     from core.modules.module_registry import get_module_registry
-    from core.modules.basic_modules import File, Float, String
+    from core.modules.basic_modules import File, Float, String, Dictionary
     import core
 
     from packages.eo4vistrails.geoinf.datamodels.QgsLayer import \
@@ -60,6 +62,14 @@ def initialize(*args, **keywords):
         SOS,
         BOUNDS_PORT,
         (String, 'Bounding Box'), optional=True) # (String,String,String,String)
+    reg.add_input_port(
+        SOS,
+        CONFIGURATION_PORT,
+        (Dictionary, 'Configuration')) #, optional=True (String,String,String,String)
+    reg.add_input_port(
+        SOS,
+        OGC_CAPABILITIES_PORT,
+        (String, 'Capabilities')) #, optional=True (String,String,String,String)
 
     reg.add_output_port(
         SOS,
@@ -156,5 +166,3 @@ def initialize(*args, **keywords):
         WCS,
         WEB_REQUEST_PORT,
         WebRequest)  # ,True)
-
-

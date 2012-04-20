@@ -97,7 +97,7 @@ class OGC(NotCacheable):
             self.url = self.getInputFromPort(init.OGC_URL_PORT)
         except:
             self.url = None
-        #print "OgcService:99\n url: %s\n get_req: %s\n post_data: %s" %\
+        #print "OgcService:100\n url: %s\n get_req: %s\n post_data: %s" %\
         #    (self.url, self.get_request, self.post_data)
 
         # assign initial values to webRequest
@@ -143,18 +143,18 @@ class OGC(NotCacheable):
             if init.RASTER_PORT in self.outputPorts:
                 qgsRasterLayer = QgsRasterLayer(
                     self.url, self.layername, self.webRequest.get_driver())
-                #print "OgcService:145 - qgsRasterLayer", qgsRasterLayer
+                #print "OgcService:146 - qgsRasterLayer", qgsRasterLayer
                 self.setResult(init.RASTER_PORT, qgsRasterLayer)
 
             if init.VECTOR_PORT in self.outputPorts:
                 qgsVectorLayer = QgsVectorLayer(
                     self.url, self.layername, self.webRequest.get_driver())
-                #print "OgcService:151 -qgsVectorLayer", qgsVectorLayer
+                #print "OgcService:152 -qgsVectorLayer", qgsVectorLayer
                 self.setResult(init.VECTOR_PORT, qgsVectorLayer)
 
             if init.TEMPORAL_VECTOR_PORT in self.outputPorts:
                 _results_file = write_gml_data(self.webRequest.data)
-                #print "OgcService:159", _results_file, _results_file.name, self.layername
+                #print "OgcService:157", _results_file, _results_file.name, self.layername
                 self.thefilename = QFileInfo(_results_file.name).fileName()
                 temporalVectorLayer = TemporalVectorLayer(
                     _results_file.name, _results_file.name, "ogr")

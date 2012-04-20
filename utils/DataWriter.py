@@ -95,6 +95,7 @@ class TextDataWriter(ThreadSafeMixin, Module):
             _file = self.interpreter.filePool.create_file(suffix=".%s" % \
                                                           data_output_type)
             filename = _file.name
+
         if data_output_type == 'csv':
             file_out = vector_layer.to_csv(filename_out=filename,
                                            missing_value=missing_value)
@@ -107,7 +108,6 @@ class TextDataWriter(ThreadSafeMixin, Module):
         elif data_output_type == 'gml':
             file_out = vector_layer.to_gml(filename_out=filename,
                                            missing_value=missing_value)
-
         else:
             raise ModuleError(self, 'Unknown Data Output Type')
 
@@ -123,6 +123,6 @@ class DataWriterTypeComboBoxWidget(ComboBoxWidget):
 
 DataWriterTypeComboBox = basic_modules.new_constant('Data Output Type',
                                         staticmethod(str),
-                                        '-',
+                                        'csv',
                                         staticmethod(lambda x: type(x) == str),
                                         DataWriterTypeComboBoxWidget)

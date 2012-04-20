@@ -29,6 +29,7 @@ selection widgets for configuring geoinf.ogc modules.
 This refers primarily to GetCapabilities requests
 """
 # library
+import pickle
 # third party
 from PyQt4 import QtCore, QtGui
 # vistrails
@@ -61,6 +62,8 @@ class OgcCommonWidget(QtGui.QWidget):
         self.parent_widget = module
         self.service = None
         self.create_config_window()
+        self.configuration = None  # enable storage of configuration settings
+        self.capabilities = None  # enable storage of GetCapabilities data
 
     def create_config_window(self):
         """TO DO - add docstring"""
@@ -177,9 +180,6 @@ class OgcCommonWidget(QtGui.QWidget):
         if self.line_edit_OGC_url.text() != "":
             #print "lvct" + str(self.launchversion.currentText())
             self.setCursor(self.waitCursor)
-            #clear existing entries
-            self.serviceIDServiceTable.clearContents()
-            self.servicePublisherTable.clearContents()
             # get service details
             self.service = OgcService(
                 self.line_edit_OGC_url.text(),
@@ -187,43 +187,53 @@ class OgcCommonWidget(QtGui.QWidget):
                 str(self.launchversion.currentText()))
             self.setCursor(self.arrowCursor)
             # populate metadata
-            if self.service.service_valid:
-                # service id metadata
-                row_count = 0
-                for item in self.service.service_id_key_set:
-                    service_id_dict_item = item.keys()[0]
-                    if service_id_dict_item in self.service.__dict__:
-                        qtwi = QtGui.QTableWidgetItem(
-                            str(self.service.__dict__[service_id_dict_item]))
-                        self.serviceIDServiceTable.setItem(row_count, 0, qtwi)
-                    row_count = row_count + 1
-                # provider metadata
-                # N.B. OGC WFS 1.0.0 does not have provider metadata in this form
-                if self.launchtype == "wfs" and self.launchversion.currentText() == "1.0.0":
-                    #TODO: we need to indicate visually that no meta data is present
-                    pass
-                else:
-                    row_count = 0
-                    for item in self.service.provider_key_set:
-                        provider_dict_item = item.keys()[0]
-                        if provider_dict_item in self.service.__dict__:
-                            qtwi = QtGui.QTableWidgetItem(
-                                str(self.service.__dict__[provider_dict_item]))
-                            self.servicePublisherTable.setItem(row_count, 0, qtwi)
-                        row_count = row_count + 1
-                # fire a "done" event: can be "listened for" in children
-                self.emit(QtCore.SIGNAL('serviceActivated'))
-
-            else:
+            if not self.populate_metadata():
                 self.emit(QtCore.SIGNAL('serviceDeactivated'))
                 self.showWarning(
                     'Unable to activate service:\n \
 Please check configuration & network\n \
 (including proxy settings).\n'\
                     + self.service.service_valid_error)
+            else:
+                self.capabilities = self.service.capabilities  # store raw XML
+                #print "OgcConfigWidget:199", self.capabilities
         else:
             # TODO - should not get here; maybe disable Fetch button until text entered?
             pass
+
+    def populate_metadata(self):
+        """Sets values for widgets, extracted from an OgcService object."""
+        #clear existing entries
+        self.serviceIDServiceTable.clearContents()
+        self.servicePublisherTable.clearContents()
+        if self.service.service_valid:
+            # service id metadata
+            row_count = 0
+            for item in self.service.service_id_key_set:
+                service_id_dict_item = item.keys()[0]
+                if service_id_dict_item in self.service.__dict__:
+                    qtwi = QtGui.QTableWidgetItem(
+                        str(self.service.__dict__[service_id_dict_item]))
+                    self.serviceIDServiceTable.setItem(row_count, 0, qtwi)
+                row_count = row_count + 1
+            # provider metadata
+            # N.B. OGC WFS 1.0.0 does not have provider metadata in this form
+            if self.launchtype == "wfs" and self.launchversion.currentText() == "1.0.0":
+                #TODO: we need to indicate visually that no meta data is present
+                pass
+            else:
+                row_count = 0
+                for item in self.service.provider_key_set:
+                    provider_dict_item = item.keys()[0]
+                    if provider_dict_item in self.service.__dict__:
+                        qtwi = QtGui.QTableWidgetItem(
+                            str(self.service.__dict__[provider_dict_item]))
+                        self.servicePublisherTable.setItem(row_count, 0, qtwi)
+                    row_count = row_count + 1
+            # fire a "done" event: can be "listened for" in children
+            self.emit(QtCore.SIGNAL('serviceActivated'))
+            return True
+        return False
 
     def showWarning(self, message):
         """Show user a warning dialog."""
@@ -270,7 +280,7 @@ class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
 
     def okTriggered(self, checked=False, functions=[]): # ,checked=False, functions=[] in parent?
         """Extends method defined in SpatialTemporalConfigurationWidget."""
-        #print OK Triggered in OgcConfigurationWidget (line 273)"
+        #print "OgcConfigurationWidget:283 OK Triggered"
 
         # constructRequest() method must be fully defined in sub-class
         base_url = str(self.ogc_common_widget.line_edit_OGC_url.text())
@@ -280,24 +290,38 @@ class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
         else:
             self.url = base_url
         result = self.constructRequest(self.url)
-        #print "OgcConfigurationWidget:285", type(result), result
+        #print "OgcConfigurationWidget:293", type(result), result
         self.request_type = result.get('request_type', None)
         self.data = result.get('data', None)
         self.full_url = result.get('full_url', None)
         self.layername = result.get('layername', None)
+        self.capabilities = result.get('capabilities', None)
+        self.configuration = result.get('configuration', None)
         if not self.data:
             self.data = self.full_url  # for GET requests
-        #print "OgcConfigurationWidget.py:291", self.request_type, self.url,\
+        #print "OgcConfigurationWidget:302", self.request_type, self.url,\
         #      '\nLayer:',self.layername,'\nURL:',self.full_url,'\nDATA:',self.data
 
         # must not set ports if nothing has been specified, or
         # if there was a problem constructing the request
+        # NOTE: Only CONSTANT-type data can be saved to input ports !
         if self.request_type and self.data:
             functions.append(
                 (init.OGC_URL_PORT, [self.url]),)
             if self.layername:
                 functions.append(
                     (init.OGC_LAYERNAME_PORT, [self.layername]),)
+            if self.capabilities:
+                print "\nOgcConfigurationWidget:314 caps", self.capabilities[:33]
+                functions.append(
+                    (init.OGC_CAPABILITIES_PORT, [self.capabilities]),)
+            if self.configuration:
+                print "\nOgcConfigurationWidget:318 config", self.configuration
+                print "OgcConfigurationWidget:320 ", type(self.configuration), \
+                    type(str(self.configuration))
+                functions.append(
+                    (init.CONFIGURATION_PORT, [str(self.configuration)]),)
+
             if self.full_url and self.request_type == 'GET':
                 functions.append(
                     (init.OGC_GET_REQUEST_PORT, [self.full_url]),)
@@ -310,7 +334,7 @@ class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
                     'Unknown or invalid OgcConfigurationWidget request: %s' %
                         str(self.request_type))
             # see: gui.vistrails_controller.py
-            #print "OgcConfigurationWidget:313/n", functions
+            #print "OgcConfigurationWidget:333/n", functions
             self.controller.update_ports_and_functions(
                 self.module.id, [], [], functions)
             SpatialTemporalConfigurationWidget.okTriggered(self, functions)
@@ -329,5 +353,7 @@ class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
               * data (for a POST)
               * full_url (for a GET)
               * layername (for WFS, WCS)
+              * capbilities (OGC GetCapabilities XML)
+              * configuration (dictionary of user-selected parameters)
         """
         return {}

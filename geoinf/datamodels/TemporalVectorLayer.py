@@ -59,6 +59,9 @@ GML_LAT_NAMES = ['latitude', 'y-position']
 GML_LON_NAMES = ['longitude', 'x-position']
 
 
+#TODO: find out why geometry data is not extracted into CSV, R etc files ???
+
+
 class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
     # TO DO - OMIT qgis.core.QgsVectorLayer
     """Create an extended vector layer, based on a QGIS vector layer.
@@ -330,7 +333,7 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
                     # convert to WKT (Well Known Text) format
                     if geom_value:
                         points = geom_value.split(',')
-                        print "  ** points", points
+                        #print "TVL:333 points", points
                         point = ogr.Geometry(ogr.wkbPoint)
                         if len(points) == 2:
                             point.AddPoint(float(points[0]), float(points[1]))
@@ -497,7 +500,7 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
                 for index, datum in enumerate(result['data']):
                     if missing_value:
                         for key, item in enumerate(datum):
-                            #print "TVL:472", type(item), item
+                            #print "TVL:500", type(item), item
                             if not item or item in GML_NO_DATA_LIST:
                                 datum[key] = missing_value
                     datum.insert(0, result['feature']['geometry'])
