@@ -1,21 +1,25 @@
 from core.modules.module_registry import get_module_registry
 
-#################################################################################
-## An useful register function for control modules
-#################################################################################
-def registerControl(module):
-    """This function is used to register the control modules. In this way, all of
-    them will have the same style and shape."""
-    
-    reg = get_module_registry()
-    utils_namespace = "utils"    
-    reg.add_module(module, moduleRightFringe=[(0.0,0.0),(0.25,0.5),(0.0,1.0)],\
-                   moduleLeftFringe=[(0.0,0.0),(0.0,1.0)], namespace=utils_namespace)
+###############################################################################
+# A useful register function for control modules                              #
+###############################################################################
 
-def initialize(*args, **keywords):    
+
+def registerControl(module):
+    """Register the control modules so that all have the same style & shape."""
+
+    reg = get_module_registry()
+    utils_namespace = "utils"
+    reg.add_module(module,
+                   moduleRightFringe=[(0.0, 0.0), (0.25, 0.5), (0.0, 1.0)],
+                   moduleLeftFringe=[(0.0, 0.0), (0.0, 1.0)],
+                   namespace=utils_namespace)
+
+
+def initialize(*args, **keywords):
     from core.modules import basic_modules
     from core.modules.vistrails_module import Module
-    
+
     import DropDownListWidget
 
     from Array import NDArrayEO
@@ -24,23 +28,23 @@ def initialize(*args, **keywords):
     from DataRequest import DataRequest, PostGISRequest
     from DataTransformations import InputStream,  pgSQLMergeInsert
     from DataWriter import TextDataWriter, \
-         DataWriterTypeComboBox
+        DataWriterTypeComboBox
     from Experiment import Timer
     from FTP import FTPReader
     from ListFilter import ListFilter
     from Random import Random
     from session import Session
-    from ThreadSafe import Fork, ThreadTestModule, ThreadSafeFold, ThreadSafeMap
+    from ThreadSafe import Fork, ThreadTestModule, ThreadSafeFold, \
+        ThreadSafeMap
     from WebRequest import WebRequest
-
 
     reg = get_module_registry()
     utils_namespace = "utils"
     utils_test_namespace = "utils|tests"
 
-    # ==========================================================================
+    # =========================================================================
     # Abstract Modules - these MUST appear FIRST
-    # ==========================================================================
+    # =========================================================================
 
     reg.add_module(Session,
                    namespace=utils_namespace,
@@ -55,33 +59,33 @@ def initialize(*args, **keywords):
                    namespace=utils_namespace,
                    abstract=True)
 
-    # ==========================================================================
+    # =========================================================================
     # ComboBox definitions
-    # ==========================================================================
+    # =========================================================================
 
     # LinuxComboBox
     LinuxDemoComboBox = basic_modules.new_constant('LinuxDemoComboBox',
-                                                   staticmethod(eval),
-                                                   (1, 1),
-                                                   staticmethod(lambda x: type(x) == tuple),
-                                                   DropDownListWidget.LinuxDemoComboBoxWidget)
+                                    staticmethod(eval),
+                                    (1, 1),
+                                    staticmethod(lambda x: type(x) == tuple),
+                                    DropDownListWidget.LinuxDemoComboBoxWidget)
 
     reg.add_module(LinuxDemoComboBox,
                    namespace=utils_test_namespace)
 
     # DateFormatComboBox
     DateFormatComboBox = basic_modules.new_constant('Date Format',
-                                        staticmethod(str),
-                                        's',
-                                        staticmethod(lambda x: type(x) == str),
-                                        DropDownListWidget.DateFormatComboBoxWidget)
+                                    staticmethod(str),
+                                    's',
+                                    staticmethod(lambda x: type(x) == str),
+                                    DropDownListWidget.DateFormatComboBoxWidget)
 
     reg.add_module(DateFormatComboBox,
                    namespace=utils_namespace)
 
-    # ==========================================================================
+    # =========================================================================
     # Standard Modules - Ports defined here
-    # ==========================================================================
+    # =========================================================================
 
     # Experiment
     reg.add_module(Timer,
@@ -171,10 +175,9 @@ def initialize(*args, **keywords):
         'out',
         basic_modules.Variant)
 
-
-    # ==========================================================================
-    # Control Flow Modules - 
-    # ==========================================================================
+    # =========================================================================
+    # Control Flow Modules -
+    # =========================================================================
 
     registerControl(ThreadSafeFold)
     registerControl(ThreadSafeMap)
@@ -185,9 +188,9 @@ def initialize(*args, **keywords):
     reg.add_input_port(ThreadSafeFold, 'OutputPort', (basic_modules.String, ""))
     reg.add_output_port(ThreadSafeFold, 'Result', (basic_modules.Variant, ""))
 
-    # ==========================================================================
+    # =========================================================================
     # Other Modules - without ports OR with locally defined ports
-    # ==========================================================================
+    # =========================================================================
 
     reg.add_module(Command,
                    namespace=utils_namespace)
