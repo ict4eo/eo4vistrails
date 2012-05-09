@@ -3,7 +3,8 @@ def initialize(*args, **keywords):
     from core.modules import basic_modules
     from core.modules.basic_modules import File, Float, String
     from packages.eo4vistrails.geoinf.datamodels.QgsLayer import QgsRasterLayer
-    from packages.eo4vistrails.geoinf.datamodels.GeoStrings import GeoJSONString,  WKTString
+    from packages.eo4vistrails.geoinf.datamodels.GeoStrings import \
+        GeoJSONString,  WKTString
     from AOI_Utils import FeatureOfInterestDefiner, \
                           FeatureOfInterestDefinerConfigurationWidget, \
                           AreaOfInterestDefiner, LineOfInterestDefiner, \
@@ -12,13 +13,13 @@ def initialize(*args, **keywords):
     reg = get_module_registry()
     helpers_namespace = "helpers"
 
-    # ==========================================================================
+    # ========================================================================
     # Abstract Modules - these MUST appear FIRST
-    # ==========================================================================
+    # ========================================================================
 
     reg.add_module(FeatureOfInterestDefiner,
                    namespace=helpers_namespace,
-                   abstract = True)
+                   abstract=True)
 
     reg.add_input_port(
         FeatureOfInterestDefiner,
@@ -40,10 +41,9 @@ def initialize(*args, **keywords):
 #        "QgsGeometry",
 #        String)
 
-    # ==========================================================================
+    # ========================================================================
     # Standard Modules
-    # ==========================================================================
-
+    # ========================================================================
 
     reg.add_module(AreaOfInterestDefiner,
                    configureWidgetType=FeatureOfInterestDefinerConfigurationWidget,
@@ -62,7 +62,6 @@ def initialize(*args, **keywords):
         LineOfInterestDefiner,
         "LineOfInterest",
         (WKTString, 'Line as WKT snippet'))
-
 
     reg.add_module(PointOfInterestDefiner,
                    configureWidgetType=FeatureOfInterestDefinerConfigurationWidget,

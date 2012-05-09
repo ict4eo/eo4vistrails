@@ -29,18 +29,21 @@ multicore parallel and distributed processing to VisTrails.
 """
 #History
 #Terence van Zyl, 15 Dec 2010, Version 1.0
+
 #Input ports
-dataSlice="dataSlice"
-url="url"
-nc4File="nc4File"
-varName="varName"
-dimLimits="dimLimits"
+dataSlice = "dataSlice"
+url = "url"
+nc4File = "nc4File"
+varName = "varName"
+dimLimits = "dimLimits"
+
+
 def initialize(*args, **keywords):
-    """Called by higher level inits to ensure that regsitration with
+    """Called by higher level inits to ensure that registration with
     VisTrails takes place."""
     from core.modules.module_registry import get_module_registry
-    
     import PySAL
+
     reg = get_module_registry()
     mynamespace = "pysal"
 
@@ -52,12 +55,23 @@ def initialize(*args, **keywords):
     mynamespace = "rasterlang"
 
     #Add Rasterlang
-    reg.add_module(Rasterlang.GDALFormatComboBox, namespace=mynamespace, abstract=True)
-    reg.add_module(Rasterlang.RasterPrototype, name="Raster Prototype", namespace=mynamespace)
-    reg.add_module(Rasterlang.layerAsArray, name="Layer As Array", namespace=mynamespace)
-    reg.add_module(Rasterlang.SaveArrayToRaster, name="Save Array To Raster", namespace=mynamespace)
-    reg.add_module(Rasterlang.arrayAsLayer, name="Array As Layer", namespace=mynamespace)
-    reg.add_module(Rasterlang.RasterLang, name="RasterLang",
+    reg.add_module(Rasterlang.GDALFormatComboBox,
+                   namespace=mynamespace,
+                   abstract=True)
+    reg.add_module(Rasterlang.RasterPrototype,
+                   name="Raster Prototype",
+                   namespace=mynamespace)
+    reg.add_module(Rasterlang.layerAsArray,
+                   name="Layer As Array",
+                   namespace=mynamespace)
+    reg.add_module(Rasterlang.SaveArrayToRaster,
+                   name="Save Array To Raster",
+                   namespace=mynamespace)
+    reg.add_module(Rasterlang.arrayAsLayer,
+                   name="Array As Layer",
+                   namespace=mynamespace)
+    reg.add_module(Rasterlang.RasterLang,
+                   name="RasterLang",
                    configureWidgetType=Rasterlang.RasterSourceConfigurationWidget,
                    namespace=mynamespace)
 
@@ -78,7 +92,7 @@ def initialize(*args, **keywords):
                    name="Script",
                    namespace=mynamespace,
                    abstract=True)
-    
+
     #TODO: Move povray to own package
     #import povray
     #mynamespace = "povray"
@@ -96,26 +110,24 @@ def initialize(*args, **keywords):
                    name="Octave Script",
                    namespace=mynamespace,
                    configureWidgetType=octave.OctaveSourceConfigurationWidget)
-                   
+
     import rpy2Stats
-    mynamespace="r"
+    mynamespace = "r"
     reg.add_module(rpy2Stats.Rpy2Script,
                    name="Rpy2 Script",
                    namespace=mynamespace,
                    configureWidgetType=rpy2Stats.RSourceConfigurationWidget)
-                   
+
     import pyDAP
-    mynamespace="pyDAP"
+    mynamespace = "pyDAP"
     reg.add_module(pyDAP.pyDAP,
                    name="pyDAP Client",
                    namespace=mynamespace,
                    configureWidgetType=pyDAP.pyDAPConfigurationWidget)
-                   
+
     import netcdf4
-    mynamespace="netcdf4"
+    mynamespace = "netcdf4"
     reg.add_module(netcdf4.netcdf4Reader,
                    name="netcdf4 Client",
                    namespace=mynamespace,
                    configureWidgetType=netcdf4.netcdf4ConfigurationWidget)
-    
-

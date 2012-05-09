@@ -10,7 +10,7 @@ OGC_REQUEST_PORT = "RequestURL"
 OGC_URL_PORT = "OGC_URL"
 WPS_PROCESS_PORT = "WPS_process"
 CONFIGURATION_PORT = "Configuration"  # store user choices from config dialog
-OGC_CAPABILITIES_PORT = "Capabilities"  # store XML from GetCaps (local "cache")
+OGC_CAPABILITIES_PORT = "Capabilities"  # store XML from GetCaps: local "cache"
 
 # output ports
 URL_PORT = "URL"
@@ -34,19 +34,31 @@ def initialize(*args, **keywords):
         QgsMapLayer, QgsVectorLayer, QgsRasterLayer
     from packages.eo4vistrails.geoinf.datamodels.TemporalVectorLayer import \
         TemporalVectorLayer
-    from packages.eo4vistrails.geoinf.ogc.WPS import WPS, WPSConfigurationWidget
-    from packages.eo4vistrails.geoinf.ogc.WFS import WFS, WFSConfigurationWidget
-    from packages.eo4vistrails.geoinf.ogc.WCS import WCS, WCSConfigurationWidget
-    from packages.eo4vistrails.geoinf.ogc.SOS import SOS, SOSConfigurationWidget
+    from packages.eo4vistrails.geoinf.ogc.WPS import WPS, \
+        WPSConfigurationWidget
+    from packages.eo4vistrails.geoinf.ogc.WFS import WFS, \
+        WFSConfigurationWidget
+    from packages.eo4vistrails.geoinf.ogc.WCS import WCS, \
+        WCSConfigurationWidget
+    from packages.eo4vistrails.geoinf.ogc.SOS import SOS, \
+        SOSConfigurationWidget
     from packages.eo4vistrails.utils.WebRequest import WebRequest
 
     reg = get_module_registry()
     ogc_namespace = "data|ogc"
 
-    reg.add_module(WPS, configureWidgetType=WPSConfigurationWidget, namespace=ogc_namespace)
-    reg.add_module(WFS, configureWidgetType=WFSConfigurationWidget, namespace=ogc_namespace)
-    reg.add_module(SOS, configureWidgetType=SOSConfigurationWidget, namespace=ogc_namespace)
-    reg.add_module(WCS, configureWidgetType=WCSConfigurationWidget, namespace=ogc_namespace)
+    reg.add_module(WPS,
+                   configureWidgetType=WPSConfigurationWidget,
+                   namespace=ogc_namespace)
+    reg.add_module(WFS,
+                   configureWidgetType=WFSConfigurationWidget,
+                   namespace=ogc_namespace)
+    reg.add_module(SOS,
+                   configureWidgetType=SOSConfigurationWidget,
+                   namespace=ogc_namespace)
+    reg.add_module(WCS,
+                   configureWidgetType=WCSConfigurationWidget,
+                   namespace=ogc_namespace)
 
     # SOS MODULE
     reg.add_input_port(
@@ -60,11 +72,11 @@ def initialize(*args, **keywords):
     reg.add_input_port(
         SOS,
         CONFIGURATION_PORT,
-        (Dictionary, 'Configuration')) #, optional=True (String,String,String,String)
+        (Dictionary, 'Configuration'))  #, optional=True (String,String,String,String)
     reg.add_input_port(
         SOS,
         OGC_CAPABILITIES_PORT,
-        (String, 'Capabilities')) #, optional=True (String,String,String,String)
+        (String, 'Capabilities'))  #, optional=True (String,String,String,String)
 
     reg.add_output_port(
         SOS,

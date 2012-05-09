@@ -11,13 +11,23 @@ def initialize(*args, **keywords):
     namespace = "plots"
 
     # abstract modules - drop-down lists
-    reg.add_module(MatplotlibMarkerComboBox, namespace=namespace, abstract=True)
-    reg.add_module(MatplotlibPlotTypeComboBox, namespace=namespace, abstract=True)
-    reg.add_module(MatplotlibLineStyleComboBox, namespace=namespace, abstract=True)
-    reg.add_module(MatplotlibHistogramTypeComboBox, namespace=namespace, abstract=True)
+    reg.add_module(MatplotlibMarkerComboBox,
+                   namespace=namespace,
+                   abstract=True)
+    reg.add_module(MatplotlibPlotTypeComboBox,
+                   namespace=namespace,
+                   abstract=True)
+    reg.add_module(MatplotlibLineStyleComboBox,
+                   namespace=namespace,
+                   abstract=True)
+    reg.add_module(MatplotlibHistogramTypeComboBox,
+                   namespace=namespace,
+                   abstract=True)
 
-    # abstract modules
-    reg.add_module(ParentPlot, namespace=namespace, abstract=True)
+    # abstract modules - other
+    reg.add_module(ParentPlot,
+                   namespace=namespace,
+                   abstract=True)
 
     # active modules
     reg.add_module(SinglePlot, namespace=namespace,

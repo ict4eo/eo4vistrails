@@ -30,14 +30,17 @@ parallel and distributed processing to VisTrails.
 #History
 #Terence van Zyl, 15 Dec 2010, Version 1.0
 
+
 def initialize(*args, **keywords):
     """This method is called by higher-level ones,
     to ensure that registration with VisTrails takes place."""
     from core.modules.module_registry import get_module_registry
-    from core.modules.python_source_configure import PythonSourceConfigurationWidget
+    from core.modules.python_source_configure import \
+        PythonSourceConfigurationWidget
     from core.modules import basic_modules
-
-    import RPyC, RPyCHelper, RPyCTest
+    import RPyC
+    import RPyCHelper
+    import RPyCTest
 
     """
     sets everything up called from the top level initialize
@@ -57,7 +60,7 @@ def initialize(*args, **keywords):
                    abstract=True)
 
     reg.add_module(RPyCHelper.RPyCCode,
-                   name = "RPyC Code Base",
+                   name="RPyC Code Base",
                    configureWidgetType=PythonSourceConfigurationWidget,
                    namespace=mynamespace,
                    abstract=True)
@@ -74,16 +77,16 @@ def initialize(*args, **keywords):
 
     #Add RPyCCode
     reg.add_module(RPyCHelper.RemotePythonCode,
-                   name = "RPyC Code",
+                   name="RPyC Code",
                    configureWidgetType=PythonSourceConfigurationWidget,
                    namespace=mynamespace)
 
     reg.add_module(RPyCHelper.RPyC_C_Code,
-                   name = "RPyC C Code",
+                   name="RPyC C Code",
                    configureWidgetType=PythonSourceConfigurationWidget,
                    namespace=mynamespace)
 
     #Add RPyCTestModule
     reg.add_module(RPyCTest.RPyCTestModule,
                    name="RpyC Test Module",
-                   namespace="utils|tests")                   
+                   namespace="utils|tests")
