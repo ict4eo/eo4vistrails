@@ -235,8 +235,8 @@ class SosCommonWidget(QtGui.QWidget):
             input port of the module.
         """
 
-        def set_cbox(box, text):
-            """Set index for PyQT4 combo box, based on text."""
+        def set_combobox(box, text):
+            """Set index for PyQT4 combo box, based on a text item."""
             try:
                 i = box.findText(text)
                 if i >= 0:
@@ -245,21 +245,22 @@ class SosCommonWidget(QtGui.QWidget):
             except:
                 return False  # sorry, no.
 
-        def set_lbox(box, text):
-            """FIXME!"""
-            """Set index for PyQT4 list box, based on text."""
-            items = box.findItems(text) #TypeError: QListWidget.findItems(QString, Qt.MatchFlags): not enough arguments
+        def set_listbox(box, text_list):
+            """Set index for PyQT4 list box, based on a list of text items.
 
-            item = items[0]
-            box.setCurrentItem(item)
-            return True
-            try:
-                items = box.findItems(text)
-                item = items[0]
-                box.setCurrentItem(item)
-                return True
-            except:
-                return False  # sorry, no.
+            See:
+                http://www.riverbankcomputing.co.uk/static/Docs/PyQt4/html/qt.html#MatchFlag-enum
+            """
+            if not isinstance(text_list, list):
+                text_list = [text_list,]
+            result = False  # sorry, no.\\
+            for text in text_list:
+                items = box.findItems(text, QtCore.Qt.MatchFixedString)
+                if items:
+                    item = items[0]
+                    box.setItemSelected(item, True)
+                    result = True
+            return result
 
         try:
             config = eval(configuration)
@@ -267,7 +268,6 @@ class SosCommonWidget(QtGui.QWidget):
             config = None
 
         if config and isinstance(config, dict):
-            pass
             """
             # not done yet
             #self.lblTL_X.setText('-')
@@ -275,9 +275,9 @@ class SosCommonWidget(QtGui.QWidget):
             #self.lblBR_X.setText('-')
             #self.lblBR_Y.setText('-')
             # self.lblSRS.setText('-') ???
-
-            # must call this first
-            if set_lbox(self.lbxOfferings, 'offering'):
+            """
+            # NB - must call this first so that appropriate choices available
+            if set_listbox(self.lbxOfferings, config.get('offering')):
                 self.offeringsChanged()
 
             tr = config.get('time_range') or (None, None)
@@ -286,25 +286,23 @@ class SosCommonWidget(QtGui.QWidget):
             if tr[1]:
                 self.lblEndTime.setText(tr[1])
 
-            set_cbox(self.cbProcedure, 'pocedure')
-
-            # other cboxs - need to do still
-            self.cbRequest.clear()
-            self.cbResponseFormat.clear()
-            self.cbResponseMode.clear()
-            self.cbResultModel.clear()
-            self.lbObservedProperty.clear()
-            self.cbFOI.clear()
-            self.cbTime
-            """
+            set_combobox(self.cbProcedure, config.get('procedure'))
+            set_combobox(self.cbRequest, config.get('request'))
+            set_combobox(self.cbResponseFormat, config.get('format'))
+            set_combobox(self.cbResponseMode, config.get('mode'))
+            set_combobox(self.cbResultModel, config.get('model'))
+            set_listbox(self.lbObservedProperty, config.get('obs_prop'))
+            set_combobox(self.cbFOI, config.get('foi'))
+            set_combobox(self.cbTime, config.get('time_limit'))
+            set_combobox(self.cbSpatial, config.get('spatial_limit'))
 
     def removeOfferings(self):
         """Remove all offering details when no SOS is selected."""
-        self.clearOfferings()
+        self.clearOfferingRelatedItems()
         self.lbxOfferings.clear()
 
-    def clearOfferings(self):
-        """Reset all displayed offering and request values."""
+    def clearOfferingRelatedItems(self):
+        """Reset all displayed values related to offering and request."""
         self.lblDescription.setText('-')
         self.lblTL_X.setText('-')
         self.lblTL_Y.setText('-')
@@ -325,8 +323,12 @@ class SosCommonWidget(QtGui.QWidget):
 
     def offeringsChanged(self):
         """Update offering details containers when new offering selected."""
-        self.clearOfferings()
-        selected_offering = self.lbxOfferings.selectedItems()[0].text()
+        self.clearOfferingRelatedItems()
+        if self.lbxOfferings.selectedItems():
+            # assumes that a max of one offering can be selected
+            selected_offering = self.lbxOfferings.selectedItems()[0].text()
+        else:
+            selected_offering = None
         if self.parent_widget.service and \
             self.parent_widget.service.service_valid and self.contents:
             for content in self.contents:
@@ -401,8 +403,8 @@ class SOSConfigurationWidget(OgcConfigurationWidget,
         # retrieve values from input ports (created in OgcConfigurationWidget)
         self.config.parent_widget.capabilities = self.getPortValue(init.OGC_CAPABILITIES_PORT)
         self.configuration = self.getPortValue(init.CONFIGURATION_PORT)
-        self.config.parent_widget.line_edit_OGC_url.setText(
-            self.getPortValue(init.OGC_URL_PORT))
+        ogc_url = self.getPortValue(init.OGC_URL_PORT) or ''
+        self.config.parent_widget.line_edit_OGC_url.setText(ogc_url)
 
         #restore existing capabilities & configuration
         if self.config.parent_widget.capabilities:
@@ -455,9 +457,9 @@ class SOSConfigurationWidget(OgcConfigurationWidget,
         return srs
 
     def constructRequest(self, URL):
-        """Return an XML-encoded request from configuration parameters
+        """Return an XML-encoded request dictionary from configuration parameters
 
-        Overwrites method defined in OgcConfigurationWidget.
+        Overwrites base method defined in OgcConfigurationWidget.
         """
         result = {}
         sos_url = URL
@@ -479,18 +481,16 @@ class SOSConfigurationWidget(OgcConfigurationWidget,
             model = self.config.cbResultModel.currentText()
         except:
             model = None
-
         obs_prop = []
         for item in self.config.lbObservedProperty.selectedItems():
             obs_prop.append(item.text())
-        #print "sos:456", obs_prop
-
         try:
             foi = self.config.cbFOI.currentText()
         except:
             foi = None
         try:
-            offering = self.config.lbxOfferings.currentItem().text()
+            # assumes that a max of one offering can be selected
+            offering = self.config.lbxOfferings.selectedItems()[0].text()
         except:
             offering = None
         try:
@@ -687,6 +687,7 @@ class SOSConfigurationWidget(OgcConfigurationWidget,
         result['capabilities'] = self.config.parent_widget.capabilities
         # ensure that any variables stored here always have default values
         # and that they are converted from PyQt4.QtCore.QString types
+        request = self.config.cbRequest.currentText() or ''
         result['configuration'] = {
             'procedure': str(procedure),
             'format': str(format),
@@ -697,6 +698,7 @@ class SOSConfigurationWidget(OgcConfigurationWidget,
             'offering': str(offering),
             'time_limit': str(time_limit),
             'spatial_limit': str(spatial_limit),
+            'request': str(request),
             'time_range': time_range,  # tuple of start/end times
         }
         return result

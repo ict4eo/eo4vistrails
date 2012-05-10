@@ -296,7 +296,7 @@ class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
         else:
             self.url = base_url
         result = self.constructRequest(self.url)
-        #print "OgcConfigurationWidget:293", type(result), result
+        #print "OgcConfigurationWidget:299", type(result), result
         self.request_type = result.get('request_type', None)
         self.data = result.get('data', None)
         self.full_url = result.get('full_url', None)
