@@ -26,7 +26,7 @@ def initialize(*args, **keywords):
     from Command import Command
     from CsvUtils import CsvWriter, CsvReader, ListDirContent, CsvFilter
     from DataRequest import DataRequest, PostGISRequest
-    from DataTransformations import InputStream,  pgSQLMergeInsert
+    from DataTransformations import InputStream, pgSQLMergeInsert
     from DataWriter import TextDataWriter, \
         DataWriterTypeComboBox
     from Experiment import Timer
@@ -34,6 +34,7 @@ def initialize(*args, **keywords):
     from ListFilter import ListFilter
     from Random import Random
     from session import Session
+    from StringToFile import StringToFile
     from ThreadSafe import Fork, ThreadTestModule, ThreadSafeFold, \
         ThreadSafeMap
     from WebRequest import WebRequest
@@ -204,7 +205,6 @@ def initialize(*args, **keywords):
     reg.add_module(CsvFilter,
                    namespace=utils_namespace)
 
-    # FTP
     reg.add_module(FTPReader,
                    namespace=utils_namespace)
 
@@ -218,6 +218,9 @@ def initialize(*args, **keywords):
                    namespace=utils_namespace)
 
     reg.add_module(Random,
+                   namespace=utils_namespace)
+
+    reg.add_module(StringToFile,
                    namespace=utils_namespace)
 
     reg.add_module(TextDataWriter,

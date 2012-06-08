@@ -44,7 +44,7 @@ class Timer(NotCacheable, Module):
                     ('input 5', '(edu.utah.sci.vistrails.basic:Module)'),
                     ('input 6', '(edu.utah.sci.vistrails.basic:Module)'),
                     ('input 7', '(edu.utah.sci.vistrails.basic:Module)'),
-                    ('input 8', '(edu.utah.sci.vistrails.basic:Module)') ,                   
+                    ('input 8', '(edu.utah.sci.vistrails.basic:Module)') ,
                     ('input names', '(edu.utah.sci.vistrails.basic:List)')
                     ]
 
@@ -58,6 +58,13 @@ class Timer(NotCacheable, Module):
         Module.__init__(self)
         self.start_time = 0
 
+    def handle_module_upgrade_request(controller, module_id, pipeline):
+        module_remap = {'Workflow Timer':
+                        [(None, '0.1.3', 'WorkflowTimer', {})],
+                        }
+        return UpgradeWorkflowHandler.remap_module(controller, module_id,
+                                                   pipeline, module_remap)
+
     def update(self):
         self.start_time  = time()
         Module.update(self)
@@ -65,9 +72,9 @@ class Timer(NotCacheable, Module):
     def compute(self):
         end_time = time()
         total_time = end_time - self.start_time
-        
+
         file_sink = self.forceGetInputFromPort('file sink', None)
-                
+
         values = []
         for i in range(8):
             value = self.forceGetInputFromPort('input %s'%(i+1), None)
@@ -85,7 +92,7 @@ class Timer(NotCacheable, Module):
                 report += "%s:%s "%(name, value)
                 csv_report += "%s,"%value
         report += "total_time:%s"%total_time
-        csv_report += "%s\n"%total_time        
+        csv_report += "%s\n"%total_time
 
         if file_sink:
             try:
@@ -96,6 +103,5 @@ class Timer(NotCacheable, Module):
             file_sink_file.seek(0, 2)
             file_sink_file.write(csv_report)
             file_sink_file.close()
-        self.setResult("total time", total_time)        
+        self.setResult("total time", total_time)
         self.setResult("report", report)
-        

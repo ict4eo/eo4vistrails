@@ -43,7 +43,7 @@ qgis.core.QgsApplication.initQgis()
 
 
 class QgsLayerWriter(Module):
-    """This module will create a file from a QGIS layer
+    """This module will create a shape file from a QGIS vector layer
     """
 
     def raiseError(self, msg, error=''):
@@ -57,14 +57,12 @@ class QgsLayerWriter(Module):
         try:
             thefile = self.forceGetInputFromPort('file', None)
             thelayer = self.forceGetInputFromPort('value', None)
-
             isFILE = (thefile != None) and (thefile.name != '')
-
             if isFILE:
                 thefilepath = thefile.name
                 #thefilename = QFileInfo(thefilepath).fileName()
-
-                self.write_vector_layer(thelayer, thefilepath, 'SHP') # QGIS 1.6 only handles shapefile
+                # TODO - upgrade the input port to specify the file type out
+                self.write_vector_layer(thelayer, thefilepath, 'SHP')
             else:
                 self.raiseError('Invalid output file')
 
@@ -75,8 +73,12 @@ class QgsLayerWriter(Module):
     def write_vector_layer(self, layer, filename, filetype='SHP', encoding=None):
         """Write a QGIS vector layer to disk
         """
-        SUPPORTED = ('SHP',) #QGIS 1.6 only handles shapefile (SHP) outputs
-        if layer and layer.isValid():
+        SUPPORTED = ('SHP',)  # QGIS 1.6 only handles shapefile (SHP) outputs
+        if not layer:
+            self.raiseError('Missing layer file')
+        elif not layer.isValid():
+            self.raiseError('Invalid layer file')
+        else:
             if not encoding:
                 encoding = 'CP1250'
             if filetype in SUPPORTED:
@@ -84,12 +86,13 @@ class QgsLayerWriter(Module):
                     crsDest = QgsCoordinateReferenceSystem(layer.srs())
                     error = QgsVectorFileWriter.writeAsShapefile(
                         layer, filename, encoding, crsDest, False)
-                    print error, layer, filename, encoding, crsDest
-                # IN FUTURE
-                #   add support for other vector types !!!
+                    print "QgsLayer:84", error,  filename, encoding, crsDest
+                # TODO IN FUTURE
+                # add support for other vector types
             else:
                 if filetype:
-                    self.raiseError('Vector Layer Type %s not supported' % str(filetype))
+                    self.raiseError('Vector Layer Type "%s" not supported' % \
+                                    str(filetype))
                 else:
                     self.raiseError('Vector Layer Type not specified')
 
