@@ -25,6 +25,9 @@
 ###
 #############################################################################
 """This module runs test workflows to validate changes in other modules.
+
+NOTE: This set of tests is designed to be run from the commandline, while
+working in the directory containing these workflows.
 """
 #History
 #Derek Hohls, 6 June 2012, Version 1.0
@@ -38,19 +41,40 @@ from runner import Runner
 r = Runner()
 path = os.getcwd()
 
+def local_test(file_in, file_out, flow, version):
+    if file_in:
+        file_in = os.path.join(path, file_in)
+    file_out = os.path.join(path, file_out)
+    aliases={'file_out': file_out, 'file_in': file_in}
+    if os.path.isfile(file_out):
+        os.remove(file_out)
+    print "file_out", file_out
+    r.run_flow(flow, version, aliases)
+    assert(os.path.isfile(file_out))
+
 # SOS
-file_out = os.path.join(path, 'sos_output.xml')
-if os.path.isfile(file_out):
-    os.remove(file_out)
-r.run('sos.vt', 'TOFILE', aliases={'file_out': file_out})
-assert(os.path.isfile(file_out))
-
+local_test(None, 'data_out/sos_out.xml', 'sos.vt', 'TOFILE')
 # NETCDF - will not work unless run in non-cached mode
-file_out = os.path.join(path, 'netcdf_array.txt')
+local_test(None, 'data_out/netcdf_array.txt', 'netcdf.vt', 'TEST',)
+# stringtofile
+local_test(None, 'data_out/string_out.txt', 'stringtofile.vt', 'TEST')
+# layerwriter
+local_test('data_in/alaska.shp', 'data_out/shape_out.shp',
+           'layerwriter.vt', 'TEST')
+# WFS
+local_test(None, 'data_out/wfs_out.xml', 'wfs.vt', 'TEST')
+# x
+#local_test(None, )
+
+"""
+# example without using local_test...
+# layerwriter
+file_in = os.path.join(path, 'data_in/alaska.shp')
+file_out = os.path.join(path, 'data_out/shape_out.shp')
 if os.path.isfile(file_out):
     os.remove(file_out)
-r.run('netcdf.vt', 'TEST', aliases={'file_out': file_out})
+print "file_out", file_out
+r.run_flow('layerwriter.vt', 'TEST', aliases={'file_out': file_out,
+                                               'file_in': file_in})
 assert(os.path.isfile(file_out))
-
-
-
+"""

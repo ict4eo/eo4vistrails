@@ -42,21 +42,27 @@ sys.path.append(VISTRAILS_HOME)
 import core.requirements
 core.requirements.check_pyqt4()
 import gui.application
+from core.db.locator import FileLocator
+from core.console_mode import run
+from core import debug
 
 
 class Runner():
 
-    def __init__(self, keep_active=False):
+    def __init__(self, keep_active=False, use_cache=False):
         """
         Args:
             keep_active: boolean
                 if True, Vistrails must run after executing flows
+            use_cache: boolean
+                if True, will run VisTrails in caching mode
         """
         # vistrails initialization
-        self.active = keep_active
         self.gui_app = gui.application
+        self.active = keep_active
+        self.options = {'useCache': use_cache}
         try:
-            vt = self.gui_app.start_application()
+            vt = self.gui_app.start_application(self.options)
             if vt != 0:
                 if self.gui_app.VistrailsApplication:
                     self.gui_app.VistrailsApplication.finishSession()
@@ -74,6 +80,39 @@ class Runner():
             traceback.print_exc()
             sys.exit(255)
 
+    def run_flow(self, workflow, version, aliases=None, path=None,
+            update=False):
+        """Run a workflow version located at a specified path.
+
+        Args:
+            workflow: string
+            version: string
+            aliases: dictionary
+                name:value pairs for workflow aliases
+            path: string
+                if not supplied, use current directory
+            update: boolean
+                True if you want the log of this execution to be stored
+                in the vistrail file
+        """
+        # api must be imported after vistrails initialization
+        import api
+        location = path or os.getcwd()
+        flow = os.path.join(location, workflow)
+        #print "102 Running %s" % (flow)
+        locator = FileLocator(os.path.abspath(flow))
+        work_list = [(locator, version)]
+        parameters = ''
+        for key, item in enumerate(aliases.items()):
+            parameters = parameters + '%s=%s' % (item[0], item[1])
+            if key + 1 < len(aliases):
+                parameters = parameters + '$&$'
+        errs = run(work_list, parameters=parameters, update_vistrail=update)
+        if len(errs) > 0:
+            for err in errs:
+                debug.critical("Error in %s:%s:%s -- %s" % err)
+
+    '''
     def run(self, workflow, version, aliases=None, path=None):
         """Run a workflow version located at a specified path.
 
@@ -98,3 +137,4 @@ class Runner():
             controller.execute_current_workflow(custom_aliases=aliases)
         except RuntimeError:
             print "Workflow %s faied..." % flow
+    '''
