@@ -24,8 +24,8 @@
 ### WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ###
 #############################################################################
-"""This module forms part of the rpyc vistrails capabilties.  It adds multicore
-parallel and distributed processing to VisTrails.
+"""This module acts as dummy placeholder for actual rpyc capabilties.
+RPyC package adds multicore parallel and distributed processing to VisTrails.
 """
 #History
 #Terence van Zyl, 15 Dec 2010, Version 1.0
@@ -39,54 +39,14 @@ def initialize(*args, **keywords):
         PythonSourceConfigurationWidget
     from core.modules import basic_modules
     import RPyC
-    import RPyCHelper
-    import RPyCTest
 
     """
     sets everything up called from the top level initialize
     """
     reg = get_module_registry()
-    mynamespace = "rpyc"
-
-    #Add RPyCNode
-    reg.add_module(RPyC.RPyCNode,
-                   name="RpyC Node",
-                   namespace=mynamespace,
-                   abstract=True)
+    rpyc_namespace = "rpyc"
 
     #Dummy Module Mixed into all RPYCSafeModules
     reg.add_module(RPyC.RPyCModule,
-                   namespace=mynamespace,
+                   namespace=rpyc_namespace,
                    abstract=True)
-
-    reg.add_module(RPyCHelper.RPyCCode,
-                   name="RPyC Code Base",
-                   configureWidgetType=PythonSourceConfigurationWidget,
-                   namespace=mynamespace,
-                   abstract=True)
-    reg.add_input_port(RPyCHelper.RPyCCode, 'source',
-                       basic_modules.String)
-    reg.add_output_port(RPyCHelper.RPyCCode, 'self',
-                        basic_modules.Module)
-
-    #Add RPyCCode
-#    reg.add_module(RPyCHelper.RemotePythonCode,
-#                   name = "Remote Python Code",
-#                   configureWidgetType=PythonSourceConfigurationWidget,
-#                   namespace=mynamespace)
-
-    #Add RPyCCode
-    reg.add_module(RPyCHelper.RemotePythonCode,
-                   name="RPyC Code",
-                   configureWidgetType=PythonSourceConfigurationWidget,
-                   namespace=mynamespace)
-
-    reg.add_module(RPyCHelper.RPyC_C_Code,
-                   name="RPyC C Code",
-                   configureWidgetType=PythonSourceConfigurationWidget,
-                   namespace=mynamespace)
-
-    #Add RPyCTestModule
-    reg.add_module(RPyCTest.RPyCTestModule,
-                   name="RpyC Test Module",
-                   namespace="utils|tests")
