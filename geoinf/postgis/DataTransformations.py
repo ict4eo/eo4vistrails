@@ -27,24 +27,27 @@
 """This module ???
 """
 # library
+# third-party
 import psycopg2
 from psycopg2 import ProgrammingError
-# third-party
 # vistrails
 from core.modules.vistrails_module import Module, ModuleError
 # eo4vistrails
 from packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
-from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
+from packages.eo4vistrails.tools.utils.ThreadSafe import ThreadSafeMixin
 # local
 
 
 #@RPyCSafeModule()
 class InputStream(Module):
-    ''''''
+    '''TODO: add documentation'''
+
     _input_ports = [('in_datalist', '(edu.utah.sci.vistrails.basic:List)'),
-                    ('in_python_datatype', '(edu.utah.sci.vistrails.basic:String)')]
+                    ('in_python_datatype',
+                     '(edu.utah.sci.vistrails.basic:String)')]
     _output_ports = [('datalist', '(edu.utah.sci.vistrails.basic:List)'),
-                    ('python_datatype', '(edu.utah.sci.vistrails.basic:String)')]
+                    ('python_datatype',
+                     '(edu.utah.sci.vistrails.basic:String)')]
 
     def __init__(self):
         #ThreadSafeMixin.__init__(self)
@@ -61,10 +64,14 @@ class InputStream(Module):
 
 #@RPyCSafeModule()
 class pgSQLMergeInsert(Module):
-    '''A Module for taking a set of lists of data and zipping them into a set of records that can be inserted into a SQL database'''
-    _input_ports = [('input_streams', '(edu.utah.sci.vistrails.basic:List)'),  \
-                            ('dbsession', '(za.co.csir.eo4vistrails:PostGisSession:postGIS)'),  \
-                            ('table', '(edu.utah.sci.vistrails.basic:String)')]
+    '''Take a set of lists of data and zip them into a set of records that
+    can be inserted into a postgreSQL database
+    '''
+
+    _input_ports = [('input_streams', '(edu.utah.sci.vistrails.basic:List)'),
+                    ('dbsession',
+                     '(za.co.csir.eo4vistrails:PostGisSession:data|postGIS)'),
+                    ('table', '(edu.utah.sci.vistrails.basic:String)')]
     _output_ports = [('result', '(edu.utah.sci.vistrails.basic:String)')]
 
     def __init__(self):
@@ -80,8 +87,8 @@ class pgSQLMergeInsert(Module):
             pgconn = psycopg2.connect(db_session.connectstr)
             curs = pgconn.cursor()
             if self.tblmeta == []:
-                curs.execute("select column_name, data_type, column_default from \
-                information_schema.columns where table_name = '%s';" % tbl)
+                curs.execute("select column_name, data_type, column_default \
+                from information_schema.columns where table_name='%s';" % tbl)
                 self.tblmeta = curs.fetchall()
 
             colnames = ""
@@ -114,9 +121,9 @@ class pgSQLMergeInsert(Module):
             self.setResult('result', curs.statusmessage)
 
         except Exception as ex:
-            print "DataTranformations:123", ex
+            #print "DataTranformations:123", ex
             raise ModuleError(pgSQLMergeInsert, \
-                              "Could not execute SQL Statement")
+                              "Could not execute SQL Statement: %s" % ex)
         finally:
             curs.close()
             pgconn.close()
