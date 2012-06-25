@@ -42,9 +42,9 @@ import core.modules.module_registry
 from core.modules.vistrails_module import Module, ModuleError
 from core.modules.module_configure import StandardModuleConfigurationWidget
 #eo4vistrails
-from packages.eo4vistrails.geoinf.datamodels.GeoStrings import GeoJSONString,  WKTString
+from packages.eo4vistrails.geoinf.geostrings.GeoStrings import GeoJSONString,  WKTString
 from packages.eo4vistrails.geoinf.datamodels.QgsLayer import QgsRasterLayer
-import packages.eo4vistrails.geoinf.visual
+import packages.eo4vistrails.tools.visual
 
 
 QgsApplication.setPrefixPath("/usr", True)
@@ -130,7 +130,7 @@ class GetFeatureInfoTool(QgsMapTool):
 
 
 class FeatureOfInterestDefinerConfigurationWidget(StandardModuleConfigurationWidget):
-    """A widget to configure the  FeatureOfInterestDefiner Module."""
+    """A widget to configure the FeatureOfInterestDefiner Module."""
 
     def __init__(self, module, controller, parent=None):
         StandardModuleConfigurationWidget.__init__(self, module, controller, parent)

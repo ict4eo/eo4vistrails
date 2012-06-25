@@ -3,15 +3,15 @@ def initialize(*args, **keywords):
     from core.modules import basic_modules
     from core.modules.basic_modules import File, Float, String
     from packages.eo4vistrails.geoinf.datamodels.QgsLayer import QgsRasterLayer
-    from packages.eo4vistrails.geoinf.datamodels.GeoStrings import \
-        GeoJSONString,  WKTString
+    from packages.eo4vistrails.geoinf.geostrings.GeoStrings import \
+        GeoJSONString, WKTString
     from AOI_Utils import FeatureOfInterestDefiner, \
                           FeatureOfInterestDefinerConfigurationWidget, \
                           AreaOfInterestDefiner, LineOfInterestDefiner, \
                           PointOfInterestDefiner
 
     reg = get_module_registry()
-    helpers_namespace = "helpers"
+    helpers_namespace = "data|helpers"
 
     # ========================================================================
     # Abstract Modules - these MUST appear FIRST
