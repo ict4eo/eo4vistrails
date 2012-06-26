@@ -7,8 +7,7 @@ def initialize(*args, **keywords):
     from Buffer import Buffer
 
     reg = get_module_registry()
-    tools_namespace = "tools"
-    tools_test_namespace = "tools|tests"
+    spatial_namespace = "tools|spatial"
 
     # =========================================================================
     # Abstract Modules - these MUST appear FIRST
@@ -25,7 +24,7 @@ def initialize(*args, **keywords):
 
     # Buffer
     reg.add_module(Buffer,
-                   namespace=tools_namespace)
+                   namespace=spatial_namespace)
     reg.add_input_port(
         Buffer,
         'layer',
