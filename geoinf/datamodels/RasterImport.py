@@ -51,7 +51,7 @@ from core.modules.vistrails_module import Module, new_module, NotCacheable, \
     ModuleError
 # eo4vistrails
 from packages.eo4vistrails.geoinf.datamodels.Raster import RasterModel
-from packages.eo4vistrails.geoinf.ogc.OgcConfigurationWidget import \
+from packages.eo4vistrails.geoinf.web.OgcConfigurationWidget import \
     OgcConfigurationWidget
 
 

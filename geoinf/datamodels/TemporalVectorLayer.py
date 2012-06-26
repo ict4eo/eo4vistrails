@@ -41,14 +41,15 @@ except:
 # vistrails
 from core.modules.vistrails_module import Module, ModuleError
 # eo4vistrails
-from packages.eo4vistrails.utils.Parser import Parser
-from packages.eo4vistrails.utils.DataRequest import DataRequest
-from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
-from packages.eo4vistrails.utils.datetimeutils import parse_datetime,\
+from packages.eo4vistrails.tools.utils.Parser import Parser
+from packages.eo4vistrails.tools.utils.ThreadSafe import ThreadSafeMixin
+from packages.eo4vistrails.tools.utils.datetimeutils import parse_datetime,\
                                                       get_date_and_time
 from packages.eo4vistrails.rpyc.RPyC import RPyCModule, RPyCSafeModule
 # local
 from QgsLayer import QgsVectorLayer
+from DataRequest import DataRequest
+
 
 # strings that may be used by GML to indicate missing data
 GML_NO_DATA_LIST = ["noData", "None", "Null", "NULL"]
@@ -122,7 +123,7 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
                     dataReq.get_driver())
             else:
                 if dataReq:
-                    self.raiseError('Vector Layer Driver %s not supported' %
+                    self.raiseError('Vector layer driver %s not supported' %
                                     str(dataReq.get_driver()))
                 else:
                     pass

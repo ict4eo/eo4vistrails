@@ -32,15 +32,15 @@ in the formats defined by QGIS.
 import qgis.core
 from PyQt4.QtCore import QFileInfo
 # vistrails
+from core.modules import basic_modules
 from core.modules.vistrails_module import Module, ModuleError, NotCacheable
 # eo4vistrails
-from packages.eo4vistrails.utils.DataRequest import DataRequest
-from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
 from packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
-from packages.eo4vistrails.utils.DropDownListWidget import ComboBoxWidget
+from packages.eo4vistrails.tools.utils.ThreadSafe import ThreadSafeMixin
+from packages.eo4vistrails.tools.utils.DropDownListWidget import ComboBoxWidget
 # local
-from core.modules import basic_modules
 from threading import Thread, currentThread, RLock
+from DataRequest import DataRequest
 
 
 class EPSGComboBoxWidget(ComboBoxWidget):
@@ -103,7 +103,7 @@ class QgsMapLayer(Module, NotCacheable):
 class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
     """Create a QGIS vector layer from either a Data Request or a file.
 
-    Vector Layer Drivers (set in the Data Request) can be any of:
+    VectorLayer Drivers (set in the Data Request) can be any of:
      *  WFS: Web Feature Service
      *  ogr: multiple vector formats - see http://www.gdal.org/ogr/
      *  postgres: Postgresql/PostGIS database
@@ -166,7 +166,7 @@ class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
 
             else:
                 if dataReq:
-                    self.raiseError('Vector Layer Driver %s not supported' %
+                    self.raiseError('Vector layer driver %s not supported' %
                                     str(dataReq.get_driver()))
                 else:
                     pass
@@ -181,7 +181,7 @@ class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
 class QgsRasterLayer(QgsMapLayer, qgis.core.QgsRasterLayer):
     """Create a QGIS raster layer from either a Data Request or a file.
 
-    Raster Layer Drivers (set in the Data Request) can be any of:
+    RasterLayer Drivers (set in the DataRequest) can be any of:
      *  WCS: Web Coverage Service
      *  wms: Web Mapping Service
      *  gdl: GDAL
@@ -251,10 +251,10 @@ class QgsRasterLayer(QgsMapLayer, qgis.core.QgsRasterLayer):
 
             else:
                 if dataReq:
-                    self.raiseError('Raster Layer Driver %s not supported' %
+                    self.raiseError('Raster layer driver %s not supported' %
                                 str(dataReq.get_driver()))
                 else:
-                    self.raiseError('Raster Layer is not specified.')
+                    self.raiseError('Raster layer is not specified.')
 
             self.setResult('value', self)
         except Exception, e:

@@ -70,7 +70,8 @@ class QgsLayerWriter(Module):
         except Exception, e:
             self.raiseError('Cannot set output port: %s' % str(e))
 
-    def write_vector_layer(self, layer, filename, filetype='SHP', encoding=None):
+    def write_vector_layer(self, layer, filename, filetype='SHP',
+                           encoding=None):
         """Write a QGIS vector layer to disk
         """
         SUPPORTED = ('SHP',)  # QGIS 1.6 only handles shapefile (SHP) outputs
@@ -86,15 +87,15 @@ class QgsLayerWriter(Module):
                     crsDest = QgsCoordinateReferenceSystem(layer.srs())
                     error = QgsVectorFileWriter.writeAsShapefile(
                         layer, filename, encoding, crsDest, False)
-                    print "QgsLayer:84", error,  filename, encoding, crsDest
+                    #print "QgsLayer:89", error,  filename, encoding, crsDest
                 # TODO IN FUTURE
                 # add support for other vector types
             else:
                 if filetype:
-                    self.raiseError('Vector Layer Type "%s" not supported' % \
+                    self.raiseError('Vector layer type "%s" not supported' % \
                                     str(filetype))
                 else:
-                    self.raiseError('Vector Layer Type not specified')
+                    self.raiseError('Vector layer type not specified')
 
             """# COMPLEX VECTOR LAYER WRITING
             # define fields for feature attributes
@@ -102,14 +103,15 @@ class QgsLayerWriter(Module):
             fields = { 0 : QgsField("first", QVariant.Int),
                        1 : QgsField("second", QVariant.String) }
 
-            # create an instance of vector file writer, it will create the shapefile.
+            # create an instance of vector file writer to create the shapefile.
             # Arguments:
             # 1. path to new shapefile (will fail if exists already)
             # 2. encoding of the attributes
             # 3. field map
             # 4. geometry type - from WKBTYPE enum
-            # 5. layer's spatial reference (instance of QgsSpatialRefSys) - optional
-            writer = QgsVectorFileWriter(filename, encoding, fields, layer.wkbType(), None)
+            # 5. layer's spatial ref(instance of QgsSpatialRefSys) - opt
+            writer = QgsVectorFileWriter(filename, encoding, fields,
+                                         layer.wkbType(), None)
 
             if writer.hasError() != QgsVectorFileWriter.NoError:
               print "Error when creating shapefile: ", writer.hasError()
@@ -121,7 +123,8 @@ class QgsLayerWriter(Module):
             del writer
             """
 
-    def write_raster_layer(self, layer, filename, filetype=None, encoding=None):
+    def write_raster_layer(self, layer, filename, filetype=None,
+                           encoding=None):
         """TODO IN FUTURE Write a QGIS raster layer to disk
         """
         pass

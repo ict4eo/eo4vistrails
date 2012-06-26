@@ -38,21 +38,22 @@ def initialize(*args, **keywords):
     import qgis.core
     # vistrails
     from core.modules.module_registry import get_module_registry
-    from core.modules.basic_modules import String, File
+    from core.modules.basic_modules import Boolean, String, File, Variant
     # eo4vistrails
-    from packages.eo4vistrails.utils.WebRequest import WebRequest, DataRequest
     from packages.eo4vistrails.geoinf.datamodels.FeatureImport import \
         FeatureImport, FeatureImportConfigurationWidget
     from packages.eo4vistrails.geoinf.datamodels.RasterImport import \
         RasterImport, RasterImportConfigurationWidget
+    from packages.eo4vistrails.geoinf.geostrings.GeoStrings import GeoString
     # local
+    from DataRequest import DataRequest
     from Feature import FeatureModel, FileFeatureModel, MemFeatureModel
     from Raster import RasterModel
-    from GeoStrings import GMLString, GeoJSONString, GeoString,  WKTString, \
-        GeoStringConstantWidget, Proj4String
     from TemporalVectorLayer import TemporalVectorLayer
+    from WebRequest import WebRequest
     import QgsLayer
     import QgsLayerWriter
+    from PostGISRequest import PostGISRequest
 
     # QGIS
     # export set PYTHONPATH=/usr/lib/python2.6
@@ -64,11 +65,20 @@ def initialize(*args, **keywords):
 
     # Vistrails
     reg = get_module_registry()
-    mynamespace = "data"
+    data_namespace = "data"
+    metadata_namespace = "data|metadata"
+
+    # =========================================================================
+    # Abstract Modules - these MUST appear FIRST
+    # =========================================================================
+
+    reg.add_module(DataRequest,
+                   namespace=data_namespace,
+                   abstract=True)
 
     # Features
     reg.add_module(FeatureModel,
-                   namespace=mynamespace,
+                   namespace=data_namespace,
                    abstract=True)  # abstract
     #reg.add_module(FeatureImport,
     #               configureWidgetType=FeatureImportConfigurationWidget,
@@ -76,11 +86,50 @@ def initialize(*args, **keywords):
 
     # EPSG Code Constant
     reg.add_module(QgsLayer.EPSGCode,
-                   namespace=mynamespace)
+                   namespace=metadata_namespace)
+
+    # =========================================================================
+    # Standard Modules - Ports defined here
+    # =========================================================================
+
+    # WebRequest
+    reg.add_module(WebRequest,
+                   namespace=data_namespace)
+    reg.add_input_port(
+        WebRequest,
+        'request',
+        (WebRequest, 'WebRequest'))
+    reg.add_input_port(
+        WebRequest,
+        'runRequest',
+        (Boolean, 'Run The Request?'))
+    reg.add_input_port(
+        WebRequest,
+        'urls',
+        (String, 'URL for the request'))
+    reg.add_input_port(
+        WebRequest,
+        'data',
+        (String, 'Data for a POST request'))
+    reg.add_output_port(
+        WebRequest,
+        'value',
+        WebRequest)
+    reg.add_output_port(
+        WebRequest,
+        'out',
+        Variant)
+
+
+    # PostGISRequest
+    reg.add_module(PostGISRequest,
+                   namespace=data_namespace)
+    reg.add_output_port(PostGISRequest, 'value', PostGISRequest)
+
 
     # QgsMapLayer
     reg.add_module(QgsLayer.QgsMapLayer,
-                   namespace=mynamespace,
+                   namespace=data_namespace,
                    abstract=True)
     reg.add_input_port(QgsLayer.QgsMapLayer, "file", File)
     reg.add_input_port(QgsLayer.QgsMapLayer, "datarequest", DataRequest)
@@ -90,50 +139,36 @@ def initialize(*args, **keywords):
 
     # ... vector
     reg.add_module(QgsLayer.QgsVectorLayer,
-                   name="Vector Layer",
-                   namespace=mynamespace)
+                   name="VectorLayer",
+                   namespace=data_namespace)
     reg.add_output_port(QgsLayer.QgsVectorLayer, "value",
                         QgsLayer.QgsVectorLayer)
 
     # ... raster
     reg.add_module(QgsLayer.QgsRasterLayer,
-                   name="Raster Layer",
-                   namespace=mynamespace)
+                   name="RasterLayer",
+                   namespace=data_namespace)
     reg.add_output_port(QgsLayer.QgsRasterLayer, "value",
                         QgsLayer.QgsRasterLayer)
 
     # ... temporal
     reg.add_module(TemporalVectorLayer,
-                   name="Temporal Vector Layer",
-                   namespace=mynamespace)
+                   name="TemporalVectorLayer",
+                   namespace=data_namespace)
     reg.add_output_port(TemporalVectorLayer, "value",
                         TemporalVectorLayer)
 
     # QgsLayerWriter
     reg.add_module(QgsLayerWriter.QgsLayerWriter,
-                   namespace=mynamespace)
+                   namespace=data_namespace)
     reg.add_input_port(QgsLayerWriter.QgsLayerWriter, "value",
                        QgsLayer.QgsVectorLayer)
     reg.add_input_port(QgsLayerWriter.QgsLayerWriter, "file",
                        File)
 
-    # misc.
-    reg.add_module(GeoString,
-                   namespace=mynamespace,
-                   abstract=True)
-    reg.add_module(GMLString,
-                   configureWidgetType=GeoStringConstantWidget,
-                   namespace=mynamespace)
-    reg.add_module(GeoJSONString,
-                   configureWidgetType=GeoStringConstantWidget,
-                   namespace=mynamespace)
-    reg.add_module(WKTString,
-                   configureWidgetType=GeoStringConstantWidget,
-                   namespace=mynamespace)
-
     # MemFeatureModel
     reg.add_module(MemFeatureModel,
-                   namespace=mynamespace,
+                   namespace=data_namespace,
                    abstract=True)
     reg.add_input_port(MemFeatureModel, "source_file", String)
     reg.add_input_port(MemFeatureModel, "dbconn", String)
@@ -144,8 +179,8 @@ def initialize(*args, **keywords):
 
     # FileFeatureModel
     reg.add_module(FileFeatureModel,
-                   name="OGR Transform",
-                   namespace=mynamespace)
+                   name="OGRTransform",
+                   namespace=data_namespace)
     reg.add_input_port(FileFeatureModel, "source_file", String)
     reg.add_input_port(FileFeatureModel, "source_feature_dataset",
                        MemFeatureModel)
@@ -154,8 +189,8 @@ def initialize(*args, **keywords):
 
     # RasterModel
     reg.add_module(RasterModel,
-                   namespace=mynamespace,
+                   namespace=data_namespace,
                    abstract=True)  # abstract
     reg.add_module(RasterImport,
                    configureWidgetType=RasterImportConfigurationWidget,
-                   namespace=mynamespace)
+                   namespace=data_namespace)

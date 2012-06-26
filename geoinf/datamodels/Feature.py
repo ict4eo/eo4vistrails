@@ -385,6 +385,7 @@ class FeatureModel(Module):
     serialise the OGR objects, but that is more likely to take place
     via external serialisers.
 
+    TODO
     .. Should there be an in-memory and a cacheable version of this?
     .. I have had to make SOS NotCacheable to work (Derek, 2010/12/04)
     """

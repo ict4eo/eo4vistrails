@@ -79,21 +79,3 @@ class DataRequest(NotCacheable, Module):
         self._uri = self.forceGetInputFromPort('uri', None)
         self._layername = self.forceGetInputFromPort('layername', None)
         self._driver = self.forceGetInputFromPort('driver', None)
-
-
-class PostGISRequest(DataRequest, QgsDataSourceURI):
-    """TO DO: Add doc string"""
-
-    def __init__(self):
-        import random
-        random.seed()
-        DataRequest.__init__(self)
-        QgsDataSourceURI.__init__(self)
-        self._driver = 'postgres'
-        self._layername = 'postgislayer' + str(random.randint(0, 10000))
-
-    def get_uri(self):
-        return self.uri()
-
-    def compute(self):
-        self.setResult('value', self)
