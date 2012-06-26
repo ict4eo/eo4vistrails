@@ -1,15 +1,41 @@
-from core.modules.module_registry import get_module_registry
+# -*- coding: utf-8 -*-
+############################################################################
+###
+### Copyright (C) 2010 CSIR Meraka Institute. All rights reserved.
+###
+### This full package extends VisTrails, providing GIS/Earth Observation
+### ingestion, pre-processing, transformation, analytic and visualisation
+### capabilities . Included is the abilty to run code transparently in
+### OpenNebula cloud environments. There are various software
+### dependencies, but all are FOSS.
+###
+### This file may be used under the terms of the GNU General Public
+### License version 2.0 as published by the Free Software Foundation
+### and appearing in the file LICENSE.GPL included in the packaging of
+### this file.  Please review the following to ensure GNU General Public
+### Licensing requirements will be met:
+### http://www.opensource.org/licenses/gpl-license.php
+###
+### If you are unsure which license is appropriate for your use (for
+### instance, you are interested in developing a commercial derivative
+### of VisTrails), please contact us at vistrails@sci.utah.edu.
+###
+### This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
+### WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+###
+#############################################################################
+"""This module is the called by higher level inits to ensure that registration
+with VisTrails takes place
+"""
 
-###############################################################################
-# A useful register function for control modules                              #
-###############################################################################
+from core.modules.module_registry import get_module_registry
 
 
 def registerControl(module):
     """Register the control modules so that all have the same style & shape."""
 
     reg = get_module_registry()
-    utils_namespace = "utils"
+    utils_namespace = "tools|utils"
     reg.add_module(module,
                    moduleRightFringe=[(0.0, 0.0), (0.25, 0.5), (0.0, 1.0)],
                    moduleLeftFringe=[(0.0, 0.0), (0.0, 1.0)],
@@ -21,42 +47,23 @@ def initialize(*args, **keywords):
     from core.modules.vistrails_module import Module
 
     import DropDownListWidget
-
     from Array import NDArrayEO
-    from Command import Command
-    from CsvUtils import CsvWriter, CsvReader, ListDirContent, CsvFilter
-    from DataRequest import DataRequest, PostGISRequest
-    from DataTransformations import InputStream, pgSQLMergeInsert
-    from DataWriter import TextDataWriter, \
-        DataWriterTypeComboBox
     from Experiment import Timer
-    from FTP import FTPReader
     from ListFilter import ListFilter
     from Random import Random
     from session import Session
-    from StringToFile import StringToFile
     from ThreadSafe import Fork, ThreadTestModule, ThreadSafeFold, \
         ThreadSafeMap
-    from WebRequest import WebRequest
 
     reg = get_module_registry()
-    utils_namespace = "utils"
-    utils_test_namespace = "utils|tests"
+    utils_namespace = "tools|utils"
+    utils_test_namespace = "tools|utils|tests"
 
     # =========================================================================
     # Abstract Modules - these MUST appear FIRST
     # =========================================================================
 
     reg.add_module(Session,
-                   namespace=utils_namespace,
-                   abstract=True)
-
-    reg.add_module(DataRequest,
-                   namespace=utils_namespace,
-                   abstract=True)
-
-    # drop-down lists
-    reg.add_module(DataWriterTypeComboBox,
                    namespace=utils_namespace,
                    abstract=True)
 
@@ -82,7 +89,8 @@ def initialize(*args, **keywords):
                                     DropDownListWidget.DateFormatComboBoxWidget)
 
     reg.add_module(DateFormatComboBox,
-                   namespace=utils_namespace)
+                   namespace=utils_namespace,
+                   abstract=True)
 
     # =========================================================================
     # Standard Modules - Ports defined here
@@ -90,7 +98,7 @@ def initialize(*args, **keywords):
 
     # Experiment
     reg.add_module(Timer,
-               name="Workflow Timer",
+               name="WorkflowTimer",
                namespace=utils_namespace)
 
     # Fork
@@ -112,7 +120,6 @@ def initialize(*args, **keywords):
         ListFilter,
         'subset',
         basic_modules.String)
-
     reg.add_output_port(
         ListFilter,
         'string',
@@ -124,21 +131,13 @@ def initialize(*args, **keywords):
 
     # NDArray
     reg.add_module(NDArrayEO,
-                   name="EO Numpy Array",
+                   name="EONumpyArray",
                    namespace=utils_namespace,
                    abstract=True)
     reg.add_output_port(
         NDArrayEO,
         "self",
         (NDArrayEO, 'self'))
-
-    # PostGISRequest
-    reg.add_module(PostGISRequest,
-                   namespace=utils_namespace)
-    reg.add_output_port(
-        PostGISRequest,
-        'value',
-        PostGISRequest)
 
     # ThreadTest
     reg.add_module(ThreadTestModule,
@@ -147,34 +146,6 @@ def initialize(*args, **keywords):
         ThreadTestModule,
         'someModuleAboveMe',
         basic_modules.Module)
-
-    # WebRequest
-    reg.add_module(WebRequest,
-                   namespace=utils_namespace)
-    reg.add_input_port(
-        WebRequest,
-        'request',
-        (WebRequest, 'Web Request'))
-    reg.add_input_port(
-        WebRequest,
-        'runRequest',
-        (basic_modules.Boolean, 'Run The Request?'))
-    reg.add_input_port(
-        WebRequest,
-        'urls',
-        (basic_modules.String, 'URL for the request'))
-    reg.add_input_port(
-        WebRequest,
-        'data',
-        (basic_modules.String, 'Data for a POST request'))
-    reg.add_output_port(
-        WebRequest,
-        'value',
-        WebRequest)
-    reg.add_output_port(
-        WebRequest,
-        'out',
-        basic_modules.Variant)
 
     # =========================================================================
     # Control Flow Modules -
@@ -193,35 +164,5 @@ def initialize(*args, **keywords):
     # Other Modules - without ports OR with locally defined ports
     # =========================================================================
 
-    reg.add_module(Command,
-                   namespace=utils_namespace)
-
-    reg.add_module(CsvWriter,
-                   namespace=utils_namespace)
-
-    reg.add_module(CsvReader,
-                   namespace=utils_namespace)
-
-    reg.add_module(CsvFilter,
-                   namespace=utils_namespace)
-
-    reg.add_module(FTPReader,
-                   namespace=utils_namespace)
-
-    reg.add_module(InputStream,
-                   namespace=utils_namespace)
-
-    reg.add_module(ListDirContent,
-                   namespace=utils_namespace)
-
-    reg.add_module(pgSQLMergeInsert,
-                   namespace=utils_namespace)
-
     reg.add_module(Random,
-                   namespace=utils_namespace)
-
-    reg.add_module(StringToFile,
-                   namespace=utils_namespace)
-
-    reg.add_module(TextDataWriter,
                    namespace=utils_namespace)

@@ -34,7 +34,8 @@ import os.path
 from core.modules.vistrails_module import Module, ModuleError
 # eo4vistrails
 from packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
-from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
+# local
+from ThreadSafe import ThreadSafeMixin
 
 
 @RPyCSafeModule()
@@ -91,9 +92,7 @@ class ListFilter(ThreadSafeMixin, Module):
          *  N, M, ...: multiple different single/range values
 
         Returns:
-
          *  A list of integers
-
         """
 
         def to_int(index):
@@ -123,7 +122,8 @@ class ListFilter(ThreadSafeMixin, Module):
                     else:
                         list.append(to_int(item))
             except Exception, e:
-                self.raiseError('Cannot process output specifications: %s' % str(e))
+                self.raiseError('Cannot process output specifications: %s' % \
+                                str(e))
                 return []
         if list:
             return set(list)  # remove duplicates
