@@ -7,7 +7,7 @@ def initialize(*args, **keywords):
     from Transformer import Transform
 
     reg = get_module_registry()
-    transform_namespace = "transform"
+    transform_namespace = "tools|transform"
     transform_test_namespace = "transform|tests"
 
     # =========================================================================

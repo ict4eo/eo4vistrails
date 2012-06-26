@@ -39,7 +39,7 @@ except:
 from core.modules.vistrails_module import \
     Module, new_module, NotCacheable, ModuleError, ModuleErrors
 # eo4vistrails
-from packages.eo4vistrails.utils.Parser import Parser
+from packages.eo4vistrails.tools.utils.Parser import Parser
 # local
 from Transformer import Transform
 
