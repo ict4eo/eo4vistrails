@@ -33,12 +33,12 @@ from os import fdopen
 # vistrails
 # eo4vistrails
 from packages.eo4vistrails.rpyc.RPyC import RPyCModule
-from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
+from packages.eo4vistrails.tools.utils.ThreadSafe import ThreadSafeMixin
 
 
 class Script(ThreadSafeMixin, RPyCModule):
     """
-       Executes a Octave Script
+       Executes a script
        Writes output to output files and reads input from input files
     """
     _input_ports = [('source', '(edu.utah.sci.vistrails.basic:String)')]

@@ -44,9 +44,12 @@ from core.modules.vistrails_module import ModuleError
 from core.modules.basic_modules import List
 from packages.NumSciPy.Array import NDArray
 # eo4vistrails
-from packages.eo4vistrails.utils.synhigh import SyntaxSourceConfigurationWidget
+from packages.eo4vistrails.tools.utils.synhigh import \
+    SyntaxSourceConfigurationWidget
+from packages.eo4vistrails.tools.utils.ModuleHelperMixin import \
+    ModuleHelperMixin
 from packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
-from packages.eo4vistrails.utils.ModuleHelperMixin import ModuleHelperMixin
+
 
 @RPyCSafeModule()
 class Rpy2Script(Script, ModuleHelperMixin):
@@ -66,19 +69,19 @@ class Rpy2Script(Script, ModuleHelperMixin):
         import gc
         robjects.r.gc()
         gc.collect()
-        
+
         # Get the script fromn theinput port named source
         r_script = urllib.unquote(str(self.forceGetInputFromPort('source', '')))
 
         # Get the list of input ports so we can get there values
         inputDict = dict([(k, self.getInputFromPort(k)) for k in self.inputPorts])
-                
+
         # Remove the script and node from the list
-        if inputDict.has_key('source'):
+        if 'source' in inputDict:
             del(inputDict['source'])
-        if inputDict.has_key('rpycnode'):
+        if 'rpycnode' in inputDict:
             del(inputDict['rpycnode'])
-        
+
 #        for p in self.inputPorts:
 #            for conn in self.inputPorts[p]:
 #                portType = self.getPortType(p, "input")
@@ -89,7 +92,7 @@ class Rpy2Script(Script, ModuleHelperMixin):
 #                        if not isinstance(portType, List) and not isinstance(inputDict[p], portType):
 #                            #worklist case
 #                            pass
-        
+
         # Check that if any are NDArrays we get the numpy array out
         for k in inputDict.iterkeys():
             if type(inputDict[k]) == NDArray:
@@ -103,7 +106,7 @@ class Rpy2Script(Script, ModuleHelperMixin):
                 myListArr = numpy.asarray(inputDict[k])
                 inputDict[k] = myListArr
             robjects.globalenv[k] = inputDict[k]
-        
+
         # Execute the script
         try:
             resultVar = r(r_script)
@@ -113,26 +116,27 @@ class Rpy2Script(Script, ModuleHelperMixin):
         rResult = self.rPyConversion(resultVar)
 
         outputDict = dict([(k, None) for k in self.outputPorts])
-        
+
         del(outputDict['self'])
         #assigning converted R result to output port
         for k in outputDict.iterkeys():
             if k in robjects.globalenv.keys() and robjects.globalenv[k] != None:
                     if str(self.getPortType(k)) == "<class 'core.modules.vistrails_module.Dictionary'>":
                         self.setResult(k, robjects.globalenv[k][0])
-                    elif str(self.getPortType(k)) == "<class 'packages.eo4vistrails.utils.Array.NDArray'>":
+                    elif str(self.getPortType(k)) == "<class 'packages.eo4vistrails.tools.utils.Array.NDArray'>":
                         self.setResult(k, robjects.globalenv[k][0])
                     elif str(self.getPortType(k)) == "<class 'core.modules.vistrails_module.String'>":
                         self.setResult(k, robjects.globalenv[k][0])
-                    elif str(self.getPortType(k) ) == "<class 'core.modules.vistrails_module.Integer'>":
+                    elif str(self.getPortType(k)) == "<class 'core.modules.vistrails_module.Integer'>":
                         self.setResult(k, robjects.globalenv[k][0])
                     elif str(self.getPortType(k)) == "<class 'core.modules.vistrails_module.Float'>":
                         self.setResult(k, robjects.globalenv[k][0])
                     elif str(self.getPortType(k)) == "<class 'core.modules.vistrails_module.Boolean'>":
                         self.setResult(k, robjects.globalenv[k][0])
                     elif str(self.getPortType(k)) == "<class 'core.modules.vistrails_module.List'>" \
-                    or str(self.getPortType(k)) == "<class 'packages.NumSciPy.Array.NDArray'>" :
-                        if debug: print "setting output numpy array"
+                    or str(self.getPortType(k)) == "<class 'packages.NumSciPy.Array.NDArray'>":
+                        if debug:
+                            print "setting output numpy array"
                         outArray = NDArray()
                         outArray.set_array(numpy.asarray(robjects.globalenv[k]))
                         self.setResult(k, outArray)
@@ -145,7 +149,7 @@ class Rpy2Script(Script, ModuleHelperMixin):
         import gc
         robjects.r.gc()
         gc.collect()
-    
+
     #Converting R result to a Python Type.
     def rPyConversion(self, data):
         try:

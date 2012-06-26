@@ -42,7 +42,7 @@ class PySALModule(object):
 class W(PySALModule, Module, pysal.W):
     """ Container class for the pysal.W class """
 
-    _output_ports = [('value', '(za.co.csir.eo4vistrails:W:pysal)')]
+    _output_ports = [('value', '(za.co.csir.eo4vistrails:W:scripting|pysal)')]
 
     def __init__(self):
         Module.__init__(self)

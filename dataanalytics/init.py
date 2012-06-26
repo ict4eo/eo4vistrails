@@ -24,8 +24,8 @@
 ### WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ###
 #############################################################################
-"""This module forms part of the rpyc vistrails capabilties, and is used to add
-multicore parallel and distributed processing to VisTrails.
+"""This module forms part of the eo4vistrails capabilties, and is used to add
+data analytics (including scripting) to VisTrails.
 """
 #History
 #Terence van Zyl, 15 Dec 2010, Version 1.0
@@ -42,38 +42,43 @@ def initialize(*args, **keywords):
     """Called by higher level inits to ensure that registration with
     VisTrails takes place."""
     from core.modules.module_registry import get_module_registry
-    import PySAL
-
     reg = get_module_registry()
-    mynamespace = "pysal"
+
+    import PySAL
+    pysal_namespace = "scripting|pysal"
 
     #Add PySAL
     reg.add_module(PySAL.W,
-                   namespace=mynamespace)
+                   namespace=pysal_namespace)
 
     import Rasterlang
-    mynamespace = "rasterlang"
+    raster_namespace = "scripting|raster"
+
+    #Add RasterlangCode
+    reg.add_module(Rasterlang.RasterLangCode,
+                   namespace=raster_namespace,
+                   abstract=True)
 
     #Add Rasterlang
     reg.add_module(Rasterlang.GDALFormatComboBox,
-                   namespace=mynamespace,
+                   namespace=raster_namespace,
                    abstract=True)
     reg.add_module(Rasterlang.RasterPrototype,
-                   name="Raster Prototype",
-                   namespace=mynamespace)
+                   name="RasterPrototype",
+                   namespace=raster_namespace)
     reg.add_module(Rasterlang.layerAsArray,
-                   name="Layer As Array",
-                   namespace=mynamespace)
+                   name="LayerAsArray",
+                   namespace=raster_namespace)
     reg.add_module(Rasterlang.SaveArrayToRaster,
-                   name="Save Array To Raster",
-                   namespace=mynamespace)
+                   name="SaveArrayToRaster",
+                   namespace=raster_namespace)
     reg.add_module(Rasterlang.arrayAsLayer,
-                   name="Array As Layer",
-                   namespace=mynamespace)
+                   name="ArrayAsLayer",
+                   namespace=raster_namespace)
     reg.add_module(Rasterlang.RasterLang,
                    name="RasterLang",
                    configureWidgetType=Rasterlang.RasterSourceConfigurationWidget,
-                   namespace=mynamespace)
+                   namespace=raster_namespace)
 
     #TODO: Move Networkx to own package
     #import Networkx
@@ -95,39 +100,39 @@ def initialize(*args, **keywords):
 
     #TODO: Move povray to own package
     #import povray
-    #mynamespace = "povray"
+    #pov_namespace = "povray"
     #reg.add_module(povray.PovRayScript,
     #               name="povRay Script",
-    #               namespace=mynamespace,
+    #               namespace=pov_namespace,
     #               configureWidgetType=povray.PovRaySourceConfigurationWidget)
     #reg.add_module(povray.PovRayConfig,
     #               name="povRay Config",
-    #               namespace=mynamespace)
+    #               namespace=pov_namespace)
 
     import octave
-    mynamespace = "octave"
+    octave_namespace = "scripting|octave"
     reg.add_module(octave.OctaveScript,
-                   name="Octave Script",
-                   namespace=mynamespace,
+                   name="OctaveScript",
+                   namespace=octave_namespace,
                    configureWidgetType=octave.OctaveSourceConfigurationWidget)
 
     import rpy2Stats
-    mynamespace = "r"
+    r_namespace = "scripting|r"
     reg.add_module(rpy2Stats.Rpy2Script,
-                   name="Rpy2 Script",
-                   namespace=mynamespace,
+                   name="Rpy2Script",
+                   namespace=r_namespace,
                    configureWidgetType=rpy2Stats.RSourceConfigurationWidget)
 
     import pyDAP
-    mynamespace = "pyDAP"
+    pydap_namespace = "data|datacube"
     reg.add_module(pyDAP.pyDAP,
-                   name="pyDAP Client",
-                   namespace=mynamespace,
+                   name="pyDAPClient",
+                   namespace=pydap_namespace,
                    configureWidgetType=pyDAP.pyDAPConfigurationWidget)
 
     import netcdf4
-    mynamespace = "netcdf4"
+    netcdf_namespace = "data|datacube"
     reg.add_module(netcdf4.netcdf4Reader,
-                   name="netcdf4 Client",
-                   namespace=mynamespace,
+                   name="netcdf4Client",
+                   namespace=netcdf_namespace,
                    configureWidgetType=netcdf4.netcdf4ConfigurationWidget)

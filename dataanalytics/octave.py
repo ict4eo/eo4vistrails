@@ -35,31 +35,33 @@ import urllib
 # vistrails
 from core.modules.vistrails_module import ModuleError, Module
 # eo4vistrails
-from packages.eo4vistrails.utils.synhigh import SyntaxSourceConfigurationWidget
-from packages.eo4vistrails.utils.ModuleHelperMixin import ModuleHelperMixin
+from packages.eo4vistrails.tools.utils.synhigh import \
+    SyntaxSourceConfigurationWidget
+from packages.eo4vistrails.tools.utils.ModuleHelperMixin import \
+    ModuleHelperMixin
 
 
 class OctaveScript(Module, ModuleHelperMixin):
     """
-       Executes a Octave Script
+       Executes a Octave script
        Writes output to output files and reads input from input files
     """
     _input_ports = [('source', '(edu.utah.sci.vistrails.basic:String)'),
                     ('Script Name', '(edu.utah.sci.vistrails.basic:String)'),
                     ('Is Function', '(edu.utah.sci.vistrails.basic:Boolean)'),
-                    ('Script Dependency', '(za.co.csir.eo4vistrails:Octave Script:octave)')]
+                    ('Script Dependency', '(za.co.csir.eo4vistrails:OctaveScript:scripting|octave)')]
 
-    _output_ports = [('self', '(za.co.csir.eo4vistrails:Octave Script:octave)')]
+    _output_ports = [('self', '(za.co.csir.eo4vistrails:OctaveScript:scripting|octave)')]
 
     def __init__(self):
         Module.__init__(self)
-    
+
     def clear(self):
         print 'clear octave'
         Module.clear(self)
         import shutil
         shutil.rmtree(self.scriptDir)
-    
+
     def write_script_to_file(self, script, fileName, preScript=None, postScript=None,
                              suffix='.e4v'):
         import os
@@ -88,7 +90,7 @@ class OctaveScript(Module, ModuleHelperMixin):
         fileName = self.getInputFromPort('Script Name')
         dependencies = self.forceGetInputListFromPort('Script Dependency')
         isFunction = self.forceGetInputFromPort('Is Function', False)
-        
+
 
         #Lets get the list of input ports so we can get there values
         inputDict = dict([(k, self.getInputFromPort(k))
@@ -110,23 +112,23 @@ class OctaveScript(Module, ModuleHelperMixin):
         if not isFunction:
             #Get a temp file to place the matlab data in
             matInFileName = self.interpreter.filePool.create_file(suffix='.mat')
-    
+
             #save the current python values for the scripts inputs to a matlab file
             scipy.io.savemat(matInFileName.name, inputDict)
             #run the following at the begining of the octave script
             #this loads the file with all the input values into octave
             octave_preScript = "load %s" % matInFileName.name
-    
+
             #create a temp file for the returned results
             matOutFileName = self.interpreter.filePool.create_file(suffix='.mat')
             #run the following at the end of the octave script
             #this writes out the results of running begining the script
             octave_postScript = "save -v7 %s" % matOutFileName.name
-        
+
             #write the script out
             self.write_script_to_file(octave_script, fileName, preScript=octave_preScript,
                                       postScript=octave_postScript, suffix='.m')
-    
+
             #Execute the script
             args = ["octave"]
             for dep in dependencies:
@@ -134,9 +136,9 @@ class OctaveScript(Module, ModuleHelperMixin):
                 args.append(dep.scriptDir)
             args.append(self.scriptPath)
             print args
-            
+
             a = call(args)
-    
+
             if a == 0:
                 #load the results of the script running back into the python input variables
                 scriptResult = scipy.io.loadmat(matOutFileName.name,
@@ -146,7 +148,7 @@ class OctaveScript(Module, ModuleHelperMixin):
                 outputDict = dict([(k, None)
                                    for k in self.outputPorts])
                 del(outputDict['self'])
-    
+
                 for k in outputDict.iterkeys():
                     if k in scriptResult and scriptResult[k] != None:
                         if self.getPortType(k) == NDArray:
@@ -159,7 +161,7 @@ class OctaveScript(Module, ModuleHelperMixin):
                             else:
                                 self.setResult(k, scriptResult[k][0])
             else:
-                raise ModuleError(OctaveScript, "Could not execute Octave Script")
+                raise ModuleError(OctaveScript, "Could not execute Octave script")
 
         else:
             octave_preScript = ""
