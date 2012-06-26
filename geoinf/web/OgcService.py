@@ -40,7 +40,8 @@ from packages.eo4vistrails.geoinf.datamodels.QgsLayer import \
     QgsVectorLayer, QgsRasterLayer
 from packages.eo4vistrails.geoinf.datamodels.TemporalVectorLayer import \
     TemporalVectorLayer
-from packages.eo4vistrails.utils.WebRequest import WebRequest
+# local
+from WebRequest import WebRequest
 
 
 class OGC(NotCacheable):

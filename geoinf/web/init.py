@@ -1,4 +1,4 @@
-# NB These constants are used throughout the ogc module:
+# NB These constants are used throughout the web module:
 #  1. DO NOT REMOVE!
 #  2. If changed; use VisTrails upgrade method to track changes
 
@@ -27,40 +27,38 @@ DATA_RESULT_PORT = "WPS_data"
 def initialize(*args, **keywords):
     """TO DO: Add doc string"""
     from core.modules.module_registry import get_module_registry
-    from core.modules.basic_modules import File, Float, String, Dictionary
+    from core.modules.basic_modules import Boolean, File, Float, String, \
+        Dictionary
     import core
 
+    # eo4vistrails
     from packages.eo4vistrails.geoinf.datamodels.QgsLayer import \
         QgsMapLayer, QgsVectorLayer, QgsRasterLayer
     from packages.eo4vistrails.geoinf.datamodels.TemporalVectorLayer import \
         TemporalVectorLayer
-    from packages.eo4vistrails.geoinf.ogc.WPS import WPS, \
-        WPSConfigurationWidget
-    from packages.eo4vistrails.geoinf.ogc.WFS import WFS, \
-        WFSConfigurationWidget
-    from packages.eo4vistrails.geoinf.ogc.WCS import WCS, \
-        WCSConfigurationWidget
-    from packages.eo4vistrails.geoinf.ogc.SOS import SOS, \
-        SOSConfigurationWidget
-    from packages.eo4vistrails.utils.WebRequest import WebRequest
+    from packages.eo4vistrails.geoinf.datamodels.WebRequest import WebRequest
+    # local
+    from FTP import FTPReader
+    from WPS import WPS, WPSConfigurationWidget
+    from WFS import WFS, WFSConfigurationWidget
+    from WCS import WCS, WCSConfigurationWidget
+    from SOS import SOS, SOSConfigurationWidget
 
     reg = get_module_registry()
-    ogc_namespace = "data|ogc"
+    ogc_namespace = "data|web"
 
-    reg.add_module(WPS,
-                   configureWidgetType=WPSConfigurationWidget,
+    # ======================= GENERIC WEB MODULES =============================
+
+    # FTP
+    reg.add_module(FTPReader,
                    namespace=ogc_namespace)
-    reg.add_module(WFS,
-                   configureWidgetType=WFSConfigurationWidget,
-                   namespace=ogc_namespace)
+
+    # ============================= OGC MODULES ===============================
+
+    # SOS MODULE
     reg.add_module(SOS,
                    configureWidgetType=SOSConfigurationWidget,
                    namespace=ogc_namespace)
-    reg.add_module(WCS,
-                   configureWidgetType=WCSConfigurationWidget,
-                   namespace=ogc_namespace)
-
-    # SOS MODULE
     reg.add_input_port(
         SOS,
         OGC_POST_DATA_PORT,
@@ -72,11 +70,11 @@ def initialize(*args, **keywords):
     reg.add_input_port(
         SOS,
         CONFIGURATION_PORT,
-        (Dictionary, 'Configuration'))  #, optional=True (String,String,String,String)
+        (Dictionary, 'Configuration'))  # , optional=True (String,String,String,String)
     reg.add_input_port(
         SOS,
         OGC_CAPABILITIES_PORT,
-        (String, 'Capabilities'))  #, optional=True (String,String,String,String)
+        (String, 'Capabilities'))  # , optional=True (String,String,String,String)
 
     reg.add_output_port(
         SOS,
@@ -102,6 +100,9 @@ def initialize(*args, **keywords):
     # WPS MODULE
     # This module will also be able to have dynamically configured ports,
     #   (created in code) by inheriting from the PortConfigurationWidget
+    reg.add_module(WPS,
+                   configureWidgetType=WPSConfigurationWidget,
+                   namespace=ogc_namespace)
     reg.add_input_port(
         WPS,
         OGC_REQUEST_PORT,
@@ -117,6 +118,9 @@ def initialize(*args, **keywords):
         (String, 'WPS Process'), optional=True)
 
     # WFS MODULE
+    reg.add_module(WFS,
+                   configureWidgetType=WFSConfigurationWidget,
+                   namespace=ogc_namespace)
     reg.add_input_port(
         WFS,
         OGC_LAYERNAME_PORT,
@@ -148,6 +152,9 @@ def initialize(*args, **keywords):
         (String, 'Data Result'))  # ,True)
 
     # WCS MODULE
+    reg.add_module(WCS,
+                   configureWidgetType=WCSConfigurationWidget,
+                   namespace=ogc_namespace)
     reg.add_input_port(
         WCS,
         OGC_LAYERNAME_PORT,

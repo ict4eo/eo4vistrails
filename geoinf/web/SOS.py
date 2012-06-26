@@ -38,8 +38,8 @@ from PyQt4 import QtCore, QtGui
 from core.modules.vistrails_module import Module, ModuleError
 # eo4vistrails
 from packages.eo4vistrails.geoinf.datamodels.Feature import FeatureModel
-from packages.eo4vistrails.utils.ModuleHelperMixin import ModuleHelperMixin
-from packages.eo4vistrails.utils.widget_configuration import \
+from packages.eo4vistrails.tools.utils.ModuleHelperMixin import ModuleHelperMixin
+from packages.eo4vistrails.tools.utils.widget_configuration import \
     ExtendedModuleConfigurationWidget
 # local
 from OgcConfigurationWidget import OgcConfigurationWidget

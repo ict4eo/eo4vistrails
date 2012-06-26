@@ -24,7 +24,7 @@
 ##
 ############################################################################
 """This module provides general OGC (Open Geospatial Consortium) Web Service
-selection widgets for configuring geoinf.ogc modules.
+selection widgets for configuring geoinf.web modules.
 
 This refers primarily to GetCapabilities requests
 """

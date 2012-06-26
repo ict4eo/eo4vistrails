@@ -61,10 +61,9 @@ from core.utils import PortAlreadyExists
 from core.modules.basic_modules import String
 # eo4vistrails
 from packages.eo4vistrails.geoinf.datamodels import QgsLayer
-from packages.eo4vistrails.geoinf.ogc.PortConfigurationWidget import \
-    Port, PortConfigurationWidget
 # local
 import init
+from PortConfigurationWidget import Port, PortConfigurationWidget
 
 
 DEBUG = False

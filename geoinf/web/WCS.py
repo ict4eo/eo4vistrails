@@ -36,12 +36,11 @@ from core.modules.vistrails_module import Module, new_module, NotCacheable, Modu
 from packages.eo4vistrails.geoinf.datamodels.Raster import RasterModel
 from packages.eo4vistrails.geoinf.SpatialTemporalConfigurationWidget import \
     SpatialTemporalConfigurationWidget, SpatialWidget
-from packages.eo4vistrails.utils.WebRequest import WebRequest
 # local
 from OgcConfigurationWidget import OgcConfigurationWidget
 from OgcService import OGC
 import init
-
+from WebRequest import WebRequest
 
 class WCS(OGC, RasterModel):
     """
