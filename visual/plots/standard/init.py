@@ -2,13 +2,13 @@ def initialize(*args, **keywords):
 
     from core.modules.module_registry import get_module_registry
     from packages.pylab.plot import MplPlot, MplPlotConfigurationWidget
-    from packages.eo4vistrails.lib.plots.standard.plot import \
+    from packages.eo4vistrails.tools.visual.plots.standard.plot import \
         ParentPlot, SinglePlot, Histogram, MultiPlot, \
         MatplotlibMarkerComboBox, MatplotlibPlotTypeComboBox, \
         MatplotlibLineStyleComboBox, MatplotlibHistogramTypeComboBox
 
     reg = get_module_registry()
-    namespace = "plots"
+    namespace = "visualisation|plots"
 
     # abstract modules - drop-down lists
     reg.add_module(MatplotlibMarkerComboBox,

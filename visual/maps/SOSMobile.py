@@ -34,6 +34,8 @@ import sys
 import os
 import os.path
 # third party
+from PyQt4 import QtCore, QtGui
+# TODO: remove import * statements !!!
 from qgis.core import *
 from qgis.gui import *
 # vistrails
@@ -41,11 +43,12 @@ import core.modules.module_registry
 from core.modules.vistrails_module import Module, ModuleError
 import core.system
 # eo4vistrails
-import packages.eo4vistrails.geoinf.visual
 from packages.eo4vistrails.geoinf.datamodels.TemporalVectorLayer import \
     TemporalVectorLayer
 from packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
-from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
+from packages.eo4vistrails.tools.utils.ThreadSafe import ThreadSafeMixin
+# local
+import packages.eo4vistrails.tools.visual.maps
 
 
 @RPyCSafeModule()

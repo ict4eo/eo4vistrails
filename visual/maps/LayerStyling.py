@@ -43,12 +43,13 @@ import core.system
 # eo4vistrails
 from packages.eo4vistrails.geoinf.datamodels.QgsLayer import QgsVectorLayer,\
     QgsRasterLayer
-import packages.eo4vistrails.geoinf.visual
 from packages.eo4vistrails.geoinf.datamodels.TemporalVectorLayer import \
     TemporalVectorLayer
 from packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
-from packages.eo4vistrails.utils.DropDownListWidget import ComboBoxWidget
-from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
+from packages.eo4vistrails.tools.utils.DropDownListWidget import ComboBoxWidget
+from packages.eo4vistrails.tools.utils.ThreadSafe import ThreadSafeMixin
+# local
+import packages.eo4vistrails.tools.visual.maps
 
 
 class LayerStyling(Module):
@@ -91,11 +92,11 @@ class VectorLayerStyling(LayerStyling):
     See also:
         http://www.qgis.org/pyqgis-cookbook/vector.html
     """
-    _input_ports = [('vector_layer', '(za.co.csir.eo4vistrails:Vector Layer:data)'),
+    _input_ports = [('vector_layer', '(za.co.csir.eo4vistrails:VectorLayer:data)'),
                     ('label', '(edu.utah.sci.vistrails.basic:String)'),
                     ('opacity', '(edu.utah.sci.vistrails.basic:Integer)'),
                     ('fill_color', '(edu.utah.sci.vistrails.basic:Color)')]
-    _output_ports = [('vector_layer', '(za.co.csir.eo4vistrails:Vector Layer:data)')]
+    _output_ports = [('vector_layer', '(za.co.csir.eo4vistrails:VectorLayer:data)')]
 
     def compute(self):
         vector_layer = self.getInputFromPort('vector_layer')
@@ -136,11 +137,11 @@ class RasterLayerStyling(LayerStyling):
     See:
         http://www.qgis.org/pyqgis-cookbook/raster.html
     """
-    _input_ports = [('raster_layer', '(za.co.csir.eo4vistrails:Raster Layer:data)'),
+    _input_ports = [('raster_layer', '(za.co.csir.eo4vistrails:RasterLayer:data)'),
                     ('label', '(edu.utah.sci.vistrails.basic:String)'),
-                    ('raster_style', '(za.co.csir.eo4vistrails:Raster Layer Drawing Style:visualisation)')]
-    _output_ports = [('raster_layer', '(za.co.csir.eo4vistrails:Raster Layer:data)')]
-
+                    ('raster_style',
+                     '(za.co.csir.eo4vistrails:Raster Layer Drawing Style:visualisation|maps)')]
+    _output_ports = [('raster_layer', '(za.co.csir.eo4vistrails:RasterLayer:data)')]
 
     def compute(self):
         raster_layer = self.getInputFromPort('raster_layer')

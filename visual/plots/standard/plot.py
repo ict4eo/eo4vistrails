@@ -32,12 +32,12 @@ extended plotting types and configuration options.
 
 # library
 from datetime import datetime
-from numpy import array, ma
 import random
 import time
 import types
 import urllib
 # third party
+from numpy import array, ma
 # vistrails
 from core.bundles import py_import
 import core.modules
@@ -49,9 +49,10 @@ from core.modules.vistrails_module import Module, ModuleError, NotCacheable, \
                                           InvalidOutput
 from packages.pylab.plot import MplPlot, MplPlotConfigurationWidget
 # eo4vistrails
-from packages.eo4vistrails.utils.DropDownListWidget import ComboBoxWidget
-from packages.eo4vistrails.lib.plots.windrose.windrose import WindroseAxes
-from packages.eo4vistrails.utils.datetimeutils import list_to_dates
+from packages.eo4vistrails.tools.utils.datetimeutils import list_to_dates
+from packages.eo4vistrails.tools.utils.DropDownListWidget import ComboBoxWidget
+from packages.eo4vistrails.tools.visual.plots.windrose.windrose import \
+    WindroseAxes
 # local
 
 
@@ -210,7 +211,7 @@ class Histogram(ParentPlot):
     """
 
     _input_ports = [('columnData', '(edu.utah.sci.vistrails.basic:List)'),
-                    ('plot', '(za.co.csir.eo4vistrails:Histogram Type:plots)'),
+                    ('plot', '(za.co.csir.eo4vistrails:Histogram Type:visualisation|plots)'),
                     ('title', '(edu.utah.sci.vistrails.basic:String)'),
                     ('xAxis_label', '(edu.utah.sci.vistrails.basic:String)'),
                     ('yAxis_label', '(edu.utah.sci.vistrails.basic:String)'),
@@ -331,13 +332,13 @@ class SinglePlot(ParentPlot):
 
     """
     _input_ports = [('xyData', '(edu.utah.sci.vistrails.basic:List)'),
-                    ('plot', '(za.co.csir.eo4vistrails:Plot Type:plots)'),
-                    ('date_format', '(za.co.csir.eo4vistrails:Date Format:utils)'),
+                    ('plot', '(za.co.csir.eo4vistrails:Plot Type:visualisation|plots)'),
+                    ('date_format', '(za.co.csir.eo4vistrails:Date Format:tools|utils)'),
                     ('title', '(edu.utah.sci.vistrails.basic:String)'),
                     ('xAxis_label', '(edu.utah.sci.vistrails.basic:String)'),
                     ('yAxis_label', '(edu.utah.sci.vistrails.basic:String)'),
-                    ('marker', '(za.co.csir.eo4vistrails:Plot Marker:plots)'),
-                    ('line_style', '(za.co.csir.eo4vistrails:Plot Line Style:plots)'),
+                    ('marker', '(za.co.csir.eo4vistrails:Plot Marker:visualisation|plots)'),
+                    ('line_style', '(za.co.csir.eo4vistrails:Plot Line Style:visualisation|plots)'),
                     ('facecolor', '(edu.utah.sci.vistrails.basic:Color)')]
     _output_ports = [('source', '(edu.utah.sci.vistrails.basic:String)')]
 
@@ -455,8 +456,8 @@ class MultiPlot(ParentPlot):
 
     """
     _input_ports = [('xyData', '(edu.utah.sci.vistrails.basic:List)'),
-                    ('plot', '(za.co.csir.eo4vistrails:Plot Type:plots)'),
-                    ('date_format', '(za.co.csir.eo4vistrails:Date Format:utils)'),
+                    ('plot', '(za.co.csir.eo4vistrails:Plot Type:visualisation|plots)'),
+                    ('date_format', '(za.co.csir.eo4vistrails:Date Format:tools|utils)'),
                     ('title', '(edu.utah.sci.vistrails.basic:String)'),
                     ('xAxis_label', '(edu.utah.sci.vistrails.basic:String)'),
                     ('yAxis_label', '(edu.utah.sci.vistrails.basic:String)')]

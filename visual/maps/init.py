@@ -31,20 +31,21 @@ def initialize(*args, **keywords):
     from core.modules.module_registry import get_module_registry
     from core.modules import basic_modules
 
-    from packages.eo4vistrails.geoinf.visual.QGISMapCanvasCell import \
-        QGISMapCanvasCell
-    from packages.eo4vistrails.geoinf.visual.SOSMobile import SOSMobile
-    from packages.eo4vistrails.geoinf.visual.LayerStyling import LayerStyling,\
-        VectorLayerStyling, RasterLayerStyling, \
-        QgsRasterLayerDrawingStyleComboBox
+    from packages.spreadsheet import basic_widgets
+
     from packages.eo4vistrails.geoinf.datamodels.QgsLayer import QgsMapLayer,\
         QgsVectorLayer, QgsRasterLayer
     from packages.eo4vistrails.geoinf.datamodels.TemporalVectorLayer import \
         TemporalVectorLayer
-    from packages.spreadsheet import basic_widgets
+    from packages.eo4vistrails.tools.visual.maps.QGISMapCanvasCell import \
+        QGISMapCanvasCell
+    from packages.eo4vistrails.tools.visual.maps.SOSMobile import SOSMobile
+    from packages.eo4vistrails.tools.visual.maps.LayerStyling import \
+        LayerStyling, VectorLayerStyling, RasterLayerStyling, \
+        QgsRasterLayerDrawingStyleComboBox
 
     reg = get_module_registry()
-    mynamespace = 'visualisation'
+    mynamespace = 'visualisation|maps'
 
     # ==========================================================================
     # Abstract Modules - these MUST appear FIRST

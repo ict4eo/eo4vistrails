@@ -34,11 +34,11 @@ import os
 import os.path
 # third party
 from PyQt4 import QtCore, QtGui
+# TODO: remove import * statements !!!
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from qgis.core import *
 from qgis.gui import *
-
 # vistrails
 import core.modules.module_registry
 from core.modules.vistrails_module import Module, ModuleError
@@ -46,12 +46,12 @@ import core.system
 from packages.spreadsheet.basic_widgets import SpreadsheetCell
 from packages.spreadsheet.spreadsheet_cell import QCellWidget
 # eo4vistrails
-import packages.eo4vistrails.geoinf.visual
-#from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
+#from packages.eo4vistrails.tools.utils.ThreadSafe import ThreadSafeMixin
 # local
+import packages.eo4vistrails.tools.visual.maps
 
 
-path_png_icon = packages.eo4vistrails.geoinf.visual.__path__[0]
+path_png_icon = packages.eo4vistrails.tools.visual.__path__[0]
 # TODO - move this elsewhere ... higher than local init.py
 QgsApplication.setPrefixPath("/usr", True)
 QgsApplication.initQgis()
@@ -238,7 +238,7 @@ class QGISMapCanvasCellWidget(QCellWidget):
                     #layer.setCacheImage( None )
                     #layer.setStandardDeviations( 0.0 )
                     # make sure the layer is redrawn
-                    #layer.triggerRepaint()                    
+                    #layer.triggerRepaint()
                     if layer.drawingStyle() in allowedGreyStyles:
                         #Everything looks fine so set stretch and exit
                         #For greyscale layers there is only ever one band
