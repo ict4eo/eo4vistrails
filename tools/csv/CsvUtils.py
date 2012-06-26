@@ -35,61 +35,7 @@ import os.path
 from core.modules.vistrails_module import Module, ModuleError
 # eo4vistrails
 from packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
-from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
-
-
-@RPyCSafeModule()
-class ListDirContent(ThreadSafeMixin, Module):
-    """A utility for walking a directory to discover csv files with specified
-    filenames.
-
-    Input ports:
-        directory path:
-            place in which files are to be discovered
-        file_extensions:
-            a list of types of files to be discovered
-
-    Output ports:
-        csv_list:
-            A list of full filenames. On RPyC nodes, will refer to files on
-            that remote filesystem.
-
-    """
-
-    _input_ports = [('directorypath', '(edu.utah.sci.vistrails.basic:String)'),
-                    ('file_extensions', '(edu.utah.sci.vistrails.basic:List)')]
-    _output_ports = [('csv_list', '(edu.utah.sci.vistrails.basic:List)')]
-
-    def __init__(self):
-        ThreadSafeMixin.__init__(self)
-        Module.__init__(self)
-
-    def compute(self):
-        filename_list = []
-        dp = self.getInputFromPort('directorypath')
-        fel = self.getInputFromPort('file_extensions')
-
-        def _index(directory):
-            #stack = [directory]
-            files = []
-            #while stack:
-                #directory = stack.pop()
-            for filename in os.listdir(directory):
-                fullname = os.path.join(directory, filename)
-                files.append(fullname)
-                    #if os.path.isdir(fullname) and not os.path.islink(fullname):
-                    #    stack.append(fullname)
-            return files
-
-        for fname in _index(dp):
-            try:
-                if fname.split(".")[-1] in fel:
-                    filename_list.append(fname)
-            except:
-                #likely a directory, ignore
-                pass
-
-        self.setResult('csv_list', filename_list)
+from packages.eo4vistrails.tools.utils.ThreadSafe import ThreadSafeMixin
 
 
 @RPyCSafeModule()
