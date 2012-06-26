@@ -23,12 +23,12 @@
 ## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ##
 ############################################################################
-"""This full package extends VisTrails, providing GIS/Earth
-Observation ingestion, pre-processing, transformation,
-analytic and visualisation capabilities.
+"""This full package extends VisTrails, providing GIS/Earth Observation
+ingestion, pre-processing, transformation, analytic and visualisation
+capabilities.
 
-Also included is the ability to run code transparently in
-OpenNebula cloud environments.
+Also included is the ability to run code transparently in OpenNebula cloud
+environments.
 """
 # Authors:
     # Terence van Zyl (tvanzyl)
@@ -37,10 +37,10 @@ OpenNebula cloud environments.
     # Derek Hohls (dhohls)
     # Petrus Shabangu (pshabangu)
     # Bolelang Sibolla (bsibolla)
-    # Mugu Mtsetfwa (mugu)
+    # Mugu Mtsetfwa (mmtsetfwa)
 
 identifier = 'za.co.csir.eo4vistrails'
-name = 'eo4vistrails'
+name = 'EO4VisTrails'
 
 #import subprocess
 #try:
@@ -48,7 +48,7 @@ name = 'eo4vistrails'
 #    revision = out[out.find('Revision'):out.find('\n', out.find('Revision'))][10:]
 #except:
 #    revision = 1
-revision = 3
+revision = 4
 version='0.1.%s'%revision
 
 author_list = 'tvanzyl,gmcferren,bcwele,dhohls,pshabangu,bsibolla,mmtsetfwa'
