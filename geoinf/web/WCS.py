@@ -23,24 +23,26 @@
 ## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ##
 ############################################################################
-"""This module provides an OGC (Open Geospatial Consortium) Web Coverage Service
-(WCS) Client via owslib.
+"""This module provides an OGC (Open Geospatial Consortium) Web Coverage
+Service (WCS) Client via owslib.
 """
 
 # library
 # third party
 from PyQt4 import QtCore, QtGui
 # vistrails
-from core.modules.vistrails_module import Module, new_module, NotCacheable, ModuleError
+from core.modules.vistrails_module import Module, new_module, NotCacheable, \
+    ModuleError
 # eo4vistrails
 from packages.eo4vistrails.geoinf.datamodels.Raster import RasterModel
 from packages.eo4vistrails.geoinf.SpatialTemporalConfigurationWidget import \
     SpatialTemporalConfigurationWidget, SpatialWidget
+from packages.eo4vistrails.geoinf.datamodels.WebRequest import WebRequest
 # local
 from OgcConfigurationWidget import OgcConfigurationWidget
 from OgcService import OGC
 import init
-from WebRequest import WebRequest
+
 
 class WCS(OGC, RasterModel):
     """
@@ -75,7 +77,7 @@ class WCSCommonWidget(QtGui.QWidget):
         self.setObjectName("WCSCommonWidget")
         self.parent_widget = ogc_widget
         #self.service = self.parent_widget.service
-        self.contents = None #  only set in self.loadRequests()
+        self.contents = None  # only set in self.loadRequests()
         self.spatial_widget = spatial_widget
         self.create_wcs_config_window()
 
@@ -147,7 +149,7 @@ class WCSCommonWidget(QtGui.QWidget):
 
         #Bounding box - Grid Envelope
         self.dcULX = QtGui.QLineEdit(' ')
-        self.dcULX.setEnabled(False) #sets it not to be editable
+        self.dcULX.setEnabled(False)  # sets it not to be editable
         self.detailsLayout.addWidget(self.dcULX, 3, 1)
         self.dcLRX = QtGui.QLineEdit(' ')
         self.dcLRX.setEnabled(False)
@@ -242,7 +244,8 @@ class WCSCommonWidget(QtGui.QWidget):
         self.clearRequests()
         #populate other coverage dependent parameters
         selected_coverageName = self.requestLbx.selectedItems()[0].text()
-        if self.parent_widget.service and self.parent_widget.service.service_valid and self.contents:
+        if self.parent_widget.service and \
+            self.parent_widget.service.service_valid and self.contents:
             for content in self.contents:
                 if selected_coverageName == content:
 
@@ -283,14 +286,14 @@ class WCSCommonWidget(QtGui.QWidget):
 
                     self.dcLayerId.setText(self.contents[str(selected_coverageName)].id)
                     self.dcLayerDescription.setText(self.contents[str(selected_coverageName)].title)
-                    self.dcULX.setText(str(self.contents[str(selected_coverageName)].boundingBoxWGS84[0])) # 1st item in bbox tuple
+                    self.dcULX.setText(str(self.contents[str(selected_coverageName)].boundingBoxWGS84[0]))  # 1st item in bbox tuple
                     self.dcLRX.setText(str(self.contents[str(selected_coverageName)].boundingBoxWGS84[1]))
                     self.dcULY.setText(str(self.contents[str(selected_coverageName)].boundingBoxWGS84[2]))
                     self.dcLRY.setText(str(self.contents[str(selected_coverageName)].boundingBoxWGS84[3]))
                     self.dcSRS.setText(self.contents[str(selected_coverageName)].supportedCRS[0])
                     #self.dcSRSreq.addItems(self.contents[str(selected_coverageName)].supportedCRS)  # spectral bands
                     self.dcSRSreq.addItems(self.contents[str(selected_coverageName)].supportedCRS)
-                    self.dcReqFormat.addItems(self.contents[str(selected_coverageName)].supportedFormats) # returns a list of values that are unpacked into a combobo
+                    self.dcReqFormat.addItems(self.contents[str(selected_coverageName)].supportedFormats)  # returns a list of values that are unpacked into a combobo
                     #print self.contents [str(selected_coverageName)].supportedFormats# .__dict__['_service'].__dict__['contents']['sf:sfdem'].__dict__['_elem']#.supportedFormats
 
         #display spatial subset in WCS window and set warning if data out of bounds
@@ -336,8 +339,10 @@ class WCSConfigurationWidget(OgcConfigurationWidget):
 
     def __init__(self, module, controller, parent=None):
         OgcConfigurationWidget.__init__(self, module, controller, parent)
-        # pass in parent widget i.e. OgcCommonWidget class and SpatialWidget Class to read changed coords
-        self.wcs_config_widget = WCSCommonWidget(self.ogc_common_widget, self.spatial_widget)
+        # pass in parent widget i.e. OgcCommonWidget class and
+        #  SpatialWidget Class to read changed coords
+        self.wcs_config_widget = WCSCommonWidget(self.ogc_common_widget,
+                                                 self.spatial_widget)
         # tabs
         self.tabs.insertTab(1, self.wcs_config_widget, "")
         self.tabs.setTabText(
@@ -440,7 +445,8 @@ class WCSConfigurationWidget(OgcConfigurationWidget):
                 crs=coord_system,
                 format=formats)
             # TO DO - update this to handle files as per VisTrails "filePool"
-            # http://www.vistrails.org/index.php/UsersGuideVisTrailsPackages#Dealing_with_command_line_tools_and_side_effects
+            # http://www.vistrails.org/index.php/UsersGuideVisTrailsPackages~
+            # Dealing_with_command_line_tools_and_side_effects
             # derek->bolelang -- but why do we want to do this???
             f = open('myfile.' + formats, 'wb')
             f.write(response.read())

@@ -38,7 +38,7 @@ from core.modules.vistrails_module import Module, ModuleError
 
 
 class Command(Module):
-    """ Container class for the random class """
+    """ TODO  Add documentation"""
 
     _input_ports = [('command', '(edu.utah.sci.vistrails.basic:String)'),
                     ('input file path', '(edu.utah.sci.vistrails.basic:String)'),

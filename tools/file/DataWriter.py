@@ -38,12 +38,12 @@ from core.modules.basic_modules import File, String, Boolean
 from packages.eo4vistrails.geoinf.datamodels.TemporalVectorLayer import \
     TemporalVectorLayer
 from packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
-from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
-from packages.eo4vistrails.utils.DropDownListWidget import ComboBoxWidget
+from packages.eo4vistrails.tools.utils.ThreadSafe import ThreadSafeMixin
+from packages.eo4vistrails.tools.utils.DropDownListWidget import ComboBoxWidget
 
 
 @RPyCSafeModule()
-class TextDataWriter(ThreadSafeMixin, Module):
+class VectorLayerToFile(ThreadSafeMixin, Module):
     """Utility for creating a text data file from a temporal vector layer.
 
     Input ports:
@@ -69,7 +69,7 @@ class TextDataWriter(ThreadSafeMixin, Module):
     """
 
     _input_ports = [('vector_layer',
-                     '(za.co.csir.eo4vistrails:Temporal Vector Layer:data)'),
+                     '(za.co.csir.eo4vistrails:TemporalVectorLayer:data)'),
                     ('filename',
                      '(edu.utah.sci.vistrails.basic:String)'),
                     ('column_header_list',
@@ -77,7 +77,7 @@ class TextDataWriter(ThreadSafeMixin, Module):
                     ('missing_value',
                      '(edu.utah.sci.vistrails.basic:String)'),
                     ('data_output_type',
-                     '(za.co.csir.eo4vistrails:Data Output Type:utils)')]
+                     '(za.co.csir.eo4vistrails:Data Output Type:tools|file)')]
     _output_ports = [('created_file', '(edu.utah.sci.vistrails.basic:File)')]
 
     def __init__(self):
