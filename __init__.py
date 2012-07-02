@@ -22,6 +22,14 @@
 ## This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
 ## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ##
+## Authors:
+    # Terence van Zyl (tvanzyl)
+    # Graeme McFerren (gmcferren)
+    # Bheki C'wele (bcwele)
+    # Derek Hohls (dhohls)
+    # Petrus Shabangu (pshabangu)
+    # Bolelang Sibolla (bsibolla)
+    # Mugu Mtsetfwa (mmtsetfwa)
 ############################################################################
 """This full package extends VisTrails, providing GIS/Earth Observation
 ingestion, pre-processing, transformation, analytic and visualisation
@@ -30,55 +38,58 @@ capabilities.
 Also included is the ability to run code transparently in OpenNebula cloud
 environments.
 """
-# Authors:
-    # Terence van Zyl (tvanzyl)
-    # Graeme McFerren (gmcferren)
-    # Bheki C'wele (bcwele)
-    # Derek Hohls (dhohls)
-    # Petrus Shabangu (pshabangu)
-    # Bolelang Sibolla (bsibolla)
-    # Mugu Mtsetfwa (mmtsetfwa)
-
 identifier = 'za.co.csir.eo4vistrails'
 name = 'EO4VisTrails'
-
-#import subprocess
-#try:
-#    out = subprocess.check_output(['svn', 'info', __path__[0]])
-#    revision = out[out.find('Revision'):out.find('\n', out.find('Revision'))][10:]
-#except:
-#    revision = 1
 revision = 4
-version='0.1.%s'%revision
-
+version = '0.1.%s' % revision
 author_list = 'tvanzyl,gmcferren,bcwele,dhohls,pshabangu,bsibolla,mmtsetfwa'
+flags = {}
 
 import sys
 import os.path
-import resource
+#import resource - LINUX specific; causes error under Windows
 from core.system import packages_directory
-sys.path = [os.path.join(packages_directory(), 'eo4vistrails/lib')] + sys.path
 
-# CAUSES ERROR! resource.setrlimit(resource.RLIMIT_NOFILE,(resource.getrlimit(resource.RLIMIT_NOFILE)[1], 4096))
+sys.path = [os.path.join(packages_directory(), 'eo4vistrails/lib')] + sys.path
+# CAUSES ERROR ???  TODO - check under Windows and Linux
+# resource.setrlimit(resource.RLIMIT_NOFILE,(resource.getrlimit(
+#  resource.RLIMIT_NOFILE)[1], 4096))
+
+
+def set_flag(module_name):
+    """Set a flag if a module is missing."""
+    flags[module_name] = False
+
 
 def package_requirements():
     import core.requirements
+    # MUST EXIST
     if not core.requirements.python_module_exists('owslib'):
-        raise core.requirements.MissingRequirement('owslib') #??? still true
+        raise core.requirements.MissingRequirement('owslib')  # ??? still true
     if not core.requirements.python_module_exists('qgis'):
         raise core.requirements.MissingRequirement('qgis')
-    if not core.requirements.python_module_exists('psycopg2'):
-        raise core.requirements.MissingRequirement('psycopg2')
-    if not core.requirements.python_module_exists('pysal'):
-        raise core.requirements.MissingRequirement('pysal')
-    if not core.requirements.python_module_exists('networkx'):
-        raise core.requirements.MissingRequirement('networkx')
-    if not core.requirements.python_module_exists('numpy'):
-        raise core.requirements.MissingRequirement('numpy')
-    if not core.requirements.python_module_exists('rpyc'):
-        raise core.requirements.MissingRequirement('rpyc')
     if not core.requirements.python_module_exists('osgeo'):
         raise core.requirements.MissingRequirement('osgeo')
+    if not core.requirements.python_module_exists('numpy'):
+        raise core.requirements.MissingRequirement('numpy')
+    # OPTIONAL (test in local init files to ensure that modules are not activated)
+    if not core.requirements.python_module_exists('psycopg2'):
+        set_flag('psycopg2')
+    if not core.requirements.python_module_exists('pysal'):
+        set_flag('pysal')
+    if not core.requirements.python_module_exists('rpyc'):
+        set_flag('rpyc')
+    if not core.requirements.python_module_exists('octave'):
+        set_flag('octave')
+    if not core.requirements.python_module_exists('rpy2stats'):
+        set_flag('rpy2stats')
+    if not core.requirements.python_module_exists('pyDAP'):
+        set_flag('pyDAP')
+    if not core.requirements.python_module_exists('netcdf4'):
+        set_flag('netcdf4')
+    if not core.requirements.python_module_exists('FOOBAR'):
+        set_flag('FOOBAR')
+
     #if not core.requirements.python_module_exists('qtermwidget'):
     #    raise core.requirements.MissingRequirement('qtermwidget')
 
@@ -87,6 +98,8 @@ def package_dependencies():
     return ['edu.utah.sci.vistrails.spreadsheet',
             'edu.utah.sci.vistrails.numpyscipy',
             'edu.utah.sci.vistrails.control_flow']
+#
+
 #    import core.packagemanager
 #    manager = core.packagemanager.get_package_manager()
 #    if manager.has_package('edu.utah.sci.vistrails.spreadsheet'):

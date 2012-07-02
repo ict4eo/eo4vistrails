@@ -35,14 +35,12 @@ def initialize(*args, **keywords):
     """This method is called by higher-level ones,
     to ensure that registration with VisTrails takes place."""
     from core.modules.module_registry import get_module_registry
+    import core.requirements
     from core.modules.python_source_configure import \
         PythonSourceConfigurationWidget
     from core.modules import basic_modules
-    import RPyC
 
-    """
-    sets everything up called from the top level initialize
-    """
+    import RPyC
     reg = get_module_registry()
     rpyc_namespace = "rpyc"
 

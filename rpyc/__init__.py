@@ -26,26 +26,19 @@
 """This module forms part of the rpyc vistrails capabilties.  It adds multicore
 parallel and distributed processing to VisTrails.
 """
-#import subprocess
-#try:
-#    out = subprocess.check_output(['svn', 'info', __path__[0]])
-#    revision = out[out.find('Revision'):out.find('\n', out.find('Revision'))][10:]
-#except:
-#    revision = 0
 identifier = 'za.co.csir.eo4vistrails.rpyc'
 name = 'rpyc'
-
 revision = 48
 version = '0.1.%s' % revision
-
 author_list = 'tvanzyl,gmcferren,bcwele,dhohls,pshabangu,bsibolla,mugu'
 
 import sys
 import os.path
-import resource
+#import resource - LINUX specific; causes error under Windows
 from core.system import packages_directory
 
 #Uncomment this line if you are running out of files
+# CAUSES ERROR ???  TODO - check under Windows and Linux
 #resource.setrlimit(resource.RLIMIT_NOFILE,(resource.getrlimit(resource.RLIMIT_NOFILE)[1], 4096))
 
 def package_requirements():
@@ -62,8 +55,8 @@ def package_requirements():
     #    raise core.requirements.MissingRequirement('networkx')
     if not core.requirements.python_module_exists('numpy'):
         raise core.requirements.MissingRequirement('numpy')
-    if not core.requirements.python_module_exists('rpyc'):
-        raise core.requirements.MissingRequirement('rpyc')
+    #if not core.requirements.python_module_exists('rpyc'):
+    #    raise core.requirements.MissingRequirement('rpyc')
     #if not core.requirements.python_module_exists('osgeo'):
     #    raise core.requirements.MissingRequirement('osgeo')
     #if not core.requirements.python_module_exists('qtermwidget'):
@@ -78,4 +71,3 @@ def package_dependencies():
 #    if manager.has_package('edu.utah.sci.vistrails.spreadsheet'):
 #        return ['edu.utah.sci.vistrails.spreadsheet']
 #    else:
-

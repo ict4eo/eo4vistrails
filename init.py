@@ -85,22 +85,22 @@ except:
 
 
 def initialize(*args, **keywords):
+    import core.requirements
     '''sets everything up'''
     # VisTrails cannot currently automatically detect your derived
     # classes, and the ports that they support as input and
     # output. Because of this, you as a module developer, need to let
     # VisTrails know that you created a new module.
     # This is done by calling function addModule()
-
     # Isolate the registration of the modules
-
     # NOTE! order does count
-    rpyc_init.initialize(*args, **keywords)
+
+    if core.requirements.python_module_exists('rpyc'):
+        rpyc_init.initialize(*args, **keywords)
     geostrings_init.initialize(*args, **keywords)
     utils_init.initialize(*args, **keywords)
     datamodels_init.initialize(*args, **keywords)
     web_init.initialize(*args, **keywords)
-    #dataanalytics_init.initialize(*args, **keywords)
     transform_init.initialize(*args, **keywords)
     helpers_init.initialize(*args, **keywords)
     spatial_init.initialize(*args, **keywords)
@@ -108,5 +108,6 @@ def initialize(*args, **keywords):
     maps_init.initialize(*args, **keywords)
     csv_init.initialize(*args, **keywords)
     file_init.initialize(*args, **keywords)
-    postgis_init.initialize(*args, **keywords)
+    if core.requirements.python_module_exists('psycopg2'):
+        postgis_init.initialize(*args, **keywords)
     dataanalytics_init.initialize(*args, **keywords)
