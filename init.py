@@ -1,10 +1,4 @@
 
-#brings in cloud modules
-try:
-    from rpyc import init as rpyc_init
-except:
-    import rpyc.init as rpyc_init
-
 #brings in geo constants
 try:
     from geoinf.geostrings import init as geostrings_init
@@ -16,12 +10,6 @@ try:
     from tools.utils import init as utils_init
 except:
     import tools.utils.init as utils_init
-
-#brings in PostGIS modules
-try:
-    from geoinf.postgis import init as postgis_init
-except:
-    import geoinf.postgis.init as postgis_init
 
 #brings in datamodels modules
 try:
@@ -96,6 +84,11 @@ def initialize(*args, **keywords):
     # NOTE! order does count
 
     if core.requirements.python_module_exists('rpyc'):
+        #brings in cloud modules
+        try:
+            from rpyc import init as rpyc_init
+        except:
+            import rpyc.init as rpyc_init
         rpyc_init.initialize(*args, **keywords)
     geostrings_init.initialize(*args, **keywords)
     utils_init.initialize(*args, **keywords)
@@ -109,5 +102,10 @@ def initialize(*args, **keywords):
     csv_init.initialize(*args, **keywords)
     file_init.initialize(*args, **keywords)
     if core.requirements.python_module_exists('psycopg2'):
+        #brings in PostGIS modules
+        try:
+            from geoinf.postgis import init as postgis_init
+        except:
+            import geoinf.postgis.init as postgis_init
         postgis_init.initialize(*args, **keywords)
     dataanalytics_init.initialize(*args, **keywords)
