@@ -1,4 +1,10 @@
 
+#brings in cloud modules; will use dummy wrappers if rpyc not installed
+try:
+    from rpyc import init as rpyc_init
+except:
+    import rpyc.init as rpyc_init
+
 #brings in geo constants
 try:
     from geoinf.geostrings import init as geostrings_init
@@ -83,13 +89,7 @@ def initialize(*args, **keywords):
     # Isolate the registration of the modules
     # NOTE! order does count
 
-    if core.requirements.python_module_exists('rpyc'):
-        #brings in cloud modules
-        try:
-            from rpyc import init as rpyc_init
-        except:
-            import rpyc.init as rpyc_init
-        rpyc_init.initialize(*args, **keywords)
+    rpyc_init.initialize(*args, **keywords)
     geostrings_init.initialize(*args, **keywords)
     utils_init.initialize(*args, **keywords)
     datamodels_init.initialize(*args, **keywords)
