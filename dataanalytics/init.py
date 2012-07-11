@@ -38,20 +38,27 @@ varName = "varName"
 dimLimits = "dimLimits"
 
 
+def missing(package_name, module_name):
+    print "WARNING: %s package not installed; %s Module disabled" % \
+        (package_name, module_name)
+
+
 def initialize(*args, **keywords):
     """Called by higher level inits to ensure that registration with
     VisTrails takes place."""
     from core.modules.module_registry import get_module_registry
     import core.requirements
+
     reg = get_module_registry()
 
     if core.requirements.python_module_exists('pysal'):
         import PySAL
         pysal_namespace = "scripting|pysal"
-
         #Add PySAL
         reg.add_module(PySAL.W,
                        namespace=pysal_namespace)
+    else:
+        missing('pysal', 'PySAL')
 
     import Rasterlang
     raster_namespace = "scripting|raster"
@@ -111,35 +118,39 @@ def initialize(*args, **keywords):
     #               name="povRay Config",
     #               namespace=pov_namespace)
 
-    if core.requirements.python_module_exists('octave'):
-        import octave
-        octave_namespace = "scripting|octave"
-        reg.add_module(octave.OctaveScript,
-                       name="OctaveScript",
-                       namespace=octave_namespace,
-                       configureWidgetType=octave.OctaveSourceConfigurationWidget)
+    import octave
+    octave_namespace = "scripting|octave"
+    reg.add_module(octave.OctaveScript,
+                   name="OctaveScript",
+                   namespace=octave_namespace,
+                   configureWidgetType=octave.OctaveSourceConfigurationWidget)
 
-
-    if core.requirements.python_module_exists('rpy2stats'):
+    if core.requirements.python_module_exists('rpy2'):
         import rpy2Stats
         r_namespace = "scripting|r"
         reg.add_module(rpy2Stats.Rpy2Script,
                        name="Rpy2Script",
                        namespace=r_namespace,
                        configureWidgetType=rpy2Stats.RSourceConfigurationWidget)
+    else:
+        missing('rpy2', 'Rpy2Script')
 
-    if core.requirements.python_module_exists('pyDAP'):
+    if core.requirements.python_module_exists('pydap'):
         import pyDAP
         pydap_namespace = "data|datacube"
         reg.add_module(pyDAP.pyDAP,
                        name="pyDAPClient",
                        namespace=pydap_namespace,
                        configureWidgetType=pyDAP.pyDAPConfigurationWidget)
+    else:
+        missing('pydap', 'pyDAPClient')
 
-    if core.requirements.python_module_exists('netcdf4'):
+    if core.requirements.python_module_exists('netCDF4'):
         import netcdf4
         netcdf_namespace = "data|datacube"
         reg.add_module(netcdf4.netcdf4Reader,
                        name="netcdf4Client",
                        namespace=netcdf_namespace,
                        configureWidgetType=netcdf4.netcdf4ConfigurationWidget)
+    else:
+        missing('netCDF4', 'netcdf4Client')

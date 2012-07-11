@@ -57,23 +57,24 @@ class netcdf4Reader(Module):
                     ('varName', '(edu.utah.sci.vistrails.basic:String)'),
                     ('dimLimits', '(edu.utah.sci.vistrails.basic:String)')]
     _output_ports = [('data', '(edu.utah.sci.vistrails.numpyscipy:Numpy Array:numpy|array)')]
+
     def __init__(self):
         Module.__init__(self)
+
     def compute(self):
         try:
             nc4File = self.getInputFromPort("nc4File")
-            varName= self.getInputFromPort("varName")
-            dimLimits=self.getInputFromPort("dimLimits")
-            self.inputFile=netCDF4.Dataset(str(nc4File.name),'r')
-            part_1=self.inputFile.variables[str(varName)]
-            result = eval("part_1%s"%dimLimits)
-            self.setResult("data",result)
+            varName = self.getInputFromPort("varName")
+            dimLimits = self.getInputFromPort("dimLimits")
+            self.inputFile = netCDF4.Dataset(str(nc4File.name), 'r')
+            part_1 = self.inputFile.variables[str(varName)]
+            result = eval("part_1%s" % dimLimits)
+            self.setResult("data", result)
             #self.inputFile.close()
         except KeyError:
             print 'Variable not correctly set from input file'
-        except IOError,e:
-            print 'Failed to open input file',e
-
+        except IOError, e:
+            print 'Failed to open input file', e
 
 
 class netcdf4ConfigurationWidget(StandardModuleConfigurationWidget):
@@ -85,7 +86,7 @@ class netcdf4ConfigurationWidget(StandardModuleConfigurationWidget):
         self.title = module.name
         self.setObjectName("netcdf4Widget")
         self.parent_widget = module
-        self.ui=Ui_netcdf4Form()
+        self.ui = Ui_netcdf4Form()
         self.ui.setupUi(self)
         port_widget = {
             init.nc4File: self.ui.UrlLineEdit
@@ -94,25 +95,28 @@ class netcdf4ConfigurationWidget(StandardModuleConfigurationWidget):
             if function.name in port_widget:
                 port_widget[function.name].setText(function.params[0].strValue)
 
-        self.connect(self.ui.fetchVarsButton,QtCore.SIGNAL("clicked()"),self.createRequest)
-        self.connect(self.ui.okButton,QtCore.SIGNAL("clicked()"),self.readData)
-        self.connect(self.ui.cancelButton,QtCore.SIGNAL("clicked()"),SLOT("close()"))
+        self.connect(self.ui.fetchVarsButton, QtCore.SIGNAL("clicked()"),
+                     self.createRequest)
+        self.connect(self.ui.okButton, QtCore.SIGNAL("clicked()"),
+                     self.readData)
+        self.connect(self.ui.cancelButton, QtCore.SIGNAL("clicked()"),
+                     SLOT("close()"))
 
     def createRequest(self):
-        self.myFile=netCDF4.Dataset(str(self.ui.UrlLineEdit.text()),'r')
-        self.keys=self.myFile.variables.keys()
-        dimensions=[]
-        metadata={}
-        listOfTuples=[]
-        i=0
+        self.myFile = netCDF4.Dataset(str(self.ui.UrlLineEdit.text()), 'r')
+        self.keys = self.myFile.variables.keys()
+        dimensions = []
+        metadata = {}
+        listOfTuples = []
+        i = 0
         for varIds in self.keys:
             for dims in self.myFile.variables[str(varIds)].dimensions:
-                dimTuple=(dims,[])
+                dimTuple = (dims, [])
                 dimensions.append(dimTuple)
-            myTuple=(varIds,dimensions)
+            myTuple = (varIds, dimensions)
             listOfTuples.append(myTuple)
-            dimensions=[]
-            i=i+1
+            dimensions = []
+            i += 1
         self.model = QStandardItemModel()
         self.addItems(self.model, listOfTuples)
         self.ui.treeView.setModel(self.model)
@@ -121,21 +125,21 @@ class netcdf4ConfigurationWidget(StandardModuleConfigurationWidget):
         layout.addWidget(self.ui.treeView)
 
     def addItems(self, parent, elements):
-        count=3
-        addColumnTest=False
+        count = 3
+        addColumnTest = False
         for text, children in elements:
-            bounds="[0:"
+            bounds = "[0:"
             item = QtGui.QStandardItem(text)
             item.setFlags(QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
-            limit=[]
+            limit = []
             parent.appendRow(item)
             if not children:
-                shape=self.myFile.variables[str(text)].shape[0]-1
+                shape = self.myFile.variables[str(text)].shape[0] - 1
                 if shape == 0:
-                    bounds="["
-                bounds=bounds+str(shape)+"]"
+                    bounds = "["
+                bounds = bounds + str(shape) + "]"
                 item.setFlags(QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
-                addColumnTest=False
+                addColumnTest = False
             limit.append(QtGui.QStandardItem(bounds))
 
             if children:
@@ -144,30 +148,29 @@ class netcdf4ConfigurationWidget(StandardModuleConfigurationWidget):
             if bounds != "[0:":
                 parent.appendRow(limit)
 
-
     def readData(self):
-        strVarsDims=""
-        bounds=""
-        allBounds=""
-        countCheckedVars=0
+        strVarsDims = ""
+        bounds = ""
+        allBounds = ""
+        countCheckedVars = 0
 
         rows = self.model.rowCount()
-        for i in range(0,self.model.rowCount()):
-            node=self.model.item(i)
-            if node.checkState()==2:
+        for i in range(0, self.model.rowCount()):
+            node = self.model.item(i)
+            if node.checkState() == 2:
 
-                    retrieveVars=str(node.text())
-                    for j in range(0,node.rowCount()/2):
-                        bounds=node.child((((j+1)*2)-1))
-                        allBounds=allBounds+bounds.text()
+                    retrieveVars = str(node.text())
+                    for j in range(0, node.rowCount() / 2):
+                        bounds = node.child((((j + 1) * 2) - 1))
+                        allBounds = allBounds + bounds.text()
                     if countCheckedVars == 0:
-                        strVarsDims=strVarsDims+retrieveVars+allBounds
+                        strVarsDims = strVarsDims + retrieveVars + allBounds
                     else:
-                        strVarsDims=strVarsDims+","+retrieveVars+allBounds
-                    countCheckedVars=countCheckedVars+1
+                        strVarsDims = strVarsDims + "," + retrieveVars + allBounds
+                    countCheckedVars = countCheckedVars + 1
 
-        dataStore=[]
+        dataStore = []
         dataStore.append((init.varName, [str(retrieveVars)]),)
         dataStore.append((init.dimLimits, [str(allBounds)]),)
         self.controller.update_ports_and_functions(
-                        self.module.id, [], [],dataStore)
+                        self.module.id, [], [], dataStore)

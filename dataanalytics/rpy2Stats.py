@@ -53,11 +53,9 @@ from packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
 
 @RPyCSafeModule()
 class Rpy2Script(Script, ModuleHelperMixin):
-    """
-       Run R scripts using rpy2 interface
+    """Run R scripts using rpy2 interface
     """
     _input_ports = []
-
     _output_ports = [('self', '(edu.utah.sci.vistrails.basic:Module)')]
 
     def __init__(self):
