@@ -17,7 +17,8 @@ from matplotlib.text import Text, FontProperties
 from matplotlib.projections.polar import PolarAxes
 from numpy.lib.twodim_base import histogram2d
 import matplotlib.pyplot as plt
-from pylab import poly_between
+#from pylab import poly_between  - pylab seems to miss this module under windows
+from matplotlib.mlab import poly_between
 
 RESOLUTION = 100
 ZBASE = -1000 #The starting zorder for all drawing, negative to have the grid on
