@@ -24,28 +24,37 @@
 ### WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ###
 #############################################################################
-"""This module provides access to either actual RPyC modules or, if the package
-is not available, "dummy" modules that allow other code to continue to work.
+"""TODO  Add documentation to this module.
 """
+# Created on Thu Aug 25 09:46:42 2011 @author: tvzyl
 
-from core.modules import basic_modules
-from core.modules.vistrails_module import Module
-import core.packagemanager
+# library
+import random
+# third-party
+# vistrails
+from core.modules.vistrails_module import Module, ModuleError
+# eo4vistrails
+# local
 
-class _RPyCModule(Module):
-    pass
 
-class _RPyCSafeModule():
-    def __init__(self, requiredVisPackages=[]):
-        pass
-    
-    def __call__(self, clazz):
-        return clazz
+class Command(Module):
+    """ Container class for the random class """
 
-# import either actual, or "dummy" rpyc modules
-manager = core.packagemanager.get_package_manager()
-if manager.has_package('za.co.csir.rpyc4vistrails'):
-    from packages.rpyc4vistrails.RPyC import RPyCModule, RPyCSafeModule
-else:
-    RPyCModule = _RPyCModule
-    RPyCSafeModule = _RPyCSafeModule
+    _input_ports = [('command', '(edu.utah.sci.vistrails.basic:String)'),
+                    ('input file path', '(edu.utah.sci.vistrails.basic:String)'),
+                    ('output file path', '(edu.utah.sci.vistrails.basic:String)')]
+
+    _output_ports = [('output file path', '(edu.utah.sci.vistrails.basic:String)')]
+
+    def __init__(self):
+        Module.__init__(self)
+
+    def compute(self):
+        command = self.getInputFromPort('command')
+        i_name = self.forceGetInputFromPort('input file path', None)
+        o_name = self.forceGetInputFromPort('output file path', None)
+
+        from subprocess import call
+        call(command % {"i": i_name, "o": o_name}, shell=True)
+
+        self.setResult('output file path', o_name)

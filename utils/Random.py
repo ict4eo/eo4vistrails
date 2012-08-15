@@ -24,28 +24,34 @@
 ### WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ###
 #############################################################################
-"""This module provides access to either actual RPyC modules or, if the package
-is not available, "dummy" modules that allow other code to continue to work.
+# -*- coding: utf-8 -*-
+"""TODO  Add documentation to this module.
 """
+#Created on Thu Aug 25 09:46:42 2011 @author: tvzyl
 
-from core.modules import basic_modules
-from core.modules.vistrails_module import Module
-import core.packagemanager
+from core.modules.vistrails_module import Module, ModuleError
+import random
 
-class _RPyCModule(Module):
-    pass
 
-class _RPyCSafeModule():
-    def __init__(self, requiredVisPackages=[]):
-        pass
-    
-    def __call__(self, clazz):
-        return clazz
+class Random(Module):
+    """ Container class for the random class """
 
-# import either actual, or "dummy" rpyc modules
-manager = core.packagemanager.get_package_manager()
-if manager.has_package('za.co.csir.rpyc4vistrails'):
-    from packages.rpyc4vistrails.RPyC import RPyCModule, RPyCSafeModule
-else:
-    RPyCModule = _RPyCModule
-    RPyCSafeModule = _RPyCSafeModule
+    _input_ports = [('lowest number', '(edu.utah.sci.vistrails.basic:Float)'),
+                    ('highest number', '(edu.utah.sci.vistrails.basic:Float)')]
+
+    _output_ports = [('random float', '(edu.utah.sci.vistrails.basic:Float)'),
+                     ('random integer', '(edu.utah.sci.vistrails.basic:Integer)')]
+
+    def __init__(self):
+        Module.__init__(self)
+
+    def compute(self):
+        low = self.forceGetInputFromPort('lowest number', 0)
+        high = self.forceGetInputFromPort('highest number', None)
+
+        if high:
+            self.setResult('random integer', random.randint(low, high))
+            self.setResult('random float', random.random() * (high - low) + low)
+        else:
+            self.setResult('random integer', random.randint(low, 10000))
+            self.setResult('random float', random.random())
