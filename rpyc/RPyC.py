@@ -40,7 +40,7 @@ class _RPyCModule(Module):
     """
 
     def __init__(self):
-        pass
+        Module.__init__(self)
 
 
 class _RPyCSafeModule(object):

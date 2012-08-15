@@ -123,11 +123,15 @@ def format(color, style='', bgcolor=''):
 
 
 class SyntaxSourceConfigurationWidget(SourceConfigurationWidget):
-
     def __init__(self, module, controller, syntax,
                  parent=None, has_inputs=True, has_outputs=True, encode=True,
                  input_port_specs=None, output_port_specs=None, displayedComboItems=None):
-
+        #Added this line as a quick hack to fix the problem for now
+        #will need to come back and add syntax highlighting back in
+        SourceConfigurationWidget.__init__(self, module, controller, SyntaxEditor,
+                                           parent=parent, has_inputs=has_inputs, has_outputs=has_outputs,
+                                           encode=encode, portName='source')
+"""
         self.displayedComboItems = displayedComboItems
         #print module.input_port_specs
         if input_port_specs:
@@ -164,7 +168,7 @@ class SyntaxSourceConfigurationWidget(SourceConfigurationWidget):
             self.inputPortTable.fixGeometry()
         if has_outputs:
             self.outputPortTable.fixGeometry()
-
+"""
 
 class SyntaxEditor(QtGui.QTextEdit):
 

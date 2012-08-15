@@ -47,11 +47,12 @@ def initialize(*args, **keywords):
     manager = core.packagemanager.get_package_manager()
     if manager.has_package('za.co.csir.rpyc4vistrails'):
         #Dummy Module Mixed into all RPYCSafeModules
-        reg.add_module(RPyC.RPyCModule,
-                       namespace=rpyc_namespace,
-                       abstract=True)
+        #reg.add_module(RPyC.RPyCModule,
+        #               namespace=rpyc_namespace,
+        #               abstract=True)
+        pass
     else:
         #Generic Module
-        reg.add_module(RPyC._RPyCModule,
+        reg.add_module(RPyC.RPyCModule,
                        namespace=rpyc_namespace,
                        abstract=True)

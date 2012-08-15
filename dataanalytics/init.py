@@ -48,6 +48,7 @@ def initialize(*args, **keywords):
     VisTrails takes place."""
     from core.modules.module_registry import get_module_registry
     import core.requirements
+    from core.modules import basic_modules
 
     reg = get_module_registry()
 
@@ -67,6 +68,10 @@ def initialize(*args, **keywords):
     reg.add_module(Rasterlang.RasterLangCode,
                    namespace=raster_namespace,
                    abstract=True)
+    reg.add_input_port(Rasterlang.RasterLangCode, 'source',
+                        basic_modules.String)
+    reg.add_output_port(Rasterlang.RasterLangCode, 'self',
+                        basic_modules.Module)
 
     #Add Rasterlang
     reg.add_module(Rasterlang.GDALFormatComboBox,

@@ -95,14 +95,14 @@ def package_requirements():
 
 
 def package_dependencies():
-    return ['edu.utah.sci.vistrails.spreadsheet',
-            'edu.utah.sci.vistrails.numpyscipy',
-            'edu.utah.sci.vistrails.control_flow']
-#
-
-#    import core.packagemanager
-#    manager = core.packagemanager.get_package_manager()
-#    if manager.has_package('edu.utah.sci.vistrails.spreadsheet'):
-#        return ['edu.utah.sci.vistrails.spreadsheet']
-#    else:
-#        return []
+    import core.packagemanager
+    manager = core.packagemanager.get_package_manager()
+    if manager.has_package('za.co.csir.rpyc4vistrails'):
+        return ['za.co.csir.rpyc4vistrails',
+                'edu.utah.sci.vistrails.spreadsheet',
+                'edu.utah.sci.vistrails.numpyscipy',
+                'edu.utah.sci.vistrails.control_flow']
+    else:
+        return ['edu.utah.sci.vistrails.spreadsheet',
+                'edu.utah.sci.vistrails.numpyscipy',
+                'edu.utah.sci.vistrails.control_flow']
