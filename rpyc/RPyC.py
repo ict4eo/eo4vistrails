@@ -32,15 +32,31 @@ from core.modules import basic_modules
 from core.modules.vistrails_module import Module
 import core.packagemanager
 
-class _RPyCModule(Module):
-    pass
 
-class _RPyCSafeModule():
+class _RPyCModule(Module):
+    """
+    This forms the basis for ensuring that rpyc-based modules have the correct
+    input ports.
+    """
+
+    def __init__(self):
+        pass
+
+
+class _RPyCSafeModule(object):
+    """
+    RPyCSafeModule executes the compute method on a RPyC node.
+
+    This annotation mixes in the code needed to ensure both threadsafe
+    execution and rpyc safe execution.
+    """
+
     def __init__(self, requiredVisPackages=[]):
         pass
-    
+
     def __call__(self, clazz):
         return clazz
+
 
 # import either actual, or "dummy" rpyc modules
 manager = core.packagemanager.get_package_manager()
