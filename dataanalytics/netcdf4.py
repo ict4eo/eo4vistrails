@@ -114,7 +114,7 @@ class netcdf4ConfigurationWidget(StandardModuleConfigurationWidget):
 
     def createRequest(self):
         self.myFile = Dataset(str(self.ui.UrlLineEdit.text()), 'r')
-        print "netcdf:116", self.myFile
+        #print "netcdf:116", self.myFile
         self.keys = self.myFile.variables.keys()
         #print "netcdf:118", self.keys
         dimensions = []
@@ -170,9 +170,8 @@ class netcdf4ConfigurationWidget(StandardModuleConfigurationWidget):
         rows = self.model.rowCount()
         for i in range(0, self.model.rowCount()):
             node = self.model.item(i)
-            print "netcdf:171", i, node
+            #print "netcdf:171", i, node
             if node.checkState() == 2:
-
                 retrieveVars = str(node.text())
                 for j in range(0, node.rowCount() / 2):
                     bounds = node.child((((j + 1) * 2) - 1))
@@ -186,6 +185,5 @@ class netcdf4ConfigurationWidget(StandardModuleConfigurationWidget):
         dataStore = []
         dataStore.append((init.varName, [str(retrieveVars)]),)
         dataStore.append((init.dimLimits, [str(allBounds)]),)
-        print "netcdf:187", str(allBounds)
         self.controller.update_ports_and_functions(
                         self.module.id, [], [], dataStore)
