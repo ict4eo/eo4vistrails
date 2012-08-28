@@ -37,6 +37,7 @@ Add brief description of what this netCDF client does ???
 # library
 import sys
 # third party
+import netcdf4
 try:
     from netCDF4 import Dataset
 except:
@@ -113,7 +114,7 @@ class netcdf4ConfigurationWidget(StandardModuleConfigurationWidget):
 
     def createRequest(self):
         self.myFile = Dataset(str(self.ui.UrlLineEdit.text()), 'r')
-        #print "netcdf:116", self.myFile
+        print "netcdf:116", self.myFile
         self.keys = self.myFile.variables.keys()
         #print "netcdf:118", self.keys
         dimensions = []
@@ -131,6 +132,7 @@ class netcdf4ConfigurationWidget(StandardModuleConfigurationWidget):
         self.model = QtGui.QStandardItemModel()
         self.addItems(self.model, listOfTuples)
         self.ui.treeView.setModel(self.model)
+        self.ui.textMetadata.setText(str(self.myFile))
         self.model.setHorizontalHeaderLabels([self.tr("File Variables, Dims")])
         layout = QtGui.QVBoxLayout()
         layout.addWidget(self.ui.treeView)
