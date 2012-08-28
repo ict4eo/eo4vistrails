@@ -33,13 +33,19 @@ data analytics (including scripting) to VisTrails.
 #Input ports
 dataSlice = "dataSlice"
 url = "url"
-nc4File = "nc4File"
+ncFile = "ncFile"
 varName = "varName"
 dimLimits = "dimLimits"
 
 
 def missing(package_name, module_name):
     print "WARNING: %s package not installed; %s Module disabled" % \
+        (package_name, module_name)
+
+
+def warning(package_name, module_name):
+    print "WARNING: %s package not installed; %s Module has reduced \
+    functionality" % \
         (package_name, module_name)
 
 
@@ -53,7 +59,7 @@ def initialize(*args, **keywords):
     reg = get_module_registry()
 
     if core.requirements.python_module_exists('pysal'):
-        import PySAL
+        import PySAL  # filename of Vistrails module
         pysal_namespace = "scripting|pysal"
         #Add PySAL
         reg.add_module(PySAL.W,
@@ -61,7 +67,7 @@ def initialize(*args, **keywords):
     else:
         missing('pysal', 'PySAL')
 
-    import Rasterlang
+    import Rasterlang  # filename of Vistrails module
     raster_namespace = "scripting|raster"
 
     #Add RasterlangCode
@@ -105,7 +111,7 @@ def initialize(*args, **keywords):
     #reg.add_module(Networkx.connected_components,
     #               namespace=mynamespace)
 
-    import script
+    import script  # filename of Vistrails module
     mynamespace = "utils"
     reg.add_module(script.Script,
                    name="Script",
@@ -131,7 +137,7 @@ def initialize(*args, **keywords):
                    configureWidgetType=octave.OctaveSourceConfigurationWidget)
 
     if core.requirements.python_module_exists('rpy2'):
-        import rpy2Stats
+        import rpy2Stats  # filename of Vistrails module
         r_namespace = "scripting|r"
         reg.add_module(rpy2Stats.Rpy2Script,
                        name="Rpy2Script",
@@ -141,7 +147,7 @@ def initialize(*args, **keywords):
         missing('rpy2', 'Rpy2Script')
 
     if core.requirements.python_module_exists('pydap'):
-        import pyDAP
+        import pyDAP  # filename of Vistrails module
         pydap_namespace = "data|datacube"
         reg.add_module(pyDAP.pyDAP,
                        name="pyDAPClient",
@@ -150,12 +156,12 @@ def initialize(*args, **keywords):
     else:
         missing('pydap', 'pyDAPClient')
 
-    if core.requirements.python_module_exists('netCDF4'):
-        import netcdf4
-        netcdf_namespace = "data|datacube"
-        reg.add_module(netcdf4.netcdf4Reader,
-                       name="netcdf4Client",
-                       namespace=netcdf_namespace,
-                       configureWidgetType=netcdf4.netcdf4ConfigurationWidget)
-    else:
-        missing('netCDF4', 'netcdf4Client')
+    if not core.requirements.python_module_exists('netCDF4'):
+        warning('netCDF4', 'netcdfClient')
+    # module still usable with fallback
+    import netcdf4  # filename of Vistrails module
+    netcdf_namespace = "data|datacube"
+    reg.add_module(netcdf4.netcdf4Reader,
+                   name="netcdfClient",
+                   namespace=netcdf_namespace,
+                   configureWidgetType=netcdf4.netcdf4ConfigurationWidget)

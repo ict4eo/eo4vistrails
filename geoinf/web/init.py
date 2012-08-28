@@ -180,3 +180,43 @@ def initialize(*args, **keywords):
         WCS,
         WEB_REQUEST_PORT,
         WebRequest)  # ,True)
+
+
+def handle_module_upgrade_request(controller, module_id, pipeline):
+    print "web init:186"
+    old_module = pipeline.modules[module_id]
+
+    # first check package
+    # v1.0 types:
+    if old_module.package == 'za.co.csir.eo4vistrails':
+        wsdl = old_module.namespace.split('|')[0]
+        namespace = old_module.namespace.split('|')[1]
+    else:
+        wsdl = toAddress(old_module.package)
+        namespace = old_module.namespace
+    name = old_module.name
+
+    print "web init:199", name, wsdl
+
+    if old_module.package == 'za.co.csir.eo4vistrails':
+        reg = core.modules.module_registry.get_module_registry()
+        new_descriptor = reg.get_descriptor_by_name(toSignature(wsdl),
+                                                    name,
+                                                    namespace)
+        if not new_descriptor:
+            return []
+        try:
+            return UpgradeWorkflowHandler.replace_module(controller,
+                                                         pipeline,
+                                                         module_id,
+                                                         new_descriptor)
+        except Exception, e:
+            import traceback
+            traceback.print_exc()
+            raise
+
+    print "web init:214"
+
+    return UpgradeWorkflowHandler.attempt_automatic_upgrade(controller,
+                                                            pipeline,
+                                                            module_id)

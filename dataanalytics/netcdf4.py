@@ -32,16 +32,21 @@ Created on Thu Mar  1 15:12:36 2012
 ##
 ############################################################################
 '''
-add brief description of what this pyDAP client does.
+Add brief description of what this netCDF client does ???
 '''
 # library
 import sys
 # third party
-import netCDF4
+try:
+    from netCDF4 import Dataset
+except:
+    # fallback if netCDF4 library not available
+    # WARNING!  scipy module (August 2012) can only read netCDF3 files
+    from scipy.io.netcdf import netcdf_file as Dataset
 import numpy
 from PyQt4 import QtCore, QtGui, Qt
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
+#from PyQt4.QtCore import *
+#from PyQt4.QtGui import *
 # vistrails
 from core.modules.vistrails_module import Module, ModuleError
 from core.modules.module_configure import StandardModuleConfigurationWidget
@@ -52,21 +57,22 @@ import init
 
 
 class netcdf4Reader(Module):
-    """Read netcdf4/hdf5 file from OpenDAP server."""
-    _input_ports = [('nc4File', '(edu.utah.sci.vistrails.basic:File)'),
+    """Read netcdf/hdf5 file from OpenDAP server."""
+    _input_ports = [('ncFile', '(edu.utah.sci.vistrails.basic:File)'),
                     ('varName', '(edu.utah.sci.vistrails.basic:String)'),
                     ('dimLimits', '(edu.utah.sci.vistrails.basic:String)')]
-    _output_ports = [('data', '(edu.utah.sci.vistrails.numpyscipy:Numpy Array:numpy|array)')]
+    _output_ports = [('data',
+                '(edu.utah.sci.vistrails.numpyscipy:Numpy Array:numpy|array)')]
 
     def __init__(self):
         Module.__init__(self)
 
     def compute(self):
         try:
-            nc4File = self.getInputFromPort("nc4File")
+            nc4File = self.getInputFromPort("ncFile")
             varName = self.getInputFromPort("varName")
             dimLimits = self.getInputFromPort("dimLimits")
-            self.inputFile = netCDF4.Dataset(str(nc4File.name), 'r')
+            self.inputFile = Dataset(str(nc4File.name), 'r')
             part_1 = self.inputFile.variables[str(varName)]
             result = eval("part_1%s" % dimLimits)
             self.setResult("data", result)
@@ -75,13 +81,16 @@ class netcdf4Reader(Module):
             print 'Variable not correctly set from input file'
         except IOError, e:
             print 'Failed to open input file', e
+        except TypeError, e:
+            print 'Failed to open file', e
 
 
 class netcdf4ConfigurationWidget(StandardModuleConfigurationWidget):
-    """A widget to configure the  netcdf4 Client."""
+    """A widget to configure the netcdf Client."""
 
     def __init__(self, module, controller, parent=None):
-        StandardModuleConfigurationWidget.__init__(self, module, controller, parent)
+        StandardModuleConfigurationWidget.__init__(self, module, controller,
+                                                   parent)
 
         self.title = module.name
         self.setObjectName("netcdf4Widget")
@@ -89,7 +98,7 @@ class netcdf4ConfigurationWidget(StandardModuleConfigurationWidget):
         self.ui = Ui_netcdf4Form()
         self.ui.setupUi(self)
         port_widget = {
-            init.nc4File: self.ui.UrlLineEdit
+            init.ncFile: self.ui.UrlLineEdit
         }
         for function in self.module.functions:
             if function.name in port_widget:
@@ -100,11 +109,13 @@ class netcdf4ConfigurationWidget(StandardModuleConfigurationWidget):
         self.connect(self.ui.okButton, QtCore.SIGNAL("clicked()"),
                      self.readData)
         self.connect(self.ui.cancelButton, QtCore.SIGNAL("clicked()"),
-                     SLOT("close()"))
+                     QtCore.SLOT("close()"))
 
     def createRequest(self):
-        self.myFile = netCDF4.Dataset(str(self.ui.UrlLineEdit.text()), 'r')
+        self.myFile = Dataset(str(self.ui.UrlLineEdit.text()), 'r')
+        #print "netcdf:116", self.myFile
         self.keys = self.myFile.variables.keys()
+        #print "netcdf:118", self.keys
         dimensions = []
         metadata = {}
         listOfTuples = []
@@ -117,7 +128,7 @@ class netcdf4ConfigurationWidget(StandardModuleConfigurationWidget):
             listOfTuples.append(myTuple)
             dimensions = []
             i += 1
-        self.model = QStandardItemModel()
+        self.model = QtGui.QStandardItemModel()
         self.addItems(self.model, listOfTuples)
         self.ui.treeView.setModel(self.model)
         self.model.setHorizontalHeaderLabels([self.tr("File Variables, Dims")])
@@ -157,20 +168,22 @@ class netcdf4ConfigurationWidget(StandardModuleConfigurationWidget):
         rows = self.model.rowCount()
         for i in range(0, self.model.rowCount()):
             node = self.model.item(i)
+            print "netcdf:171", i, node
             if node.checkState() == 2:
 
-                    retrieveVars = str(node.text())
-                    for j in range(0, node.rowCount() / 2):
-                        bounds = node.child((((j + 1) * 2) - 1))
-                        allBounds = allBounds + bounds.text()
-                    if countCheckedVars == 0:
-                        strVarsDims = strVarsDims + retrieveVars + allBounds
-                    else:
-                        strVarsDims = strVarsDims + "," + retrieveVars + allBounds
-                    countCheckedVars = countCheckedVars + 1
+                retrieveVars = str(node.text())
+                for j in range(0, node.rowCount() / 2):
+                    bounds = node.child((((j + 1) * 2) - 1))
+                    allBounds = allBounds + bounds.text()
+                if countCheckedVars == 0:
+                    strVarsDims = strVarsDims + retrieveVars + allBounds
+                else:
+                    strVarsDims = strVarsDims + "," + retrieveVars + allBounds
+                countCheckedVars = countCheckedVars + 1
 
         dataStore = []
         dataStore.append((init.varName, [str(retrieveVars)]),)
         dataStore.append((init.dimLimits, [str(allBounds)]),)
+        print "netcdf:187", str(allBounds)
         self.controller.update_ports_and_functions(
                         self.module.id, [], [], dataStore)

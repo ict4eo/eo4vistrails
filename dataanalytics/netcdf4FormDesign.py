@@ -76,7 +76,7 @@ class Ui_netcdf4Form(object):
 
     def retranslateUi(self, netcdf4Form):
         netcdf4Form.setWindowTitle(QtGui.QApplication.translate("netcdf4Form", "netcdf4 Client", None, QtGui.QApplication.UnicodeUTF8))
-        self.label.setText(QtGui.QApplication.translate("netcdf4Form", "Url:", None, QtGui.QApplication.UnicodeUTF8))
+        self.label.setText(QtGui.QApplication.translate("netcdf4Form", "URL:", None, QtGui.QApplication.UnicodeUTF8))
         self.UrlLineEdit.setText(QtGui.QApplication.translate("netcdf4Form", "/home/mmtsetfwa/Downloads/SSAfrica_MODIS_sst_20110101.nc4", None, QtGui.QApplication.UnicodeUTF8))
         self.fetchVarsButton.setText(QtGui.QApplication.translate("netcdf4Form", "Fetch", None, QtGui.QApplication.UnicodeUTF8))
         self.groupBox.setTitle(QtGui.QApplication.translate("netcdf4Form", "Metadata", None, QtGui.QApplication.UnicodeUTF8))
@@ -84,4 +84,3 @@ class Ui_netcdf4Form(object):
         self.okButton.setText(QtGui.QApplication.translate("netcdf4Form", "GetData", None, QtGui.QApplication.UnicodeUTF8))
         self.cancelButton.setText(QtGui.QApplication.translate("netcdf4Form", "Cancel", None, QtGui.QApplication.UnicodeUTF8))
         self.cancelButton.setShortcut(QtGui.QApplication.translate("netcdf4Form", "C", None, QtGui.QApplication.UnicodeUTF8))
-
