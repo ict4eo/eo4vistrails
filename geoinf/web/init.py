@@ -183,6 +183,16 @@ def initialize(*args, **keywords):
 
 
 def handle_module_upgrade_request(controller, module_id, pipeline):
+    """Maps changes to namespaces (and ports) for modules"""
+    # NOT WORKING ???
+    module_remap = {'data|ogc|SOS':
+        [(None, '0.1.2', 'data|web|SOS', {})]}
+
+    return UpgradeWorkflowHandler.attempt_automatic_upgrade(controller,
+                                                            pipeline,
+                                                            module_id)
+
+"""
     print "web init:186"
     old_module = pipeline.modules[module_id]
 
@@ -220,3 +230,4 @@ def handle_module_upgrade_request(controller, module_id, pipeline):
     return UpgradeWorkflowHandler.attempt_automatic_upgrade(controller,
                                                             pipeline,
                                                             module_id)
+"""
