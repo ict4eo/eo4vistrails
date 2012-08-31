@@ -2,10 +2,10 @@
 ##
 ## Copyright (C) 2010 CSIR Meraka Institute. All rights reserved.
 ##
-## eo4vistrails extends VisTrails, providing GIS/Earth Observation 
-## ingestion, pre-processing, transformation, analytic and visualisation 
-## capabilities . Included is the abilty to run code transparently in 
-## OpenNebula cloud environments. There are various software 
+## eo4vistrails extends VisTrails, providing GIS/Earth Observation
+## ingestion, pre-processing, transformation, analytic and visualisation
+## capabilities . Included is the abilty to run code transparently in
+## OpenNebula cloud environments. There are various software
 ## dependencies, but all are FOSS.
 ##
 ## This file may be used under the terms of the GNU General Public
@@ -33,6 +33,5 @@ R, SciPy are proposed to be used
 #except:
 #    revision = 0
 revision = 13
-version='0.1.%s'%revision
+version='0.1.%s' % revision
 pass
-

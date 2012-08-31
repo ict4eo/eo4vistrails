@@ -2,10 +2,10 @@
 ##
 ## Copyright (C) 2010 CSIR Meraka Institute. All rights reserved.
 ##
-## eo4vistrails extends VisTrails, providing GIS/Earth Observation 
-## ingestion, pre-processing, transformation, analytic and visualisation 
-## capabilities . Included is the abilty to run code transparently in 
-## OpenNebula cloud environments. There are various software 
+## eo4vistrails extends VisTrails, providing GIS/Earth Observation
+## ingestion, pre-processing, transformation, analytic and visualisation
+## capabilities . Included is the abilty to run code transparently in
+## OpenNebula cloud environments. There are various software
 ## dependencies, but all are FOSS.
 ##
 ## This file may be used under the terms of the GNU General Public
@@ -24,10 +24,10 @@
 ##
 ############################################################################
 """This package provides GIS capabilities for eo4vistrails.
-In particular, provides GRASS, PostGIS, OGC clients and some 
+In particular, provides GRASS, PostGIS, OGC clients and some
 visualisation capabilities through the QGIS API.
 """
 identifier = 'za.co.csir.eo4vistrails'
-revision = 2
-version='0.0.%s'%revision
+revision = 4
+version = '0.0.%s' % revision
 pass

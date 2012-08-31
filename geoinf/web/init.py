@@ -23,6 +23,7 @@ TEMPORAL_VECTOR_PORT = "TemporalVectorLayer"
 MAP_LAYER_PORT = "QgsMapLayer"
 DATA_RESULT_PORT = "WPS_data"
 
+from core.upgradeworkflow import UpgradeWorkflowHandler
 
 def initialize(*args, **keywords):
     """TO DO: Add doc string"""
@@ -30,7 +31,6 @@ def initialize(*args, **keywords):
     from core.modules.basic_modules import Boolean, File, Float, String, \
         Dictionary
     import core
-
     # eo4vistrails
     from packages.eo4vistrails.geoinf.datamodels.QgsLayer import \
         QgsMapLayer, QgsVectorLayer, QgsRasterLayer
@@ -183,51 +183,10 @@ def initialize(*args, **keywords):
 
 
 def handle_module_upgrade_request(controller, module_id, pipeline):
-    """Maps changes to namespaces (and ports) for modules"""
+    """Map changes to namespaces (and ports) for modules"""
     # NOT WORKING ???
     module_remap = {'data|ogc|SOS':
-        [(None, '0.1.2', 'data|web|SOS', {})]}
+        [(None, '0.1.4', 'data|web|SOS', {})]}
 
-    return UpgradeWorkflowHandler.attempt_automatic_upgrade(controller,
-                                                            pipeline,
-                                                            module_id)
-
-"""
-    print "web init:186"
-    old_module = pipeline.modules[module_id]
-
-    # first check package
-    # v1.0 types:
-    if old_module.package == 'za.co.csir.eo4vistrails':
-        wsdl = old_module.namespace.split('|')[0]
-        namespace = old_module.namespace.split('|')[1]
-    else:
-        wsdl = toAddress(old_module.package)
-        namespace = old_module.namespace
-    name = old_module.name
-
-    print "web init:199", name, wsdl
-
-    if old_module.package == 'za.co.csir.eo4vistrails':
-        reg = core.modules.module_registry.get_module_registry()
-        new_descriptor = reg.get_descriptor_by_name(toSignature(wsdl),
-                                                    name,
-                                                    namespace)
-        if not new_descriptor:
-            return []
-        try:
-            return UpgradeWorkflowHandler.replace_module(controller,
-                                                         pipeline,
-                                                         module_id,
-                                                         new_descriptor)
-        except Exception, e:
-            import traceback
-            traceback.print_exc()
-            raise
-
-    print "web init:214"
-
-    return UpgradeWorkflowHandler.attempt_automatic_upgrade(controller,
-                                                            pipeline,
-                                                            module_id)
-"""
+    return UpgradeWorkflowHandler.remap_module(controller, module_id, pipeline,
+                                               module_remap)

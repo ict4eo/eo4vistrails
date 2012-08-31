@@ -28,6 +28,6 @@ In particular, provides spatial and file tools and utilities, inlcuding some
 visualisation capabilities.
 """
 identifier = 'za.co.csir.eo4vistrails'
-revision = 2
-version='0.0.%s'%revision
+revision = 4
+version = '0.0.%s' % revision
 pass
