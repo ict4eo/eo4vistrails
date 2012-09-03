@@ -29,5 +29,5 @@ visualisation capabilities.
 """
 identifier = 'za.co.csir.eo4vistrails'
 revision = 4
-version = '0.0.%s' % revision
+version = '0.1.%s' % revision
 pass

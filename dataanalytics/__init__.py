@@ -32,6 +32,6 @@ R, SciPy are proposed to be used
 #    revision = out[out.find('Revision'):out.find('\n', out.find('Revision'))][10:]
 #except:
 #    revision = 0
-revision = 13
+revision = 14
 version='0.1.%s' % revision
 pass
