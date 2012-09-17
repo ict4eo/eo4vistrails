@@ -1,0 +1,100 @@
+<InsertObservation xmlns="http://www.opengis.net/sos/1.0"
+    xmlns:ows="http://www.opengis.net/ows/1.1"
+    xmlns:ogc="http://www.opengis.net/ogc"
+    xmlns:om="http://www.opengis.net/om/1.0"
+    xmlns:sos="http://www.opengis.net/sos/1.0"
+    xmlns:sa="http://www.opengis.net/sampling/1.0"
+    xmlns:gml="http://www.opengis.net/gml"
+    xmlns:swe="http://www.opengis.net/swe/1.0.1"
+    xmlns:xlink="http://www.w3.org/1999/xlink"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.opengis.net/sos/1.0
+    http://schemas.opengis.net/sos/1.0.0/sosInsert.xsd
+    http://www.opengis.net/sampling/1.0
+    http://schemas.opengis.net/sampling/1.0.0/sampling.xsd
+    http://www.opengis.net/om/1.0
+    http://schemas.opengis.net/om/1.0.0/extensions/observationSpecialization_override.xsd"
+    service="SOS" version="1.0.0">
+
+ <AssignedSensorId>{{ sensorID }}</AssignedSensorId>
+
+ <om:Observation>
+
+  <om:samplingTime>
+   <gml:TimePeriod xsi:type="gml:TimePeriodType">
+    <gml:beginPosition>{{ period.start }}</gml:beginPosition>
+    <gml:endPosition>{{ period.end }}</gml:endPosition>
+   </gml:TimePeriod>
+  </om:samplingTime>
+
+  <om:procedure xlink:href="{{ procedureID }}" />
+
+  <om:observedProperty>
+   <swe:CompositePhenomenon gml:id="cpid0" dimension="1"> {# ??? #}
+    <gml:name>resultComponents</gml:name>
+    {# e.g. urn:ogc:def:phenomenon:OGC:1.0.30:temperature #}
+    {% for item in component %}
+    <swe:component xlink:href="{{ item.urn }}" />
+    {% endfor %}
+   </swe:CompositePhenomenon>
+  </om:observedProperty>
+
+  <om:featureOfInterest>
+     <sa:SamplingPoint gml:id="{{ foi.ID }}">
+      <gml:name>{{ foi.name }}</gml:name>
+      <sa:sampledFeature xlink:href=""/>
+      <sa:position>
+       <gml:Point>
+        <gml:pos srsName="{{ foi.srs|default('urn:ogc:def:crs:EPSG::4326') }}">
+         {{ foi.latitude }} {{ foi.longitude }}
+        </gml:pos>
+       </gml:Point>
+      </sa:position>
+     </sa:SamplingPoint>
+  </om:featureOfInterest>
+
+  <om:result>
+   <swe:DataArray>
+
+    <swe:elementCount>
+     <swe:Count>
+      <swe:value>2</swe:value> {# ??? #}
+     </swe:Count>
+    </swe:elementCount>
+
+    <swe:elementType name="Components">
+     <swe:DataRecord>
+     {% for item in component %}
+      {% if item.type == 'Quantity' %}
+      <swe:field name="{{ item.name }}">
+       <swe:Quantity definition="{{ item.urn }}">
+        {% if item.units %}
+        <swe:uom code="{{ item.units }}" />
+        {% endif %}
+       </swe:Quantity>
+      </swe:field>
+      {% elif item.type == 'Time' %}
+      <swe:field name="Time">
+       <swe:Time definition="{{ item.urn }}" />
+      </swe:field>
+      {% endif %}
+     {% endfor %}
+     </swe:DataRecord>
+    </swe:elementType>
+
+    <swe:encoding>
+     <swe:TextBlock decimalSeparator="{{ separator.decimal|default('.') }}"
+                    tokenSeparator="{{ separator.token|default(',') }}"
+                    blockSeparator="{{ separator.block|default(';') }}" />
+    </swe:encoding>
+
+    <swe:values>{% for dataset in values %}
+    {% for data in dataset %}{{ data }}{% if not loop.last %},{% endif %}{% endfor %};
+    {% endfor %}</swe:values>
+
+   </swe:DataArray>
+  </om:result>
+
+ </om:Observation>
+
+</InsertObservation>
