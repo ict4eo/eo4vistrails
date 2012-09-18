@@ -16,18 +16,25 @@
     http://schemas.opengis.net/om/1.0.0/extensions/observationSpecialization_override.xsd"
     service="SOS" version="1.0.0">
 
- <AssignedSensorId>{{ sensorID }}</AssignedSensorId>
+ <AssignedSensorId>{{ core.sensorID }}</AssignedSensorId>
 
  <om:Observation>
 
+  {% if period.start and period.end %}
   <om:samplingTime>
    <gml:TimePeriod xsi:type="gml:TimePeriodType">
     <gml:beginPosition>{{ period.start }}</gml:beginPosition>
     <gml:endPosition>{{ period.end }}</gml:endPosition>
    </gml:TimePeriod>
   </om:samplingTime>
+  {% elif period.start %}
+  <om:samplingTime>
+    <gml:TimeInstant>
+      <gml:timePosition>{{ period.start }}</gml:timePosition>
+    </gml:TimeInstant>
+  </om:samplingTime>{% endif %}
 
-  <om:procedure xlink:href="{{ procedureID }}" />
+  <om:procedure xlink:href="{{ core.procedureID }}" />
 
   <om:observedProperty>
    <swe:CompositePhenomenon gml:id="cpid0" dimension="1"> {# ??? #}
@@ -40,7 +47,7 @@
   </om:observedProperty>
 
   <om:featureOfInterest>
-     <sa:SamplingPoint gml:id="{{ foi.ID }}">
+     <sa:SamplingPoint gml:id="{{ foi.id }}">
       <gml:name>{{ foi.name }}</gml:name>
       <sa:sampledFeature xlink:href=""/>
       <sa:position>
@@ -58,13 +65,14 @@
 
     <swe:elementCount>
      <swe:Count>
-      <swe:value>2</swe:value> {# ??? #}
+      {# ??? #}
+      <swe:value>2</swe:value>
      </swe:Count>
     </swe:elementCount>
 
-    <swe:elementType name="Components">
+    {% if components and components is iterable %}<swe:elementType name="Components">
      <swe:DataRecord>
-     {% for item in component %}
+     {% for item in components %}
       {% if item.type == 'Quantity' %}
       <swe:field name="{{ item.name }}">
        <swe:Quantity definition="{{ item.urn }}">
@@ -73,24 +81,24 @@
         {% endif %}
        </swe:Quantity>
       </swe:field>
-      {% elif item.type == 'Time' %}
-      <swe:field name="Time">
-       <swe:Time definition="{{ item.urn }}" />
+      {% else %}
+      <swe:field name="{{ item.name }}">
+       <swe:{{ item.type }} definition="{{ item.urn }}" />
       </swe:field>
       {% endif %}
      {% endfor %}
      </swe:DataRecord>
-    </swe:elementType>
+    </swe:elementType>{% endif %}
 
     <swe:encoding>
-     <swe:TextBlock decimalSeparator="{{ separator.decimal|default('.') }}"
-                    tokenSeparator="{{ separator.token|default(',') }}"
-                    blockSeparator="{{ separator.block|default(';') }}" />
+     <swe:TextBlock decimalSeparator="{{ separator.decimal|default('.', true) }}"
+                    tokenSeparator="{{ separator.token|default(',', true) }}"
+                    blockSeparator="{{ separator.block|default(';', true) }}" />
     </swe:encoding>
 
-    <swe:values>{% for dataset in values %}
-    {% for data in dataset %}{{ data }}{% if not loop.last %},{% endif %}{% endfor %};
-    {% endfor %}</swe:values>
+    {% if values and values is iterable %}<swe:values>{% for dataset in values %}
+    {% if dataset is iterable %}{% for data in dataset %}{{ data }}{% if not loop.last %},{% endif %}{% endfor %};{% endif %}
+    {% endfor %}</swe:values>{% endif %}
 
    </swe:DataArray>
   </om:result>

@@ -26,10 +26,12 @@ DATA_RESULT_PORT = "WPS_data"
 from core.upgradeworkflow import UpgradeWorkflowHandler
 
 def initialize(*args, **keywords):
-    """TO DO: Add doc string"""
+    """
+    Set everything up for vistrails; called from the top level initialize
+    """
     from core.modules.module_registry import get_module_registry
     from core.modules.basic_modules import Boolean, File, Float, String, \
-        Dictionary
+        Dictionary, Variant
     import core
     # eo4vistrails
     from packages.eo4vistrails.geoinf.datamodels.QgsLayer import \
@@ -43,6 +45,7 @@ def initialize(*args, **keywords):
     from WFS import WFS, WFSConfigurationWidget
     from WCS import WCS, WCSConfigurationWidget
     from SOS import SOS, SOSConfigurationWidget
+    from SOSFeeder import SOSFeeder, InsertObservation, RegisterSensor
 
     reg = get_module_registry()
     ogc_namespace = "data|web"
@@ -54,6 +57,44 @@ def initialize(*args, **keywords):
                    namespace=ogc_namespace)
 
     # ============================= OGC MODULES ===============================
+
+    # SOS feeders MODULE
+    reg.add_module(SOSFeeder,
+                   abstract=True,
+                   namespace=ogc_namespace)
+
+    reg.add_input_port(
+        SOSFeeder,
+        OGC_URL_PORT,
+        (String, 'URL String'))  # ,True)
+
+    reg.add_input_port(
+        SOSFeeder,
+        'data_file',
+        (File, 'Data File'))  # ,True)
+
+    reg.add_input_port(
+        SOSFeeder,
+        'configuration',
+        (String, 'Configuration Dictionary'))  # ,True)
+
+    reg.add_input_port(
+        SOSFeeder,
+        'active',
+        (Boolean, 'POST the data?'))
+
+    reg.add_output_port(
+        SOSFeeder,
+        OGC_POST_DATA_PORT,
+        (String, 'POST Data'))  # , True)
+
+    reg.add_module(InsertObservation,
+                   namespace=ogc_namespace)
+
+    """TO DO - activate when coding complete
+    reg.add_module(RegisterSensor,
+                   namespace=ogc_namespace)
+    """
 
     # SOS MODULE
     reg.add_module(SOS,
