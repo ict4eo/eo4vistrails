@@ -25,6 +25,7 @@ DATA_RESULT_PORT = "WPS_data"
 
 from core.upgradeworkflow import UpgradeWorkflowHandler
 
+
 def initialize(*args, **keywords):
     """
     Set everything up for vistrails; called from the top level initialize
@@ -50,13 +51,9 @@ def initialize(*args, **keywords):
     reg = get_module_registry()
     ogc_namespace = "data|web"
 
-    # ======================= GENERIC WEB MODULES =============================
-
-    # FTP
-    reg.add_module(FTPReader,
-                   namespace=ogc_namespace)
-
-    # ============================= OGC MODULES ===============================
+    # ========================================================================
+    # Abstract Modules - these MUST appear FIRST
+    # ========================================================================
 
     # SOS feeders MODULE
     reg.add_module(SOSFeeder,
@@ -88,6 +85,19 @@ def initialize(*args, **keywords):
         OGC_POST_DATA_PORT,
         (String, 'POST Data'))  # , True)
 
+    # ========================================================================
+    # Standard Modules
+    # ========================================================================
+
+    # ======================= GENERIC WEB MODULES =============================
+
+    # FTP
+    reg.add_module(FTPReader,
+                   namespace=ogc_namespace)
+
+    # ============================= OGC MODULES ===============================
+
+    # SOS WRITER
     reg.add_module(InsertObservation,
                    namespace=ogc_namespace)
 
@@ -96,7 +106,7 @@ def initialize(*args, **keywords):
                    namespace=ogc_namespace)
     """
 
-    # SOS MODULE
+    # SOS READER MODULE
     reg.add_module(SOS,
                    configureWidgetType=SOSConfigurationWidget,
                    namespace=ogc_namespace)
@@ -111,11 +121,11 @@ def initialize(*args, **keywords):
     reg.add_input_port(
         SOS,
         CONFIGURATION_PORT,
-        (Dictionary, 'Configuration'))  # , optional=True (String,String,String,String)
+        (Dictionary, 'Configuration'))  # , optional=True (String,String)
     reg.add_input_port(
         SOS,
         OGC_CAPABILITIES_PORT,
-        (String, 'Capabilities'))  # , optional=True (String,String,String,String)
+        (String, 'Capabilities'))  # , optional=True (String,String,String)
 
     reg.add_output_port(
         SOS,

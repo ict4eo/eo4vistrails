@@ -71,22 +71,15 @@
     </swe:elementCount>
 
     {% if components and components is iterable %}<swe:elementType name="Components">
-     <swe:DataRecord>
-     {% for item in components %}
-      {% if item.type == 'Quantity' %}
-      <swe:field name="{{ item.name }}">
+     <swe:DataRecord>{% for item in components %}
+      {% if item.type == 'Quantity' %}<swe:field name="{{ item.name }}">
        <swe:Quantity definition="{{ item.urn }}">
-        {% if item.units %}
-        <swe:uom code="{{ item.units }}" />
-        {% endif %}
+        {% if item.units %}<swe:uom code="{{ item.units }}" />{% endif %}
        </swe:Quantity>
-      </swe:field>
-      {% else %}
+      </swe:field>{% else %}
       <swe:field name="{{ item.name }}">
        <swe:{{ item.type }} definition="{{ item.urn }}" />
-      </swe:field>
-      {% endif %}
-     {% endfor %}
+      </swe:field>{% endif %}{% endfor %}
      </swe:DataRecord>
     </swe:elementType>{% endif %}
 
@@ -96,9 +89,7 @@
                     blockSeparator="{{ separator.block|default(';', true) }}" />
     </swe:encoding>
 
-    {% if values and values is iterable %}<swe:values>{% for dataset in values %}
-    {% if dataset is iterable %}{% for data in dataset %}{{ data }}{% if not loop.last %},{% endif %}{% endfor %};{% endif %}
-    {% endfor %}</swe:values>{% endif %}
+    {% if values and values is iterable %}<swe:values>{% for dataset in values %}{% if dataset is iterable %}{% for data in dataset %}{{ data }}{% if not loop.last %},{% endif %}{% endfor %};{% endif %}{% endfor %}</swe:values>{% endif %}
 
    </swe:DataArray>
   </om:result>

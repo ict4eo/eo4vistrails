@@ -87,8 +87,10 @@ def package_requirements():
         set_flag('pyDAP')
     if not core.requirements.python_module_exists('netcdf4'):
         set_flag('netcdf4')
-    if not core.requirements.python_module_exists('FOOBAR'):
-        set_flag('FOOBAR')
+    if not core.requirements.python_module_exists('xlrd'):
+        set_flag('xlrd')
+    if not core.requirements.python_module_exists('xlwt'):
+        set_flag('xlwt')
 
     #if not core.requirements.python_module_exists('qtermwidget'):
     #    raise core.requirements.MissingRequirement('qtermwidget')

@@ -138,19 +138,44 @@ class InsertObservation(SOSFeeder):
         SOSFeeder.__init__(self)
 
     def load_from_excel(self):
-        """Get data from excel file."""
-        # default location (row, col) tuples for data
+        """Read data from Excel file, and store it in dictionaries
+
+        Default location (row, col) tuples for data
+
+        "components"
+        ------------
+        This dictionary has:
+            row: start row where components are listed
+            count: no of components (rows) available
+            name, type, urn, units: column numbers for these entries
+
+        "values"
+        --------
+        The 'start_end' tuple can have:
+            (row1, ) - starting row; read values down to end of sheet
+            (row1, row2) - starting row (1); read values down to second row (2)
+
+        The 'columns' tuple values correspond to the equivalent component
+        number in the "components' list.
+        """
+        # default locations for data
         pos = {
-            'sensor': (1, 1), 'procedure': (2, 1),
-            'period': {'start': (4, 1), 'end': (4, 2)},
+            'sensor': (1, 1),
+            'procedure': (2, 1),
+            'period': {'start': (4, 1), 'end': (4, 2), 'offset': (4, 3)},
             'foi': {'id': (6, 2), 'name': (6, 1), 'srs': (6, 3),
                     'latitude': (6, 4), 'longitude': (6, 5), },
             'separator': {'decimal': (8, 1), 'token': (8, 2), 'block': (8, 3)},
             'components': {'name': 1, 'type': 2, 'urn': 2, 'units': 4,
-                           'row': 10, 'count': 4}
+                           'row': 10, 'count': 4},
+            'values': {'start_end': (16, ), 'columns': (1, 2, 3)}
         }
         if self.config:
-            pass
+            # override default data locations from self.config dictionary
+            for item in ('sensor', 'procedure', 'period', 'foi', 'separator',
+                         'components', 'values'):
+                pos[item] = self.config.get(item) or pos[item]
+        # open data file
         work_book = xlrd.open_workbook(self.file_in.name)
         sh = work_book.sheet_by_index(0)
         # meta data
@@ -159,7 +184,8 @@ class InsertObservation(SOSFeeder):
             'procedureID': sh.cell(*pos['procedure']).value}
         self.period = {
             'start': sh.cell(*pos['period']['start']).value,
-            'end': sh.cell(*pos['period']['end']).value}
+            'end': sh.cell(*pos['period']['end']).value,
+            'offset': sh.cell(*pos['period']['offset']).value or 0}
         self.foi = {
             'name': sh.cell(*pos['foi']['name']).value,
             'id': sh.cell(*pos['foi']['id']).value,
@@ -182,15 +208,38 @@ class InsertObservation(SOSFeeder):
                 })
         # read observation data
         self.values = []
-        """
-        # TO DO - fill in sets of data; e.g. date,value,location
-        for rownum in range(11, sh.nrows):
-            self.values.append(sh.cell(rownum, 1).value)
-        """
+        offset = self.period['offset']
+        row_start = pos['values']['start_end'][0]
+        if len(pos['values']['start_end']) == 2:
+            row_end = pos['values']['start_end'][1]
+        else:
+            row_end = sh.nrows
+        for row_num in range(row_start - 1, row_end):
+            set = []
+            for col in pos['values']['columns']:
+                col_num = col - 1
+                type = sh.cell(row_num, col_num).ctype
+                val = sh.cell(row_num, col_num).value
+                if type == 3:
+                    date_tuple = xlrd.xldate_as_tuple(val, work_book.datemode)\
+                            + (offset, )
+                    value = "%04d-%02d-%02dT%02d:%02d:%02d+%02d" % date_tuple
+                elif type == 2:
+                    if val == int(val):
+                        value = int(val)
+                elif type == 5:
+                    value = xlrd.error_text_from_code[val]
+                else:
+                    value = val
+                set.append(value)
+            self.values.append(set)
+
 
     def create_data(self):
         """Create the XML for the POST to the SOS, using a Jinja template."""
         template = self.env.get_template('InsertObservation.xml')
+        self.period, self.values, self.separator = None, [], None
+        self.core, self.components, self.foi = None, [], None
         """
         # test data
         self.core = {
@@ -223,7 +272,13 @@ class InsertObservation(SOSFeeder):
           'name': 'temperature',
           'type': 'Quantity',
           'units': 'cel'})
-        self.values = []
+        self.values = [
+            ['1963-12-13T00:00:00+02', 22, 60],
+            ['1963-12-14T00:00:00+02', 24, 65],
+            ['1963-12-15T00:00:00+02', 25, 45],
+            ['1963-12-16T00:00:00+02', 21, 50],
+            ['1963-12-17T00:00:00+02', 23, 55],
+            ['1963-12-18T00:00:00+02', 24, 60]]
         """
         # load data from file
         self.load_from_excel()

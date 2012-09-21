@@ -65,6 +65,12 @@ try:
 except:
     import tools.csv.init as csv_init
 
+# brings in excel
+try:
+    from tools.excel import init as excel_init
+except:
+    import tools.excel.init as excel_init
+
 # brings in plots
 try:
     from tools.visual.plots.standard import init as plots_init
@@ -100,6 +106,7 @@ def initialize(*args, **keywords):
     plots_init.initialize(*args, **keywords)
     maps_init.initialize(*args, **keywords)
     csv_init.initialize(*args, **keywords)
+    excel_init.initialize(*args, **keywords)
     file_init.initialize(*args, **keywords)
     if core.requirements.python_module_exists('psycopg2'):
         #brings in PostGIS modules
