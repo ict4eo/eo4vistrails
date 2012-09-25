@@ -61,7 +61,8 @@ def initialize(*args, **keywords):
         #Add PySAL
         reg.add_module(ExcelCell,
                        namespace=excel_namespace)
-        reg.add_input_port(ExcelCell, "Location", basic_widgets.CellLocation)
         reg.add_input_port(ExcelCell, "File", basic_modules.File)
+        reg.add_input_port(ExcelCell, "Sheets", basic_modules.List)
+        reg.add_input_port(ExcelCell, "Location", basic_widgets.CellLocation)
     else:
         missing('xlrd', 'excel')

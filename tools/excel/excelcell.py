@@ -39,12 +39,23 @@ from packages.spreadsheet.basic_widgets import SpreadsheetCell
 from packages.spreadsheet.spreadsheet_cell import QCellWidget
 import shutil
 
-################################################################################
+ENCODING = "utf-8"  # will probably differ in some countries ???
+
+##############################################################################
+
 
 class ExcelCell(SpreadsheetCell):
     """
     ExcelCell is a custom module to view Excel files as HTML
 
+    Ports:
+        Location:
+            The Location of the output display cell
+        File:
+            A File in .xls format
+        Sheets:
+            A List of sheet numbers, or names, that must be displayed.
+            If None, then all sheets will be displayed.
     """
     def compute(self):
         """ compute() -> None
@@ -53,9 +64,12 @@ class ExcelCell(SpreadsheetCell):
         if self.hasInputFromPort("File"):
             fileValue = self.getInputFromPort("File")
             fileHTML = self.interpreter.filePool.create_file(suffix='.html')
+            fileSheets = self.forceGetInputFromPort("Sheets", None)
         else:
             fileValue = None
-        self.cellWidget = self.displayAndWait(ExcelCellWidget, (fileValue, fileHTML))
+        self.cellWidget = self.displayAndWait(ExcelCellWidget, (fileValue,
+                                                                fileHTML,
+                                                                fileSheets))
 
 
 class ExcelCellWidget(QCellWidget):
@@ -82,9 +96,9 @@ class ExcelCellWidget(QCellWidget):
 
         """
         self.fileSrc = None
-        (fileExcel, fileHTML) = inputPorts
+        (fileExcel, fileHTML, fileSheets) = inputPorts
         if fileExcel:
-            html_file = self.create_html(fileExcel, fileHTML)
+            html_file = self.create_html(fileExcel, fileHTML, fileSheets)
             if html_file:
                 try:
                     fi = open(html_file.name, "r")
@@ -110,7 +124,7 @@ class ExcelCellWidget(QCellWidget):
             (f_root, f_ext) = os.path.splitext(filename)
             ori_filename = f_root + s_ext
             shutil.copyfile(self.fileSrc, ori_filename)
-        QCellWidget.dumpToFile(self,filename)
+        QCellWidget.dumpToFile(self, filename)
 
     def saveToPDF(self, filename):
         printer = QtGui.QPrinter()
@@ -127,13 +141,15 @@ class ExcelCellWidget(QCellWidget):
         else:
             raise ModuleError(self, msg)
 
-    def create_html(self, file_in, file_out,
+    def create_html(self, file_in, file_out, sheets=None,
                          date_as_tuple=False, css=None):
         """Return HTML in the output file from an Excel input file.
 
         Args:
             file_in: File object; points to Excel file
             file_out: File object; points to (temporary) HTML file
+            sheets: List of sheet numbers or names to be processed; if None
+                then all are processed
         """
         #file_in = '/home/dhohls/Dropbox_CSIR/Dropbox/ICT4EO_PG/Demo_Workflows/Data/observation_data.xls'
         #file_out = '/home/dhohls/Desktop/output.html'
@@ -163,8 +179,19 @@ class ExcelCellWidget(QCellWidget):
         alignment = {2: ' text-align: center;',
                      3: ' text-align: right;',
                      1: ' text-align: left;'}
-        # create table per page
-        for name in book.sheet_names():
+        # list of selected sheets
+        sheet_list = []
+        if sheets:
+            for index, name in enumerate(book.sheet_names()):
+                if index in sheets or name in sheets:
+                    sheet_list.append(name)
+            if not sheet_list:
+                self.raiseError('Invalid list of sheets; please check Excel file')
+                return None
+        else:
+            sheet_list = book.sheet_names()
+        # create table per selected sheet
+        for name in sheet_list:
             fyle.write('\n<h1>%s</h1>\n' % name)
             fyle.write('  <table%s>\n' % table_borders)
             for row_n in range(0, book.sheet_by_name(name).nrows):
@@ -206,7 +233,9 @@ class ExcelCellWidget(QCellWidget):
                     # check data types
                     # 0:EMPTY; 1:TEXT (a Unicode string); 2:NUMBER (float);
                     # 3:DATE (float); 4:BOOLEAN (1 TRUE, 0 FALSE); 5: ERROR
-                    if type == 2:
+                    if type == 1:
+                        value = value.encode(ENCODING, 'ignore')
+                    elif type == 2:
                         if value == int(value):
                             value = int(value)
                         style += ' text-align:right;'
@@ -223,7 +252,7 @@ class ExcelCellWidget(QCellWidget):
                             elif datetuple[3] == 0 and datetuple[4] == 0 and \
                                  datetuple[5] == 0:
                                 value = "%04d/%02d/%02d" % datetuple[:3]
-                            else: # full date
+                            else:  # full date
                                 value = "%04d/%02d/%02d %02d:%02d:%02d" % datetuple
                     elif type == 5:
                         value = xlrd.error_text_from_code[value]
