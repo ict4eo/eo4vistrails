@@ -48,7 +48,7 @@ class ExcelCell(SpreadsheetCell):
     """
     ExcelCell is a custom module to view Excel files as HTML
 
-    Ports:
+    Input ports:
         Location:
             The Location of the output display cell
         File:

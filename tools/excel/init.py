@@ -55,14 +55,31 @@ def initialize(*args, **keywords):
     from packages.spreadsheet import basic_widgets
     reg = get_module_registry()
 
-    if core.requirements.python_module_exists('xlrd'):
+    if core.requirements.python_module_exists('xlrd') and \
+       core.requirements.python_module_exists('xlwt'):
         from excelcell import ExcelCell  # filename of Vistrails module
+        from ExcelUtils import ExcelChopper, ExcelExtractor, ExcelFiller, \
+                               ExcelReplacer, ExcelSplitter
         excel_namespace = "tools|excel"
-        #Add PySAL
+
+        # Add ExcelCell
         reg.add_module(ExcelCell,
                        namespace=excel_namespace)
         reg.add_input_port(ExcelCell, "File", basic_modules.File)
         reg.add_input_port(ExcelCell, "Sheets", basic_modules.List)
         reg.add_input_port(ExcelCell, "Location", basic_widgets.CellLocation)
+
+        # Add other Excel utils
+        reg.add_module(ExcelChopper,
+                       namespace=excel_namespace)
+        reg.add_module(ExcelExtractor,
+                       namespace=excel_namespace)
+        reg.add_module(ExcelFiller,
+                       namespace=excel_namespace)
+        reg.add_module(ExcelReplacer,
+                       namespace=excel_namespace)
+        reg.add_module(ExcelSplitter,
+                       namespace=excel_namespace)
+
     else:
-        missing('xlrd', 'excel')
+        missing('xlrd/xlwt', 'excel')

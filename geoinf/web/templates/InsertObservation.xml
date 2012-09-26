@@ -65,8 +65,7 @@
 
     <swe:elementCount>
      <swe:Count>
-      {# ??? #}
-      <swe:value>2</swe:value>
+      <swe:value>2</swe:value>  {# ??? #}
      </swe:Count>
     </swe:elementCount>
 
