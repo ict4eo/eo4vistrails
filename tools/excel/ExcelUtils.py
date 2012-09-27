@@ -43,9 +43,96 @@ from packages.eo4vistrails.tools.utils.ThreadSafe import ThreadSafeMixin
 # local
 from readexcel import read_excel
 
+DATE_FORMAT = 'YYYY/MM/DD'
+
+# TODO TODO TODO
+# create abstract class ExcelBase(ThreadSafeMixin, Module) from which others inherit;
+# add in common methods (excel_write, excel_list) and basic compute()
+# initialisations eg. sheet list -
+# New classes inherit via super(NewClass, self).compute()
+
+
+def excel_list(_items, reverse=False, sort=False, zero_base=False):
+    """Create (sorted) list of values from a "range" input List.
+
+    Args:
+        items: List of numbers
+        reverse:  Sort final list in reverse order
+        sort:  Sort final list
+        zero_base:  if true, List numbering starts from 0
+
+    Assumes list numbering starts from 1, and alters this, if needed, to a
+    0-based numbering:
+    *  [N]: single number;
+       returns a list from 0 to N-1
+    *  [N, M]: two numbers;
+       returns a list from N-1 to M-1
+    *  [N, M, P, ...]: three or more numbers;
+       returns a list [N-1, M-1, P-1, ...]
+    """
+    #print "excelutils:67", _items, len(_items)
+    offset = 1
+    if zero_base:
+        offset = 0
+    try:
+        #print "excelutils:72", _items
+        if len(_items) == 1:
+            list_items = [x for x in range(offset, _items[0] + offset)]
+        elif len(_items) == 2:
+            list_items = [x for x in range(_items[0], _items[1] + offset)]
+        else:
+            list_items = _items
+        if list_items:
+            list_items = [x - offset for x in list_items]
+        #print "excelutils:81", list_items
+        if reverse:
+            return sorted(list_items, reverse=True)
+        elif sort:
+            return sorted(list_items)
+        else:
+            return list_items
+    except:
+        return []
+
+
+def excel_write(results, file_name_out=None):
+    """Write an Excel book, based on a dictionary with a list of lists.
+
+    Args:
+        results: dictionary
+            each dictionary item corresponds to a worksheet (the key is the
+            name); that contains rows of column values
+        file_name_out: string
+            if None, a temp file is created
+    """
+    if not file_name_out:
+        new_file = self.interpreter.filePool.create_file(suffix='.xls')
+    else:
+        try:
+            new_file = open(str(file_name_out), "w")
+        except:
+            return None
+    # create data in Excel file
+    workbook = xlwt.Workbook()
+    for key in results.iterkeys():
+        worksheet = workbook.add_sheet(key)
+        # add row/col data
+        for row_index, row in enumerate(results[key]):
+            for col_index, value in enumerate(row):
+                #print "excelutils:316", row_index, col_index, value
+                if isinstance(value, (list, tuple)):  # date
+                    dt = datetime(*value)
+                    worksheet.write(row_index, col_index,
+                                    dt, style)
+                else:
+                    worksheet.write(row_index, col_index,
+                                    value)
+    workbook.save(new_file.name)
+    return new_file
+
 
 @RPyCSafeModule()
-class ExcelExtractor(ThreadSafeMixin, Module):
+class ExcelExtractor(ThreadSafeMixin, Module):  # DO NOT INHERIT FROM BASE
     """Read Excel file and extract data either as a dictionary or a list.
 
     Input ports:
@@ -86,7 +173,12 @@ class ExcelExtractor(ThreadSafeMixin, Module):
 
     def compute(self):
         file_in = self.getInputFromPort('file_in')
-        sheets = self.forceGetInputFromPort('sheets', None)
+        try:
+            sheets = self.getInputListFromPort('sheets')
+            if isinstance(sheets[0], (list, tuple)):
+                sheets = sheets[0]  # remove "wrapper" that Vistrails may add
+        except:
+            sheets = []
 
         if file_in:
             try:
@@ -114,12 +206,20 @@ class ExcelExtractor(ThreadSafeMixin, Module):
 @RPyCSafeModule()
 class ExcelSplitter(ThreadSafeMixin, Module):
     """Read Excel file and create a new file according to specific parameters.
-
     """
 
     def __init__(self):
         ThreadSafeMixin.__init__(self)
         Module.__init__(self)
+
+    def raiseError(self, msg, error=''):
+        """Raise a VisTrails error."""
+        import traceback
+        traceback.print_exc()
+        if error:
+            raise ModuleError(self, msg + ': %s' % str(error))
+        else:
+            raise ModuleError(self, msg)
 
     def compute(self):
         pass
@@ -140,10 +240,16 @@ class ExcelChopper(ThreadSafeMixin, Module):
             If None, then all sheets will be processed.
         rows:
             A list of row numbers that must be removed. If None, then no
-            rows will be removed.
+            rows will be removed.  Use the following formats:
+             *  N: single number; removes the first N rows
+             *  N, M: two numbers; removes from row N to row M
+             *  N, M, P, ...: three or more numbers; removes the numbered rows
         columns:
             A list of column numbers that must be removed. If None, then no
-            columns will be removed.
+            columns will be removed.  Use the following formats:
+             *  N: single number; removes the first N columns
+             *  N, M: two numbers; removes from column N to column M
+             *  N, M, P, ...: three or more numbers; removes the numbered columns
         file_name_out:
             an optional full directory path and filename to be writte; if None
             then a temporary file will be created
@@ -157,8 +263,8 @@ class ExcelChopper(ThreadSafeMixin, Module):
                     ('sheets', '(edu.utah.sci.vistrails.basic:List)'),
                     ('rows', '(edu.utah.sci.vistrails.basic:List)'),
                     ('columns', '(edu.utah.sci.vistrails.basic:List)'),
-                    ('file_name_out', '(edu.utah.sci.vistrails.basic:String)'),]
-    _output_ports = [('file_out', '(edu.utah.sci.vistrails.basic:File)'),]
+                    ('file_name_out', '(edu.utah.sci.vistrails.basic:String)')]
+    _output_ports = [('file_out', '(edu.utah.sci.vistrails.basic:File)')]
 
     def __init__(self):
         ThreadSafeMixin.__init__(self)
@@ -176,9 +282,30 @@ class ExcelChopper(ThreadSafeMixin, Module):
     def compute(self):
         file_in = self.forceGetInputFromPort('file_in', None)
         file_name_out = self.forceGetInputFromPort('file_name_out', "")
-        sheets = self.forceGetInputFromPort('sheets', None)
-        remove_rows = self.forceGetInputFromPort("rows", None)
-        remove_cols = self.forceGetInputFromPort("columns", None)
+        try:
+            sheets = self.getInputListFromPort('sheets')
+            if isinstance(sheets[0], (list, tuple)):
+                sheets = sheets[0]  # remove "wrapper" that Vistrails may add
+        except:
+            sheets = []
+        try:
+            _rows = self.getInputListFromPort("rows")
+            if isinstance(_rows[0], (list, tuple)):
+                _rows = _rows[0]  # remove "wrapper" that Vistrails may add
+        except:
+            _rows = []
+        try:
+            _cols = self.getInputListFromPort("columns")
+            if isinstance(_cols[0], (list, tuple)):
+                _cols = _cols[0]  # remove "wrapper" that Vistrails may add
+        except:
+            _cols = []
+
+        #create filter ranges
+        remove_rows = excel_list(_rows)
+        # allow for "popping" in  a loop
+        remove_cols = excel_list(_cols, reverse=True)
+        #print "excelutils:302 rows, cols", remove_rows, remove_cols
 
         if file_in:
             try:
@@ -188,6 +315,9 @@ class ExcelChopper(ThreadSafeMixin, Module):
                     self.raiseError('Invalid list of "sheets"; please check Excel file')
                     return
                 results = {}
+                # set date format
+                style = xlwt.XFStyle()
+                style.num_format_str = DATE_FORMAT
                 # create output dict; entry per selected sheet name
                 for sheet_name in xls.sheet_list:
                     sheet = xls.book.sheet_by_name(sheet_name)
@@ -198,46 +328,30 @@ class ExcelChopper(ThreadSafeMixin, Module):
                         else:
                             row_list = xls._parse_row(sheet, row,
                                                       date_as_tuple=True)
-                            if remove_cols:
-                                for col in range(sheet.ncols):
-                                    if col in remove_cols:
-                                        row_list[col].delete
+                            for col in remove_cols:  # in reverse numeric order
+                                try:
+                                    row_list.pop(col)  # not in output
+                                except:
+                                    pass  # ignore invalid cols
                             out_list.append(row_list)
                     # results
                     results[sheet_name] = out_list
-                    #print "excelutils 199", result[sheet_name]
+                    #print "excelutils:333", result[sheet_name]
                 if results:
                     # create output file
-                    if not file_name_out:
-                        new_file = self.interpreter.filePool.create_file(suffix='.xls')
+                    if excel_write(results, file_name_out):
+                        self.setResult('file_out', new_file)  # port
                     else:
-                        try:
-                            new_file = open(str(file_name_out), "w")
-                        except:
-                            self.raiseError('Invalid output filename!')
-                            return
-                    # create data in Excel file
-                    workbook = xlwt.Workbook()
-                    for key in results.iterkeys():
-                        worksheet = workbook.add_sheet(key)
-                        # add row/col data
-                        for row_index, row in enumerate(results[key]):
-                            for col_index, value in enumerate(row):
-                                worksheet.write(row_index, col_index, value)
-                    workbook.save(new_file.name)
-                    # port
-                    self.setResult('file_out', new_file)
-
+                        self.raiseError('Unable to create output file!')
             except Exception, e:
                 self.raiseError('Unable to run compute: %s' % str(e))
-            csvfile = None
         else:
             self.raiseError('Invalid or missing input file/filename')
 
 
 @RPyCSafeModule()
 class ExcelReplacer(ThreadSafeMixin, Module):
-    """Read Excel file and create a new file according to specific parameters.
+    """Read Excel file and replace values according to specific parameters.
     """
 
     def __init__(self):
@@ -250,6 +364,28 @@ class ExcelReplacer(ThreadSafeMixin, Module):
 
 @RPyCSafeModule()
 class ExcelFiller(ThreadSafeMixin, Module):
+    """Read Excel file and fill in data according to specific parameters.
+    """
+
+    def __init__(self):
+        ThreadSafeMixin.__init__(self)
+        Module.__init__(self)
+
+    def raiseError(self, msg, error=''):
+        """Raise a VisTrails error."""
+        import traceback
+        traceback.print_exc()
+        if error:
+            raise ModuleError(self, msg + ': %s' % str(error))
+        else:
+            raise ModuleError(self, msg)
+
+    def compute(self):
+        pass
+
+
+@RPyCSafeModule()
+class NotUsed(ThreadSafeMixin, Module):
     """Read Excel file and fill in data according to specific parameters.
 
     Input ports:

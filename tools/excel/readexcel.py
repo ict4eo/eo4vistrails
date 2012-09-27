@@ -54,16 +54,18 @@ class read_excel(object):
                 return True  # row full of (valid) False values?
         return False
 
-    def set_sheet_list(self, sheets=None):
+    def set_sheet_list(self, sheets=[]):
         """Set the required list of sheet names.
 
         Args:
             sheets: a list
-                the required sheets; either sheet names or sheet numbers
+                the required sheets; either sheet names or sheet numbers.
+                Sheet numbering starts from 1.
         """
         if sheets:
+            print "readexcel:67 sheets", sheets
             for index, name in enumerate(self.book.sheet_names()):
-                if index in sheets or name in sheets:
+                if index + 1 in sheets or name in sheets:
                     self.sheet_list.append(name)
         else:
             self.sheet_list = self.book.sheet_names()

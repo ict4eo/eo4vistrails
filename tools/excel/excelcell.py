@@ -59,12 +59,17 @@ class ExcelCell(SpreadsheetCell):
     """
     def compute(self):
         """ compute() -> None
-        Dispatch the HTML contents to the spreadsheet
+        Creat HTMl and dispatch the contents to the VisTrails spreadsheet
         """
         if self.hasInputFromPort("File"):
             fileValue = self.getInputFromPort("File")
             fileHTML = self.interpreter.filePool.create_file(suffix='.html')
-            fileSheets = self.forceGetInputFromPort("Sheets", None)
+            try:
+                fileSheets = self.getInputListFromPort("Sheets")
+                if isinstance(fileSheets[0], (list, tuple)):
+                    fileSheets = fileSheets[0]  # remove Vistrails "wrapper"
+            except:
+                fileSheets = []
         else:
             fileValue = None
         self.cellWidget = self.displayAndWait(ExcelCellWidget, (fileValue,
@@ -149,7 +154,7 @@ class ExcelCellWidget(QCellWidget):
             file_in: File object; points to Excel file
             file_out: File object; points to (temporary) HTML file
             sheets: List of sheet numbers or names to be processed; if None
-                then all are processed
+                then all are processed.  Sheet numbering starts from 1.
         """
         #file_in = '/home/dhohls/Dropbox_CSIR/Dropbox/ICT4EO_PG/Demo_Workflows/Data/observation_data.xls'
         #file_out = '/home/dhohls/Desktop/output.html'
@@ -183,7 +188,7 @@ class ExcelCellWidget(QCellWidget):
         sheet_list = []
         if sheets:
             for index, name in enumerate(book.sheet_names()):
-                if index in sheets or name in sheets:
+                if index + 1 in sheets or name in sheets:
                     sheet_list.append(name)
             if not sheet_list:
                 self.raiseError('Invalid list of sheets; please check Excel file')
