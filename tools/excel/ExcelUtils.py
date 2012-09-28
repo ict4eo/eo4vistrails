@@ -75,7 +75,6 @@ class ExcelBase(ThreadSafeMixin, Module):
             output Excel file
     """
 
-    # NOTE: inheriting class MUST set:  _xxx_ports = self.xxx_ports
     _input_ports = [
                     ('file_in', '(edu.utah.sci.vistrails.basic:File)'),
                     ('sheets', '(edu.utah.sci.vistrails.basic:List)'),
@@ -180,6 +179,15 @@ class ExcelBase(ThreadSafeMixin, Module):
                                         value)
         workbook.save(new_file.name)
         return new_file
+
+    def save_results(self, results):
+        """Save results into designated output file."""
+        if results:
+            new_file = self.excel_write(results, self.file_name_out)
+            if new_file:
+                self.setResult('file_out', new_file)  # port
+            else:
+                self.raiseError('Unable to create output file!')
 
     def compute(self):
         """inheriting class should extend this via:
@@ -314,27 +322,59 @@ class ExcelChopper(ExcelBase):
                             pass  # ignore invalid cols
                     out_list.append(row_list)
             results[sheet_name] = out_list
-            #print "excelutils:349", result[sheet_name]
-        if results:
-            # create output file
-            new_file = self.excel_write(results, self.file_name_out)
-            if new_file:
-                self.setResult('file_out', new_file)  # port
-            else:
-                self.raiseError('Unable to create output file!')
+        self.save_results(results)
 
 
 @RPyCSafeModule()
 class ExcelReplacer(ExcelBase):
     """Read Excel file and replace values according to specific parameters.
+
+    Input ports:
+        rows:
+            If None, then all rows will be processed.
+        columns:
+            If None, then all columns will be processed.
     """
+
+    _input_ports = [
+                   ('cell_current', '(edu.utah.sci.vistrails.basic:String)'),
+                   ('cell_replace', '(edu.utah.sci.vistrails.basic:String)'),
+                   ('partial_match', '(edu.utah.sci.vistrails.basic:Boolean)'),
+                   ]
 
     def __init__(self):
         ExcelBase.__init__(self)
 
     def compute(self):
         super(ExcelReplacer, self).compute()
-        # TODO - complete process...
+        cell_current = self.forceGetInputFromPort('cell_current', "")
+        cell_replace = self.forceGetInputFromPort('cell_replace', "")
+        partial = self.forceGetInputFromPort('partial_match', False)
+        results = {}
+        if not cell_current:
+            self.raiseError('Invalid or missing cell_replace port')
+        # create output dict; one entry per selected sheet name
+        for sheet_name in self.xls.sheet_list:
+            sheet = self.xls.book.sheet_by_name(sheet_name)
+            # allow all columsn to be searched by default
+            if not self.process_cols:
+                self.process_cols = range(0, sheet.ncols)
+            out_list = []
+            for row in range(sheet.nrows):
+                if not self.process_rows or row in self.process_rows:
+                    row_list = self.xls._parse_row(sheet, row,
+                                              date_as_tuple=True)
+                    for col in self.process_cols:
+                        if partial and str(cell_current) in str(row_list[col]):
+                            row_list[col] = str(row_list[col]).replace(
+                                                            str(cell_current),
+                                                            cell_replace)
+                        else:
+                            if str(row_list[col]) == str(cell_current):
+                                row_list[col] = cell_replace
+                    out_list.append(row_list)
+            results[sheet_name] = out_list
+        self.save_results(results)
 
 
 @RPyCSafeModule()

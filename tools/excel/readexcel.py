@@ -63,7 +63,7 @@ class read_excel(object):
                 Sheet numbering starts from 1.
         """
         if sheets:
-            print "readexcel:67 sheets", sheets
+            #print "readexcel:67 sheets", sheets
             for index, name in enumerate(self.book.sheet_names()):
                 if index + 1 in sheets or name in sheets:
                     self.sheet_list.append(name)
