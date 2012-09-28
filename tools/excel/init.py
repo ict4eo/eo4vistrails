@@ -59,8 +59,14 @@ def initialize(*args, **keywords):
        core.requirements.python_module_exists('xlwt'):
         from excelcell import ExcelCell  # filename of Vistrails module
         from ExcelUtils import ExcelChopper, ExcelExtractor, ExcelFiller, \
-                               ExcelReplacer, ExcelSplitter, ExcelBase
+                               ExcelReplacer, ExcelSplitter, ExcelBase, \
+                               ExcelDirectionComboBox
         excel_namespace = "tools|excel"
+
+        # abstract modules - drop-down lists
+        reg.add_module(ExcelDirectionComboBox,
+                       namespace=excel_namespace,
+                       abstract=True)
 
         # Add ExcelCell
         reg.add_module(ExcelCell,

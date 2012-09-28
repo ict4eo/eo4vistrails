@@ -36,10 +36,12 @@ from datetime import date, datetime, time
 import xlrd
 import xlwt
 # vistrails
+from core.modules.basic_modules import File, String, Boolean, new_constant
 from core.modules.vistrails_module import Module, ModuleError
 # eo4vistrails
 from packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
 from packages.eo4vistrails.tools.utils.ThreadSafe import ThreadSafeMixin
+from packages.eo4vistrails.tools.utils.DropDownListWidget import ComboBoxWidget
 # local
 from readexcel import read_excel
 
@@ -53,6 +55,9 @@ class ExcelBase(ThreadSafeMixin, Module):
     Input ports:
         file_in:
             input Excel file
+        file_name_out:
+            an optional full directory path and filename to be writte; if None
+            then a temporary file will be created
         sheets:
             A list of worksheet numbers, or names, that must be processed.
             If None, then all sheets will be processed.
@@ -66,9 +71,6 @@ class ExcelBase(ThreadSafeMixin, Module):
              *  N: single number; removes the first N columns
              *  N, M: two numbers; removes from column N to column M
              *  N, M, P, ...: three or more numbers; removes numbered columns
-        file_name_out:
-            an optional full directory path and filename to be writte; if None
-            then a temporary file will be created
 
     Output ports:
         file_out:
@@ -237,6 +239,25 @@ class ExcelBase(ThreadSafeMixin, Module):
 class ExcelExtractor(ExcelBase):
     """Read Excel file and extract data either as a dictionary or a list.
 
+        file_in:
+            input Excel file
+        file_name_out:
+            an optional full directory path and filename to be writte; if None
+            then a temporary file will be created
+        sheets:
+            A list of worksheet numbers, or names, that must be processed.
+            If None, then all sheets will be processed.
+        rows:
+            A list of row numbers. Uses the following formats:
+             *  N: single number; removes the first N rows
+             *  N, M: two numbers; removes from row N to row M
+             *  N, M, P, ...: three or more numbers; removes numbered rows
+        columns:
+            A list of column numbers. Uses the following formats:
+             *  N: single number; removes the first N columns
+             *  N, M: two numbers; removes from column N to column M
+             *  N, M, P, ...: three or more numbers; removes numbered columns
+
     Output ports:
         data_list:
             Excel data as a list of lists; each item in the outer list
@@ -275,6 +296,30 @@ class ExcelExtractor(ExcelBase):
 @RPyCSafeModule()
 class ExcelSplitter(ExcelBase):
     """Read Excel file and create a new file according to specific parameters.
+
+    Input ports:
+        file_in:
+            input Excel file
+        file_name_out:
+            an optional full directory path and filename to be writte; if None
+            then a temporary file will be created
+        sheets:
+            A list of worksheet numbers, or names, that must be processed.
+            If None, then all sheets will be processed.
+        rows:
+            A list of row numbers. Uses the following formats:
+             *  N: single number; removes the first N rows
+             *  N, M: two numbers; removes from row N to row M
+             *  N, M, P, ...: three or more numbers; removes numbered rows
+        columns:
+            A list of column numbers. Uses the following formats:
+             *  N: single number; removes the first N columns
+             *  N, M: two numbers; removes from column N to column M
+             *  N, M, P, ...: three or more numbers; removes numbered columns
+
+    Output ports:
+        file_out:
+            output Excel file
     """
 
     def __init__(self):
@@ -293,10 +338,30 @@ class ExcelChopper(ExcelBase):
     (e.g. alignment, font style and colors) will be lost.
 
     Input ports:
+        file_in:
+            input Excel file
+        file_name_out:
+            an optional full directory path and filename to be writte; if None
+            then a temporary file will be created
+        sheets:
+            A list of worksheet numbers, or names, that must be processed.
+            If None, then all sheets will be processed.
         rows:
+            A list of row numbers. Uses the following formats:
+             *  N: single number; removes the first N rows
+             *  N, M: two numbers; removes from row N to row M
+             *  N, M, P, ...: three or more numbers; removes numbered rows
             If None, then no rows will be removed.
         columns:
+            A list of column numbers. Uses the following formats:
+             *  N: single number; removes the first N columns
+             *  N, M: two numbers; removes from column N to column M
+             *  N, M, P, ...: three or more numbers; removes numbered columns
             If None, then no columns will be removed.
+
+    Output ports:
+        file_out:
+            output Excel file
     """
 
     def __init__(self):
@@ -330,11 +395,42 @@ class ExcelReplacer(ExcelBase):
     """Read Excel file and replace values according to specific parameters.
 
     Input ports:
+        file_in:
+            input Excel file
+        file_name_out:
+            an optional full directory path and filename to be writte; if None
+            then a temporary file will be created
+        sheets:
+            A list of worksheet numbers, or names, that must be processed.
+            If None, then all sheets will be processed.
         rows:
+            A list of row numbers. Uses the following formats:
+             *  N: single number; removes the first N rows
+             *  N, M: two numbers; removes from row N to row M
+             *  N, M, P, ...: three or more numbers; removes numbered rows
             If None, then all rows will be processed.
         columns:
+            A list of column numbers. Uses the following formats:
+             *  N: single number; removes the first N columns
+             *  N, M: two numbers; removes from column N to column M
+             *  N, M, P, ...: three or more numbers; removes numbered columns
             If None, then all columns will be processed.
+        cell_current: string
+            The current cell value that is to be replaced.
+        cell_replace: string
+            The new cell value that is to be used instead of the currrent.
+            Can be None; then the current cell value will be replaced by an
+            empty string.
+        partial_match: boolean
+            If True, then part of a cell's current value will be replaced.
+
+    Output ports:
+        file_out:
+            output Excel file
     """
+
+    # TODO - extend code to allow for multiple current -> single replace; and
+    #                                 multiple current -> multiple replace
 
     _input_ports = [
                    ('cell_current', '(edu.utah.sci.vistrails.basic:String)'),
@@ -352,18 +448,18 @@ class ExcelReplacer(ExcelBase):
         partial = self.forceGetInputFromPort('partial_match', False)
         results = {}
         if not cell_current:
-            self.raiseError('Invalid or missing cell_replace port')
+            self.raiseError('Invalid or missing cell_current port')
         # create output dict; one entry per selected sheet name
         for sheet_name in self.xls.sheet_list:
             sheet = self.xls.book.sheet_by_name(sheet_name)
-            # allow all columsn to be searched by default
+            # allow all columns to be processed by default
             if not self.process_cols:
                 self.process_cols = range(0, sheet.ncols)
             out_list = []
             for row in range(sheet.nrows):
+                row_list = self.xls._parse_row(sheet, row,
+                                               date_as_tuple=True)
                 if not self.process_rows or row in self.process_rows:
-                    row_list = self.xls._parse_row(sheet, row,
-                                              date_as_tuple=True)
                     for col in self.process_cols:
                         if partial and str(cell_current) in str(row_list[col]):
                             row_list[col] = str(row_list[col]).replace(
@@ -372,7 +468,7 @@ class ExcelReplacer(ExcelBase):
                         else:
                             if str(row_list[col]) == str(cell_current):
                                 row_list[col] = cell_replace
-                    out_list.append(row_list)
+                out_list.append(row_list)
             results[sheet_name] = out_list
         self.save_results(results)
 
@@ -380,119 +476,97 @@ class ExcelReplacer(ExcelBase):
 @RPyCSafeModule()
 class ExcelFiller(ExcelBase):
     """Read Excel file and fill in data according to specific parameters.
+
+    Input ports:
+        file_in:
+            input Excel file
+        file_name_out:
+            an optional full directory path and filename to be writte; if None
+            then a temporary file will be created
+        sheets:
+            A list of worksheet numbers, or names, that must be processed.
+            If None, then all sheets will be processed.
+        rows:
+            A list of row numbers. Uses the following formats:
+             *  N: single number; removes the first N rows
+             *  N, M: two numbers; removes from row N to row M
+             *  N, M, P, ...: three or more numbers; removes numbered rows
+            If None, then all rows will be processed.
+        columns:
+            A list of column numbers. Uses the following formats:
+             *  N: single number; removes the first N columns
+             *  N, M: two numbers; removes from column N to column M
+             *  N, M, P, ...: three or more numbers; removes numbered columns
+            If None, then all columns will be processed.
+        cell_replace: string
+            The new cell value that is to be used instead of any empty cell.
+        use_last_value:
+            If True, will replace empty cells with the last non-empty value.
+        direction:
+            The manner in which the sheet is processed; down the columns or
+            along the rows
+
+    Output ports:
+        file_out:
+            output Excel file
     """
+
+    _input_ports = [
+        ('cell_replace', '(edu.utah.sci.vistrails.basic:String)'),
+        ('use_last_value', '(edu.utah.sci.vistrails.basic:Boolean)'),
+        ('direction', '(za.co.csir.eo4vistrails:Excel Direction:tools|excel)'),
+        ]
 
     def __init__(self):
         ExcelBase.__init__(self)
 
     def compute(self):
         super(ExcelFiller, self).compute()
-        # TODO - complete process...
+        cell_replace = self.forceGetInputFromPort('cell_replace', "")
+        use_last_value = self.forceGetInputFromPort('use_last_value', False)
+        direction = self.forceGetInputFromPort('direction', 'rows')
+        results = {}
+        if not cell_replace:
+            self.raiseError('Invalid or missing cell_replace port')
+        # create output dict; one entry per selected sheet name
+        for sheet_name in self.xls.sheet_list:
+            sheet = self.xls.book.sheet_by_name(sheet_name)
+            # allow all columns to be processed by default
+            if not self.process_cols:
+                self.process_cols = range(0, sheet.ncols)
+            out_list = []
+            if direction == 'rows':
+                # process along a row...
+                for row in range(sheet.nrows):
+                    row_list = self.xls._parse_row(sheet, row,
+                                                   date_as_tuple=True)
+                    if not self.process_rows or row in self.process_rows:
+                        current = None
+                        for col in self.process_cols:
+                            if not row_list[col]:
+                                if not use_last_value or current:
+                                    row_list[col] = cell_replace
+                                if use_last_value and current:
+                                    row_list[col] = current
+                            current = row_list[col]
+                    out_list.append(row_list)
+            elif direction == 'cols':
+                # process down a column...
+                self.raiseError('CODE NOT IMPLEMENTED!!!')  # TODO
+                # ??? do not have data arranged in cols...
+            else:
+                self.raiseError('Invalid direction specification.')
+
+            results[sheet_name] = out_list
+        self.save_results(results)
 
 
-@RPyCSafeModule()
-class NotUsed(ThreadSafeMixin, Module):
-    """Read Excel file and fill in data according to specific parameters.
+class ExcelDirectionComboBoxWidget(ComboBoxWidget):
+    """Constants used to decide direction of processsing of an Excel file"""
+    _KEY_VALUES = {'Along Rows': 'rows', 'Down Columns': 'cols'}
 
-    Input ports:
-        file_in:
-            an optional file object to be read
-        filename_in:
-            an optional full directory path and filename to be read
-        delimiter:
-            an optional item delimiter (defaults to a ",")
-        sample_set:
-            switch to enable output of a maximum of the first 10 rows
-            (default False)
-        transpose:
-            switch to enable output of a transposed set of data (default False)
-        header_in:
-            switch to indicate if the first row in the input data set contains
-            header data (default False); this header row is then ignored for
-            data import
-        header_out:
-            switch to indicate if the first row (likely containing headers)
-            should be written to output (default True)
-        filter_rows:
-            an optional specification of which rows appear in the output (this
-            notation assumes a starting row number of '1')
-        filter_cols:
-            an optional specification of which columns appear in the output
-            (this notation assumes a starting column number of '1')
-        flatten:
-            switch to indicate if nested lists should be combined into one
-            single list (default False); only works for one "level" of nesting
-        pairs:
-            x,y pairs, in a semi-colon delimited string, representing desired
-            output tuples (see the `datapairs` output port) to be extracted
-            from incoming lists; each X or Y represents a different list (this
-            notation assumes a starting list number of '1')
-
-    The "filter_" specification uses the following syntax:
-     *  N: a single integer; or a single Excel column letter
-     *  N-M: a range of integers; or a range of Excel column letters
-     *  N, M, ...: multiple different single/range values
-
-    Output ports:
-        csv_file:
-            a CSV file, containing all filtered data from the file
-        dataset:
-            a list of lists, containing all filtered data from the file (or
-            a single list, if flatten option selected)
-        datapairs:
-            a paired list of tuples, containing all filtered data from the file
-            in the form: [(X1,Y1), (X2,Y2), ... (Xn,Yn)]
-        html:
-            an HTML 'view' string, containing all filtered data from the file
-
-    """
-
-    _input_ports = [('file_in', '(edu.utah.sci.vistrails.basic:File)'),
-                    ('delimiter', '(edu.utah.sci.vistrails.basic:String)'),
-                    ('sample_set', '(edu.utah.sci.vistrails.basic:Boolean)'),
-                    ('transpose', '(edu.utah.sci.vistrails.basic:Boolean)'),
-                    ('header_in', '(edu.utah.sci.vistrails.basic:Boolean)'),
-                    ('header_out', '(edu.utah.sci.vistrails.basic:Boolean)'),
-                    ('filter_rows', '(edu.utah.sci.vistrails.basic:String)'),
-                    ('filter_cols', '(edu.utah.sci.vistrails.basic:String)'),
-                    ('flatten', '(edu.utah.sci.vistrails.basic:Boolean)'),
-                    ('pairs', '(edu.utah.sci.vistrails.basic:String)')]
-    _output_ports = [('csv_file', '(edu.utah.sci.vistrails.basic:File)'),
-                    ('dataset', '(edu.utah.sci.vistrails.basic:List)'),
-                    ('datapairs', '(edu.utah.sci.vistrails.basic:List)'),
-                    ('html_file', '(edu.utah.sci.vistrails.basic:File)')]
-
-    def __init__(self):
-        ThreadSafeMixin.__init__(self)
-        Module.__init__(self)
-
-    def raiseError(self, msg, error=''):
-        """Raise a VisTrails error."""
-        import traceback
-        traceback.print_exc()
-        if error:
-            raise ModuleError(self, msg + ': %s' % str(error))
-        else:
-            raise ModuleError(self, msg)
-
-    def compute(self):
-        file_in = self.forceGetInputFromPort('file_in', None)
-        fullname = self.forceGetInputFromPort('filename_in', "")
-        delimiter = self.forceGetInputFromPort('delimiter', ",")
-        sample = self.forceGetInputFromPort("sample_set", False)
-        transpose = self.forceGetInputFromPort("transpose", False)
-        header_in = self.forceGetInputFromPort("header_in", False)
-        header_out = self.forceGetInputFromPort("header_out", True)
-        filter_rows = self.forceGetInputFromPort("filter_rows", "")
-        filter_cols = self.forceGetInputFromPort("filter_cols", "")
-        flatten = self.forceGetInputFromPort("flatten", False)
-        pairs = self.forceGetInputFromPort("pairs", "")
-
-        if file_in:
-            try:
-                pass
-            except Exception, e:
-                self.raiseError('Unable to run compute: %s' % str(e))
-            csvfile = None
-        else:
-            self.raiseError('Invalid or missing input file/filename')
+ExcelDirectionComboBox = new_constant('Excel Direction',
+                                      staticmethod(str),
+                                      'rows',
+                                      staticmethod(lambda x: type(x) == str),
+                                      ExcelDirectionComboBoxWidget)
