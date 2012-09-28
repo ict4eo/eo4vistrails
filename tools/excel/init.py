@@ -59,7 +59,7 @@ def initialize(*args, **keywords):
        core.requirements.python_module_exists('xlwt'):
         from excelcell import ExcelCell  # filename of Vistrails module
         from ExcelUtils import ExcelChopper, ExcelExtractor, ExcelFiller, \
-                               ExcelReplacer, ExcelSplitter
+                               ExcelReplacer, ExcelSplitter, ExcelBase
         excel_namespace = "tools|excel"
 
         # Add ExcelCell
@@ -70,6 +70,9 @@ def initialize(*args, **keywords):
         reg.add_input_port(ExcelCell, "Location", basic_widgets.CellLocation)
 
         # Add other Excel utils
+        reg.add_module(ExcelBase,
+                       namespace=excel_namespace,
+                       abstract=True)
         reg.add_module(ExcelChopper,
                        namespace=excel_namespace)
         reg.add_module(ExcelExtractor,
