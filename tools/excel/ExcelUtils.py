@@ -194,7 +194,7 @@ class ExcelBase(ThreadSafeMixin, Module):
     def compute(self):
         """inheriting class should extend this via:
             super(NewClassName, self).compute()
-            # other code....
+            # other code... e.g. to read/change the Excel file
         """
         # process port inputs
         self.file_in = self.forceGetInputFromPort('file_in', None)
@@ -217,12 +217,15 @@ class ExcelBase(ThreadSafeMixin, Module):
                 _cols = _cols[0]  # remove "wrapper" that Vistrails may add
         except:
             _cols = []
+        #store basic rows/columns
+        self.rows = _rows
+        self.cols = _cols
         #store lists to be processed
         self.sheets = _sheets
         self.process_rows = self.excel_list(_rows)
         # allow for "popping" in a loop
         self.process_cols = self.excel_list(_cols, reverse=True)
-        #set up dict/list to process files
+        #set-up connection to Excel file (but does not read the contents here!)
         if self.file_in:
             try:
                 self.xls = read_excel(self.file_in.name)
@@ -297,6 +300,10 @@ class ExcelExtractor(ExcelBase):
 class ExcelSplitter(ExcelBase):
     """Read Excel file and create a new file according to specific parameters.
 
+    The new file will have a set of worksheets, created by splitting existing
+    sheets along row/columns. For example, if a sheet is split by rows and
+    columns, then each "block" within the split will form a new worksheet.
+
     Input ports:
         file_in:
             input Excel file
@@ -308,26 +315,109 @@ class ExcelSplitter(ExcelBase):
             If None, then all sheets will be processed.
         rows:
             A list of row numbers. Uses the following formats:
-             *  N: single number; removes the first N rows
-             *  N, M: two numbers; removes from row N to row M
-             *  N, M, P, ...: three or more numbers; removes numbered rows
+             *  N: single number; split only at row N
+             *  N, M: two numbers; split, starting from row N and repeating
+                                   every M rows
+             *  N, M, P, ...: three or more numbers; split at each row
+            If the list is empty, the sheet will be split according to the
+            type of 'row_match'.
         columns:
             A list of column numbers. Uses the following formats:
-             *  N: single number; removes the first N columns
-             *  N, M: two numbers; removes from column N to column M
-             *  N, M, P, ...: three or more numbers; removes numbered columns
+             *  N: single number; split only at column N
+             *  N, M: two numbers; split, starting from column N and repeating
+                                   every M columns
+             *  N, M, P, ...: three or more numbers; split at each column
+            If the list is empty, the sheet will be split according to the
+            type of 'column_match'.
+        cell_match:
+            The type of cell value on which the split will take place
+        cell_value:
+            The cell value (string) on which the split will take place (if
+            'cell_match' is not 'Is Blank')
 
     Output ports:
         file_out:
             output Excel file
     """
 
+    _input_ports = [
+        ('cell_match', '(za.co.csir.eo4vistrails:Excel Match:tools|excel)'),
+        ('cell_value', '(edu.utah.sci.vistrails.basic:String)'),
+        ]
+
     def __init__(self):
         ExcelBase.__init__(self)
 
+    def check_if_equal(self, iterator):
+        """Check if all elements of iterable are the same.
+
+        http://stackoverflow.com/questions/3844801/\
+        check-if-all-elements-in-a-list-are-identical
+        """
+        try:
+            iterator = iter(iterator)
+            first = next(iterator)
+            return all(first == rest for rest in iterator)
+        except StopIteration:
+            return True
+
+    def interval_set(self, start_repeat, stop):
+        """Generate range of numbers, with start, start and repeat."""
+        return [r for r in range(start_repeat[0], stop + 1, start_repeat[1])]
+
+    def add_block(self, row, col):
+        """Add new block; and alter limits of existing blocks."""
+        candidate = [self.sheet.name, [row, col], [self.sheet.nrows,
+                                                   self.sheet.ncols]]
+        for block in self.blocks:
+            # alter limits on existing blocks
+            # TO DO - NOT WORKING (dont overwrite all previous!)
+            # use row_flag  col_flag to test if already changed
+            if block[1][0] < row:
+                block[2][0] = row -1
+            if block[1][1] < col:
+                block[2][1] = col -1
+        self.blocks.append(candidate)
+
+    def process_row(self, row_no, row_list):
+        """Find matching elements in a row; request new blocks"""
+        for col, col_value in enumerate(row_list):
+            if self.cell_match == 'exact' and col_value == self.cell_value:
+                self.add_block(row_no, col)
+            elif self.cell_match == 'starts' and \
+            col_value[0:len(self.cell_value)] == self.cell_value:
+                self.add_block(row_no, col)
+            elif self.cell_match == 'contains' and self.cell_value in col_value:
+                self.add_block(row_no, col)
+
     def compute(self):
         super(ExcelSplitter, self).compute()
-        # TODO - complete process...
+        # class ports
+        self.cell_match = self.forceGetInputFromPort('cell_match', None)
+        self.cell_value = self.forceGetInputFromPort('cell_value', None)
+
+        # create array of [sheet_name,  [top_left_row, top_left_col[,
+        #                 [bottom_left_row, bottom_left_col]]
+        self.blocks = []
+        for sheet_name in self.xls.sheet_list:
+
+            self.sheet = self.xls.book.sheet_by_name(sheet_name)
+            # override process_rows & process_cols
+            if len(self.rows) == 2:
+                self.process_rows = self.interval_set(rows, self.sheet.nrows)
+            if len(self.cols) == 2:
+                self.process_cols = self.interval_set(cols, self.sheet.ncols)
+            # process splits
+            for row in range(self.sheet.nrows):
+                if self.cell_value and self.cell_match != 'blank':
+                    row_list = self.xls._parse_row(self.sheet, row,
+                                                   date_as_tuple=False)
+                    self.process_row(row, row_list)
+        # write blocks to worksheets in output file
+        for index, block in enumerate(self.blocks):
+            # extract blocks
+            # sheet name = current sheet name (#)
+            print block  # TODO - complete processig...
 
 
 @RPyCSafeModule()
@@ -570,3 +660,14 @@ ExcelDirectionComboBox = new_constant('Excel Direction',
                                       'rows',
                                       staticmethod(lambda x: type(x) == str),
                                       ExcelDirectionComboBoxWidget)
+
+class ExcelMatchComboBoxWidget(ComboBoxWidget):
+    """Constants used to decide what type of match to use in an Excel file"""
+    _KEY_VALUES = {'Is Blank': 'blank', 'Contains': 'contains',
+                   'Exact Match': 'exact', 'Starts With': 'starts'}
+
+ExcelMatchComboBox = new_constant('Excel Match',
+                                      staticmethod(str),
+                                      'blank',
+                                      staticmethod(lambda x: type(x) == str),
+                                      ExcelMatchComboBoxWidget)

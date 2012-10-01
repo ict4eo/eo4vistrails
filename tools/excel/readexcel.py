@@ -12,8 +12,8 @@ class read_excel(object):
     Uses the xlrd module (version 0.5.2 or later), supporting Excel versions:
     2004, 2002, XP, 2000, 97, 95, 5, 4, 3
 
-    Data is extracted via iterators that return one row at a time -- either
-    as a dict or as a list.
+    Data is extracted via iterators that can either return one row at a time
+    (either as a dict or as a list) or one column at a time.
 
     The dict generator assumes that the worksheet is in tabular format,
     with the first "data" row containing the variable names and all subsequent
@@ -33,7 +33,7 @@ class read_excel(object):
             for row in xls.iter_dict(sheet_name):
                 print row
 
-    Orginal Credit:
+    Original Credit:
         http://gizmojo.org/code/readexcel/
     """
 
@@ -54,6 +54,15 @@ class read_excel(object):
                 return True  # row full of (valid) False values?
         return False
 
+    def _is_data_column(self, sheet, i):
+        values = sheet.column_values(i)
+        if isinstance(values[0], basestring) and values[0].startswith('#'):
+            return False  # ignorable comment row
+        for v in values:
+            if bool(v):
+                return True  # row full of (valid) False values?
+        return False
+
     def set_sheet_list(self, sheets=[]):
         """Set the required list of sheet names.
 
@@ -63,12 +72,47 @@ class read_excel(object):
                 Sheet numbering starts from 1.
         """
         if sheets:
-            #print "readexcel:67 sheets", sheets
+            #print "readexcel:75 sheets", sheets
             for index, name in enumerate(self.book.sheet_names()):
                 if index + 1 in sheets or name in sheets:
                     self.sheet_list.append(name)
         else:
             self.sheet_list = self.book.sheet_names()
+
+    def _parse_column(self, sheet, col_index, date_as_tuple=False):
+        """Sanitize incoming Excel data; return list of column values."""
+        # Data Type Codes:
+        #  EMPTY 0
+        #  TEXT 1 a Unicode string
+        #  NUMBER 2 float
+        #  DATE 3 float
+        #  BOOLEAN 4 int; 1 means TRUE, 0 means FALSE
+        #  ERROR 5
+        values = []
+        for type, value in zip(
+                sheet.column_types(row_index), sheet.column_values(row_index)):
+            if type == 2:
+                if value == int(value):
+                    value = int(value)
+            elif type == 3:
+                datetuple = xlrd.xldate_as_tuple(value, self.book.datemode)
+                if date_as_tuple:
+                    value = datetuple
+                else:
+                    # time only no date component
+                    if datetuple[0] == 0 and datetuple[1] == 0 and \
+                       datetuple[2] == 0:
+                        value = "%02d:%02d:%02d" % datetuple[3:]
+                    # date only, no time
+                    elif datetuple[3] == 0 and datetuple[4] == 0 and \
+                         datetuple[5] == 0:
+                        value = "%04d/%02d/%02d" % datetuple[:3]
+                    else:  # full date
+                        value = "%04d/%02d/%02d %02d:%02d:%02d" % datetuple
+            elif type == 5:
+                value = xlrd.error_text_from_code[value]
+            values.append(value)
+        return values
 
     def _parse_row(self, sheet, row_index, date_as_tuple=False):
         """Sanitize incoming Excel data; return list of row values."""

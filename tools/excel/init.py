@@ -60,11 +60,14 @@ def initialize(*args, **keywords):
         from excelcell import ExcelCell  # filename of Vistrails module
         from ExcelUtils import ExcelChopper, ExcelExtractor, ExcelFiller, \
                                ExcelReplacer, ExcelSplitter, ExcelBase, \
-                               ExcelDirectionComboBox
+                               ExcelDirectionComboBox, ExcelMatchComboBox
         excel_namespace = "tools|excel"
 
         # abstract modules - drop-down lists
         reg.add_module(ExcelDirectionComboBox,
+                       namespace=excel_namespace,
+                       abstract=True)
+        reg.add_module(ExcelMatchComboBox,
                        namespace=excel_namespace,
                        abstract=True)
 
