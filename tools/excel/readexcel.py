@@ -79,8 +79,7 @@ class read_excel(object):
         else:
             self.sheet_list = self.book.sheet_names()
 
-    def _parse_column(self, sheet, col_index, date_as_tuple=False):
-        """Sanitize incoming Excel data; return list of column values."""
+    def parse_cell_value(self, type, value, date_as_tuple=False):
         # Data Type Codes:
         #  EMPTY 0
         #  TEXT 1 a Unicode string
@@ -88,64 +87,43 @@ class read_excel(object):
         #  DATE 3 float
         #  BOOLEAN 4 int; 1 means TRUE, 0 means FALSE
         #  ERROR 5
+        if type == 2:
+            if value == int(value):
+                value = int(value)
+        elif type == 3:
+            datetuple = xlrd.xldate_as_tuple(value, self.book.datemode)
+            if date_as_tuple:
+                value = datetuple
+            else:
+                # time only, no date component
+                if datetuple[0] == 0 and datetuple[1] == 0 and \
+                   datetuple[2] == 0:
+                    value = "%02d:%02d:%02d" % datetuple[3:]
+                # date only, no time component
+                elif datetuple[3] == 0 and datetuple[4] == 0 and \
+                     datetuple[5] == 0:
+                    value = "%04d/%02d/%02d" % datetuple[:3]
+                else:  # full date
+                    value = "%04d/%02d/%02d %02d:%02d:%02d" % datetuple
+        elif type == 5:
+            value = xlrd.error_text_from_code[value]
+        return value
+
+    def _parse_column(self, sheet, col_index, date_as_tuple=False):
+        """Sanitize incoming Excel data; return list of column values."""
         values = []
         for type, value in zip(
                 sheet.column_types(row_index), sheet.column_values(row_index)):
-            if type == 2:
-                if value == int(value):
-                    value = int(value)
-            elif type == 3:
-                datetuple = xlrd.xldate_as_tuple(value, self.book.datemode)
-                if date_as_tuple:
-                    value = datetuple
-                else:
-                    # time only no date component
-                    if datetuple[0] == 0 and datetuple[1] == 0 and \
-                       datetuple[2] == 0:
-                        value = "%02d:%02d:%02d" % datetuple[3:]
-                    # date only, no time
-                    elif datetuple[3] == 0 and datetuple[4] == 0 and \
-                         datetuple[5] == 0:
-                        value = "%04d/%02d/%02d" % datetuple[:3]
-                    else:  # full date
-                        value = "%04d/%02d/%02d %02d:%02d:%02d" % datetuple
-            elif type == 5:
-                value = xlrd.error_text_from_code[value]
+            value = self.parse_cell_value(type, value, date_as_tuple)
             values.append(value)
         return values
 
     def _parse_row(self, sheet, row_index, date_as_tuple=False):
         """Sanitize incoming Excel data; return list of row values."""
-        # Data Type Codes:
-        #  EMPTY 0
-        #  TEXT 1 a Unicode string
-        #  NUMBER 2 float
-        #  DATE 3 float
-        #  BOOLEAN 4 int; 1 means TRUE, 0 means FALSE
-        #  ERROR 5
         values = []
         for type, value in zip(
                 sheet.row_types(row_index), sheet.row_values(row_index)):
-            if type == 2:
-                if value == int(value):
-                    value = int(value)
-            elif type == 3:
-                datetuple = xlrd.xldate_as_tuple(value, self.book.datemode)
-                if date_as_tuple:
-                    value = datetuple
-                else:
-                    # time only no date component
-                    if datetuple[0] == 0 and datetuple[1] == 0 and \
-                       datetuple[2] == 0:
-                        value = "%02d:%02d:%02d" % datetuple[3:]
-                    # date only, no time
-                    elif datetuple[3] == 0 and datetuple[4] == 0 and \
-                         datetuple[5] == 0:
-                        value = "%04d/%02d/%02d" % datetuple[:3]
-                    else:  # full date
-                        value = "%04d/%02d/%02d %02d:%02d:%02d" % datetuple
-            elif type == 5:
-                value = xlrd.error_text_from_code[value]
+            value = self.parse_cell_value(type, value, date_as_tuple)
             values.append(value)
         return values
 

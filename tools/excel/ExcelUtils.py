@@ -99,6 +99,17 @@ class ExcelBase(ThreadSafeMixin, Module):
         else:
             raise ModuleError(self, msg)
 
+    def create_excel_file(self):
+        """Create a new Excel file"""
+        if not self.file_name_out:
+            new_file = self.interpreter.filePool.create_file(suffix='.xls')
+        else:
+            try:
+                new_file = open(str(self.file_name_out), "w")
+            except:
+                return None
+        return new_file
+
     def excel_list(self, items, reverse=False, sort=False, zero_base=False):
         """Create (sorted) list of values from a "range" input List.
 
@@ -117,12 +128,12 @@ class ExcelBase(ThreadSafeMixin, Module):
         *  [N, M, P, ...]: three or more numbers;
            returns a list [N-1, M-1, P-1, ...]
         """
-        #print "excelutils:67", items, len(items)
+        #print "excelutils:131", items, len(items)
         offset = 1
         if zero_base:
             offset = 0
         try:
-            #print "excelutils:72", items
+            #print "excelutils:137", items
             if len(items) == 1:
                 list_items = [x for x in range(offset, items[0] + offset)]
             elif len(items) == 2:
@@ -131,7 +142,7 @@ class ExcelBase(ThreadSafeMixin, Module):
                 list_items = items
             if list_items:
                 list_items = [x - offset for x in list_items]
-            #print "excelutils:81", list_items
+            #print "excelutils:145", list_items
             if reverse:
                 return sorted(list_items, reverse=True)
             elif sort:
@@ -141,7 +152,7 @@ class ExcelBase(ThreadSafeMixin, Module):
         except:
             return []
 
-    def excel_write(self, results, date_style=None, file_name_out=None):
+    def excel_write(self, results, date_style=None):
         """Write an Excel book, based on a dictionary with a list of lists.
 
         Args:
@@ -149,37 +160,32 @@ class ExcelBase(ThreadSafeMixin, Module):
                 each dictionary item corresponds to a worksheet (the key is the
                 name); that contains rows of column values
             style:
-                an XFStyle object, in whihc to write dates
+                an XFStyle object, in which to write dates
             file_name_out: string
                 if None, a temp file is created
         """
-        if not file_name_out:
-            new_file = self.interpreter.filePool.create_file(suffix='.xls')
-        else:
-            try:
-                new_file = open(str(file_name_out), "w")
-            except:
-                return None
-        if not date_style:
-            # set date format
-            date_style = xlwt.XFStyle()
-            date_style.num_format_str = DATE_FORMAT
-        # create data in Excel file
-        workbook = xlwt.Workbook()
-        for key in results.iterkeys():
-            worksheet = workbook.add_sheet(key)
-            # add row/col data
-            for row_index, row in enumerate(results[key]):
-                for col_index, value in enumerate(row):
-                    #print "excelutils:316", row_index, col_index, value
-                    if isinstance(value, (list, tuple)):  # date
-                        dt = datetime(*value)
-                        worksheet.write(row_index, col_index,
-                                        dt, date_style)
-                    else:
-                        worksheet.write(row_index, col_index,
-                                        value)
-        workbook.save(new_file.name)
+        new_file = self.create_excel_file()
+        if new_file:
+            if not date_style:
+                # set date format
+                date_style = xlwt.XFStyle()
+                date_style.num_format_str = DATE_FORMAT
+            # create data in Excel file
+            workbook = xlwt.Workbook()
+            for key in results.iterkeys():
+                worksheet = workbook.add_sheet(key)
+                # add row/col data
+                for row_index, row in enumerate(results[key]):
+                    for col_index, value in enumerate(row):
+                        #print "excelutils:316", row_index, col_index, value
+                        if isinstance(value, (list, tuple)):  # date
+                            dt = datetime(*value)
+                            worksheet.write(row_index, col_index,
+                                            dt, date_style)
+                        else:
+                            worksheet.write(row_index, col_index,
+                                            value)
+            workbook.save(new_file.name)
         return new_file
 
     def save_results(self, results):
@@ -362,62 +368,101 @@ class ExcelSplitter(ExcelBase):
             return True
 
     def interval_set(self, start_repeat, stop):
-        """Generate range of numbers, with start, start and repeat."""
+        """Generate range of numbers, with start, start and repeat values."""
         return [r for r in range(start_repeat[0], stop + 1, start_repeat[1])]
 
     def add_block(self, row, col):
-        """Add new block; and alter limits of existing blocks."""
-        candidate = [self.sheet.name, [row, col], [self.sheet.nrows,
-                                                   self.sheet.ncols]]
+        """Add new block and alter limits of existing blocks.
+
+        Each block has an array composed of:
+         *  sheet_name
+         *  top_left_row, top_left_col: cell co-ordinates
+         *  bottom_left_row, bottom_left_col: cell co-ordinates
+         *  row_flag, col_flag: flags to indicate if the bottom limits have
+                                already been reset (by default, each block
+                                extends to the edge of the worksheet)
+        """
+        candidate = [self.sheet.name, [row, col],
+                     [self.sheet.nrows, self.sheet.ncols], [True, True]]
         for block in self.blocks:
             # alter limits on existing blocks
-            # TO DO - NOT WORKING (dont overwrite all previous!)
+            # TO DO - NOT WORKING (don't overwrite all previous!)
             # use row_flag  col_flag to test if already changed
-            if block[1][0] < row:
+            if block[1][0] < row and block[3][0]:
                 block[2][0] = row -1
-            if block[1][1] < col:
+                block[3][0] = False
+            if block[1][1] < col and block[3][1]:
                 block[2][1] = col -1
+                block[3][1] = False
         self.blocks.append(candidate)
 
     def process_row(self, row_no, row_list):
-        """Find matching elements in a row; request new blocks"""
+        """Find matching elements in a row; create new block/s"""
         for col, col_value in enumerate(row_list):
             if self.cell_match == 'exact' and col_value == self.cell_value:
                 self.add_block(row_no, col)
             elif self.cell_match == 'starts' and \
-            col_value[0:len(self.cell_value)] == self.cell_value:
+                col_value[0:len(self.cell_value)] == self.cell_value:
                 self.add_block(row_no, col)
             elif self.cell_match == 'contains' and self.cell_value in col_value:
                 self.add_block(row_no, col)
 
     def compute(self):
         super(ExcelSplitter, self).compute()
-        # class ports
+        # class-specific ports
         self.cell_match = self.forceGetInputFromPort('cell_match', None)
         self.cell_value = self.forceGetInputFromPort('cell_value', None)
 
-        # create array of [sheet_name,  [top_left_row, top_left_col[,
-        #                 [bottom_left_row, bottom_left_col]]
-        self.blocks = []
+        self.blocks = []  # see add_block()
         for sheet_name in self.xls.sheet_list:
-
             self.sheet = self.xls.book.sheet_by_name(sheet_name)
             # override process_rows & process_cols
             if len(self.rows) == 2:
                 self.process_rows = self.interval_set(rows, self.sheet.nrows)
             if len(self.cols) == 2:
                 self.process_cols = self.interval_set(cols, self.sheet.ncols)
-            # process splits
+            # process splits & create blocks
             for row in range(self.sheet.nrows):
                 if self.cell_value and self.cell_match != 'blank':
                     row_list = self.xls._parse_row(self.sheet, row,
                                                    date_as_tuple=False)
                     self.process_row(row, row_list)
-        # write blocks to worksheets in output file
-        for index, block in enumerate(self.blocks):
-            # extract blocks
-            # sheet name = current sheet name (#)
-            print block  # TODO - complete processig...
+                # TODO - code pther split conditions !!!
+
+        # set up output file
+        new_file = self.create_excel_file()
+        if not new_file:
+            self.raiseError('Unable to create output file!')
+            return
+        # check for blocks
+        if not self.blocks:
+            self.raiseError('No suitable split matches in input file!')
+            return
+        # set date format
+        date_style = xlwt.XFStyle()
+        date_style.num_format_str = DATE_FORMAT
+        # create data in Excel file using block info
+        workbook = xlwt.Workbook()
+        for row_index, block in enumerate(self.blocks):
+            worksheet = workbook.add_sheet("%s_%s" % (block[0], row_index + 1))
+            for r, row in enumerate(range(block[1][0], block[2][0])):
+                sheet = self.xls.book.sheet_by_name(block[0])
+                #print "slicing row:cols", row, ":", block[1][1], block[2][1]
+                row_slice = sheet.row_slice(row, block[1][1], block[2][1])
+                worksheet_row = worksheet.row(r)
+                for col_index, col_cell in enumerate(row_slice):
+                    worksheet_row.write(col_index,
+                                        self.xls.parse_cell_value(
+                                                            col_cell.ctype,
+                                                            col_cell.value))
+            """
+            It is recommended that flush_row_data is called for every 1000
+            or so rows of a normal size that are written to an xlwt.Workbook.
+            If the rows are huge, that number should be reduced."""
+            worksheet.flush_row_data
+        workbook.save(new_file.name)
+        if new_file:
+            self.setResult('file_out', new_file)  # port
 
 
 @RPyCSafeModule()
@@ -671,3 +716,16 @@ ExcelMatchComboBox = new_constant('Excel Match',
                                       'blank',
                                       staticmethod(lambda x: type(x) == str),
                                       ExcelMatchComboBoxWidget)
+
+"""
+from xlrd import open_workbook,cellname
+book = open_workbook('/home/dhohls/Desktop/test.xls')
+sheet = book.sheet_by_index(0)
+print sheet.name
+print sheet.nrows
+print sheet.ncols
+for row_index in range(sheet.nrows):
+    for col_index in range(sheet.ncols):
+        print cellname(row_index,col_index),'-',
+        print sheet.cell(row_index,col_index).value
+"""
