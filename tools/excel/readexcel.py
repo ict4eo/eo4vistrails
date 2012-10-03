@@ -127,6 +127,15 @@ class read_excel(object):
             values.append(value)
         return values
 
+    def _parse_row_type(self, sheet, row_index, date_as_tuple=False):
+        """Sanitize incoming Excel data; return list of (value, type) tuples"""
+        values = []
+        for type, value in zip(
+                sheet.row_types(row_index), sheet.row_values(row_index)):
+            value = self.parse_cell_value(type, value, date_as_tuple)
+            values.append((value, type))
+        return values
+
     def iter_dict(self, sheet_name, date_as_tuple=False):
         """Iterator for the worksheet's rows as dictionaries """
         sheet = self.book.sheet_by_name(sheet_name)  # XLRDError

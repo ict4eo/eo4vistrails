@@ -46,6 +46,7 @@ from packages.eo4vistrails.tools.utils.DropDownListWidget import ComboBoxWidget
 from readexcel import read_excel
 
 DATE_FORMAT = 'YYYY/MM/DD'
+NAME_SIZE = 27 # maximum length of Excel worksheet name (31), subtract 4
 
 
 @RPyCSafeModule()
@@ -386,8 +387,6 @@ class ExcelSplitter(ExcelBase):
                      [self.sheet.nrows, self.sheet.ncols], [True, True]]
         for block in self.blocks:
             # alter limits on existing blocks
-            # TO DO - NOT WORKING (don't overwrite all previous!)
-            # use row_flag  col_flag to test if already changed
             if block[1][0] < row and block[3][0]:
                 block[2][0] = row -1
                 block[3][0] = False
@@ -397,14 +396,29 @@ class ExcelSplitter(ExcelBase):
         self.blocks.append(candidate)
 
     def process_row(self, row_no, row_list):
-        """Find matching elements in a row; create new block/s"""
+        """Find matching elements in a row; create new block/s
+
+        Args:
+            row_no: integer
+                current row
+            row_list: list
+                list of (value, type) entries for a row
+        """
         for col, col_value in enumerate(row_list):
-            if self.cell_match == 'exact' and col_value == self.cell_value:
+            # get column value as searchable type
+            if col_value[1] == 2: # float
+                value = str(col_value[0])
+            elif col_value[1] == 1: # text
+                value = col_value[0]
+            else:
+                value = col_value[0]
+            # check value
+            if self.cell_match == 'exact' and value == self.cell_value:
                 self.add_block(row_no, col)
             elif self.cell_match == 'starts' and \
-                col_value[0:len(self.cell_value)] == self.cell_value:
+                value[0:len(self.cell_value)] == self.cell_value:
                 self.add_block(row_no, col)
-            elif self.cell_match == 'contains' and self.cell_value in col_value:
+            elif self.cell_match == 'contains' and self.cell_value in value:
                 self.add_block(row_no, col)
 
     def compute(self):
@@ -424,10 +438,22 @@ class ExcelSplitter(ExcelBase):
             # process splits & create blocks
             for row in range(self.sheet.nrows):
                 if self.cell_value and self.cell_match != 'blank':
-                    row_list = self.xls._parse_row(self.sheet, row,
-                                                   date_as_tuple=False)
-                    self.process_row(row, row_list)
-                # TODO - code pther split conditions !!!
+                    # skip non-valid rows:
+                    if not self.process_rows or row in self.process_rows:
+                        # get list of row (value, type)
+                        row_list = self.xls._parse_row_type(self.sheet, row,
+                                                        date_as_tuple=False)
+                        self.process_row(row, row_list)
+                """
+                # TODO - finish coding other split conditions !!!
+                elif not self.cell_value and self.cell_match == 'blank':
+                    if not self.process_rows or row in self.process_rows:
+                        row_list = self.xls._parse_row_type(self.sheet, row,
+                                                        date_as_tuple=False)
+                        if row_list and row_list[0] == None and \
+                        self.check_if_equal():
+
+                """
 
         # set up output file
         new_file = self.create_excel_file()
@@ -441,10 +467,12 @@ class ExcelSplitter(ExcelBase):
         # set date format
         date_style = xlwt.XFStyle()
         date_style.num_format_str = DATE_FORMAT
+
         # create data in Excel file using block info
         workbook = xlwt.Workbook()
         for row_index, block in enumerate(self.blocks):
-            worksheet = workbook.add_sheet("%s_%s" % (block[0], row_index + 1))
+            worksheet = workbook.add_sheet("%s_%s" %
+                                        (row_index + 1, block[0][0:NAME_SIZE]))
             for r, row in enumerate(range(block[1][0], block[2][0])):
                 sheet = self.xls.book.sheet_by_name(block[0])
                 #print "slicing row:cols", row, ":", block[1][1], block[2][1]
@@ -455,12 +483,13 @@ class ExcelSplitter(ExcelBase):
                                         self.xls.parse_cell_value(
                                                             col_cell.ctype,
                                                             col_cell.value))
-            """
-            It is recommended that flush_row_data is called for every 1000
-            or so rows of a normal size that are written to an xlwt.Workbook.
-            If the rows are huge, that number should be reduced."""
+                if r > 500:
+                    worksheet.flush_row_data
+                    # Recommended that flush_row_data is called for every 1000
+                    # or so rows of normal size written to an xlwt.Workbook.
             worksheet.flush_row_data
         workbook.save(new_file.name)
+
         if new_file:
             self.setResult('file_out', new_file)  # port
 
@@ -596,12 +625,12 @@ class ExcelReplacer(ExcelBase):
                                                date_as_tuple=True)
                 if not self.process_rows or row in self.process_rows:
                     for col in self.process_cols:
-                        if partial and str(cell_current) in str(row_list[col]):
-                            row_list[col] = str(row_list[col]).replace(
-                                                            str(cell_current),
+                        if partial and cell_current in row_list[col]:
+                            row_list[col] = row_list[col].replace(
+                                                            cell_current,
                                                             cell_replace)
                         else:
-                            if str(row_list[col]) == str(cell_current):
+                            if row_list[col] == cell_current:
                                 row_list[col] = cell_replace
                 out_list.append(row_list)
             results[sheet_name] = out_list
