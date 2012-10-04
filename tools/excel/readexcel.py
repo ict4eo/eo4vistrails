@@ -113,7 +113,7 @@ class read_excel(object):
         """Sanitize incoming Excel data; return list of column values."""
         values = []
         for type, value in zip(
-                sheet.column_types(row_index), sheet.column_values(row_index)):
+                sheet.col_types(col_index), sheet.col_values(col_index)):
             value = self.parse_cell_value(type, value, date_as_tuple)
             values.append(value)
         return values

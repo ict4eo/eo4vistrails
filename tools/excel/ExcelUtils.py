@@ -51,13 +51,19 @@ NAME_SIZE = 27 # maximum length of Excel worksheet name (31), subtract 4
 
 @RPyCSafeModule()
 class ExcelBase(ThreadSafeMixin, Module):
-    """Read Excel file and allow for operations according to parameters.
+    """An abtract VisTrails class for reading and processing an Excel file.
+
+    This base class contains common methods and properties.
+
+    The compute() method initialises data for ports that are common to all
+    classes; but should be extended to perform procesing specific to the
+    inherited class.
 
     Input ports:
         file_in:
             input Excel file
         file_name_out:
-            an optional full directory path and filename to be writte; if None
+            an optional full directory path and filename to be written; if None
             then a temporary file will be created
         sheets:
             A list of worksheet numbers, or names, that must be processed.
@@ -435,25 +441,43 @@ class ExcelSplitter(ExcelBase):
                 self.process_rows = self.interval_set(rows, self.sheet.nrows)
             if len(self.cols) == 2:
                 self.process_cols = self.interval_set(cols, self.sheet.ncols)
+            # store list of any blank cols
+            blank_cols = []
+            if self.cell_match in ['blank', 'cols']:
+                for col in range(self.sheet.ncols):
+                    col_list = self.xls._parse_column(self.sheet, col,
+                                                      date_as_tuple=False)
+                    if col_list and col_list[0] in [None, ''] and \
+                    self.check_if_equal(col_list): # all blanks!
+                            blank_cols.append(col)
+            if not '0' in blank_cols:
+                blank_cols.insert(0, -1)  # will always split at first col
             # process splits & create blocks
+            found_blank_rows = False
             for row in range(self.sheet.nrows):
-                if self.cell_value and self.cell_match != 'blank':
-                    # skip non-valid rows:
+                if self.cell_value and self.cell_match in ['contains', 'exact',
+                                                           'starts']:
                     if not self.process_rows or row in self.process_rows:
                         # get list of row (value, type)
                         row_list = self.xls._parse_row_type(self.sheet, row,
                                                         date_as_tuple=False)
                         self.process_row(row, row_list)
-                """
-                # TODO - finish coding other split conditions !!!
-                elif not self.cell_value and self.cell_match == 'blank':
+                elif self.cell_match in ['blank', 'rows']:
                     if not self.process_rows or row in self.process_rows:
-                        row_list = self.xls._parse_row_type(self.sheet, row,
-                                                        date_as_tuple=False)
-                        if row_list and row_list[0] == None and \
-                        self.check_if_equal():
-
-                """
+                        row_list = self.xls._parse_row(self.sheet, row,
+                                                       date_as_tuple=False)
+                        if row == 0 or (row_list and row_list[0] in [None, '']\
+                        and self.check_if_equal(row_list)):  # all blanks or row #1
+                            found_blank_rows = True
+                            if row == 0: row = -1
+                            for col in blank_cols:
+                                self.add_block(row + 1, col + 1)
+                else:
+                    self.raiseError('Cell value is not specified!')
+            # no split on blank rows; just split on blank cols
+            if not found_blank_rows:
+                for col in blank_cols:
+                    self.add_block(0, col + 1)
 
         # set up output file
         new_file = self.create_excel_file()
@@ -737,7 +761,8 @@ ExcelDirectionComboBox = new_constant('Excel Direction',
 
 class ExcelMatchComboBoxWidget(ComboBoxWidget):
     """Constants used to decide what type of match to use in an Excel file"""
-    _KEY_VALUES = {'Is Blank': 'blank', 'Contains': 'contains',
+    _KEY_VALUES = {'Blank Rows & Columns': 'blank', 'Blank Rows': 'rows',
+                   'Blank Columns': 'cols', 'Contains': 'contains',
                    'Exact Match': 'exact', 'Starts With': 'starts'}
 
 ExcelMatchComboBox = new_constant('Excel Match',
