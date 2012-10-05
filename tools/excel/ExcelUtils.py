@@ -366,7 +366,7 @@ class ExcelSplitter(ExcelBase):
     _input_ports = [
         ('cell_match', '(za.co.csir.eo4vistrails:Excel Match:tools|excel)'),
         ('cell_value', '(edu.utah.sci.vistrails.basic:String)'),
-        ('split_direction', '(za.co.csir.eo4vistrails:Excel Split:tools|excel))'),
+        ('split_direction', '(za.co.csir.eo4vistrails:Excel Split:tools|excel)'),
         ('split_offset', '(edu.utah.sci.vistrails.basic:Integer)'),
         ('case_sensitive', '(edu.utah.sci.vistrails.basic:Boolean)'),
         ]
@@ -820,6 +820,7 @@ ExcelSplitComboBox = new_constant('Excel Split',
                                   'both',
                                   staticmethod(lambda x: type(x) == str),
                                   ExcelSplitComboBoxWidget)
+
 
 class ExcelMatchComboBoxWidget(ComboBoxWidget):
     """Constants used to decide what type of match to use in an Excel file"""
