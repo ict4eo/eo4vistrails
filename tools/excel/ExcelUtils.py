@@ -46,7 +46,7 @@ from packages.eo4vistrails.tools.utils.DropDownListWidget import ComboBoxWidget
 from readexcel import read_excel
 
 DATE_FORMAT = 'YYYY/MM/DD'
-NAME_SIZE = 27 # maximum length of Excel worksheet name (31), subtract 4
+NAME_SIZE = 27  # maximum length of Excel worksheet name (31), subtract 4
 
 
 @RPyCSafeModule()
@@ -321,7 +321,7 @@ class ExcelSplitter(ExcelBase):
         file_in:
             input Excel file
         file_name_out:
-            an optional full directory path and filename to be writte; if None
+            an optional full directory path and filename to be written; if None
             then a temporary file will be created
         sheets:
             A list of worksheet numbers, or names, that must be processed.
@@ -333,7 +333,7 @@ class ExcelSplitter(ExcelBase):
                                    every M rows
              *  N, M, P, ...: three or more numbers; split at each row
             If the list is empty, the sheet will be split according to the
-            type of 'row_match'.
+            type of 'cell_match'.
         columns:
             A list of column numbers. Uses the following formats:
              *  N: single number; split only at column N
@@ -341,12 +341,22 @@ class ExcelSplitter(ExcelBase):
                                    every M columns
              *  N, M, P, ...: three or more numbers; split at each column
             If the list is empty, the sheet will be split according to the
-            type of 'column_match'.
+            type of 'cell_match'.
         cell_match:
             The type of cell value on which the split will take place
+            ('Is Blank' will split on blank rows & columns instead of a value)
         cell_value:
             The cell value (string) on which the split will take place (if
             'cell_match' is not 'Is Blank')
+        split_direction:
+            The direction in which the split will take place (if 'cell_match'
+            is not 'Is Blank').  Either along a row, along a column, or both.
+        split_offset
+            The number of rows/columns away from the split point, at which the
+            split must take place.  This can be a negative number.
+        case_sensitive:
+            Switch to determine if the `cell_match` is case senstive or not
+            (the default is *not* case sensitive)
 
     Output ports:
         file_out:
@@ -356,6 +366,9 @@ class ExcelSplitter(ExcelBase):
     _input_ports = [
         ('cell_match', '(za.co.csir.eo4vistrails:Excel Match:tools|excel)'),
         ('cell_value', '(edu.utah.sci.vistrails.basic:String)'),
+        ('split_direction', '(za.co.csir.eo4vistrails:Excel Split:tools|excel))'),
+        ('split_offset', '(edu.utah.sci.vistrails.basic:Integer)'),
+        ('case_sensitive', '(edu.utah.sci.vistrails.basic:Boolean)'),
         ]
 
     def __init__(self):
@@ -381,6 +394,9 @@ class ExcelSplitter(ExcelBase):
     def add_block(self, row, col):
         """Add new block and alter limits of existing blocks.
 
+        Blocks are used to track which sections of an incoming worksheet need
+        to be split into a new worksheet in the outgoing file.
+
         Each block has an array composed of:
          *  sheet_name
          *  top_left_row, top_left_col: cell co-ordinates
@@ -391,18 +407,22 @@ class ExcelSplitter(ExcelBase):
         """
         candidate = [self.sheet.name, [row, col],
                      [self.sheet.nrows, self.sheet.ncols], [True, True]]
+        duplicate = False
         for block in self.blocks:
             # alter limits on existing blocks
             if block[1][0] < row and block[3][0]:
-                block[2][0] = row -1
+                block[2][0] = row - 1
                 block[3][0] = False
             if block[1][1] < col and block[3][1]:
-                block[2][1] = col -1
+                block[2][1] = col - 1
                 block[3][1] = False
-        self.blocks.append(candidate)
+            if [row, col] == block[1]:
+                duplicate = True
+        if not duplicate:
+            self.blocks.append(candidate)
 
     def process_row(self, row_no, row_list):
-        """Find matching elements in a row; create new block/s
+        """Find matching elements in a row; add new block/s when matched.
 
         Args:
             row_no: integer
@@ -412,19 +432,42 @@ class ExcelSplitter(ExcelBase):
         """
         for col, col_value in enumerate(row_list):
             # get column value as searchable type
-            if col_value[1] == 2: # float
+            if col_value[1] == 2:  # float
                 value = str(col_value[0])
-            elif col_value[1] == 1: # text
+            elif col_value[1] == 1:  # text
                 value = col_value[0]
             else:
                 value = col_value[0]
-            # check value
-            if self.cell_match == 'exact' and value == self.cell_value:
+            # switch for case-sensitivity
+            if not self.case_sensitive:
+                value = value.lower()
+                cell_value = self.cell_value.lower()
+            else:
+                cell_value = self.cell_value
+            # change row/col locations according to split_*
+            split_row, split_col = row_no, col
+            if self.split_direction == 'col':
+                split_row = 0
+                if self.split_offset < 0:
+                    split_col = max(split_col + self.split_offset, 0)
+                if self.split_offset > 0:
+                    split_col = min(split_col + self.split_offset,
+                                    self.sheet.ncols)
+            elif self.split_direction == 'row':
+                split_col = 0
+                if self.split_offset < 0:
+                    split_row = max(split_row + self.split_offset, 0)
+                if self.split_offset > 0:
+                    split_row = min(split_row + self.split_offset,
+                                    self.sheet.nrows)
+            # perform value comparison
+            #print "excel464: ", row_no, col, split_row, split_col, value, cell_value
+            if self.cell_match == 'exact' and value == cell_value:
                 self.add_block(row_no, col)
             elif self.cell_match == 'starts' and \
-                value[0:len(self.cell_value)] == self.cell_value:
+                value[0:len(cell_value)] == cell_value:
                 self.add_block(row_no, col)
-            elif self.cell_match == 'contains' and self.cell_value in value:
+            elif self.cell_match == 'contains' and cell_value in value:
                 self.add_block(row_no, col)
 
     def compute(self):
@@ -432,6 +475,11 @@ class ExcelSplitter(ExcelBase):
         # class-specific ports
         self.cell_match = self.forceGetInputFromPort('cell_match', None)
         self.cell_value = self.forceGetInputFromPort('cell_value', None)
+        self.case_sensitive = self.forceGetInputFromPort('case_sensitive',
+                                                         False)
+        self.split_direction = self.forceGetInputFromPort('split_direction',
+                                                          'both')
+        self.split_offset = self.forceGetInputFromPort('split_offset', 0)
 
         self.blocks = []  # see add_block()
         for sheet_name in self.xls.sheet_list:
@@ -448,7 +496,7 @@ class ExcelSplitter(ExcelBase):
                     col_list = self.xls._parse_column(self.sheet, col,
                                                       date_as_tuple=False)
                     if col_list and col_list[0] in [None, ''] and \
-                    self.check_if_equal(col_list): # all blanks!
+                    self.check_if_equal(col_list):  # all blanks!
                             blank_cols.append(col)
             if not '0' in blank_cols:
                 blank_cols.insert(0, -1)  # will always split at first col
@@ -467,15 +515,17 @@ class ExcelSplitter(ExcelBase):
                         row_list = self.xls._parse_row(self.sheet, row,
                                                        date_as_tuple=False)
                         if row == 0 or (row_list and row_list[0] in [None, '']\
-                        and self.check_if_equal(row_list)):  # all blanks or row #1
+                        and self.check_if_equal(row_list)):  # all blank or #1
                             found_blank_rows = True
-                            if row == 0: row = -1
+                            if row == 0:
+                                row = -1
                             for col in blank_cols:
                                 self.add_block(row + 1, col + 1)
                 else:
                     self.raiseError('Cell value is not specified!')
-            # no split on blank rows; just split on blank cols
-            if not found_blank_rows:
+            # blanks: no split on blank rows; just split on blank cols
+            if not found_blank_rows and self.cell_match in ['blank', 'rows',
+                                                            'cols']:
                 for col in blank_cols:
                     self.add_block(0, col + 1)
 
@@ -759,6 +809,18 @@ ExcelDirectionComboBox = new_constant('Excel Direction',
                                       staticmethod(lambda x: type(x) == str),
                                       ExcelDirectionComboBoxWidget)
 
+
+class ExcelSplitComboBoxWidget(ComboBoxWidget):
+    """Constants used to decide splits for processsing of an Excel file"""
+    _KEY_VALUES = {'Row & Column': 'both', 'Along a Row': 'row',
+                   'Along a Column': 'col'}
+
+ExcelSplitComboBox = new_constant('Excel Split',
+                                  staticmethod(str),
+                                  'both',
+                                  staticmethod(lambda x: type(x) == str),
+                                  ExcelSplitComboBoxWidget)
+
 class ExcelMatchComboBoxWidget(ComboBoxWidget):
     """Constants used to decide what type of match to use in an Excel file"""
     _KEY_VALUES = {'Blank Rows & Columns': 'blank', 'Blank Rows': 'rows',
@@ -770,16 +832,3 @@ ExcelMatchComboBox = new_constant('Excel Match',
                                       'blank',
                                       staticmethod(lambda x: type(x) == str),
                                       ExcelMatchComboBoxWidget)
-
-"""
-from xlrd import open_workbook,cellname
-book = open_workbook('/home/dhohls/Desktop/test.xls')
-sheet = book.sheet_by_index(0)
-print sheet.name
-print sheet.nrows
-print sheet.ncols
-for row_index in range(sheet.nrows):
-    for col_index in range(sheet.ncols):
-        print cellname(row_index,col_index),'-',
-        print sheet.cell(row_index,col_index).value
-"""
