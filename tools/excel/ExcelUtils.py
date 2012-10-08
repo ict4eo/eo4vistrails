@@ -107,7 +107,7 @@ class ExcelBase(ThreadSafeMixin, Module):
             raise ModuleError(self, msg)
 
     def create_excel_file(self):
-        """Create a new Excel file"""
+        """Create a new Excel output file; named or temporary"""
         if not self.file_name_out:
             new_file = self.interpreter.filePool.create_file(suffix='.xls')
         else:
@@ -122,8 +122,8 @@ class ExcelBase(ThreadSafeMixin, Module):
 
         Args:
             items: List of numbers
-            reverse:  Sort final list in reverse order
-            sort:  Sort final list
+            reverse:  if true, Sort final list in reverse order
+            sort:  if true, Sort final list
             zero_base:  if true, List numbering starts from 0
 
         Assumes list numbering starts from 1, and alters this, if needed, to a
@@ -160,16 +160,14 @@ class ExcelBase(ThreadSafeMixin, Module):
             return []
 
     def excel_write(self, results, date_style=None):
-        """Write an Excel book, based on a dictionary with a list of lists.
+        """Write an Excel workbook, based on a dictionary with a list of lists.
 
         Args:
             results: dictionary
                 each dictionary item corresponds to a worksheet (the key is the
-                name); that contains rows of column values
-            style:
-                an XFStyle object, in which to write dates
-            file_name_out: string
-                if None, a temp file is created
+                name); that contains arrays of column values
+            date_style:
+                an XFStyle object, in which format to write dates
         """
         new_file = self.create_excel_file()
         if new_file:
@@ -184,7 +182,7 @@ class ExcelBase(ThreadSafeMixin, Module):
                 # add row/col data
                 for row_index, row in enumerate(results[key]):
                     for col_index, value in enumerate(row):
-                        #print "excelutils:316", row_index, col_index, value
+                        #print "excelutils:186", row_index, col_index, value
                         if isinstance(value, (list, tuple)):  # date
                             dt = datetime(*value)
                             worksheet.write(row_index, col_index,
@@ -196,7 +194,7 @@ class ExcelBase(ThreadSafeMixin, Module):
         return new_file
 
     def save_results(self, results):
-        """Save results into designated output file."""
+        """Save results into designated output file and assign to port."""
         if results:
             new_file = self.excel_write(results, self.file_name_out)
             if new_file:
@@ -324,7 +322,7 @@ class ExcelSplitter(ExcelBase):
             an optional full directory path and filename to be written; if None
             then a temporary file will be created
         sheets:
-            A list of worksheet numbers, or names, that must be processed.
+            A list of worksheet numbers, or "names", that must be processed.
             If None, then all sheets will be processed.
         rows:
             A list of row numbers. Uses the following formats:
@@ -348,12 +346,12 @@ class ExcelSplitter(ExcelBase):
         cell_value:
             The cell value (string) on which the split will take place (if
             'cell_match' is not 'Is Blank')
-        split_direction:
-            The direction in which the split will take place (if 'cell_match'
-            is not 'Is Blank').  Either along a row, along a column, or both.
-        split_offset
-            The number of rows/columns away from the split point, at which the
-            split must take place.  This can be a negative number.
+        split_offset:
+            The number of rows, or rows and columns, away from the split point,
+            at which the split must take place. These can be negative numbers.
+            Uses the following formats:
+             *  N: single number; split offset is N rows
+             *  N, M: two numbers; split offset is N rows and M columns
         case_sensitive:
             Switch to determine if the `cell_match` is case senstive or not
             (the default is *not* case sensitive)
@@ -366,10 +364,26 @@ class ExcelSplitter(ExcelBase):
     _input_ports = [
         ('cell_match', '(za.co.csir.eo4vistrails:Excel Match:tools|excel)'),
         ('cell_value', '(edu.utah.sci.vistrails.basic:String)'),
-        ('split_direction', '(za.co.csir.eo4vistrails:Excel Split:tools|excel)'),
-        ('split_offset', '(edu.utah.sci.vistrails.basic:Integer)'),
+        ('split_offset', '(edu.utah.sci.vistrails.basic:List)'),
         ('case_sensitive', '(edu.utah.sci.vistrails.basic:Boolean)'),
         ]
+
+    """
+('f1', '(edu.utah.sci.vistrails.basic:Float,\
+edu.utah.sci.vistrails.basic:String)',
+                    {"defaults": str([1.23, "abc"]),
+                     "labels": str(["temp", "name"])}),
+        ('split_offset', '(edu.utah.sci.vistrails.basic:Integer, \
+                           edu.utah.sci.vistrails.basic:Integer)',
+                         {"labels": str(["row", "col"])}),
+
+   _input_ports = [('f1', '(edu.utah.sci.vistrails.basic:Float, \
+                            edu.utah.sci.vistrails.basic:String)',
+                    {"defaults": str([1.23, "abc"]),
+                     "labels": str(["temp", "name"]),
+                     "optional": True})
+                  ]
+    """
 
     def __init__(self):
         ExcelBase.__init__(self)
@@ -392,24 +406,24 @@ class ExcelSplitter(ExcelBase):
         return [r for r in range(start_repeat[0], stop + 1, start_repeat[1])]
 
     def add_block(self, row, col):
-        """Add new block and alter limits of existing blocks.
+        """Add new unique block and alter limits of existing blocks.
 
         Blocks are used to track which sections of an incoming worksheet need
         to be split into a new worksheet in the outgoing file.
 
-        Each block has an array composed of:
+        Each block is an array composed of:
          *  sheet_name
-         *  top_left_row, top_left_col: cell co-ordinates
-         *  bottom_left_row, bottom_left_col: cell co-ordinates
-         *  row_flag, col_flag: flags to indicate if the bottom limits have
-                                already been reset (by default, each block
-                                extends to the edge of the worksheet)
+         *  top_left_row, top_left_col: cell co-ordinates array
+         *  bottom_left_row, bottom_left_col: cell co-ordinates array
+         *  row_flag, col_flag: boolean array
+                flags indicate if the bottom limits have already been reset
+                (by default, each block extends to the edge of the worksheet)
         """
         candidate = [self.sheet.name, [row, col],
                      [self.sheet.nrows, self.sheet.ncols], [True, True]]
         duplicate = False
         for block in self.blocks:
-            # alter limits on existing blocks
+            # alter limits on unaltered existing blocks
             if block[1][0] < row and block[3][0]:
                 block[2][0] = row - 1
                 block[3][0] = False
@@ -417,7 +431,7 @@ class ExcelSplitter(ExcelBase):
                 block[2][1] = col - 1
                 block[3][1] = False
             if [row, col] == block[1]:
-                duplicate = True
+                duplicate = True  # can only be one block per top,left cell
         if not duplicate:
             self.blocks.append(candidate)
 
@@ -430,7 +444,7 @@ class ExcelSplitter(ExcelBase):
             row_list: list
                 list of (value, type) entries for a row
         """
-        for col, col_value in enumerate(row_list):
+        for col_no, col_value in enumerate(row_list):
             # get column value as searchable type
             if col_value[1] == 2:  # float
                 value = str(col_value[0])
@@ -444,31 +458,38 @@ class ExcelSplitter(ExcelBase):
                 cell_value = self.cell_value.lower()
             else:
                 cell_value = self.cell_value
-            # change row/col locations according to split_*
-            split_row, split_col = row_no, col
-            if self.split_direction == 'col':
-                split_row = 0
-                if self.split_offset < 0:
-                    split_col = max(split_col + self.split_offset, 0)
-                if self.split_offset > 0:
-                    split_col = min(split_col + self.split_offset,
-                                    self.sheet.ncols)
-            elif self.split_direction == 'row':
-                split_col = 0
-                if self.split_offset < 0:
-                    split_row = max(split_row + self.split_offset, 0)
-                if self.split_offset > 0:
-                    split_row = min(split_row + self.split_offset,
-                                    self.sheet.nrows)
+            # change row/col split locations according to split_offset
+            split_row, split_col = row_no, col_no
+            col_offset, row_offset = None, None
+            if self.split_offset and len(self.split_offset) >= 2:  # col value
+                try:
+                    col_offset = int(self.split_offset[1])
+                except:
+                    self.raiseError('Column offset is not an integer.')
+            if self.split_offset and len(self.split_offset) > 0:  # row value
+                try:
+                    row_offset = int(self.split_offset[0])
+                except:
+                    self.raiseError('Row offset is not an integer.')
+            if col_offset:  # col
+                if col_offset < 0:
+                    split_col = max(split_col + col_offset, 0)
+                if col_offset > 0:
+                    split_col = min(split_col + col_offset, self.sheet.ncols)
+            if row_offset:  # row
+                if row_offset < 0:
+                    split_row = max(split_row + row_offset, 0)
+                if row_offset > 0:
+                    split_row = min(split_row + row_offset, self.sheet.nrows)
             # perform value comparison
-            #print "excel464: ", row_no, col, split_row, split_col, value, cell_value
+            #print "excelutils:482", row_no, col_no, split_row, split_col
             if self.cell_match == 'exact' and value == cell_value:
-                self.add_block(row_no, col)
+                self.add_block(split_row, split_col)
             elif self.cell_match == 'starts' and \
                 value[0:len(cell_value)] == cell_value:
-                self.add_block(row_no, col)
+                self.add_block(split_row, split_col)
             elif self.cell_match == 'contains' and cell_value in value:
-                self.add_block(row_no, col)
+                self.add_block(split_row, split_col)
 
     def compute(self):
         super(ExcelSplitter, self).compute()
@@ -477,9 +498,19 @@ class ExcelSplitter(ExcelBase):
         self.cell_value = self.forceGetInputFromPort('cell_value', None)
         self.case_sensitive = self.forceGetInputFromPort('case_sensitive',
                                                          False)
-        self.split_direction = self.forceGetInputFromPort('split_direction',
-                                                          'both')
-        self.split_offset = self.forceGetInputFromPort('split_offset', 0)
+        """        """
+        try:
+            _offset = self.getInputListFromPort("split_offset")
+            if isinstance(_offset[0], (list, tuple)):
+                _offset = _offset[0]  # remove "wrapper" that Vistrails may add
+        except:
+            _offset = []
+        self.split_offset = _offset
+
+
+        # sensible defaults (???) - assume if a value is filled in
+        if self.cell_value and not self.cell_match:
+            self.cell_match = 'contains'
 
         self.blocks = []  # see add_block()
         for sheet_name in self.xls.sheet_list:
@@ -498,8 +529,8 @@ class ExcelSplitter(ExcelBase):
                     if col_list and col_list[0] in [None, ''] and \
                     self.check_if_equal(col_list):  # all blanks!
                             blank_cols.append(col)
-            if not '0' in blank_cols:
-                blank_cols.insert(0, -1)  # will always split at first col
+                if not '0' in blank_cols:
+                    blank_cols.insert(0, -1)  # will always split at first col
             # process splits & create blocks
             found_blank_rows = False
             for row in range(self.sheet.nrows):
@@ -522,7 +553,8 @@ class ExcelSplitter(ExcelBase):
                             for col in blank_cols:
                                 self.add_block(row + 1, col + 1)
                 else:
-                    self.raiseError('Cell value is not specified!')
+                    self.raiseError('Cell match has not been specified! \
+                                    Please make a suitable choice.')
             # blanks: no split on blank rows; just split on blank cols
             if not found_blank_rows and self.cell_match in ['blank', 'rows',
                                                             'cols']:
@@ -810,6 +842,7 @@ ExcelDirectionComboBox = new_constant('Excel Direction',
                                       ExcelDirectionComboBoxWidget)
 
 
+# not used as at 10/10/2012
 class ExcelSplitComboBoxWidget(ComboBoxWidget):
     """Constants used to decide splits for processsing of an Excel file"""
     _KEY_VALUES = {'Row & Column': 'both', 'Along a Row': 'row',
