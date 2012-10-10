@@ -101,11 +101,11 @@ class ExcelBase(ThreadSafeMixin, Module):
         ('sheets', '(edu.utah.sci.vistrails.basic:List)'),
         ('rows', '(edu.utah.sci.vistrails.basic:List,\
 edu.utah.sci.vistrails.basic:Boolean)',
-                    {"defaults": str(["", False]),
-                     "labels": str(["values", "range"])}),
+            {"defaults": str([[], False]),
+             "labels": str(["values", "range"])}),
         ('columns', '(edu.utah.sci.vistrails.basic:List,\
 edu.utah.sci.vistrails.basic:Boolean)',
-                    {"defaults": str(["", False]),
+                    {"defaults": str([[], False]),
                      "labels": str(["values", "range"])}),
         ('file_name_out', '(edu.utah.sci.vistrails.basic:String)')]
     _output_ports = [
@@ -242,14 +242,20 @@ edu.utah.sci.vistrails.basic:Boolean)',
         # process port inputs
         self.file_in = self.forceGetInputFromPort('file_in', None)
         self.file_name_out = self.forceGetInputFromPort('file_name_out', "")
-        self.sheets = self.make_list(self.getInputListFromPort('sheets'))
+        self.sheets = self.make_list(self.forceGetInputListFromPort('sheets'))
         # rows and cols
-        _rows, self.row_range = self.forceGetInputFromPort('rows')
-        _rows = self.make_list(_rows)
+        if self.forceGetInputFromPort('rows'):
+            _rows, self.row_range = self.forceGetInputFromPort('rows')
+            _rows = self.make_list(_rows)
+        else:
+            _rows, self.row_range = [], False
+        #print "excelutils:252", type(_rows), _rows, self.row_range
+        if self.forceGetInputFromPort('columns'):
+            _cols, self.col_range = self.forceGetInputFromPort('columns')
+            _cols = self.make_list(_cols)
+        else:
+            _cols, self.col_range = [], False
         self.rows = _rows
-        #print "excelutils:251", type(_rows), _rows, self.row_range
-        _cols, self.col_range = self.forceGetInputFromPort('columns')
-        _cols = self.make_list(_cols)
         self.cols = _cols
         #store lists to be processed
         self.process_rows = self.excel_list(_rows, ranged=self.row_range)
@@ -387,20 +393,19 @@ class ExcelSplitter(ExcelBase):
             If the list is empty, the sheet will be split according to the
             type of 'cell_match'.
         cell_match:
-            The type of cell value on which the split will take place
-            ('Is Blank' will split on blank rows & columns instead of a value)
-        cell_value:
-            The cell value (string) on which the split will take place (if
-            'cell_match' is not 'Is Blank')
+            type:
+                The type of cell value on which the split will take place.
+                ('Is Blank' will split on blank rows & columns instead of a
+                value)
+            value:
+                The cell value (string) on which the split will take place (if
+                'cell_match' is not 'Is Blank')
+            case_sensitive:
+                Switch to determine if the `cell_match` is case sensitive or
+                not (the default is *not* case sensitive)
         split_offset:
             The number of rows, or rows and columns, away from the split point,
-            at which the split must take place. These can be negative numbers.
-            Uses the following formats:
-             *  N: single number; split offset is N rows
-             *  N, M: two numbers; split offset is N rows and M columns
-        case_sensitive:
-            Switch to determine if the `cell_match` is case senstive or not
-            (the default is *not* case sensitive)
+            at which the split must take place.
 
     Output ports:
         file_out:
@@ -408,28 +413,15 @@ class ExcelSplitter(ExcelBase):
     """
 
     _input_ports = [
-        ('cell_match', '(za.co.csir.eo4vistrails:Excel Match:tools|excel)'),
-        ('cell_value', '(edu.utah.sci.vistrails.basic:String)'),
-        ('split_offset', '(edu.utah.sci.vistrails.basic:List)'),
-        ('case_sensitive', '(edu.utah.sci.vistrails.basic:Boolean)'),
-        ]
-
-    """
-('rows', '(edu.utah.sci.vistrails.basic:List,\
-edu.utah.sci.vistrails.basic:Boolean)',
-                    {"defaults": str(["", False]),
-                     "labels": str(["values", "range"])}),
-        ('split_offset', '(edu.utah.sci.vistrails.basic:Integer, \
+        ('cell_match', '(za.co.csir.eo4vistrails:Excel Match:tools|excel,\
+edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:Boolean)',
+            {"defaults": str(['contains', "", False]),
+             "labels": str(["type", "value", "case_sensitive"])}),
+        ('split_offset', '(edu.utah.sci.vistrails.basic:Integer,\
 edu.utah.sci.vistrails.basic:Integer)',
-                         {"labels": str(["row", "col"])}),
-
-   _input_ports = [('f1', '(edu.utah.sci.vistrails.basic:Float, \
-                            edu.utah.sci.vistrails.basic:String)',
-                    {"defaults": str([1.23, "abc"]),
-                     "labels": str(["temp", "name"]),
-                     "optional": True})
-                  ]
-    """
+                    {"defaults": str([0, 0]),
+                     "labels": str(["rows", "columns"])}),
+    ]
 
     def __init__(self):
         ExcelBase.__init__(self)
@@ -446,10 +438,6 @@ edu.utah.sci.vistrails.basic:Integer)',
             return all(first == rest for rest in iterator)
         except StopIteration:
             return True
-
-    def interval_set(self, start_repeat, stop):
-        """Generate range of numbers, with start, start and repeat values."""
-        return [r for r in range(start_repeat[0], stop + 1, start_repeat[1])]
 
     def add_block(self, row, col):
         """Add new unique block and alter limits of existing blocks.
@@ -540,32 +528,25 @@ edu.utah.sci.vistrails.basic:Integer)',
     def compute(self):
         super(ExcelSplitter, self).compute()
         # class-specific ports
-        self.cell_match = self.forceGetInputFromPort('cell_match', None)
-        self.cell_value = self.forceGetInputFromPort('cell_value', None)
-        self.case_sensitive = self.forceGetInputFromPort('case_sensitive',
-                                                         False)
-        """        """
-        try:
-            _offset = self.getInputListFromPort("split_offset")
-            if isinstance(_offset[0], (list, tuple)):
-                _offset = _offset[0]  # remove "wrapper" that Vistrails may add
-        except:
-            _offset = []
-        self.split_offset = _offset
+        if self.forceGetInputFromPort('cell_match'):
+            self.cell_match, self.cell_value, self.case_sensitive = \
+                self.forceGetInputFromPort('cell_match')
+        else:
+            self.cell_match, self.cell_value, self.case_sensitive = \
+                'blank', None, False
+        if self.forceGetInputFromPort('split_offset'):
+            self.split_offset = self.forceGetInputFromPort('split_offset')
+        else:
+            self.split_offset = (0, 0)
+        #print "excelutils:541", type(self.split_offset), self.split_offset
 
-
-        # sensible defaults (???) - assume if a value is filled in
+        # switch to sensible default (???) if a value is filled in
         if self.cell_value and not self.cell_match:
             self.cell_match = 'contains'
 
         self.blocks = []  # see add_block()
         for sheet_name in self.xls.sheet_list:
             self.sheet = self.xls.book.sheet_by_name(sheet_name)
-            # override process_rows & process_cols
-            if len(self.rows) == 2:
-                self.process_rows = self.interval_set(rows, self.sheet.nrows)
-            if len(self.cols) == 2:
-                self.process_cols = self.interval_set(cols, self.sheet.ncols)
             # store list of any blank cols
             blank_cols = []
             if self.cell_match in ['blank', 'cols']:
@@ -591,16 +572,22 @@ edu.utah.sci.vistrails.basic:Integer)',
                     if not self.process_rows or row in self.process_rows:
                         row_list = self.xls._parse_row(self.sheet, row,
                                                        date_as_tuple=False)
+                        #print "excelutils 575", row, row_list[0]
                         if row == 0 or (row_list and row_list[0] in [None, '']\
                         and self.check_if_equal(row_list)):  # all blank or #1
                             found_blank_rows = True
                             if row == 0:
                                 row = -1
-                            for col in blank_cols:
-                                self.add_block(row + 1, col + 1)
+                            if blank_cols and self.cell_match in ['blank',]:
+                                for col in blank_cols:
+                                    self.add_block(row + 1, col + 1)
+                            else:
+                                self.add_block(row + 1, 0)
+                elif self.cell_match in ['cols', ]:
+                    pass  # see below
                 else:
-                    self.raiseError('Cell match has not been specified! \
-                                    Please make a suitable choice.')
+                    self.raiseError(
+            'Cell match has not been specified! Please make a suitable choice.')
             # blanks: no split on blank rows; just split on blank cols
             if not found_blank_rows and self.cell_match in ['blank', 'rows',
                                                             'cols']:
@@ -614,7 +601,7 @@ edu.utah.sci.vistrails.basic:Integer)',
             return
         # check for blocks
         if not self.blocks:
-            self.raiseError('No suitable split matches in input file!')
+            self.raiseError('No suitable split matches found in input file!')
             return
         # set date format
         date_style = xlwt.XFStyle()
@@ -757,14 +744,16 @@ class ExcelReplacer(ExcelBase):
                  *  N: the first N columns
                  *  N, M: all columns from N to M inclusive
                  *  N, M, P: every "Pth" column, between N to M inclusive
-        cell_current: string
-            The current cell value that is to be replaced.
+        cell_match:
+            value:
+                The current cell value that is to be matched (and replaced).
+            partial: boolean
+                If True, then part of a cell's current value will be replaced.
         cell_replace: string
             The new cell value that is to be used instead of the currrent.
             Can be None; then the current cell value will be replaced by an
             empty string.
-        partial_match: boolean
-            If True, then part of a cell's current value will be replaced.
+
 
     Output ports:
         file_out:
@@ -775,19 +764,20 @@ class ExcelReplacer(ExcelBase):
     #                                 multiple current -> multiple replace
 
     _input_ports = [
-                   ('cell_current', '(edu.utah.sci.vistrails.basic:String)'),
-                   ('cell_replace', '(edu.utah.sci.vistrails.basic:String)'),
-                   ('partial_match', '(edu.utah.sci.vistrails.basic:Boolean)'),
-                   ]
+        ('cell_match', '(edu.utah.sci.vistrails.basic:String,\
+edu.utah.sci.vistrails.basic:Boolean)',
+            {"defaults": str(["", False]),
+             "labels": str(["value", "partial"])}),
+        ('cell_replace', '(edu.utah.sci.vistrails.basic:String)'),
+    ]
 
     def __init__(self):
         ExcelBase.__init__(self)
 
     def compute(self):
         super(ExcelReplacer, self).compute()
-        cell_current = self.forceGetInputFromPort('cell_current', "")
+        cell_current, partial = self.getInputFromPort('cell_match')
         cell_replace = self.forceGetInputFromPort('cell_replace', "")
-        partial = self.forceGetInputFromPort('partial_match', False)
         results = {}
         if not cell_current:
             self.raiseError('Invalid or missing cell_current port')
@@ -856,7 +846,10 @@ class ExcelFiller(ExcelBase):
         cell_replace: string
             The new cell value that is to be used instead of any empty cell.
         use_last_value:
-            If True, will replace empty cells with the last non-empty value.
+            If no value is specified for `cell_replace`, and this is True,
+            any empty cells will be replaced with the last non-empty value
+            found when traversing the worksheet (starting from top-left) in the
+            specified `direction`.
         direction:
             The manner in which the sheet is processed; down the columns or
             along the rows
