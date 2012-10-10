@@ -69,29 +69,47 @@ class ExcelBase(ThreadSafeMixin, Module):
             A list of worksheet numbers, or names, that must be processed.
             If None, then all sheets will be processed.
         rows:
-            A list of row numbers. Uses the following formats:
-             *  N: single number; removes the first N rows
-             *  N, M: two numbers; removes from row N to row M
-             *  N, M, P, ...: three or more numbers; removes numbered rows
-        columns:
-            A list of column numbers. Uses the following formats:
-             *  N: single number; removes the first N columns
-             *  N, M: two numbers; removes from column N to column M
-             *  N, M, P, ...: three or more numbers; removes numbered columns
+            values:
+                A list of row numbers.
+            range:
+                A boolean indicating if the row numbers specify a range.
 
+            If range is `False`, the row values are just numbers of individual
+            rows. If range is `True`, the following notation applies:
+                 *  N: the first N rows
+                 *  N, M: all rows from N to M inclusive
+                 *  N, M, P: every "Pth" row, between N to M inclusive
+        columns:
+            values:
+                A list of column numbers.
+            range:
+                A boolean indicating if the column numbers specify a range.
+
+            If range is `False`, the column values are just numbers of
+            individual columns. If range is `True`, the following notation
+            applies:
+                 *  N: the first N columns
+                 *  N, M: all columns from N to M inclusive
+                 *  N, M, P: every "Pth" column, between N to M inclusive
     Output ports:
         file_out:
             output Excel file
     """
 
     _input_ports = [
-                    ('file_in', '(edu.utah.sci.vistrails.basic:File)'),
-                    ('sheets', '(edu.utah.sci.vistrails.basic:List)'),
-                    ('rows', '(edu.utah.sci.vistrails.basic:List)'),
-                    ('columns', '(edu.utah.sci.vistrails.basic:List)'),
-                    ('file_name_out', '(edu.utah.sci.vistrails.basic:String)')]
+        ('file_in', '(edu.utah.sci.vistrails.basic:File)'),
+        ('sheets', '(edu.utah.sci.vistrails.basic:List)'),
+        ('rows', '(edu.utah.sci.vistrails.basic:List,\
+edu.utah.sci.vistrails.basic:Boolean)',
+                    {"defaults": str(["", False]),
+                     "labels": str(["values", "range"])}),
+        ('columns', '(edu.utah.sci.vistrails.basic:List,\
+edu.utah.sci.vistrails.basic:Boolean)',
+                    {"defaults": str(["", False]),
+                     "labels": str(["values", "range"])}),
+        ('file_name_out', '(edu.utah.sci.vistrails.basic:String)')]
     _output_ports = [
-                    ('file_out', '(edu.utah.sci.vistrails.basic:File)')]
+        ('file_out', '(edu.utah.sci.vistrails.basic:File)')]
 
     def __init__(self):
         ThreadSafeMixin.__init__(self)
@@ -106,6 +124,15 @@ class ExcelBase(ThreadSafeMixin, Module):
         else:
             raise ModuleError(self, msg)
 
+    def make_list(self, lst=None):
+        """"Return a list from any given single element."""
+        if not lst:
+            return []
+        if hasattr(lst, '__iter__'):
+            return list(lst)
+        else:
+            return [lst]
+
     def create_excel_file(self):
         """Create a new Excel output file; named or temporary"""
         if not self.file_name_out:
@@ -117,43 +144,48 @@ class ExcelBase(ThreadSafeMixin, Module):
                 return None
         return new_file
 
-    def excel_list(self, items, reverse=False, sort=False, zero_base=False):
-        """Create (sorted) list of values from a "range" input List.
+    def excel_list(self, items, ranged=False, reverse=False, sort=False,
+                   zero_base=False):
+        """Create (sorted) list of values from a numeric input list.
 
         Args:
             items: List of numbers
-            reverse:  if true, Sort final list in reverse order
-            sort:  if true, Sort final list
-            zero_base:  if true, List numbering starts from 0
+            ranged: if True, create a ranged list
+            reverse:  if True, sort final list in reverse order
+            sort:  if True, sort final list
+            zero_base:  if True, List numbering starts from 0
 
         Assumes list numbering starts from 1, and alters this, if needed, to a
-        0-based numbering:
-        *  [N]: single number;
-           returns a list from 0 to N-1
-        *  [N, M]: two numbers;
-           returns a list from N-1 to M-1
-        *  [N, M, P, ...]: three or more numbers;
-           returns a list [N-1, M-1, P-1, ...]
+        0-based numbering.
+
+        If ranged is `True`, the following notation applies:
+         *  N: a list from 0 to N
+         *  N, M: a list from N-1 to M-1
+         *  N, M, P: a list from N to M, with an interval of P
         """
-        #print "excelutils:131", items, len(items)
+        #print "excelutils:166", items, len(items), type(items[0]), ranged
         offset = 1
         if zero_base:
             offset = 0
         try:
-            #print "excelutils:137", items
-            if len(items) == 1:
+            if ranged and len(items) == 1:
                 list_items = [x for x in range(offset, items[0] + offset)]
-            elif len(items) == 2:
+            elif ranged and len(items) == 2:
                 list_items = [x for x in range(items[0], items[1] + offset)]
+            elif ranged and len(items) == 3:
+                list_items = [x for x in range(items[0], items[1] + offset,
+                                               items[2])]
             else:
                 list_items = items
+            #print "excelutils:177", list_items
             if list_items:
                 list_items = [x - offset for x in list_items]
-            #print "excelutils:145", list_items
-            if reverse:
-                return sorted(list_items, reverse=True)
-            elif sort:
-                return sorted(list_items)
+                if reverse:
+                    return sorted(list_items, reverse=True)
+                elif sort:
+                    return sorted(list_items)
+                else:
+                    return list_items
             else:
                 return list_items
         except:
@@ -210,32 +242,20 @@ class ExcelBase(ThreadSafeMixin, Module):
         # process port inputs
         self.file_in = self.forceGetInputFromPort('file_in', None)
         self.file_name_out = self.forceGetInputFromPort('file_name_out', "")
-        try:
-            _sheets = self.getInputListFromPort('sheets')
-            if isinstance(_sheets[0], (list, tuple)):
-                _sheets = _sheets[0]  # remove Vistrails "wrapper"
-        except:
-            _sheets = []
-        try:
-            _rows = self.getInputListFromPort("rows")
-            if isinstance(_rows[0], (list, tuple)):
-                _rows = _rows[0]  # remove "wrapper" that Vistrails may add
-        except:
-            _rows = []
-        try:
-            _cols = self.getInputListFromPort("columns")
-            if isinstance(_cols[0], (list, tuple)):
-                _cols = _cols[0]  # remove "wrapper" that Vistrails may add
-        except:
-            _cols = []
-        #store basic rows/columns
+        self.sheets = self.make_list(self.getInputListFromPort('sheets'))
+        # rows and cols
+        _rows, self.row_range = self.forceGetInputFromPort('rows')
+        _rows = self.make_list(_rows)
         self.rows = _rows
+        #print "excelutils:251", type(_rows), _rows, self.row_range
+        _cols, self.col_range = self.forceGetInputFromPort('columns')
+        _cols = self.make_list(_cols)
         self.cols = _cols
         #store lists to be processed
-        self.sheets = _sheets
-        self.process_rows = self.excel_list(_rows)
+        self.process_rows = self.excel_list(_rows, ranged=self.row_range)
         # allow for "popping" in a loop
-        self.process_cols = self.excel_list(_cols, reverse=True)
+        self.process_cols = self.excel_list(_cols, ranged=self.col_range,
+                                            reverse=True)
         #set-up connection to Excel file (but does not read the contents here!)
         if self.file_in:
             try:
@@ -246,7 +266,7 @@ class ExcelBase(ThreadSafeMixin, Module):
             if not self.xls.sheet_list:
                 self.raiseError('Invalid "sheets"; please check Excel file')
         else:
-            self.raiseError('Invalid or missing input file/filename')
+            self.raiseError('Invalid or missing input file')
 
 
 @RPyCSafeModule()
@@ -262,15 +282,28 @@ class ExcelExtractor(ExcelBase):
             A list of worksheet numbers, or names, that must be processed.
             If None, then all sheets will be processed.
         rows:
-            A list of row numbers. Uses the following formats:
-             *  N: single number; removes the first N rows
-             *  N, M: two numbers; removes from row N to row M
-             *  N, M, P, ...: three or more numbers; removes numbered rows
+            values:
+                A list of row numbers to be extracted.
+            range:
+                A boolean indicating if the row numbers specify a range.
+
+            If range is `False`, the row values are just numbers of individual
+            rows. If range is `True`, the following notation applies:
+                 *  N: the first N rows
+                 *  N, M: all rows from N to M inclusive
+                 *  N, M, P: every "Pth" row, between N to M inclusive
         columns:
-            A list of column numbers. Uses the following formats:
-             *  N: single number; removes the first N columns
-             *  N, M: two numbers; removes from column N to column M
-             *  N, M, P, ...: three or more numbers; removes numbered columns
+            values:
+                A list of column numbers to be extracted.
+            range:
+                A boolean indicating if the column numbers specify a range.
+
+            If range is `False`, the column values are just numbers of
+            individual columns. If range is `True`, the following notation
+            applies:
+                 *  N: the first N columns
+                 *  N, M: all columns from N to M inclusive
+                 *  N, M, P: every "Pth" column, between N to M inclusive
 
     Output ports:
         data_list:
@@ -325,19 +358,32 @@ class ExcelSplitter(ExcelBase):
             A list of worksheet numbers, or "names", that must be processed.
             If None, then all sheets will be processed.
         rows:
-            A list of row numbers. Uses the following formats:
-             *  N: single number; split only at row N
-             *  N, M: two numbers; split, starting from row N and repeating
-                                   every M rows
-             *  N, M, P, ...: three or more numbers; split at each row
+            values:
+                A list of row numbers on which to split a worksheet.
+            range:
+                A boolean indicating if the row numbers specify a range.
+
+            If range is `False`, the row values are just numbers of individual
+            rows. If range is `True`, the following notation applies:
+                 *  N: the first N rows
+                 *  N, M: all rows from N to M inclusive
+                 *  N, M, P: every "Pth" row, between N to M inclusive
+
             If the list is empty, the sheet will be split according to the
             type of 'cell_match'.
         columns:
-            A list of column numbers. Uses the following formats:
-             *  N: single number; split only at column N
-             *  N, M: two numbers; split, starting from column N and repeating
-                                   every M columns
-             *  N, M, P, ...: three or more numbers; split at each column
+            values:
+                A list of column numbers on which to split a worksheet.
+            range:
+                A boolean indicating if the column numbers specify a range.
+
+            If range is `False`, the column values are just numbers of
+            individual columns. If range is `True`, the following notation
+            applies:
+                 *  N: the first N columns
+                 *  N, M: all columns from N to M inclusive
+                 *  N, M, P: every "Pth" column, between N to M inclusive
+
             If the list is empty, the sheet will be split according to the
             type of 'cell_match'.
         cell_match:
@@ -369,12 +415,12 @@ class ExcelSplitter(ExcelBase):
         ]
 
     """
-('f1', '(edu.utah.sci.vistrails.basic:Float,\
-edu.utah.sci.vistrails.basic:String)',
-                    {"defaults": str([1.23, "abc"]),
-                     "labels": str(["temp", "name"])}),
+('rows', '(edu.utah.sci.vistrails.basic:List,\
+edu.utah.sci.vistrails.basic:Boolean)',
+                    {"defaults": str(["", False]),
+                     "labels": str(["values", "range"])}),
         ('split_offset', '(edu.utah.sci.vistrails.basic:Integer, \
-                           edu.utah.sci.vistrails.basic:Integer)',
+edu.utah.sci.vistrails.basic:Integer)',
                          {"labels": str(["row", "col"])}),
 
    _input_ports = [('f1', '(edu.utah.sci.vistrails.basic:Float, \
@@ -617,17 +663,30 @@ class ExcelChopper(ExcelBase):
             A list of worksheet numbers, or names, that must be processed.
             If None, then all sheets will be processed.
         rows:
-            A list of row numbers. Uses the following formats:
-             *  N: single number; removes the first N rows
-             *  N, M: two numbers; removes from row N to row M
-             *  N, M, P, ...: three or more numbers; removes numbered rows
-            If None, then no rows will be removed.
+            values:
+                A list of row numbers to be removed. If None, then no rows will
+                be removed.
+            range:
+                A boolean indicating if the row numbers specify a range.
+
+            If range is `False`, the row values are just numbers of individual
+            rows. If range is `True`, the following notation applies:
+                 *  N: the first N rows
+                 *  N, M: all rows from N to M inclusive
+                 *  N, M, P: every "Pth" row, between N to M inclusive
         columns:
-            A list of column numbers. Uses the following formats:
-             *  N: single number; removes the first N columns
-             *  N, M: two numbers; removes from column N to column M
-             *  N, M, P, ...: three or more numbers; removes numbered columns
-            If None, then no columns will be removed.
+            values:
+                A list of column numbers to be removed. If None, then no
+                columns will be removed.
+            range:
+                A boolean indicating if the column numbers specify a range.
+
+            If range is `False`, the column values are just numbers of
+            individual columns. If range is `True`, the following notation
+            applies:
+                 *  N: the first N columns
+                 *  N, M: all columns from N to M inclusive
+                 *  N, M, P: every "Pth" column, between N to M inclusive
 
     Output ports:
         file_out:
@@ -674,17 +733,30 @@ class ExcelReplacer(ExcelBase):
             A list of worksheet numbers, or names, that must be processed.
             If None, then all sheets will be processed.
         rows:
-            A list of row numbers. Uses the following formats:
-             *  N: single number; removes the first N rows
-             *  N, M: two numbers; removes from row N to row M
-             *  N, M, P, ...: three or more numbers; removes numbered rows
-            If None, then all rows will be processed.
+            values:
+                A list of row numbers to be processed.  If None, then all rows
+                will be processed.
+            range:
+                A boolean indicating if the row numbers specify a range.
+
+            If range is `False`, the row values are just numbers of individual
+            rows. If range is `True`, the following notation applies:
+                 *  N: the first N rows
+                 *  N, M: all rows from N to M inclusive
+                 *  N, M, P: every "Pth" row, between N to M inclusive
         columns:
-            A list of column numbers. Uses the following formats:
-             *  N: single number; removes the first N columns
-             *  N, M: two numbers; removes from column N to column M
-             *  N, M, P, ...: three or more numbers; removes numbered columns
-            If None, then all columns will be processed.
+            values:
+                A list of column numbers to be processed. If None, then all
+                columns will be processed.
+            range:
+                A boolean indicating if the column numbers specify a range.
+
+            If range is `False`, the column values are just numbers of
+            individual columns. If range is `True`, the following notation
+            applies:
+                 *  N: the first N columns
+                 *  N, M: all columns from N to M inclusive
+                 *  N, M, P: every "Pth" column, between N to M inclusive
         cell_current: string
             The current cell value that is to be replaced.
         cell_replace: string
@@ -757,17 +829,30 @@ class ExcelFiller(ExcelBase):
             A list of worksheet numbers, or names, that must be processed.
             If None, then all sheets will be processed.
         rows:
-            A list of row numbers. Uses the following formats:
-             *  N: single number; removes the first N rows
-             *  N, M: two numbers; removes from row N to row M
-             *  N, M, P, ...: three or more numbers; removes numbered rows
-            If None, then all rows will be processed.
+            values:
+                A list of row numbers to be processed.  If None, then all rows
+                will be processed.
+            range:
+                A boolean indicating if the row numbers specify a range.
+
+            If range is `False`, the row values are just numbers of individual
+            rows. If range is `True`, the following notation applies:
+                 *  N: the first N rows
+                 *  N, M: all rows from N to M inclusive
+                 *  N, M, P: every "Pth" row, between N to M inclusive
         columns:
-            A list of column numbers. Uses the following formats:
-             *  N: single number; removes the first N columns
-             *  N, M: two numbers; removes from column N to column M
-             *  N, M, P, ...: three or more numbers; removes numbered columns
-            If None, then all columns will be processed.
+            values:
+                A list of column numbers to be processed.  If None, then all
+                columns will be processed.
+            range:
+                A boolean indicating if the column numbers specify a range.
+
+            If range is `False`, the column values are just numbers of
+            individual columns. If range is `True`, the following notation
+            applies:
+                 *  N: the first N columns
+                 *  N, M: all columns from N to M inclusive
+                 *  N, M, P: every "Pth" column, between N to M inclusive
         cell_replace: string
             The new cell value that is to be used instead of any empty cell.
         use_last_value:
