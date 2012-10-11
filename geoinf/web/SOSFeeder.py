@@ -44,33 +44,126 @@ import init
 
 @RPyCSafeModule()
 class SOSFeeder(ThreadSafeMixin, Module):
-    """Accept a file, extract data from it, and POST it to a specified SOS.
+    """Accept an Excel file, extract data from it, and POST it to a specified
+    Sensor Observation Serice (SOS), as per specified parameters.
 
     Input ports:
         OGC_URL:
             the network address of the SOS
-        data_file:
-            an Excel (.xls format) file; containing data to populate the SOS
-        configuration:
-            an optional configuration dictionary - this will override the
-            default settings used to access data from the Excel file
+        file_in:
+            input Excel file
+        sheets:
+            a list of worksheet numbers, or names, that must be processed.
+            If None, then all sheets will be processed. Sheet numbering starts
+            from 1.
         active:
-            a boolean port; if True (default) then incoming data is POSTed
+            a Boolean port; if True (default) then outgoing data is POSTed
             directly to the SOS
+        procedure:
+            the physical sensor or process that has carried out the observation
+            name:
+                the name of the procedure, which is set for all observations
+            row:
+                the row in which the name of the procedure appears - rows are
+                numbered from 1 onwards.
+            column:
+                the column in which the name of the procedure appears - columns
+                are numbered from 1 onwards.
+        feature:
+            the feature for which the observation was carried out; typically
+            a geographical area or a monitoring station / sampling point
+            name:
+                the name of the feature, which is set for all observations
+            row:
+                the row in which the name of the feature appears- rows are
+                numbered from 1 onwards.
+            column:
+                the column in which the name of the feature appears- columns
+                are numbered from 1 onwards.
+        feature_details:
+            an (optional) expanded set of information for each feature;
+            including SRS, latitude and longitude
+            filename:
+                the name of the CSV file containing the details for each
+                feature, in the form:
+                    "name", "SRS_value", "co-ordinates"
+                where `co-ordinates` can be a single  pair of space-separated
+                lat/long values, or a comma-delimited list of such values
+            dictionary:
+                a dictionary containing the details for each feature, in the
+                format:
+                    {"name_1": {"srs": "SRS_1", "coord": [(a,b), (c,d) ...]},
+                    "name_2": {"srs": "SRS_2", "coord": [(p,q), (r,s) ...]},}
+        property:
+            the property which was measured or calculated as part of the
+            observation; for example, the water flowrate at river guage
+            name:
+                the name of the property, which is set for all observations
+            row:
+                the row in which the name of the property appears- rows are
+                numbered from 1 onwards.
+            column:
+                the column in which the name of the property appears- columns
+                are numbered from 1 onwards.
+        property_details:
+            an (optional) expanded set of information for each property;
+            including URN and units of measure
+            filename:
+                the name of the CSV file containing the details for each
+                property, in the form:
+                    "name", "URN_value", "units"
+                where the URN is once used by standards bodies, such OGC or
+                NASA (SWEET), and units are noted in standard ISO format
+            dictionary:
+                a dictionary containing the details for each property, in the
+                format:
+                    {"name_1": {"urn": "URN_value1", "units": "abc"},
+                    "name_2": {"urn": "URN_value2", "units": "pqr"},}
+            a commonly used set of properties, for measurements made in the
+            environmental domain, is supplied with EO4VisTrails;  this will
+            only be used if information is not available from the above sources
+        date:
+            the date(s) on which the property which was measured or calculated
+            value:
+                a single date, which is the same for all observations
+            row:
+                the row in which the date appears- rows are numbered from 1
+                onwards.
+            column:
+                the column in which the date appears- columns are numbered
+                from 1 onwards.
+        observations:
+            row:
+                the row in which the first observation appears- rows are
+                numbered from 1 onwards.
+            column:
+                the column in which the first observation  appears- columns
+                are numbered from 1 onwards.
+        separator:
+            the characters used to separate observations in the SOS XML file;
+            only change this if absolutely required
+            decimal:
+                a single character used to demarcate a decimal fraction (this
+                defaults to ".")
+            token:
+                a single character used to seperate items in a single
+                observation (this defaults to ",")
+            block:
+                a single character used to seperate sets of observations (this
+                defaults to ";")
 
     Output ports:
         PostData:
             an XML string; containing data POSTed to the SOS
     """
 
-    """
     _input_ports = [
                 ('OGC_URL', '(edu.utah.sci.vistrails.basic:String)'),
-                ('data_file', '(edu.utah.sci.vistrails.basic:File)'),
-                ('configuration', '(edu.utah.sci.vistrails.basic:Dictionary)'),
+                ('file_in', '(edu.utah.sci.vistrails.basic:File)'),
+                ('sheets', '(edu.utah.sci.vistrails.basic:List)'),
                 ('active', '(edu.utah.sci.vistrails.basic:Boolean)')]
     _output_ports = [('PostData', '(edu.utah.sci.vistrails.basic:String)'),]
-    """
+
 
     def __init__(self):
         ThreadSafeMixin.__init__(self)
