@@ -4,7 +4,7 @@
 ##
 ## eo4vistrails extends VisTrails, providing GIS/Earth Observation
 ## ingestion, pre-processing, transformation, analytic and visualisation
-## capabilities . Included is the abilty to run code transparently in
+## capabilities . Included is the ability to run code transparently in
 ## OpenNebula cloud environments. There are various software
 ## dependencies, but all are FOSS.
 ##
@@ -23,7 +23,7 @@
 ## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ##
 ############################################################################
-"""This module provides a meams to visualise an Excel file, in a Vistrails
+"""This module provides a means to visualise an Excel file, in a Vistrails
 spreadsheet cell, as an HMTL table.
 """
 # library
@@ -41,6 +41,8 @@ import shutil
 
 ENCODING = "utf-8"  # will probably differ in some countries ???
 
+# TODO - consider recoding from line 180 using a Jinja template !!!
+
 ##############################################################################
 
 
@@ -50,16 +52,16 @@ class ExcelCell(SpreadsheetCell):
 
     Input ports:
         Location:
-            The Location of the output display cell
+            the Location of the output display cell
         File:
-            A File in .xls format
+            a File in .xls format
         Sheets:
-            A List of sheet numbers, or names, that must be displayed.
+            a List of sheet numbers, or names, that must be displayed.
             If None, then all sheets will be displayed.
     """
     def compute(self):
         """ compute() -> None
-        Creat HTMl and dispatch the contents to the VisTrails spreadsheet
+        Create HTML and dispatch the contents to the VisTrails spreadsheet
         """
         if self.hasInputFromPort("File"):
             fileValue = self.getInputFromPort("File")
@@ -122,7 +124,7 @@ class ExcelCellWidget(QCellWidget):
         """ dumpToFile(filename) -> None
         It will generate a screenshot of the cell contents and dump to filename.
         It will also create a copy of the original text file used with
-        filename's basename and the original extension.
+        filename's base name and the original extension.
         """
         if self.fileSrc is not None:
             (_, s_ext) = os.path.splitext(self.fileSrc)
@@ -151,13 +153,14 @@ class ExcelCellWidget(QCellWidget):
         """Return HTML in the output file from an Excel input file.
 
         Args:
-            file_in: File object; points to Excel file
-            file_out: File object; points to (temporary) HTML file
-            sheets: List of sheet numbers or names to be processed; if None
+            file_in: File object
+                points to Excel file
+            file_out: File object
+                points to (temporary) HTML file
+            sheets: List
+                the sheet numbers or names to be processed; if None
                 then all are processed.  Sheet numbering starts from 1.
         """
-        #file_in = '/home/dhohls/Dropbox_CSIR/Dropbox/ICT4EO_PG/Demo_Workflows/Data/observation_data.xls'
-        #file_out = '/home/dhohls/Desktop/output.html'
         if not file_in or not file_out:
             return None
         if not css:
@@ -261,7 +264,7 @@ class ExcelCellWidget(QCellWidget):
                                 value = "%04d/%02d/%02d %02d:%02d:%02d" % datetuple
                     elif type == 5:
                         value = xlrd.error_text_from_code[value]
-                    # create cell with formating
+                    # create cell with formatting
                     if style:
                         style = ' style="%s"' % style
                     fyle.write('<td%s>%s</td>' % (style, value or '&#160;'))

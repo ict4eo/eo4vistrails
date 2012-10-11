@@ -5,7 +5,7 @@
 ###
 ### This full package extends VisTrails, providing GIS/Earth Observation
 ### ingestion, pre-processing, transformation, analytic and visualisation
-### capabilities . Included is the abilty to run code transparently in
+### capabilities . Included is the ability to run code transparently in
 ### OpenNebula cloud environments. There are various software
 ### dependencies, but all are FOSS.
 ###
@@ -46,17 +46,17 @@ from packages.eo4vistrails.tools.utils.DropDownListWidget import ComboBoxWidget
 from readexcel import read_excel
 
 DATE_FORMAT = 'YYYY/MM/DD'
-NAME_SIZE = 27  # maximum length of Excel worksheet name (31), subtract 4
+SHEET_NAME_SIZE = 27  # maximum length of an Excel worksheet name (31 - 4)
 
 
 @RPyCSafeModule()
 class ExcelBase(ThreadSafeMixin, Module):
-    """An abtract VisTrails class for reading and processing an Excel file.
+    """An abstract VisTrails class for reading and processing an Excel file.
 
     This base class contains common methods and properties.
 
     The compute() method initialises data for ports that are common to all
-    classes; but should be extended to perform procesing specific to the
+    classes; but should be extended to perform processing specific to the
     inherited class.
 
     Input ports:
@@ -66,13 +66,14 @@ class ExcelBase(ThreadSafeMixin, Module):
             an optional full directory path and filename to be written; if None
             then a temporary file will be created
         sheets:
-            A list of worksheet numbers, or names, that must be processed.
-            If None, then all sheets will be processed.
+            a list of worksheet numbers, or names, that must be processed.
+            If None, then all sheets will be processed. Sheet numbering starts
+            from 1.
         rows:
             values:
-                A list of row numbers.
+                a list of row numbers. Row numbering starts from 1.
             range:
-                A boolean indicating if the row numbers specify a range.
+                a Boolean indicating if the row numbers specify a range.
 
             If range is `False`, the row values are just numbers of individual
             rows. If range is `True`, the following notation applies:
@@ -81,9 +82,9 @@ class ExcelBase(ThreadSafeMixin, Module):
                  *  N, M, P: every "Pth" row, between N to M inclusive
         columns:
             values:
-                A list of column numbers.
+                a list of column numbers. Column numbering starts from 1.
             range:
-                A boolean indicating if the column numbers specify a range.
+                a Boolean indicating if the column numbers specify a range.
 
             If range is `False`, the column values are just numbers of
             individual columns. If range is `True`, the following notation
@@ -149,7 +150,7 @@ edu.utah.sci.vistrails.basic:Boolean)',
         """Create (sorted) list of values from a numeric input list.
 
         Args:
-            items: List of numbers
+            items: a List of numbers
             ranged: if True, create a ranged list
             reverse:  if True, sort final list in reverse order
             sort:  if True, sort final list
@@ -177,7 +178,6 @@ edu.utah.sci.vistrails.basic:Boolean)',
                                                items[2])]
             else:
                 list_items = items
-            #print "excelutils:177", list_items
             if list_items:
                 list_items = [x - offset for x in list_items]
                 if reverse:
@@ -214,7 +214,7 @@ edu.utah.sci.vistrails.basic:Boolean)',
                 # add row/col data
                 for row_index, row in enumerate(results[key]):
                     for col_index, value in enumerate(row):
-                        #print "excelutils:186", row_index, col_index, value
+                        #print "excelutils:218", row_index, col_index, value
                         if isinstance(value, (list, tuple)):  # date
                             dt = datetime(*value)
                             worksheet.write(row_index, col_index,
@@ -249,7 +249,7 @@ edu.utah.sci.vistrails.basic:Boolean)',
             _rows = self.make_list(_rows)
         else:
             _rows, self.row_range = [], False
-        #print "excelutils:252", type(_rows), _rows, self.row_range
+        #print "excelutils:253", type(_rows), _rows, self.row_range
         if self.forceGetInputFromPort('columns'):
             _cols, self.col_range = self.forceGetInputFromPort('columns')
             _cols = self.make_list(_cols)
@@ -282,16 +282,18 @@ class ExcelExtractor(ExcelBase):
         file_in:
             input Excel file
         file_name_out:
-            an optional full directory path and filename to be writte; if None
+            an optional full directory path and filename to be written; if None
             then a temporary file will be created
         sheets:
-            A list of worksheet numbers, or names, that must be processed.
-            If None, then all sheets will be processed.
+            a list of worksheet numbers, or names, that must be processed.
+            If None, then all sheets will be processed. Sheet numbering starts
+            from 1.
         rows:
             values:
-                A list of row numbers to be extracted.
+                a list of row numbers to be extracted. Row numbering starts
+                from 1.
             range:
-                A boolean indicating if the row numbers specify a range.
+                a Boolean indicating if the row numbers specify a range.
 
             If range is `False`, the row values are just numbers of individual
             rows. If range is `True`, the following notation applies:
@@ -300,9 +302,10 @@ class ExcelExtractor(ExcelBase):
                  *  N, M, P: every "Pth" row, between N to M inclusive
         columns:
             values:
-                A list of column numbers to be extracted.
+                a list of column numbers to be extracted. Column numbering
+                starts from 1.
             range:
-                A boolean indicating if the column numbers specify a range.
+                a Boolean indicating if the column numbers specify a range.
 
             If range is `False`, the column values are just numbers of
             individual columns. If range is `True`, the following notation
@@ -361,13 +364,15 @@ class ExcelSplitter(ExcelBase):
             an optional full directory path and filename to be written; if None
             then a temporary file will be created
         sheets:
-            A list of worksheet numbers, or "names", that must be processed.
-            If None, then all sheets will be processed.
+            a list of worksheet numbers, or "names", that must be processed.
+            If None, then all sheets will be processed. Sheet numbering starts
+            from 1.
         rows:
             values:
-                A list of row numbers on which to split a worksheet.
+                a list of row numbers on which to split a worksheet. Row
+                numbering starts from 1.
             range:
-                A boolean indicating if the row numbers specify a range.
+                a Boolean indicating if the row numbers specify a range.
 
             If range is `False`, the row values are just numbers of individual
             rows. If range is `True`, the following notation applies:
@@ -379,9 +384,10 @@ class ExcelSplitter(ExcelBase):
             type of 'cell_match'.
         columns:
             values:
-                A list of column numbers on which to split a worksheet.
+                a list of column numbers on which to split a worksheet. Column
+                numbering starts from 1.
             range:
-                A boolean indicating if the column numbers specify a range.
+                a Boolean indicating if the column numbers specify a range.
 
             If range is `False`, the column values are just numbers of
             individual columns. If range is `True`, the following notation
@@ -394,17 +400,17 @@ class ExcelSplitter(ExcelBase):
             type of 'cell_match'.
         cell_match:
             type:
-                The type of cell value on which the split will take place.
+                the type of cell value on which the split will take place.
                 ('Is Blank' will split on blank rows & columns instead of a
                 value)
             value:
-                The cell value (string) on which the split will take place (if
+                the cell value (string) on which the split will take place (if
                 'cell_match' is not 'Is Blank')
             case_sensitive:
-                Switch to determine if the `cell_match` is case sensitive or
-                not (the default is *not* case sensitive)
+                a Boolean switch to determine if the `cell_match` is case
+                sensitive or not (the default is *not* case sensitive)
         split_offset:
-            The number of rows, or rows and columns, away from the split point,
+            the number of rows, or rows and columns, away from the split point,
             at which the split must take place.
 
     Output ports:
@@ -449,7 +455,7 @@ edu.utah.sci.vistrails.basic:Integer)',
          *  sheet_name
          *  top_left_row, top_left_col: cell co-ordinates array
          *  bottom_left_row, bottom_left_col: cell co-ordinates array
-         *  row_flag, col_flag: boolean array
+         *  row_flag, col_flag: Boolean array
                 flags indicate if the bottom limits have already been reset
                 (by default, each block extends to the edge of the worksheet)
         """
@@ -479,7 +485,7 @@ edu.utah.sci.vistrails.basic:Integer)',
                 list of (value, type) entries for a row
         """
         for col_no, col_value in enumerate(row_list):
-            # get column value as searchable type
+            # get column value as search-able type
             if col_value[1] == 2:  # float
                 value = str(col_value[0])
             elif col_value[1] == 1:  # text
@@ -516,7 +522,7 @@ edu.utah.sci.vistrails.basic:Integer)',
                 if row_offset > 0:
                     split_row = min(split_row + row_offset, self.sheet.nrows)
             # perform value comparison
-            #print "excelutils:482", row_no, col_no, split_row, split_col
+            #print "excelutils:526", row_no, col_no, split_row, split_col
             if self.cell_match == 'exact' and value == cell_value:
                 self.add_block(split_row, split_col)
             elif self.cell_match == 'starts' and \
@@ -538,7 +544,7 @@ edu.utah.sci.vistrails.basic:Integer)',
             self.split_offset = self.forceGetInputFromPort('split_offset')
         else:
             self.split_offset = (0, 0)
-        #print "excelutils:541", type(self.split_offset), self.split_offset
+        #print "excelutils:548", type(self.split_offset), self.split_offset
 
         # switch to sensible default (???) if a value is filled in
         if self.cell_value and not self.cell_match:
@@ -572,13 +578,13 @@ edu.utah.sci.vistrails.basic:Integer)',
                     if not self.process_rows or row in self.process_rows:
                         row_list = self.xls._parse_row(self.sheet, row,
                                                        date_as_tuple=False)
-                        #print "excelutils 575", row, row_list[0]
+                        #print "excelutils 582", row, row_list[0]
                         if row == 0 or (row_list and row_list[0] in [None, '']\
                         and self.check_if_equal(row_list)):  # all blank or #1
                             found_blank_rows = True
                             if row == 0:
                                 row = -1
-                            if blank_cols and self.cell_match in ['blank',]:
+                            if blank_cols and self.cell_match in ['blank', ]:
                                 for col in blank_cols:
                                     self.add_block(row + 1, col + 1)
                             else:
@@ -587,7 +593,7 @@ edu.utah.sci.vistrails.basic:Integer)',
                     pass  # see below
                 else:
                     self.raiseError(
-            'Cell match has not been specified! Please make a suitable choice.')
+                    'Cell match has not been specified! Please make a choice.')
             # blanks: no split on blank rows; just split on blank cols
             if not found_blank_rows and self.cell_match in ['blank', 'rows',
                                                             'cols']:
@@ -611,7 +617,8 @@ edu.utah.sci.vistrails.basic:Integer)',
         workbook = xlwt.Workbook()
         for row_index, block in enumerate(self.blocks):
             worksheet = workbook.add_sheet("%s_%s" %
-                                        (row_index + 1, block[0][0:NAME_SIZE]))
+                                        (row_index + 1,
+                                         block[0][0:SHEET_NAME_SIZE]))
             for r, row in enumerate(range(block[1][0], block[2][0])):
                 sheet = self.xls.book.sheet_by_name(block[0])
                 #print "slicing row:cols", row, ":", block[1][1], block[2][1]
@@ -644,17 +651,18 @@ class ExcelChopper(ExcelBase):
         file_in:
             input Excel file
         file_name_out:
-            an optional full directory path and filename to be writte; if None
+            an optional full directory path and filename to be written; if None
             then a temporary file will be created
         sheets:
-            A list of worksheet numbers, or names, that must be processed.
-            If None, then all sheets will be processed.
+            a list of worksheet numbers, or names, that must be processed.
+            If None, then all sheets will be processed. Sheet numbering starts
+            from 1.
         rows:
             values:
-                A list of row numbers to be removed. If None, then no rows will
-                be removed.
+                a list of row numbers to be removed. If None, then no rows will
+                be removed. Row numbering starts from 1.
             range:
-                A boolean indicating if the row numbers specify a range.
+                a Boolean indicating if the row numbers specify a range.
 
             If range is `False`, the row values are just numbers of individual
             rows. If range is `True`, the following notation applies:
@@ -663,10 +671,10 @@ class ExcelChopper(ExcelBase):
                  *  N, M, P: every "Pth" row, between N to M inclusive
         columns:
             values:
-                A list of column numbers to be removed. If None, then no
-                columns will be removed.
+                a list of column numbers to be removed. If None, then no
+                columns will be removed. Column numbering starts from 1.
             range:
-                A boolean indicating if the column numbers specify a range.
+                a Boolean indicating if the column numbers specify a range.
 
             If range is `False`, the column values are just numbers of
             individual columns. If range is `True`, the following notation
@@ -714,17 +722,18 @@ class ExcelReplacer(ExcelBase):
         file_in:
             input Excel file
         file_name_out:
-            an optional full directory path and filename to be writte; if None
+            an optional full directory path and filename to be write; if None
             then a temporary file will be created
         sheets:
-            A list of worksheet numbers, or names, that must be processed.
-            If None, then all sheets will be processed.
+            a list of worksheet numbers, or names, that must be processed.
+            If None, then all sheets will be processed. Sheet numbering starts
+            from 1.
         rows:
             values:
-                A list of row numbers to be processed.  If None, then all rows
-                will be processed.
+                a list of row numbers to be processed.  If None, then all rows
+                will be processed. Row numbering starts from 1.
             range:
-                A boolean indicating if the row numbers specify a range.
+                a Boolean indicating if the row numbers specify a range.
 
             If range is `False`, the row values are just numbers of individual
             rows. If range is `True`, the following notation applies:
@@ -733,10 +742,10 @@ class ExcelReplacer(ExcelBase):
                  *  N, M, P: every "Pth" row, between N to M inclusive
         columns:
             values:
-                A list of column numbers to be processed. If None, then all
-                columns will be processed.
+                a list of column numbers to be processed. If None, then all
+                columns will be processed. Column numbering starts from 1.
             range:
-                A boolean indicating if the column numbers specify a range.
+                a Boolean indicating if the column numbers specify a range.
 
             If range is `False`, the column values are just numbers of
             individual columns. If range is `True`, the following notation
@@ -746,11 +755,11 @@ class ExcelReplacer(ExcelBase):
                  *  N, M, P: every "Pth" column, between N to M inclusive
         cell_match:
             value:
-                The current cell value that is to be matched (and replaced).
-            partial: boolean
-                If True, then part of a cell's current value will be replaced.
+                the current cell value that is to be matched (and replaced).
+            partial: Boolean
+                if True, then part of a cell's current value will be replaced.
         cell_replace: string
-            The new cell value that is to be used instead of the currrent.
+            the new cell value that is to be used instead of the current.
             Can be None; then the current cell value will be replaced by an
             empty string.
 
@@ -813,17 +822,18 @@ class ExcelFiller(ExcelBase):
         file_in:
             input Excel file
         file_name_out:
-            an optional full directory path and filename to be writte; if None
+            an optional full directory path and filename to be write; if None
             then a temporary file will be created
         sheets:
-            A list of worksheet numbers, or names, that must be processed.
-            If None, then all sheets will be processed.
+            a list of worksheet numbers, or names, that must be processed.
+            If None, then all sheets will be processed. Sheet numbering starts
+            from 1.
         rows:
             values:
-                A list of row numbers to be processed.  If None, then all rows
-                will be processed.
+                a list of row numbers to be processed.  If None, then all rows
+                will be processed. Row numbering starts from 1.
             range:
-                A boolean indicating if the row numbers specify a range.
+                a Boolean indicating if the row numbers specify a range.
 
             If range is `False`, the row values are just numbers of individual
             rows. If range is `True`, the following notation applies:
@@ -832,10 +842,10 @@ class ExcelFiller(ExcelBase):
                  *  N, M, P: every "Pth" row, between N to M inclusive
         columns:
             values:
-                A list of column numbers to be processed.  If None, then all
-                columns will be processed.
+                a list of column numbers to be processed.  If None, then all
+                columns will be processed. Column numbering starts from 1.
             range:
-                A boolean indicating if the column numbers specify a range.
+                a Boolean indicating if the column numbers specify a range.
 
             If range is `False`, the column values are just numbers of
             individual columns. If range is `True`, the following notation
@@ -844,14 +854,14 @@ class ExcelFiller(ExcelBase):
                  *  N, M: all columns from N to M inclusive
                  *  N, M, P: every "Pth" column, between N to M inclusive
         cell_replace: string
-            The new cell value that is to be used instead of any empty cell.
-        use_last_value:
-            If no value is specified for `cell_replace`, and this is True,
+            the new cell value that is to be used instead of any empty cell.
+        use_last_value: Boolean
+            if no value is specified for `cell_replace`, and this is True,
             any empty cells will be replaced with the last non-empty value
             found when traversing the worksheet (starting from top-left) in the
             specified `direction`.
         direction:
-            The manner in which the sheet is processed; down the columns or
+            the order in which the sheet is processed; down the columns or
             along the rows
 
     Output ports:
@@ -910,7 +920,7 @@ class ExcelFiller(ExcelBase):
 
 
 class ExcelDirectionComboBoxWidget(ComboBoxWidget):
-    """Constants used to decide direction of processsing of an Excel file"""
+    """Constants used to decide direction of processing of an Excel file"""
     _KEY_VALUES = {'Along Rows': 'rows', 'Down Columns': 'cols'}
 
 ExcelDirectionComboBox = new_constant('Excel Direction',
@@ -922,7 +932,7 @@ ExcelDirectionComboBox = new_constant('Excel Direction',
 
 # not used as at 10/10/2012
 class ExcelSplitComboBoxWidget(ComboBoxWidget):
-    """Constants used to decide splits for processsing of an Excel file"""
+    """Constants used to decide splits for processing of an Excel file"""
     _KEY_VALUES = {'Row & Column': 'both', 'Along a Row': 'row',
                    'Along a Column': 'col'}
 

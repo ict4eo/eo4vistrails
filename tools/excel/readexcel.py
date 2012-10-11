@@ -24,7 +24,7 @@ class read_excel(object):
     appropriate. However, when specifying date_as_tuple=True, dates will be
     returned as a (Year, Month, Day, Hour, Min, Second) tuple, for usage with
     mxDateTime or DateTime. Numbers are returned as either INT or FLOAT,
-    whichever is needed to support the data. Text, booleans, and error codes
+    whichever is needed to support the data. Text, Booleans, and error codes
     are also returned as appropriate representations.
 
     Example of use:
