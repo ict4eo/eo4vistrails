@@ -1,33 +1,9 @@
-# -*- coding: utf-8 -*-
-############################################################################
-###
-### Copyright (C) 2010 CSIR Meraka Institute. All rights reserved.
-###
-### This full package extends VisTrails, providing GIS/Earth Observation
-### ingestion, pre-processing, transformation, analytic and visualisation
-### capabilities . Included is the abilty to run code transparently in
-### OpenNebula cloud environments. There are various software
-### dependencies, but all are FOSS.
-###
-### This file may be used under the terms of the GNU General Public
-### License version 2.0 as published by the Free Software Foundation
-### and appearing in the file LICENSE.GPL included in the packaging of
-### this file.  Please review the following to ensure GNU General Public
-### Licensing requirements will be met:
-### http://www.opensource.org/licenses/gpl-license.php
-###
-### If you are unsure which license is appropriate for your use (for
-### instance, you are interested in developing a commercial derivative
-### of VisTrails), please contact us at vistrails@sci.utah.edu.
-###
-### This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-### WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-###
-#############################################################################
+
 """This module forms part of the eo4vistrails capabilities. It is used to
 handle data feeds to an OGC SOS (including InsertObservation & RegisterSensor)
 """
 # library
+import csv
 import os
 import os.path
 from jinja2 import Environment, PackageLoader, FileSystemLoader
@@ -44,8 +20,8 @@ import init
 
 @RPyCSafeModule()
 class SOSFeeder(ThreadSafeMixin, Module):
-    """Accept an Excel file, extract data from it, and POST it to a specified
-    Sensor Observation Serice (SOS), as per specified parameters.
+    """Accept an Excel file, extract observation data from it, and POST it to a
+    Sensor Observation Service (SOS), as per specified parameters.
 
     Input ports:
         OGC_URL:
@@ -59,98 +35,6 @@ class SOSFeeder(ThreadSafeMixin, Module):
         active:
             a Boolean port; if True (default) then outgoing data is POSTed
             directly to the SOS
-        procedure:
-            the physical sensor or process that has carried out the observation
-            name:
-                the name of the procedure, which is set for all observations
-            row:
-                the row in which the name of the procedure appears - rows are
-                numbered from 1 onwards.
-            column:
-                the column in which the name of the procedure appears - columns
-                are numbered from 1 onwards.
-        feature:
-            the feature for which the observation was carried out; typically
-            a geographical area or a monitoring station / sampling point
-            name:
-                the name of the feature, which is set for all observations
-            row:
-                the row in which the name of the feature appears- rows are
-                numbered from 1 onwards.
-            column:
-                the column in which the name of the feature appears- columns
-                are numbered from 1 onwards.
-        feature_details:
-            an (optional) expanded set of information for each feature;
-            including SRS, latitude and longitude
-            filename:
-                the name of the CSV file containing the details for each
-                feature, in the form:
-                    "name", "SRS_value", "co-ordinates"
-                where `co-ordinates` can be a single  pair of space-separated
-                lat/long values, or a comma-delimited list of such values
-            dictionary:
-                a dictionary containing the details for each feature, in the
-                format:
-                    {"name_1": {"srs": "SRS_1", "coord": [(a,b), (c,d) ...]},
-                    "name_2": {"srs": "SRS_2", "coord": [(p,q), (r,s) ...]},}
-        property:
-            the property which was measured or calculated as part of the
-            observation; for example, the water flowrate at river guage
-            name:
-                the name of the property, which is set for all observations
-            row:
-                the row in which the name of the property appears- rows are
-                numbered from 1 onwards.
-            column:
-                the column in which the name of the property appears- columns
-                are numbered from 1 onwards.
-        property_details:
-            an (optional) expanded set of information for each property;
-            including URN and units of measure
-            filename:
-                the name of the CSV file containing the details for each
-                property, in the form:
-                    "name", "URN_value", "units"
-                where the URN is once used by standards bodies, such OGC or
-                NASA (SWEET), and units are noted in standard ISO format
-            dictionary:
-                a dictionary containing the details for each property, in the
-                format:
-                    {"name_1": {"urn": "URN_value1", "units": "abc"},
-                    "name_2": {"urn": "URN_value2", "units": "pqr"},}
-            a commonly used set of properties, for measurements made in the
-            environmental domain, is supplied with EO4VisTrails;  this will
-            only be used if information is not available from the above sources
-        date:
-            the date(s) on which the property which was measured or calculated
-            value:
-                a single date, which is the same for all observations
-            row:
-                the row in which the date appears- rows are numbered from 1
-                onwards.
-            column:
-                the column in which the date appears- columns are numbered
-                from 1 onwards.
-        observations:
-            row:
-                the row in which the first observation appears- rows are
-                numbered from 1 onwards.
-            column:
-                the column in which the first observation  appears- columns
-                are numbered from 1 onwards.
-        separator:
-            the characters used to separate observations in the SOS XML file;
-            only change this if absolutely required
-            decimal:
-                a single character used to demarcate a decimal fraction (this
-                defaults to ".")
-            token:
-                a single character used to seperate items in a single
-                observation (this defaults to ",")
-            block:
-                a single character used to seperate sets of observations (this
-                defaults to ";")
 
     Output ports:
         PostData:
@@ -158,10 +42,11 @@ class SOSFeeder(ThreadSafeMixin, Module):
     """
 
     _input_ports = [
-                ('OGC_URL', '(edu.utah.sci.vistrails.basic:String)'),
-                ('file_in', '(edu.utah.sci.vistrails.basic:File)'),
-                ('sheets', '(edu.utah.sci.vistrails.basic:List)'),
-                ('active', '(edu.utah.sci.vistrails.basic:Boolean)')]
+        ('OGC_URL', '(edu.utah.sci.vistrails.basic:String)'),
+        ('file_in', '(edu.utah.sci.vistrails.basic:File)'),
+        ('sheets', '(edu.utah.sci.vistrails.basic:List)'),
+        ('active', '(edu.utah.sci.vistrails.basic:Boolean)'),
+        ]
     _output_ports = [('PostData', '(edu.utah.sci.vistrails.basic:String)'),]
 
 
@@ -178,22 +63,43 @@ class SOSFeeder(ThreadSafeMixin, Module):
         else:
             raise ModuleError(self, msg)
 
-    def compute(self):
+    def compute(self):  # inherit and extend in child class
+        # port data
         self.URL = self.getInputFromPort(init.OGC_URL_PORT)
         self.file_in = self.getInputFromPort('data_file')
-        _config = self.forceGetInputFromPort('configuration', None)
+        #_config = self.forceGetInputFromPort('configuration', None)
         self.active = self.forceGetInputFromPort('active', True)
+
         # template location
         current_dir = os.path.dirname(os.path.abspath(__file__))
         template_dir = os.path.join(current_dir, 'templates')
+        print "sosfeeder:75", current_dir, template_dir
         self.env = Environment(loader=FileSystemLoader(template_dir),
                                trim_blocks=True)
 
+    def create_data(self):
+        """Create the XML for the POST to the SOS, using a Jinja template."""
+        pass  # override in inherited classes
+
+
+class RegisterSensor(SOSFeeder):
+    """TODO - Extend SOS Feeder to register a sensor for a SOS."""
+
+    def __init__(self):
+        SOSFeeder.__init__(self)
+
+    def create_data(self):
+        """Create the XML for the POST to the SOS, using a Jinja template."""
+        return None  # TO DO !!!
+
+    def compute(self):
+        super(RegisterSensor, self).compute()
+        # port values
+
         try:
-            self.config = self.get_config(_config)
             # process the POST
             XML = self.create_data()
-            #print "SOSfeed:102\n", XML
+            #print "SOSfeed:105\n", XML
             if self.active:
                 # TO DO ...
                 pass
@@ -204,135 +110,251 @@ class SOSFeeder(ThreadSafeMixin, Module):
         except Exception, ex:
             self.raiseError(ex)
 
-    def get_config(self, config=None):
-        """Create the configuration needed to read data in from the file."""
-        return None
-
-    def create_data(self):
-        """Create the XML for the POST to the SOS, using a Jinja template."""
-        pass  # override in inherited classes
-
-
-class RegisterSensor(SOSFeeder):
-    """Extend SOS Feeder to register a sensor for a SOS."""
-
-    def __init__(self):
-        SOSFeeder.__init__(self)
-
-    def create_data(self):
-        """Create the XML for the POST to the SOS, using a Jinja template."""
-        return None  # TO DO !!!
-
-
 class InsertObservation(SOSFeeder):
-    """Extend SOS Feeder to create observation data for a SOS."""
+    """Accept an Excel file, extract observation data from it, and POST it to a
+    Sensor Observation Service (SOS), as per specified parameters.
+
+    Input ports:
+        OGC_URL:
+            the network address of the SOS
+        file_in:
+            input Excel file
+        sheets:
+            a list of worksheet numbers, or names, that must be processed.
+            If None, then all sheets will be processed. Sheet numbering starts
+            from 1.
+        active:
+            a Boolean port; if True (default) then outgoing data is POSTed
+            directly to the SOS
+        procedure:
+            The physical sensor or process that has carried out the observation
+
+            name:
+                the name of the procedure, which is set for all observations
+            row:
+                the row in which the name of the procedure appears - rows are
+                numbered from 1 onwards.
+            column:
+                the column in which the name of the procedure appears - columns
+                are numbered from 1 onwards.
+        feature:
+            The feature-of-interest (FOI) for which the observation was carried
+            out; typically this corresponds to a geographical area or a
+            monitoring station / sampling point.
+
+            name:
+                the name of the feature, which is set for all observations
+            row:
+                the row in which the name of the feature appears- rows are
+                numbered from 1 onwards.
+            column:
+                the column in which the name of the feature appears- columns
+                are numbered from 1 onwards.
+        feature_details:
+            An (optional) expanded set of information for each feature;
+            including SRS, latitude and longitude.
+
+            filename:
+                the name of the CSV file containing the details for each
+                feature, in the form:
+                    name, SRS_value, "co-ordinates"
+                where `co-ordinates` can be a single pair of space-separated
+                lat/long values, or a comma-delimited list of such values.
+                The co-ordinates must be wrapped in "" - e.g.
+                    name_1, SRS_1, "45 12, 44 13, 43 14"
+            list:
+                a list of dictionaries, each containing a nested dictionary
+                with details for a feature, in the format:
+                    {"name_1": {"srs": "SRS_1", "coords": [(a,b), (c,d) ...]},
+                    {"name_2": {"srs": "SRS_2", "coords": [(p,q), (r,s) ...]},}
+        property:
+            The property ID which was measured or calculated as part of the
+            observation; for example, the water flowrate at river guage.
+            Multiple properties can be inserted as part of an observation.
+
+            ID:
+                the unique property ID, which is set for all observations
+            row:
+                the row in which the unique property ID appears- rows are
+                numbered from 1 onwards.
+            column:
+                the column in which the unique property ID appears- columns
+                are numbered from 1 onwards.
+        property_details:
+            An (optional) expanded set of information for each property;
+            including its descriptiv name, the URN - as used by standards
+            bodies, such OGC or NASA (SWEET), and units of measure (in
+            standard SI notation).
+
+            filename:
+                the name of the CSV file containing the details for each
+                property, in the form:
+                    "id", "name", "URN_value", "units"
+            dictionary:
+                each dictionary entry is keyed on the property ID, with a
+                list containing the details for that property, in the format:
+                    {"ID_1": ["name_1", "URN_value1", "units_abc"],
+                     "ID_2": ["name_2", "URN_value2", "units_pqr"],}
+                these entries will be added to, and overwrite, and entries read
+                in from the file
+
+            A dictionary of commonly used properties, for measurements made in
+            the environmental domain, is supplied with this program; this will
+            only be used if information is not available from the above sources
+        date:
+            The date(s) on which the property which was measured or calculated.
+            This should be in the format YYYY-MM-DD; or YYYY-MM-DD HH:SS if
+            there is a specific time associated.
+
+            value:
+                a single date, which is the same for all observations
+            row:
+                the row in which the dates appear - rows are numbered from 1
+                onwards.
+            column:
+                the column in which the dates appear - columns are numbered
+                from 1 onwards.
+            offset:
+                the difference (in hours) between UTC and the timezone in which
+                the properties were measured or calculated
+        observations:
+            These are the actual recorded observation values (numeric or non-
+            numeric) made for the properties at the specified dates.
+
+            row:
+                the row in which the first observation appears- rows are
+                numbered from 1 onwards.
+            column:
+                the column in which the first observation  appears- columns
+                are numbered from 1 onwards.
+        separators:
+            The characters used to separate observations in the SOS XML file
+            (only change these if absolutely required).
+
+            decimal:
+                a single character used to demarcate a decimal fraction (this
+                defaults to ".")
+            token:
+                a single character used to separate items in a single
+                observation (this defaults to ",")
+            block:
+                a single character used to separate sets of observations (this
+                defaults to ";")
+
+    Output ports:
+        PostData:
+            an XML string; containing data POSTed to the SOS
+    """
+    _input_ports = [
+        ('procedure', '(edu.utah.sci.vistrails.basic:String,\
+edu.utah.sci.vistrails.basic:Integer,edu.utah.sci.vistrails.basic:Integer)',
+            {"defaults": str(["", 0, 0]),
+             "labels": str(["name", "row", "column"])}),
+        ('feature', '(edu.utah.sci.vistrails.basic:String,\
+edu.utah.sci.vistrails.basic:Integer,edu.utah.sci.vistrails.basic:Integer)',
+            {"defaults": str(["", 0, 0]),
+             "labels": str(["name", "row", "column"])}),
+        ('feature_details', '(edu.utah.sci.vistrails.basic:File,\
+edu.utah.sci.vistrails.basic:List)',
+            {"defaults": str(["", []]),
+             "labels": str(["file", "list"])}),
+        ('property', '(edu.utah.sci.vistrails.basic:String,\
+edu.utah.sci.vistrails.basic:Integer,edu.utah.sci.vistrails.basic:Integer)',
+            {"defaults": str(["", 0, 0]),
+             "labels": str(["ID", "row", "column"])}),
+        ('property_details', '(edu.utah.sci.vistrails.basic:File,\
+edu.utah.sci.vistrails.basic:Dictionary)',
+            {"defaults": str(["", {}]),
+             "labels": str(["file", "dictionary"])}),
+        ('date', '(edu.utah.sci.vistrails.basic:String,\
+edu.utah.sci.vistrails.basic:Integer,edu.utah.sci.vistrails.basic:Integer,\
+edu.utah.sci.vistrails.basic:Integer)',
+            {"defaults": str(["", 0, 0, 0]),
+             "labels": str(["value", "row", "column", "offset"])}),
+        ('observations', '(edu.utah.sci.vistrails.basic:Integer,\
+edu.utah.sci.vistrails.basic:Integer)',
+            {"defaults": str([0, 0]),
+             "labels": str(["row", "column"])}),
+        ('separators', '(edu.utah.sci.vistrails.basic:String,\
+edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
+            {"defaults": str([".", ",", ";"]),
+             "labels": str(["decimal", "token", "block"])}),
+    ]
 
     def __init__(self):
         SOSFeeder.__init__(self)
 
-    def load_from_excel(self):
-        """Read data from Excel file, and store it in dictionaries
+    def load_from_excel(self, sheet_no=0):
+        """Read data from Excel worksheet, and store it in dictionaries
 
-        Default location (row, col) tuples for data
+        TODO : NOT WORKING !!!  UNDER CONSTRUCTION !!!
 
-        "components"
-        ------------
-        This dictionary has:
-            row: start row where components are listed
-            count: no of components (rows) available
-            name, type, urn, units: column numbers for these entries
-
-        "values"
-        --------
-        The 'start_end' tuple can have:
-            (row1, ) - starting row; read values down to end of sheet
-            (row1, row2) - starting row (1); read values down to second row (2)
-
-        The 'columns' tuple values correspond to the equivalent component
-        number in the "components' list.
         """
         # default locations for data
-        pos = {
-            'sensor': (1, 1),
-            'procedure': (2, 1),
-            'period': {'start': (4, 1), 'end': (4, 2), 'offset': (4, 3)},
-            'foi': {'id': (6, 2), 'name': (6, 1), 'srs': (6, 3),
-                    'latitude': (6, 4), 'longitude': (6, 5), },
-            'separator': {'decimal': (8, 1), 'token': (8, 2), 'block': (8, 3)},
-            'components': {'name': 1, 'type': 2, 'urn': 2, 'units': 4,
-                           'row': 10, 'count': 4},
-            'values': {'start_end': (16, ), 'columns': (1, 2, 3)}
-        }
-        if self.config:
-            # override default data locations from self.config dictionary
-            for item in ('sensor', 'procedure', 'period', 'foi', 'separator',
-                         'components', 'values'):
-                pos[item] = self.config.get(item) or pos[item]
+        if self.configuration:
+            pos = self.configuration
+        else:
+            self.raiseError('Internal Error: Configuration not set.')
         # open data file
         work_book = xlrd.open_workbook(self.file_in.name)
-        sh = work_book.sheet_by_index(0)
+        sh = work_book.sheet_by_index(sheet_no)
         # meta data
         self.core = {
-            'sensorID': sh.cell(*pos['sensor']).value,
-            'procedureID': sh.cell(*pos['procedure']).value}
+            'sensorID': None,
+            'procedureID': None}
         self.period = {
-            'start': sh.cell(*pos['period']['start']).value,
-            'end': sh.cell(*pos['period']['end']).value,
-            'offset': sh.cell(*pos['period']['offset']).value or 0}
+            'start': None,
+            'end': None,
+            'offset': pos['period']['offset'] or 0}
         self.foi = {
-            'name': sh.cell(*pos['foi']['name']).value,
-            'id': sh.cell(*pos['foi']['id']).value,
-            'srs': sh.cell(*pos['foi']['srs']).value,
-            'latitude': sh.cell(*pos['foi']['latitude']).value,
-            'longitude': sh.cell(*pos['foi']['longitude']).value}
-        self.separator = {
-            'decimal': sh.cell(*pos['separator']['decimal']).value,
-            'token': sh.cell(*pos['separator']['token']).value,
-            'block': sh.cell(*pos['separator']['block']).value}
-        # set components
-        self.components = []
-        for rownum in range(pos['components']['row'],
-                pos['components']['row'] + pos['components']['count'] + 1):
-            self.components.append({
-                'name': sh.cell(rownum, pos['components']['name']).value,
-                'type': sh.cell(rownum, pos['components']['type']).value,
-                'urn': sh.cell(rownum, pos['components']['urn']).value,
-                'units': sh.cell(rownum, pos['components']['units']).value,
+            'name': None,
+            'id': None,
+            'srs': None,
+            'coords': None}
+        self.separator = pos['separator']
+        self.properties = []
+        for row_num in []:
+            name = None
+            self.properties.append({
+                'name': name,
+                'type': self.properties[name][0],
+                'urn': self.properties[name][1],
+                'units': self.properties[name][2],
                 })
         # read observation data
         self.values = []
-        offset = self.period['offset']
-        row_start = pos['values']['start_end'][0]
-        if len(pos['values']['start_end']) == 2:
-            row_end = pos['values']['start_end'][1]
-        else:
-            row_end = sh.nrows
-        for row_num in range(row_start - 1, row_end):
+        offset = pos['period']['offset']
+        try:
+            offset = int(offset)
+        except:
+            offset = 0
+        for row_num in range(pos['values']['rowcol'][0] - 1, sh.nrows):
             set = []
-            for col in pos['values']['columns']:
+            for col in range(pos['values']['rowcol'][1] - 1, sh.ncols):
                 col_num = col - 1
-                type = sh.cell(row_num, col_num).ctype
+                ctype = sh.cell(row_num, col_num).ctype
                 val = sh.cell(row_num, col_num).value
-                if type == 3:
+                print "sosfeed:359", row_num, col_num, val, ctype
+                if ctype == 3:
                     date_tuple = xlrd.xldate_as_tuple(val, work_book.datemode)\
                             + (offset, )
+                    print "sosfeed:362", type(date_tuple), date_tuple
                     value = "%04d-%02d-%02dT%02d:%02d:%02d+%02d" % date_tuple
-                elif type == 2:
+                elif ctype == 2:
                     if val == int(val):
                         value = int(val)
-                elif type == 5:
+                elif ctype == 5:
                     value = xlrd.error_text_from_code[val]
                 else:
                     value = val
                 set.append(value)
             self.values.append(set)
 
-
     def create_data(self):
         """Create the XML for the POST to the SOS, using a Jinja template."""
         template = self.env.get_template('InsertObservation.xml')
         self.period, self.values, self.separator = None, [], None
-        self.core, self.components, self.foi = None, [], None
+        self.core, self.properties, self.foi = None, [], None
         """
         # test data
         self.core = {
@@ -351,16 +373,17 @@ class InsertObservation(SOSFeeder):
             'decimal': '.',
             'token': ':',
             'block': ';'}
-        self.components = []
-        self.components.append({
+        self.properties = []
+        self.properties.append({
           'urn': 'http://www.opengis.net/def/uom/ISO-8601/0/Gregorian',
           'name': 'Time',
           'type': 'Time'})
-        self.components.append({
+        self.properties.append({
           'urn': 'http://www.opengis.net/def/property/OGC/0/FeatureOfInterest',
           'name': 'feature',
           'type': 'Text'})
-        self.components.append({
+        self.properties.append({
+          'name': 'temperature',
           'urn': 'urn:ogc:def:phenomenon:OGC:1.0.30:temperature',
           'name': 'temperature',
           'type': 'Quantity',
@@ -377,5 +400,120 @@ class InsertObservation(SOSFeeder):
         self.load_from_excel()
         data = template.render(period=self.period, values=self.values,
                                separator=self.separator, core=self.core,
-                               components=self.components, foi=self.foi,)
+                               properties=self.properties, foi=self.foi,)
         return data
+
+    def compute(self):
+        super(InsertObservation, self).compute()
+        # port values
+        if self.forceGetInputFromPort('procedure'):
+            _proc, _proc_row, _proc_col = self.forceGetInputFromPort('procedure')
+        else:
+            _proc, _proc_row, _proc_col = None, None, None
+        if self.forceGetInputFromPort('feature'):
+            _FOI, _FOI_row, _FOI_col = self.forceGetInputFromPort('feature')
+        else:
+            _FOI, _FOI_row, _FOI_col = None, None, None
+        if self.forceGetInputFromPort('feature_details'):
+            _FOI_file, _FOI_list = self.forceGetInputFromPort('feature_details')
+        else:
+            _FOI_file, _FOI_list = None, None
+        if self.forceGetInputFromPort('property'):
+            _prop, _prop_row, _prop_col = self.forceGetInputFromPort('property')
+        else:
+            _prop, _prop_row, _prop_col = None, None, None
+        if self.forceGetInputFromPort('property_details'):
+            _prop_file, _prop_dict = self.forceGetInputFromPort('property_details')
+        else:
+            _prop_file, _prop_dict = None, None
+        if self.forceGetInputFromPort('date'):
+            _date, _date_row, _date_col, _date_offset = \
+                                            self.forceGetInputFromPort('date')
+        else:
+            _date, _date_row, _date_col, _date_offset = None, None, None, 0
+        if self.forceGetInputFromPort('observations'):
+            _obs_row, _obs_col = self.forceGetInputFromPort('observations')
+        else:
+            _obs_row, _obs_col = None, None
+        if self.forceGetInputFromPort('separators'):
+            _sep_decimal, _sep_token, sep_block = \
+                                    self.forceGetInputFromPort('separators')
+        else:
+            _sep_decimal, _sep_token, _sep_block = ".", ",", ";"
+        # validate port values
+        if not _proc and not _proc_row and not _proc_col:
+            self.raiseError('Either name, row or column must be specified for %s'\
+                            % 'procedure')
+        if not _FOI and not _FOI_row and not _FOI_col:
+            self.raiseError('Either ID, row or column must be specified for %s'\
+                            % 'feature')
+        if not _prop and not _prop_row and not _prop_col:
+            self.raiseError('Either name, row or column must be specified for %s'\
+                            % 'property')
+        if not _obs_row and not _obs_col:
+            self.raiseError('Observation row and column must be specified.')
+        if not _date and not _date_row and not _date_col:
+            self.raiseError('Either name, row or column must be specified for %s'\
+                            % 'date')
+        if not _prop_file and not _prop_dict:
+            self.raiseError('Either file or dictionary must be specified for %s'\
+                            % 'property details')
+        if not _FOI_file and not _FOI_list:
+            self.raiseError('Either file or list must be specified for %s'\
+                            % 'feature details')
+        # get property details as dictionary
+        self.properties = {}
+        #print "sosfeed:494", _prop_file, type(_prop_file), _prop_file.name
+        if _prop_file and _prop_file.name:
+            try:
+                reader = csv.reader(open(_prop_file.name), delimiter=',',
+                                    quotechar='"')
+                self.properties = {row[0]: row[1:] for row in reader}
+            except IOError:
+                 self.raiseError('Properties file "%s" does not exist'\
+                            % _prop_file.name)
+        if _prop_dict:
+            self.properties.update(_prop_dict)
+        # get FOI details as list
+        self.features = []
+        if _FOI_file and _FOI_file.name:
+            try:
+                reader = csv.reader(open(_FOI_file.name), delimiter=',',
+                                    quotechar='"')
+                for row in reader:
+                    coord_list = row[2].split(',')
+                    coords = [(cl.strip(' ').split(' ')[0],
+                               cl.strip(' ').split(' ')[1]) for cl in coord_list]
+                    self.features.append({row[0]: {'srs': row[1], 'coords': coords}})
+            except IOError:
+                 self.raiseError('Feature file "%s" does not exist'\
+                            % _FOI_file.name)
+        if _FOI_list:
+            self.features.append(_FOI_list)
+        # create configuration dictionary
+        self.configuration = {
+            'sensor': {'value': _FOI, 'rowcol': (_FOI_row, _FOI_col)},
+            'procedure': {'value': _proc, 'rowcol': (_proc_row, _proc_col)},
+            'period': {'value': _date, 'rowcol': (_date_row, _date_col),
+                       'offset': _date_offset},
+            'foi': {'value': _FOI, 'rowcol': (_FOI_row, _FOI_col)},
+            'separator': {'decimal': _sep_decimal, 'token': _sep_token,
+                          'block': _sep_block},
+            'properties': {'value': _prop, 'rowcol': (_prop_row, _prop_col)},
+            'values': {'rowcol': (_obs_row, _obs_col)},
+        }
+
+        try:
+            # process the POST
+            self.config = None
+            XML = self.create_data()
+            #print "SOSfeed:530\n", XML
+            if self.active:
+                # TO DO ...
+                pass
+            # output POST data, if required
+            if init.OGC_POST_DATA_PORT in self.outputPorts:
+                self.setResult(init.OGC_POST_DATA_PORT, XML)
+
+        except Exception, ex:
+            self.raiseError(ex)
