@@ -109,7 +109,8 @@ class CsvWriter(ThreadSafeMixin, Module):
                     ('filename', '(edu.utah.sci.vistrails.basic:String)'),
                     ('column_header_list', '(edu.utah.sci.vistrails.basic:List)'),
                     ('data_values_listoflists', '(edu.utah.sci.vistrails.basic:List)')]
-    _output_ports = [('created_file', '(edu.utah.sci.vistrails.basic:String)')]
+    _output_ports = [('created_file', '(edu.utah.sci.vistrails.basic:String)'),
+                     ('file_out', '(edu.utah.sci.vistrails.basic:File)')]
 
     def __init__(self):
         ThreadSafeMixin.__init__(self)
@@ -118,15 +119,16 @@ class CsvWriter(ThreadSafeMixin, Module):
     def compute(self):
         fn = self.getInputFromPort('filename')
         dp = self.getInputFromPort('directorypath')
-        chl = self.getInputFromPort('column_header_list')
-        dvll = self.getInputFromPort('data_values_listoflists')
+        chl = self.forceGetInputFromPort('column_header_list', [])
+        dvll = self.forceGetInputFromPort('data_values_listoflists', [])
 
         if not os.path.isdir(dp):
             os.mkdir(dp)
-
         newfile = os.path.join(dp, fn)
+
         try:
-            csvfile = csv.writer(open(newfile, 'w'),
+            file_out = open(newfile, 'w')
+            csvfile = csv.writer(file_out,
                                  delimiter=',',
                                  quotechar="'")
             if len(chl) > 0:
@@ -134,8 +136,10 @@ class CsvWriter(ThreadSafeMixin, Module):
             if len(dvll) > 0:
                 csvfile.writerows(dvll)
             self.setResult('created_file', newfile)
+            self.setResult('file_out', file_out)
+            file_out.close()
         except Exception, e:
-            raise ModuleError(self, 'Cannot set create CSV: %s' % str(e))
+            raise ModuleError(self, 'Cannot set/create CSV: %s' % str(e))
 
         csvfile = None  # flush to disk
 

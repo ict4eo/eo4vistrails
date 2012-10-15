@@ -884,7 +884,7 @@ class ExcelFiller(ExcelBase):
         use_last_value = self.forceGetInputFromPort('use_last_value', False)
         direction = self.forceGetInputFromPort('direction', 'rows')
         results = {}
-        if not cell_replace:
+        if not cell_replace and not use_last_value:
             self.raiseError('Invalid or missing cell_replace port')
         # create output dict; one entry per selected sheet name
         for sheet_name in self.xls.sheet_list:
@@ -901,7 +901,7 @@ class ExcelFiller(ExcelBase):
                     if not self.process_rows or row in self.process_rows:
                         current = None
                         for col in self.process_cols:
-                            if not row_list[col]:
+                            if not row_list[col]:  # blank
                                 if not use_last_value or current:
                                     row_list[col] = cell_replace
                                 if use_last_value and current:
@@ -909,9 +909,23 @@ class ExcelFiller(ExcelBase):
                             current = row_list[col]
                     out_list.append(row_list)
             elif direction == 'cols':
+                current = self.xls._parse_row(sheet, 0, date_as_tuple=True)
                 # process down a column...
-                self.raiseError('CODE NOT IMPLEMENTED!!!')  # TODO
-                # ??? do not have data arranged in cols...
+                for row in range(sheet.nrows):
+                    if not self.process_rows or row in self.process_rows:
+                        row_list = self.xls._parse_row(sheet, row,
+                                                       date_as_tuple=True)
+                        for col in self.process_cols:
+                            if not row_list[col]:  # blank
+                                if not use_last_value or current[col]:
+                                    row_list[col] = cell_replace
+                                if use_last_value and current[col]:
+                                    row_list[col] = current[col]
+                                    current[col] = row_list[col]
+                            else:
+                                # update "current" with new, non-blank value
+                                current[col] = row_list[col]
+                    out_list.append(row_list)
             else:
                 self.raiseError('Invalid direction specification.')
 

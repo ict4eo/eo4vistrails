@@ -18,6 +18,9 @@ from packages.eo4vistrails.tools.utils.ThreadSafe import ThreadSafeMixin
 import init
 
 
+SRS_DEFAULT = 'urn:ogc:def:crs:EPSG::4326'
+
+
 @RPyCSafeModule()
 class SOSFeeder(ThreadSafeMixin, Module):
     """Accept an Excel file, extract observation data from it, and POST it to a
@@ -33,22 +36,21 @@ class SOSFeeder(ThreadSafeMixin, Module):
             If None, then all sheets will be processed. Sheet numbering starts
             from 1.
         active:
-            a Boolean port; if True (default) then outgoing data is POSTed
-            directly to the SOS
+            a Boolean port; if True (default is False) then outgoing data is
+            POSTed directly to the specified SOS address (OGC_URL)
 
     Output ports:
         PostData:
-            an XML string; containing data POSTed to the SOS
+            a list of XML strings; each containing data POSTed to the SOS
     """
 
     _input_ports = [
         ('OGC_URL', '(edu.utah.sci.vistrails.basic:String)'),
         ('file_in', '(edu.utah.sci.vistrails.basic:File)'),
         ('sheets', '(edu.utah.sci.vistrails.basic:List)'),
-        ('active', '(edu.utah.sci.vistrails.basic:Boolean)'),
-        ]
-    _output_ports = [('PostData', '(edu.utah.sci.vistrails.basic:String)'),]
-
+        ('active', '(edu.utah.sci.vistrails.basic:Boolean)'), ]
+    _output_ports = [
+        ('PostData', '(edu.utah.sci.vistrails.basic:List)'), ]
 
     def __init__(self):
         ThreadSafeMixin.__init__(self)
@@ -63,17 +65,55 @@ class SOSFeeder(ThreadSafeMixin, Module):
         else:
             raise ModuleError(self, msg)
 
+    def make_list(self, lst=None):
+        """"Return a list from any given single element."""
+        if not lst:
+            return []
+        if hasattr(lst, '__iter__'):
+            return list(lst)
+        else:
+            return [lst]
+
+    def set_sheet_list(self, sheets=[]):
+        """Sets the list of Excel sheet names for the SOSFeeder.
+
+        Args:
+            sheets: a list
+                the required sheets; either sheet names or sheet numbers.
+                Sheet numbering starts from 1. If None, get all sheets.
+        """
+        self.sheet_list = []
+        if sheets:
+            for index, name in enumerate(self.workbook.sheet_names()):
+                if index + 1 in sheets or name in sheets:
+                    self.sheet_list.append(name)
+        else:
+            self.sheet_list = self.workbook.sheet_names()
+
     def compute(self):  # inherit and extend in child class
         # port data
-        self.URL = self.getInputFromPort(init.OGC_URL_PORT)
+        self.URL = self.forceGetInputFromPort(init.OGC_URL_PORT, '')
         self.file_in = self.getInputFromPort('data_file')
         #_config = self.forceGetInputFromPort('configuration', None)
-        self.active = self.forceGetInputFromPort('active', True)
+        self.active = self.forceGetInputFromPort('active', False)
+        # validate port values
+        if self.active and not self.URL:
+            self.raiseError('SOS URL must be specified if feed is Active')
+        # open data file
+        try:
+            self.workbook = xlrd.open_workbook(self.file_in.name)
+        except:
+            self.raiseError("%s is not a valid Excel file" % self.file_in.name)
+        # get data sheets
+        self.sheets = self.make_list(self.forceGetInputListFromPort('sheets'))
+        self.set_sheet_list(self.sheets)
+        if not self.sheet_list:
+            self.raiseError("Unable to extract sheets from Excel file")
 
         # template location
         current_dir = os.path.dirname(os.path.abspath(__file__))
         template_dir = os.path.join(current_dir, 'templates')
-        print "sosfeeder:75", current_dir, template_dir
+        #print "SOSFeeder:75", current_dir, template_dir
         self.env = Environment(loader=FileSystemLoader(template_dir),
                                trim_blocks=True)
 
@@ -94,21 +134,23 @@ class RegisterSensor(SOSFeeder):
 
     def compute(self):
         super(RegisterSensor, self).compute()
-        # port values
+        # other port values
 
         try:
-            # process the POST
-            XML = self.create_data()
-            #print "SOSfeed:105\n", XML
-            if self.active:
-                # TO DO ...
-                pass
-            # output POST data, if required
+            results = []
+            for sheet_name in self.sheet_list:
+                XML = self.create_data(sheet_name)
+                results.append(XML)
+                #print "SOSfeed:600\n", XML
+                if self.active:
+                    # TO DO ...post XML data
+                    pass
+            # output POST data, if port is linked to another module
             if init.OGC_POST_DATA_PORT in self.outputPorts:
-                self.setResult(init.OGC_POST_DATA_PORT, XML)
-
+                self.setResult(init.OGC_POST_DATA_PORT, results)
         except Exception, ex:
             self.raiseError(ex)
+
 
 class InsertObservation(SOSFeeder):
     """Accept an Excel file, extract observation data from it, and POST it to a
@@ -162,11 +204,13 @@ class InsertObservation(SOSFeeder):
                 lat/long values, or a comma-delimited list of such values.
                 The co-ordinates must be wrapped in "" - e.g.
                     name_1, SRS_1, "45 12, 44 13, 43 14"
-            list:
-                a list of dictionaries, each containing a nested dictionary
-                with details for a feature, in the format:
-                    {"name_1": {"srs": "SRS_1", "coords": [(a,b), (c,d) ...]},
-                    {"name_2": {"srs": "SRS_2", "coords": [(p,q), (r,s) ...]},}
+            dictionary:
+               each dictionary entry is keyed on the feature ID, with a
+               nested dictionary of feature details, in the format:
+                    {"ID_1": {"name": "name_1", "srs": "SRS_1",
+                              "coords": [(a,b), (c,d) ...]},
+                     "ID_2": {"name": "name_2", "srs": "SRS_2",
+                              "coords": [(p,q), (r,s) ...]},}
         property:
             The property ID which was measured or calculated as part of the
             observation; for example, the water flowrate at river guage.
@@ -255,8 +299,8 @@ edu.utah.sci.vistrails.basic:Integer,edu.utah.sci.vistrails.basic:Integer)',
             {"defaults": str(["", 0, 0]),
              "labels": str(["name", "row", "column"])}),
         ('feature_details', '(edu.utah.sci.vistrails.basic:File,\
-edu.utah.sci.vistrails.basic:List)',
-            {"defaults": str(["", []]),
+edu.utah.sci.vistrails.basic:Dictionary)',
+            {"defaults": str(["", {}]),
              "labels": str(["file", "list"])}),
         ('property', '(edu.utah.sci.vistrails.basic:String,\
 edu.utah.sci.vistrails.basic:Integer,edu.utah.sci.vistrails.basic:Integer)',
@@ -273,7 +317,7 @@ edu.utah.sci.vistrails.basic:Integer)',
              "labels": str(["value", "row", "column", "offset"])}),
         ('observations', '(edu.utah.sci.vistrails.basic:Integer,\
 edu.utah.sci.vistrails.basic:Integer)',
-            {"defaults": str([0, 0]),
+            {"defaults": str([1, 1]),
              "labels": str(["row", "column"])}),
         ('separators', '(edu.utah.sci.vistrails.basic:String,\
 edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
@@ -284,77 +328,134 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
     def __init__(self):
         SOSFeeder.__init__(self)
 
-    def load_from_excel(self, sheet_no=0):
-        """Read data from Excel worksheet, and store it in dictionaries
+    def load_from_excel(self, sheet_name=None):
+        """Read data from a named Excel worksheet, and store in dictionaries
 
-        TODO : NOT WORKING !!!  UNDER CONSTRUCTION !!!
-
+        Uses:
+            self.configuration = {
+                'sensor': {'value': xxx, 'rowcol': (row, col)},
+                'procedure': {'value': xxx, 'rowcol': (row, col)},
+                'period': {'value': date_x, 'rowcol': (row, col),
+                           'offset': hours},
+                'foi': {'value': xxx, 'rowcol': (row, col)},
+                'separator': {'decimal': char, 'token': char, 'block': char},
+                'properties': {'value': xxx, 'rowcol': (row, col)},
+                'values': {'rowcol': (row, col)},
+                }
+            self.property_lookup: dictionary
+                details for a property ID, in the format:
+                    {"ID_1": ["name_1", "URN_value1", "units_abc"],
+                     "ID_2": ["name_2", "URN_value2", "units_pqr"],}
+            self.feature_lookup: dictionary
+                details for a feature, in the format:
+                    {"ID_1": {"name": "name_1", "srs": "SRS_1",
+                              "coords": [(a,b), (c,d) ...]},
+                     "ID_2": {"name": "name_2", "srs": "SRS_2",
+                              "coords": [(p,q), (r,s) ...]},}
         """
-        # default locations for data
+
+        def cell_value(sh, row_num, col_num):
+            """Return the correct value from an Excel cell."""
+            ctype = sh.cell(row_num, col_num).ctype
+            val = sh.cell(row_num, col_num).value
+            #print "sosfeed:359", row_num, col_num, val, ctype
+            if ctype == 3:
+                date_tuple = xlrd.xldate_as_tuple(val, self.workbook.datemode)\
+                        + (offset, )
+                value = "%04d-%02d-%02dT%02d:%02d:%02d+%02d" % date_tuple
+            elif ctype == 2:
+                if val == int(val):
+                    value = int(val)
+                else:
+                    try:
+                        value = float(val)
+                    except:
+                        value = val
+            elif ctype == 5:
+                value = xlrd.error_text_from_code[val]
+            else:
+                value = val
+            return value
+
+        def add_property(name):
+            """If property is found in lookup, add to properties attribute."""
+            prop = self.property_lookup.get(name)
+            if prop:
+                self.properties.append({
+                    'name': name,
+                    'type': prop[0],
+                    'urn': prop[1],
+                    'units': prop[2],
+                    })
+
         if self.configuration:
-            pos = self.configuration
+            config = self.configuration
         else:
             self.raiseError('Internal Error: Configuration not set.')
-        # open data file
-        work_book = xlrd.open_workbook(self.file_in.name)
-        sh = work_book.sheet_by_index(sheet_no)
+        sh = self.workbook.sheet_by_name(sheet_name)
         # meta data
         self.core = {
-            'sensorID': None,
-            'procedureID': None}
+            'sensorID': config['sensor']['value'] or \
+                        cell_value(sh,
+                                   config['sensor']['rowcol'][0],
+                                   config['sensor']['rowcol'][1]),
+            'procedureID': config['procedure']['value'] or \
+                           cell_value(sh,
+                                      config['procedure']['rowcol'][0],
+                                      config['procedure']['rowcol'][1])}
         self.period = {
-            'start': None,
-            'end': None,
-            'offset': pos['period']['offset'] or 0}
-        self.foi = {
-            'name': None,
-            'id': None,
-            'srs': None,
-            'coords': None}
-        self.separator = pos['separator']
+            'start': None,  # TODO ! calculate this from max date
+            'end': None,  # TODO ! calculate this from min date
+            'offset': config['period']['offset'] or 0}
+        foi_ID = config['foi']['value'] or \
+                 cell_value(sh, config['procedure']['rowcol'][0],
+                                config['procedure']['rowcol'][1])
+        foi_ID_entry = self.feature_lookup.get(foi_ID)
+        if foi_ID_entry:
+            self.foi = {
+                'id': foi_ID,
+                'name': foi_ID_entry.get('name') or foi_ID,
+                'srs': foi_ID_entry.get('srs') or SRS_DEFAULT,
+                'coords': foi_ID_entry.get('coords')}
+        self.separator = config['separator']
         self.properties = []
-        for row_num in []:
-            name = None
-            self.properties.append({
-                'name': name,
-                'type': self.properties[name][0],
-                'urn': self.properties[name][1],
-                'units': self.properties[name][2],
-                })
-        # read observation data
+        if config['properties']['value']:
+            name = config['properties']['value']
+            add_property(name)
+        elif config['property']['row']:
+            row_num = config['properties']['rowcol'][0]
+            for col_num in range(0, sh.ncols):
+                name = cell_value(sh, row_num, col_num)
+                add_property(name)
+        elif config['properties']['column']:
+            col_num = config['properties']['rowcol'][1]
+            for row_num in range(0, sh.nrows):
+                name = cell_value(sh, row_num, col_num)
+                add_property(name)
+
+        # observation data values
         self.values = []
-        offset = pos['period']['offset']
+        offset = config['period']['offset']
         try:
             offset = int(offset)
         except:
             offset = 0
-        for row_num in range(pos['values']['rowcol'][0] - 1, sh.nrows):
+        for row_num in range(config['values']['rowcol'][0] - 1, sh.nrows):
             set = []
-            for col in range(pos['values']['rowcol'][1] - 1, sh.ncols):
+            for col in range(config['values']['rowcol'][1] - 1, sh.ncols):
                 col_num = col - 1
-                ctype = sh.cell(row_num, col_num).ctype
-                val = sh.cell(row_num, col_num).value
-                print "sosfeed:359", row_num, col_num, val, ctype
-                if ctype == 3:
-                    date_tuple = xlrd.xldate_as_tuple(val, work_book.datemode)\
-                            + (offset, )
-                    print "sosfeed:362", type(date_tuple), date_tuple
-                    value = "%04d-%02d-%02dT%02d:%02d:%02d+%02d" % date_tuple
-                elif ctype == 2:
-                    if val == int(val):
-                        value = int(val)
-                elif ctype == 5:
-                    value = xlrd.error_text_from_code[val]
-                else:
-                    value = val
+                value = cell_value(sh, row_num, col_num)
                 set.append(value)
             self.values.append(set)
 
-    def create_data(self):
-        """Create the XML for the POST to the SOS, using a Jinja template."""
+    def create_data(self, sheet_name=None):
+        """Create the XML for the POST to the SOS, using a Jinja template.
+        """
         template = self.env.get_template('InsertObservation.xml')
         self.period, self.values, self.separator = None, [], None
         self.core, self.properties, self.foi = None, [], None
+        # load data from file
+        self.load_from_excel(sheet_name)
         """
         # test data
         self.core = {
@@ -396,16 +497,14 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
             ['1963-12-17T00:00:00+02', 23, 55],
             ['1963-12-18T00:00:00+02', 24, 60]]
         """
-        # load data from file
-        self.load_from_excel()
         data = template.render(period=self.period, values=self.values,
                                separator=self.separator, core=self.core,
                                properties=self.properties, foi=self.foi,)
-        return data
+        return data  # XML
 
     def compute(self):
         super(InsertObservation, self).compute()
-        # port values
+        # get port values
         if self.forceGetInputFromPort('procedure'):
             _proc, _proc_row, _proc_col = self.forceGetInputFromPort('procedure')
         else:
@@ -415,9 +514,9 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
         else:
             _FOI, _FOI_row, _FOI_col = None, None, None
         if self.forceGetInputFromPort('feature_details'):
-            _FOI_file, _FOI_list = self.forceGetInputFromPort('feature_details')
+            _FOI_file, _FOI_dict = self.forceGetInputFromPort('feature_details')
         else:
-            _FOI_file, _FOI_list = None, None
+            _FOI_file, _FOI_dict = None, None
         if self.forceGetInputFromPort('property'):
             _prop, _prop_row, _prop_col = self.forceGetInputFromPort('property')
         else:
@@ -440,6 +539,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                                     self.forceGetInputFromPort('separators')
         else:
             _sep_decimal, _sep_token, _sep_block = ".", ",", ";"
+
         # validate port values
         if not _proc and not _proc_row and not _proc_col:
             self.raiseError('Either name, row or column must be specified for %s'\
@@ -458,24 +558,26 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
         if not _prop_file and not _prop_dict:
             self.raiseError('Either file or dictionary must be specified for %s'\
                             % 'property details')
-        if not _FOI_file and not _FOI_list:
-            self.raiseError('Either file or list must be specified for %s'\
+        if not _FOI_file and not _FOI_dict:
+            self.raiseError('Either file or dictionary must be specified for %s'\
                             % 'feature details')
-        # get property details as dictionary
-        self.properties = {}
-        #print "sosfeed:494", _prop_file, type(_prop_file), _prop_file.name
+
+        # get property lookup details as dictionary
+        self.property_lookup = {}
+        #print "sosfeeder:554", _prop_file, type(_prop_file), _prop_file.name
         if _prop_file and _prop_file.name:
             try:
                 reader = csv.reader(open(_prop_file.name), delimiter=',',
                                     quotechar='"')
-                self.properties = {row[0]: row[1:] for row in reader}
+                self.property_lookup = {row[0]: row[1:] for row in reader}
             except IOError:
-                 self.raiseError('Properties file "%s" does not exist'\
-                            % _prop_file.name)
+                self.raiseError('Properties file "%s" does not exist' % \
+                                _prop_file.name)
         if _prop_dict:
-            self.properties.update(_prop_dict)
-        # get FOI details as list
-        self.features = []
+            self.property_lookup.update(_prop_dict)
+
+        # get FOI lookup details as list
+        self.feature_lookup = {}
         if _FOI_file and _FOI_file.name:
             try:
                 reader = csv.reader(open(_FOI_file.name), delimiter=',',
@@ -484,12 +586,14 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                     coord_list = row[2].split(',')
                     coords = [(cl.strip(' ').split(' ')[0],
                                cl.strip(' ').split(' ')[1]) for cl in coord_list]
-                    self.features.append({row[0]: {'srs': row[1], 'coords': coords}})
+                    self.feature_lookup = {row[0]: {'srs': row[1],
+                                                    'coords': coords}}
             except IOError:
-                 self.raiseError('Feature file "%s" does not exist'\
-                            % _FOI_file.name)
-        if _FOI_list:
-            self.features.append(_FOI_list)
+                self.raiseError('Feature file "%s" does not exist' % \
+                                _FOI_file.name)
+        if _FOI_dict:
+            self.feature_lookup.update(_FOI_dict)
+
         # create configuration dictionary
         self.configuration = {
             'sensor': {'value': _FOI, 'rowcol': (_FOI_row, _FOI_col)},
@@ -503,17 +607,18 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
             'values': {'rowcol': (_obs_row, _obs_col)},
         }
 
+        # process the data to create the POST
         try:
-            # process the POST
-            self.config = None
-            XML = self.create_data()
-            #print "SOSfeed:530\n", XML
-            if self.active:
-                # TO DO ...
-                pass
-            # output POST data, if required
+            results = []
+            for sheet_name in self.sheet_list:
+                XML = self.create_data(sheet_name)
+                results.append(XML)
+                #print "SOSfeeder:600\n", XML
+                if self.active:
+                    # TO DO ...post XML data
+                    pass
+            # output POST data, if port is linked to another module
             if init.OGC_POST_DATA_PORT in self.outputPorts:
-                self.setResult(init.OGC_POST_DATA_PORT, XML)
-
+                self.setResult(init.OGC_POST_DATA_PORT, results)
         except Exception, ex:
             self.raiseError(ex)
