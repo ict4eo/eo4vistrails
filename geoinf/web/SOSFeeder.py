@@ -23,8 +23,14 @@ SRS_DEFAULT = 'urn:ogc:def:crs:EPSG::4326'
 
 @RPyCSafeModule()
 class SOSFeeder(ThreadSafeMixin, Module):
-    """Accept an Excel file, extract observation data from it, and POST it to a
-    Sensor Observation Service (SOS), as per specified parameters.
+    """An abstract VisTrails class for creating SOS data feeders.
+
+    This base class contains common methods and properties.
+
+    The compute() method initialises data for ports that are common to all
+    classes; but should be extended (via super) to perform processing specific
+    to the inherited class; e.g. extract observation data from the file, and
+    POST this to a Sensor Observation Service (SOS).
 
     Input ports:
         OGC_URL:
@@ -36,7 +42,7 @@ class SOSFeeder(ThreadSafeMixin, Module):
             If None, then all sheets will be processed. Sheet numbering starts
             from 1.
         active:
-            a Boolean port; if True (default is False) then outgoing data is
+            Boolean port; if True (default is False) then outgoing data is
             POSTed directly to the specified SOS address (OGC_URL)
 
     Output ports:
@@ -128,13 +134,13 @@ class RegisterSensor(SOSFeeder):
     def __init__(self):
         SOSFeeder.__init__(self)
 
-    def create_data(self):
+    def create_data(self, sheet_name=None):
         """Create the XML for the POST to the SOS, using a Jinja template."""
         return None  # TO DO !!!
 
     def compute(self):
         super(RegisterSensor, self).compute()
-        # other port values
+        # check other port values
 
         try:
             results = []
@@ -356,6 +362,8 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
 
         def cell_value(sh, row_num, col_num):
             """Return the correct value from an Excel cell."""
+            row_num = max(row_num, 0)
+            col_num = max(col_num, 0)
             ctype = sh.cell(row_num, col_num).ctype
             val = sh.cell(row_num, col_num).value
             #print "sosfeed:359", row_num, col_num, val, ctype
@@ -377,10 +385,11 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                 value = val
             return value
 
-        def add_property(name):
+        def add_property(name, type=None):
             """If property is found in lookup, add to properties attribute."""
             prop = self.property_lookup.get(name)
-            if prop:
+            #print "sosFeeder:389", name, type, prop
+            if prop and len(prop) >= 3:
                 self.properties.append({
                     'name': name,
                     'type': prop[0],
@@ -397,19 +406,19 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
         self.core = {
             'sensorID': config['sensor']['value'] or \
                         cell_value(sh,
-                                   config['sensor']['rowcol'][0],
-                                   config['sensor']['rowcol'][1]),
+                                   config['sensor']['rowcol'][0] - 1,
+                                   config['sensor']['rowcol'][1] - 1),
             'procedureID': config['procedure']['value'] or \
                            cell_value(sh,
-                                      config['procedure']['rowcol'][0],
-                                      config['procedure']['rowcol'][1])}
+                                      config['procedure']['rowcol'][0] - 1,
+                                      config['procedure']['rowcol'][1] - 1)}
         self.period = {
             'start': None,  # TODO ! calculate this from max date
             'end': None,  # TODO ! calculate this from min date
             'offset': config['period']['offset'] or 0}
         foi_ID = config['foi']['value'] or \
-                 cell_value(sh, config['procedure']['rowcol'][0],
-                                config['procedure']['rowcol'][1])
+                 cell_value(sh, config['procedure']['rowcol'][0] - 1,
+                                config['procedure']['rowcol'][1] - 1)
         foi_ID_entry = self.feature_lookup.get(foi_ID)
         if foi_ID_entry:
             self.foi = {
@@ -421,17 +430,17 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
         self.properties = []
         if config['properties']['value']:
             name = config['properties']['value']
-            add_property(name)
-        elif config['property']['row']:
+            add_property(name, type='constant')
+        elif config['properties']['rowcol'][0]:
             row_num = config['properties']['rowcol'][0]
             for col_num in range(0, sh.ncols):
-                name = cell_value(sh, row_num, col_num)
-                add_property(name)
-        elif config['properties']['column']:
+                name = cell_value(sh, row_num - 1, col_num)
+                add_property(name, type='row')
+        elif config['properties']['rowcol'][1]:
             col_num = config['properties']['rowcol'][1]
             for row_num in range(0, sh.nrows):
-                name = cell_value(sh, row_num, col_num)
-                add_property(name)
+                name = cell_value(sh, row_num, col_num - 1)
+                add_property(name, type='col')
 
         # observation data values
         self.values = []
@@ -440,10 +449,14 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
             offset = int(offset)
         except:
             offset = 0
+        if config['values']['rowcol'][0] - 1 > sh.nrows:
+            self.raiseError('Observation rows outside sheet limits!')
+        if config['values']['rowcol'][1] - 1 > sh.ncols:
+            self.raiseError('Observation columns outside sheet limits!')
+
         for row_num in range(config['values']['rowcol'][0] - 1, sh.nrows):
             set = []
-            for col in range(config['values']['rowcol'][1] - 1, sh.ncols):
-                col_num = col - 1
+            for col_num in range(config['values']['rowcol'][1] - 1, sh.ncols):
                 value = cell_value(sh, row_num, col_num)
                 set.append(value)
             self.values.append(set)
@@ -564,7 +577,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
 
         # get property lookup details as dictionary
         self.property_lookup = {}
-        #print "sosfeeder:554", _prop_file, type(_prop_file), _prop_file.name
+        #print "sosfeeder:574", _prop_file, type(_prop_file), _prop_file.name
         if _prop_file and _prop_file.name:
             try:
                 reader = csv.reader(open(_prop_file.name), delimiter=',',
@@ -583,13 +596,17 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                 reader = csv.reader(open(_FOI_file.name), delimiter=',',
                                     quotechar='"')
                 for row in reader:
-                    coord_list = row[2].split(',')
+                    coord_list = row[3].split(',')
                     coords = [(cl.strip(' ').split(' ')[0],
                                cl.strip(' ').split(' ')[1]) for cl in coord_list]
-                    self.feature_lookup = {row[0]: {'srs': row[1],
+                    self.feature_lookup = {row[0]: {'name': row[1],
+                                                    'srs': row[2],
                                                     'coords': coords}}
             except IOError:
                 self.raiseError('Feature file "%s" does not exist' % \
+                                _FOI_file.name)
+            except IndexError:
+                self.raiseError('Feature file "%s" is not configured properly' % \
                                 _FOI_file.name)
         if _FOI_dict:
             self.feature_lookup.update(_FOI_dict)

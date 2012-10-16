@@ -99,10 +99,12 @@ class CsvWriter(ThreadSafeMixin, Module):
             list of lists contain the rows of data to write to file
 
     Output ports:
-        created_file:
-            a full pathname to the file created, if successful. On RPyC nodes,
-            will refer to files on that remote filesystem.
-
+        created_file: String
+            a full pathname to the file created, if successful. (On RPyC nodes,
+            will refer to files on that remote filesystem.)
+        file_out: File
+            a pointer to the CSV file that has been created. (On RPyC nodes,
+            will refer to files on that remote filesystem.)
     """
 
     _input_ports = [('directorypath', '(edu.utah.sci.vistrails.basic:String)'),

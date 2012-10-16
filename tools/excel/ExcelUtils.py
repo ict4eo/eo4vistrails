@@ -56,8 +56,8 @@ class ExcelBase(ThreadSafeMixin, Module):
     This base class contains common methods and properties.
 
     The compute() method initialises data for ports that are common to all
-    classes; but should be extended to perform processing specific to the
-    inherited class.
+    classes; but should be extended (via super) to perform processing specific
+    to the inherited class.
 
     Input ports:
         file_in:
@@ -277,42 +277,14 @@ edu.utah.sci.vistrails.basic:Boolean)',
 
 @RPyCSafeModule()
 class ExcelExtractor(ExcelBase):
-    """Read Excel file and extract data either as a dictionary or a list.
+    """Read Excel file and extract all data either as a dictionary or a list.
 
         file_in:
             input Excel file
-        file_name_out:
-            an optional full directory path and filename to be written; if None
-            then a temporary file will be created
         sheets:
             a list of worksheet numbers, or names, that must be processed.
             If None, then all sheets will be processed. Sheet numbering starts
             from 1.
-        rows:
-            values:
-                a list of row numbers to be extracted. Row numbering starts
-                from 1.
-            range:
-                a Boolean indicating if the row numbers specify a range.
-
-            If range is `False`, the row values are just numbers of individual
-            rows. If range is `True`, the following notation applies:
-                 *  N: the first N rows
-                 *  N, M: all rows from N to M inclusive
-                 *  N, M, P: every "Pth" row, between N to M inclusive
-        columns:
-            values:
-                a list of column numbers to be extracted. Column numbering
-                starts from 1.
-            range:
-                a Boolean indicating if the column numbers specify a range.
-
-            If range is `False`, the column values are just numbers of
-            individual columns. If range is `True`, the following notation
-            applies:
-                 *  N: the first N columns
-                 *  N, M: all columns from N to M inclusive
-                 *  N, M, P: every "Pth" column, between N to M inclusive
 
     Output ports:
         data_list:
