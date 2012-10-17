@@ -53,7 +53,7 @@
       <sa:position>
        <gml:Point>
         <gml:pos srsName="{{ foi.srs|default('urn:ogc:def:crs:EPSG::4326') }}">
-         {{ foi.latitude }} {{ foi.longitude }}
+         {{ foi.coords }}
         </gml:pos>
        </gml:Point>
       </sa:position>

@@ -14,6 +14,7 @@ from core.modules.vistrails_module import Module, ModuleError
 # eo4vistrails
 from packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
 from packages.eo4vistrails.tools.utils.ThreadSafe import ThreadSafeMixin
+from packages.eo4vistrails.tools.utils.listutils import uniqify
 #names of ports as constants
 import init
 
@@ -177,7 +178,7 @@ class InsertObservation(SOSFeeder):
         procedure:
             The physical sensor or process that has carried out the observation
 
-            name:
+            value:
                 the name of the procedure, which is set for all observations
             row:
                 the row in which the name of the procedure appears - rows are
@@ -186,18 +187,20 @@ class InsertObservation(SOSFeeder):
                 the column in which the name of the procedure appears - columns
                 are numbered from 1 onwards.
         feature:
-            The feature-of-interest (FOI) for which the observation was carried
-            out; typically this corresponds to a geographical area or a
-            monitoring station / sampling point.
+            The feature-of-interest(s) (FOI) for which the observation(s) was
+            carried out; typically this corresponds to a geographical area or
+            a monitoring station / sampling point.
 
             name:
-                the name of the feature, which is set for all observations
+                the name of the single feature; set for all observations
             row:
-                the row in which the name of the feature appears- rows are
+                the row in which the name of the features appear- rows are
                 numbered from 1 onwards.
             column:
-                the column in which the name of the feature appears- columns
+                the column in which the name of the features appear- columns
                 are numbered from 1 onwards.
+            If both row and column are filled in, the name of the feature is
+            taken from that specific cell.
         feature_details:
             An (optional) expanded set of information for each feature;
             including SRS, latitude and longitude.
@@ -218,28 +221,30 @@ class InsertObservation(SOSFeeder):
                      "ID_2": {"name": "name_2", "srs": "SRS_2",
                               "coords": [(p,q), (r,s) ...]},}
         property:
-            The property ID which was measured or calculated as part of the
-            observation; for example, the water flowrate at river guage.
+            The ID(s) for the property(ies) measured or calculated as part of
+            the observation; for example, the water flowrate at river guage.
             Multiple properties can be inserted as part of an observation.
 
             ID:
-                the unique property ID, which is set for all observations
+                single unique property ID, which is set for all observations
             row:
-                the row in which the unique property ID appears- rows are
+                the row in which the unique property IDs appear- rows are
                 numbered from 1 onwards.
             column:
-                the column in which the unique property ID appears- columns
+                the column in which the unique property IDs appear- columns
                 are numbered from 1 onwards.
+            If both row and column are filled in, the property ID is taken
+            from that specific cell.
         property_details:
             An (optional) expanded set of information for each property;
-            including its descriptiv name, the URN - as used by standards
+            including its descriptive name, the URN - as used by standards
             bodies, such OGC or NASA (SWEET), and units of measure (in
             standard SI notation).
 
             filename:
                 the name of the CSV file containing the details for each
                 property, in the form:
-                    "id", "name", "URN_value", "units"
+                    "ID", "name", "URN_value", "units"
             dictionary:
                 each dictionary entry is keyed on the property ID, with a
                 list containing the details for that property, in the format:
@@ -334,8 +339,14 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
     def __init__(self):
         SOSFeeder.__init__(self)
 
-    def load_from_excel(self, sheet_name=None):
+    def load_from_excel(self, sheet_name=None, reset=True):
         """Read data from a named Excel worksheet, and store in dictionaries
+
+        Args:
+            sheet_name: string
+                name of worksheet in `self.workbook` Excel file
+            reset: Boolean
+                whether all storage dictionaris are reset to null
 
         Uses:
             self.configuration = {
@@ -361,7 +372,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
         """
 
         def cell_value(sh, row_num, col_num):
-            """Return the correct value from an Excel cell."""
+            """Return the correct type of value from an Excel cell."""
             row_num = max(row_num, 0)
             col_num = max(col_num, 0)
             ctype = sh.cell(row_num, col_num).ctype
@@ -385,22 +396,78 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                 value = val
             return value
 
-        def add_property(name, type=None):
+        def add_property(name, cell_type=None, row=None, col=None):
             """If property is found in lookup, add to properties attribute."""
             prop = self.property_lookup.get(name)
-            #print "sosFeeder:389", name, type, prop
             if prop and len(prop) >= 3:
                 self.properties.append({
                     'name': name,
-                    'type': prop[0],
+                    'type': prop[0] or 'Quantity',
                     'urn': prop[1],
                     'units': prop[2],
+                    'row': row_num,
+                    'col': col_num
                     })
+
+        def add_foi(foi_ID, row=None, col=None):
+            """If FOI is found in lookup, add to the FOI's dictionary."""
+            foi_ID_entry = self.feature_lookup.get(foi_ID)
+            if foi_ID_entry:
+                self.fois[foi_ID] = {
+                    'id': foi_ID,
+                    'name': foi_ID_entry.get('name') or foi_ID,
+                    'srs': foi_ID_entry.get('srs') or SRS_DEFAULT,
+                    'coords': foi_ID_entry.get('coords'),
+                    'col': col,
+                    'row':row}
+
+        def add_date(_date, row=None, col=None):
+            """Add to date list."""
+            self.unique_dates.append(_date)
+            self.dates.append({
+                'date': _date,
+                'row': row_num,
+                'col': col_num
+                })
+
+        def get_foi(row=None, col=None):
+            # fixed FOI value
+            if len(self.fois) == 1:
+                if self.fois[0]['col'] is None and self.fois[0]['row'] is None:
+                    return self.fois[0]
+            for foi in self.fois:
+                if foi['col'] == col or foi['row'] == row:
+                    return foi
+            return None
+
+        def get_property(row=None, col=None):
+            # fixed property value
+            if len(self.properties) == 1:
+                if self.properties[0]['col'] is None and \
+                   self.properties[0]['row'] is None:
+                    return self.properties[0]
+            for property in self.properties:
+                print "sosfeed:451 prop", row, col, property['col'], property['row']
+                if property['col'] == col or property['row'] == row:
+                    return property
+            return None
+
+        def get_vdate(row=None, col=None):
+            # constant date
+            if len(self.dates) == 1:
+                if date['col'] is None and date['row'] is None:
+                    return self.dates[0]
+            for date in self.dates:
+                if date['col'] == col or date['row'] == row:
+                    return date
 
         if self.configuration:
             config = self.configuration
         else:
             self.raiseError('Internal Error: Configuration not set.')
+        if reset:
+            self.period, self.values, self.separator = None, [], None
+            self.core, self.properties, self.foi = None, [], None
         sh = self.workbook.sheet_by_name(sheet_name)
         # meta data
         self.core = {
@@ -416,34 +483,80 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
             'start': None,  # TODO ! calculate this from max date
             'end': None,  # TODO ! calculate this from min date
             'offset': config['period']['offset'] or 0}
-        foi_ID = config['foi']['value'] or \
-                 cell_value(sh, config['procedure']['rowcol'][0] - 1,
-                                config['procedure']['rowcol'][1] - 1)
-        foi_ID_entry = self.feature_lookup.get(foi_ID)
-        if foi_ID_entry:
-            self.foi = {
-                'id': foi_ID,
-                'name': foi_ID_entry.get('name') or foi_ID,
-                'srs': foi_ID_entry.get('srs') or SRS_DEFAULT,
-                'coords': foi_ID_entry.get('coords')}
         self.separator = config['separator']
+        # features
+        print "488", config['foi']['rowcol'][0], config['foi']['rowcol'][1]
+        self.fois = []
+        if config['foi']['value']:
+            foi_ID = config['foi']['value']
+            add_foi(foi_ID)
+        elif config['foi']['rowcol'][0] and config['foi']['rowcol'][1]:
+            foi_ID = cell_value(sh, config['foi']['rowcol'][0] - 1,
+                                  config['foi']['rowcol'][1] - 1)
+            add_foi(foi_ID)
+        elif config['foi']['rowcol'][0] and not config['foi']['rowcol'][1]:
+            row_num = config['foi']['rowcol'][0]
+            for col_num in range(0, sh.ncols):
+                foi_ID = cell_value(sh, row_num - 1, col_num)
+                add_foi(foi_ID, row=row_num, col=None)
+        elif config['foi']['rowcol'][1] and not config['foi']['rowcol'][0]:
+            col_num = config['foi']['rowcol'][1]
+            for row_num in range(0, sh.nrows):
+                foi_ID = cell_value(sh, row_num, col_num - 1)
+                print "505", row_num, col_num, foi_ID
+                add_foi(foi_ID, row=None, col=col_num)
+        else:
+            self.raiseError('Feature settings not configured properly!')
+        # properties
         self.properties = []
         if config['properties']['value']:
             name = config['properties']['value']
             add_property(name, type='constant')
-        elif config['properties']['rowcol'][0]:
+        elif config['properties']['rowcol'][0] and config['properties']['rowcol'][1]:
+            name = cell_value(sh, config['properties']['rowcol'][0] - 1,
+                                  config['properties']['rowcol'][1] - 1)
+            add_property(name, type='constant')
+        elif config['properties']['rowcol'][0] and not config['properties']['rowcol'][1]:
             row_num = config['properties']['rowcol'][0]
             for col_num in range(0, sh.ncols):
                 name = cell_value(sh, row_num - 1, col_num)
-                add_property(name, type='row')
-        elif config['properties']['rowcol'][1]:
+                add_property(name, type='row', row=row_num, col=None)
+        elif config['properties']['rowcol'][1] and not config['properties']['rowcol'][0]:
             col_num = config['properties']['rowcol'][1]
             for row_num in range(0, sh.nrows):
                 name = cell_value(sh, row_num, col_num - 1)
-                add_property(name, type='col')
+                add_property(name, type='col', row=None, col=col_num)
+        else:
+            self.raiseError('Property settings not configured properly!')
+        # dates
+        self.unique_dates = []
+        self.dates = []
+        if config['period']['value']:
+            value = config['period']['value']
+            add_date(value)
+        elif config['period']['rowcol'][0] and config['period']['rowcol'][1]:
+            value = cell_value(sh, config['period']['rowcol'][0] - 1,
+                                  config['period']['rowcol'][1] - 1)
+            add_date(value)
+        elif config['period']['rowcol'][0] and not config['period']['rowcol'][1]:
+            row_num = config['period']['rowcol'][0]
+            for col_num in range(0, sh.ncols):
+                value = cell_value(sh, row_num - 1, col_num)
+                add_date(value, row=row_num, col=None)
+        elif config['period']['rowcol'][1] and not config['period']['rowcol'][0]:
+            col_num = config['period']['rowcol'][1]
+            for row_num in range(0, sh.nrows):
+                value = cell_value(sh, row_num, col_num - 1)
+                add_date(value, row=None, col=col_num)
+        else:
+            self.raiseError('Date settings not configured properly!')
+        self.unique_dates = uniqify(self.unique_dates)
+
+        print "554???", self.fois
+        print "555", self.properties  # TODO - make unique?  track row/col in diff list?
+        print "556", self.unique_dates
 
         # observation data values
-        self.values = []
         offset = config['period']['offset']
         try:
             offset = int(offset)
@@ -453,56 +566,57 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
             self.raiseError('Observation rows outside sheet limits!')
         if config['values']['rowcol'][1] - 1 > sh.ncols:
             self.raiseError('Observation columns outside sheet limits!')
-
+        self.values = {}
         for row_num in range(config['values']['rowcol'][0] - 1, sh.nrows):
-            set = []
             for col_num in range(config['values']['rowcol'][1] - 1, sh.ncols):
-                value = cell_value(sh, row_num, col_num)
-                set.append(value)
-            self.values.append(set)
+                # keys
+                foi = get_foi(row_num, col_num)
+                vdate = get_vdate(row_num, col_num)
+                property = get_property(row_num, col_num)
+                #print "sosfeed:571 FDP", foi, vdate['date'], property
+                # data
+                self.values[(foi, vdate['date'], property)] = \
+                                            cell_value(sh, row_num, col_num)
 
-    def create_data(self, sheet_name=None):
-        """Create the XML for the POST to the SOS, using a Jinja template.
+    def create_XML(self, sheet_name=None, data={}):
+        """Create the XML for an InsertObservation POST using a Jinja template
         """
         template = self.env.get_template('InsertObservation.xml')
-        self.period, self.values, self.separator = None, [], None
-        self.core, self.properties, self.foi = None, [], None
-        # load data from file
-        self.load_from_excel(sheet_name)
         """
         # test data
-        self.core = {
+        data['core'] = {
             'sensorID': 'urn:ogc:object:feature:Sensor:Derwent-Station-2',
             'procedureID': 'urn:ogc:object:feature:Sensor:Derwent-Station-2'}
-        self.period = {
+        data['period'] = {
             'start': '2008-04-03T04:44:15+11:00',
             'end': '2008-05-03T04:44:15+11:00'}
-        self.foi = {
+        data['foi'] = {
             'name': 'Hobart 2',
             'id': 'Hobart-2',
             'srs': 'urn:ogc:def:crs:EPSG::4326',
-            'latitude': '-42.91',
-            'longitude': '147.33'}
-        self.separator = {
+            'coords': '-42.91 147.33'}
+        data['separator'] = {
             'decimal': '.',
             'token': ':',
             'block': ';'}
-        self.properties = []
-        self.properties.append({
+        data['properties'] = []
+        data['properties'].append({
           'urn': 'http://www.opengis.net/def/uom/ISO-8601/0/Gregorian',
           'name': 'Time',
           'type': 'Time'})
-        self.properties.append({
-          'urn': 'http://www.opengis.net/def/property/OGC/0/FeatureOfInterest',
-          'name': 'feature',
-          'type': 'Text'})
-        self.properties.append({
+        data['properties'].append({
           'name': 'temperature',
           'urn': 'urn:ogc:def:phenomenon:OGC:1.0.30:temperature',
           'name': 'temperature',
           'type': 'Quantity',
-          'units': 'cel'})
-        self.values = [
+          'units': 'celcius'})
+        data['properties'].append({
+          'name': 'temperature',
+          'urn': 'urn:ogc:def:phenomenon:OGC:1.0.30:humidity',
+          'name': 'humidity',
+          'type': 'Quantity',
+          'units': 'percentage'})
+        data['values'] = [
             ['1963-12-13T00:00:00+02', 22, 60],
             ['1963-12-14T00:00:00+02', 24, 65],
             ['1963-12-15T00:00:00+02', 25, 45],
@@ -510,10 +624,41 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
             ['1963-12-17T00:00:00+02', 23, 55],
             ['1963-12-18T00:00:00+02', 24, 60]]
         """
-        data = template.render(period=self.period, values=self.values,
-                               separator=self.separator, core=self.core,
-                               properties=self.properties, foi=self.foi,)
+        data = template.render(period=data['period'], values=data['values'],
+                               separator=data['separator'], core=data['core'],
+                               properties=data['properties'], foi=data['foi'],)
         return data  # XML
+
+    def create_results(self):
+        """Create list of XML POST datasets for each feature of interest.
+        """
+        results = []
+        for sheet_name in self.sheet_list:
+            # load data from worksheet into dictionaries
+            self.load_from_excel(sheet_name)
+            for foi in self.fois:
+                data = {}
+                data['core'] = self.core
+                data['period'] = self.period
+                data['foi'] = foi
+                data['separator'] = self.separator
+                data['properties'] = self.properties
+
+                data['values'] = ''
+                token = data['separator']['token']
+                for _date in self.unique_dates:
+                    data['values'] = _date + token
+                    for prop in self.properties:
+                        key = (foi['ID'], _date, prop['name'])
+                        value = self.values.get(key)
+                        data['values'] = data['values'] + value + token
+                    data['values'] = data['values'] + data['separator']['block']
+
+                XML = self.create_XML(sheet_name=sheet_name, data=data)
+                if XML:
+                    results.append(XML)
+                    print "SOSfeeder:650\n", XML
+            return results
 
     def compute(self):
         super(InsertObservation, self).compute()
@@ -577,7 +722,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
 
         # get property lookup details as dictionary
         self.property_lookup = {}
-        #print "sosfeeder:574", _prop_file, type(_prop_file), _prop_file.name
+        #print "sosfeeder:594", _prop_file, type(_prop_file), _prop_file.name
         if _prop_file and _prop_file.name:
             try:
                 reader = csv.reader(open(_prop_file.name), delimiter=',',
@@ -589,7 +734,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
         if _prop_dict:
             self.property_lookup.update(_prop_dict)
 
-        # get FOI lookup details as list
+        # get FOI lookup details as dictionary
         self.feature_lookup = {}
         if _FOI_file and _FOI_file.name:
             try:
@@ -624,18 +769,14 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
             'values': {'rowcol': (_obs_row, _obs_col)},
         }
 
-        # process the data to create the POST
+        # process configuration and generate output
         try:
-            results = []
-            for sheet_name in self.sheet_list:
-                XML = self.create_data(sheet_name)
-                results.append(XML)
-                #print "SOSfeeder:600\n", XML
-                if self.active:
-                    # TO DO ...post XML data
-                    pass
+            results = self.create_results()
             # output POST data, if port is linked to another module
             if init.OGC_POST_DATA_PORT in self.outputPorts:
                 self.setResult(init.OGC_POST_DATA_PORT, results)
+            if self.active:
+                # TO DO ... actually post XML data
+                pass
         except Exception, ex:
             self.raiseError(ex)

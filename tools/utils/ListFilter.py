@@ -36,7 +36,7 @@ from core.modules.vistrails_module import Module, ModuleError
 from packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
 # local
 from ThreadSafe import ThreadSafeMixin
-
+from listutils import get_filter
 
 @RPyCSafeModule()
 class ListFilter(ThreadSafeMixin, Module):
@@ -81,59 +81,10 @@ class ListFilter(ThreadSafeMixin, Module):
         else:
             raise ModuleError(self, msg)
 
-    def get_filter(self, items):
-        """Create a list of values from numeric ranges defined in a string.
-
-        Accepts:
-
-        A single string, with a specification that uses the following syntax:
-         *  N: a single integer; or a single Excel column letter
-         *  N-M: a range of integers; or a range of Excel column letters
-         *  N, M, ...: multiple different single/range values
-
-        Returns:
-         *  A list of integers
-        """
-
-        def to_int(index):
-            s = 0
-            pow = 1
-            try:
-                return int(index)
-            except:
-                pass
-            for letter in index[::-1]:
-                d = int(letter, 36) - 9
-                s += pow * d
-                pow *= 26
-            # excel starts column numeration from 1
-            return s
-
-        list = []
-        if items:
-            try:
-                item_list = items.split(',')
-                for item in item_list:
-                    if '-' in item:
-                        _range = item.split('-')
-                        _short = [x for x in range(to_int(_range[0]),
-                                                   to_int(_range[1]) + 1)]
-                        list = list + _short
-                    else:
-                        list.append(to_int(item))
-            except Exception, e:
-                self.raiseError('Cannot process output specifications: %s' % \
-                                str(e))
-                return []
-        if list:
-            return set(list)  # remove duplicates
-        else:
-            return list  # empty
-
     def compute(self):
         list_in = self.getInputFromPort('list_in')
         _subset = self.forceGetInputFromPort('subset', None)
-        subset_list = self.get_filter(_subset)
+        subset_list = get_filter(_subset)
 
         def create_list(list_in, subset_list):
             if list_in:
