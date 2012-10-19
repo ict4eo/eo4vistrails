@@ -5,7 +5,7 @@
 ###
 ### This full package extends VisTrails, providing GIS/Earth Observation
 ### ingestion, pre-processing, transformation, analytic and visualisation
-### capabilities . Included is the abilty to run code transparently in
+### capabilities . Included is the ability to run code transparently in
 ### OpenNebula cloud environments. There are various software
 ### dependencies, but all are FOSS.
 ###
@@ -25,7 +25,7 @@
 ###
 #############################################################################
 """This module forms part of the eo4vistrails capabilities. It is used to
-provide common utiliyy functions for working with lists.
+provide common utility functions for working with lists.
 """
 
 

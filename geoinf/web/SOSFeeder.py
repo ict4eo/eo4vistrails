@@ -339,6 +339,21 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
     def __init__(self):
         SOSFeeder.__init__(self)
 
+    def unicode_csv_reader(self, utf8_data, dialect=csv.excel, **kwargs):
+        """Read and encode data from CSV as 'utf-8'.
+
+        NOTE:
+            Data from Excel is read as unicode; this is used to maintain
+            interoperability between excel data and csv data!
+
+        Source:
+            http://stackoverflow.com/questions/904041/\
+            reading-a-utf8-csv-file-with-python
+        """
+        csv_reader = csv.reader(utf8_data, dialect=dialect, **kwargs)
+        for row in csv_reader:
+            yield [unicode(cell, 'utf-8') for cell in row]
+
     def load_from_excel(self, sheet_name=None, reset=True):
         """Read data from a named Excel worksheet, and store in dictionaries
 
@@ -377,7 +392,6 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
             col_num = max(col_num, 0)
             ctype = sh.cell(row_num, col_num).ctype
             val = sh.cell(row_num, col_num).value
-            #print "sosfeed:359", row_num, col_num, val, ctype
             if ctype == 3:
                 date_tuple = xlrd.xldate_as_tuple(val, self.workbook.datemode)\
                         + (offset, )
@@ -396,7 +410,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                 value = val
             return value
 
-        def add_property(name, cell_type=None, row=None, col=None):
+        def add_property(name, source_type=None, row=None, col=None):
             """If property is found in lookup, add to properties attribute."""
             prop = self.property_lookup.get(name)
             if prop and len(prop) >= 3:
@@ -406,16 +420,28 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                     'urn': prop[1],
                     'units': prop[2],
                     'row': row_num,
-                    'col': col_num
-                    })
+                    'col': col_num,
+                    'source': source_type})
+                if not self.unique_property_names.get(name):
+                    self.unique_property_names[name] = name
+                    self.unique_properties.append({
+                        'name': name,
+                        'type': prop[0] or 'Quantity',
+                        'urn': prop[1],
+                        'units': prop[2]})
 
         def add_foi(foi_ID, row=None, col=None):
             """If FOI is found in lookup, add to the FOI's dictionary."""
-            foi_ID_entry = self.feature_lookup.get(foi_ID)
+            try:
+                ID = unicode(foi_ID)  # convert Excel int to unicode
+            except:
+                ID = foi_ID
+            foi_ID_entry = self.feature_lookup.get(ID)
+            #print "sosfeeder:436", foi_ID_entry, ID, type(ID)
             if foi_ID_entry:
-                self.fois[foi_ID] = {
-                    'id': foi_ID,
-                    'name': foi_ID_entry.get('name') or foi_ID,
+                self.fois[ID] = {
+                    'id': ID,
+                    'name': foi_ID_entry.get('name') or ID,
                     'srs': foi_ID_entry.get('srs') or SRS_DEFAULT,
                     'coords': foi_ID_entry.get('coords'),
                     'col': col,
@@ -430,26 +456,27 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                 'col': col_num
                 })
 
-        def get_foi(row=None, col=None):
+        def get_foi_ID(row=None, col=None):
             # fixed FOI value
             if len(self.fois) == 1:
                 if self.fois[0]['col'] is None and self.fois[0]['row'] is None:
-                    return self.fois[0]
-            for foi in self.fois:
-                if foi['col'] == col or foi['row'] == row:
-                    return foi
+                    return self.fois[0].get('id')
+            for key, foi in self.fois.iteritems():
+                if foi.get('col') == col or foi.get('row') == row:
+                    #print "465 match!", foi.get('col'), col, foi.get('id')
+                    return foi.get('id')
             return None
 
-        def get_property(row=None, col=None):
+        def get_property_name(row=None, col=None):
             # fixed property value
             if len(self.properties) == 1:
                 if self.properties[0]['col'] is None and \
                    self.properties[0]['row'] is None:
-                    return self.properties[0]
+                    return self.properties[0].get('name')
             for property in self.properties:
-                print "sosfeed:451 prop", row, col, property['col'], property['row']
+                #print "sosfeed:451 prop", row, col, property['col'], property['row']
                 if property['col'] == col or property['row'] == row:
-                    return property
+                    return property.get('name')
             return None
 
         def get_vdate(row=None, col=None):
@@ -485,8 +512,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
             'offset': config['period']['offset'] or 0}
         self.separator = config['separator']
         # features
-        print "488", config['foi']['rowcol'][0], config['foi']['rowcol'][1]
-        self.fois = []
+        self.fois = {}
         if config['foi']['value']:
             foi_ID = config['foi']['value']
             add_foi(foi_ID)
@@ -498,34 +524,35 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
             row_num = config['foi']['rowcol'][0]
             for col_num in range(0, sh.ncols):
                 foi_ID = cell_value(sh, row_num - 1, col_num)
-                add_foi(foi_ID, row=row_num, col=None)
+                add_foi(foi_ID, row=None, col=col_num)
         elif config['foi']['rowcol'][1] and not config['foi']['rowcol'][0]:
             col_num = config['foi']['rowcol'][1]
             for row_num in range(0, sh.nrows):
                 foi_ID = cell_value(sh, row_num, col_num - 1)
-                print "505", row_num, col_num, foi_ID
-                add_foi(foi_ID, row=None, col=col_num)
+                add_foi(foi_ID, row=row_num, col=None)
         else:
             self.raiseError('Feature settings not configured properly!')
         # properties
         self.properties = []
+        self.unique_properties = []
+        self.unique_property_names = {}
         if config['properties']['value']:
             name = config['properties']['value']
-            add_property(name, type='constant')
+            add_property(name, source_type='constant')
         elif config['properties']['rowcol'][0] and config['properties']['rowcol'][1]:
             name = cell_value(sh, config['properties']['rowcol'][0] - 1,
                                   config['properties']['rowcol'][1] - 1)
-            add_property(name, type='constant')
+            add_property(name, source_type='constant')
         elif config['properties']['rowcol'][0] and not config['properties']['rowcol'][1]:
             row_num = config['properties']['rowcol'][0]
             for col_num in range(0, sh.ncols):
                 name = cell_value(sh, row_num - 1, col_num)
-                add_property(name, type='row', row=row_num, col=None)
+                add_property(name, source_type='row', row=None, col=col_num)
         elif config['properties']['rowcol'][1] and not config['properties']['rowcol'][0]:
             col_num = config['properties']['rowcol'][1]
             for row_num in range(0, sh.nrows):
                 name = cell_value(sh, row_num, col_num - 1)
-                add_property(name, type='col', row=None, col=col_num)
+                add_property(name, source_type='col', row=row_num, col=None)
         else:
             self.raiseError('Property settings not configured properly!')
         # dates
@@ -552,10 +579,6 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
             self.raiseError('Date settings not configured properly!')
         self.unique_dates = uniqify(self.unique_dates)
 
-        print "554???", self.fois
-        print "555", self.properties  # TODO - make unique?  track row/col in diff list?
-        print "556", self.unique_dates
-
         # observation data values
         offset = config['period']['offset']
         try:
@@ -570,13 +593,15 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
         for row_num in range(config['values']['rowcol'][0] - 1, sh.nrows):
             for col_num in range(config['values']['rowcol'][1] - 1, sh.ncols):
                 # keys
-                foi = get_foi(row_num, col_num)
+                foi = get_foi_ID(row_num, col_num)
                 vdate = get_vdate(row_num, col_num)
-                property = get_property(row_num, col_num)
-                #print "sosfeed:571 FDP", foi, vdate['date'], property
-                # data
-                self.values[(foi, vdate['date'], property)] = \
-                                            cell_value(sh, row_num, col_num)
+                property = get_property_name(row_num, col_num)
+                #print "sosfeed:596 FDP", foi, vdate['date'], property
+                if foi and vdate and property:
+                    value = cell_value(sh, row_num, col_num)
+                    if value:
+                        # data
+                        self.values[(foi, vdate.get('date'), property)] = value
 
     def create_XML(self, sheet_name=None, data={}):
         """Create the XML for an InsertObservation POST using a Jinja template
@@ -624,9 +649,12 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
             ['1963-12-17T00:00:00+02', 23, 55],
             ['1963-12-18T00:00:00+02', 24, 60]]
         """
-        data = template.render(period=data['period'], values=data['values'],
-                               separator=data['separator'], core=data['core'],
-                               properties=data['properties'], foi=data['foi'],)
+        data = template.render(period=data.get('period'),
+                               values=data.get('values'),
+                               separator=data.get('separator'),
+                               core=data.get('core'),
+                               components=data.get('properties'),
+                               foi=data.get('foi'),)
         return data  # XML
 
     def create_results(self):
@@ -636,28 +664,43 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
         for sheet_name in self.sheet_list:
             # load data from worksheet into dictionaries
             self.load_from_excel(sheet_name)
-            for foi in self.fois:
+            for key, foi in self.fois.iteritems():
                 data = {}
+                data['values'] = []
                 data['core'] = self.core
                 data['period'] = self.period
                 data['foi'] = foi
                 data['separator'] = self.separator
-                data['properties'] = self.properties
+                data['properties'] = self.unique_properties
 
-                data['values'] = ''
                 token = data['separator']['token']
                 for _date in self.unique_dates:
-                    data['values'] = _date + token
-                    for prop in self.properties:
-                        key = (foi['ID'], _date, prop['name'])
-                        value = self.values.get(key)
-                        data['values'] = data['values'] + value + token
-                    data['values'] = data['values'] + data['separator']['block']
+                    value_set = [_date, ]
+                    for prop in self.unique_properties:
+                        key = (foi.get('id'), _date, prop.get('name'))
+                        val = self.values.get(key)
+                        #print "682", foi, _date, prop.get('name'), val
+                        value_set.append(val)
+                    data['values'].append(value_set)
+                    """
+                    data['values'] = u''.join([_date + token])
+                    for key, prop in self.unique_properties.iteritems():
+                        #print "674", foi, _date, prop.get('name')
+                        key = (foi, _date, prop.get('name'))
+                        val = self.values.get(key)
+                        try:
+                            value = unicode(val)  # convert int/float to unicode
+                        except:
+                            value = val
+                        if value:
+                            data['values'] = u''.join([data['values'], value, token])
+                    data['values'] = u''.join([data['values'], data['separator']['block']])
+                    """
 
                 XML = self.create_XML(sheet_name=sheet_name, data=data)
                 if XML:
                     results.append(XML)
-                    print "SOSfeeder:650\n", XML
+                    print "\nSOSfeeder:704\n", XML
             return results
 
     def compute(self):
@@ -725,8 +768,9 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
         #print "sosfeeder:594", _prop_file, type(_prop_file), _prop_file.name
         if _prop_file and _prop_file.name:
             try:
-                reader = csv.reader(open(_prop_file.name), delimiter=',',
-                                    quotechar='"')
+                reader = self.unicode_csv_reader(open(_prop_file.name),
+                                                delimiter=',',
+                                                quotechar='"')
                 self.property_lookup = {row[0]: row[1:] for row in reader}
             except IOError:
                 self.raiseError('Properties file "%s" does not exist' % \
@@ -738,15 +782,16 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
         self.feature_lookup = {}
         if _FOI_file and _FOI_file.name:
             try:
-                reader = csv.reader(open(_FOI_file.name), delimiter=',',
-                                    quotechar='"')
+                reader = self.unicode_csv_reader(open(_FOI_file.name),
+                                                 delimiter=',',
+                                                 quotechar='"')
                 for row in reader:
                     coord_list = row[3].split(',')
                     coords = [(cl.strip(' ').split(' ')[0],
                                cl.strip(' ').split(' ')[1]) for cl in coord_list]
-                    self.feature_lookup = {row[0]: {'name': row[1],
-                                                    'srs': row[2],
-                                                    'coords': coords}}
+                    self.feature_lookup[row[0]] = {'name': row[1],
+                                                   'srs': row[2],
+                                                   'coords': coords}
             except IOError:
                 self.raiseError('Feature file "%s" does not exist' % \
                                 _FOI_file.name)
