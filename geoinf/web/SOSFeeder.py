@@ -1,4 +1,29 @@
-
+# -*- coding: utf-8 -*-
+###########################################################################
+##
+## Copyright (C) 2012 CSIR Meraka Institute. All rights reserved.
+##
+## eo4vistrails extends VisTrails, providing GIS/Earth Observation
+## ingestion, pre-processing, transformation, analytic and visualisation
+## capabilities . Included is the ability to run code transparently in
+## OpenNebula cloud environments. There are various software
+## dependencies, but all are FOSS.
+##
+## This file may be used under the terms of the GNU General Public
+## License version 2.0 as published by the Free Software Foundation
+## and appearing in the file LICENSE.GPL included in the packaging of
+## this file.  Please review the following to ensure GNU General Public
+## Licensing requirements will be met:
+## http://www.opensource.org/licenses/gpl-license.php
+##
+## If you are unsure which license is appropriate for your use (for
+## instance, you are interested in developing a commercial derivative
+## of VisTrails), please contact us at vistrails@sci.utah.edu.
+##
+## This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
+## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+##
+############################################################################
 """This module forms part of the eo4vistrails capabilities. It is used to
 handle data feeds to an OGC SOS (including InsertObservation & RegisterSensor)
 """
@@ -375,11 +400,11 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                 'values': {'rowcol': (row, col)},
                 }
             self.property_lookup: dictionary
-                details for a property ID, in the format:
+                details for each property, in the format:
                     {"ID_1": ["name_1", "URN_value1", "units_abc"],
                      "ID_2": ["name_2", "URN_value2", "units_pqr"],}
             self.feature_lookup: dictionary
-                details for a feature, in the format:
+                details for each feature, in the format:
                     {"ID_1": {"name": "name_1", "srs": "SRS_1",
                               "coords": [(a,b), (c,d) ...]},
                      "ID_2": {"name": "name_2", "srs": "SRS_2",
@@ -437,13 +462,23 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
             except:
                 ID = foi_ID
             foi_ID_entry = self.feature_lookup.get(ID)
-            #print "sosfeeder:436", foi_ID_entry, ID, type(ID)
+            #print "sosfeeder:465", foi_ID_entry, ID, type(ID)
             if foi_ID_entry:
+                # convert coords "list of tuples with unicode strings"
+                coords = []
+                coords_list = foi_ID_entry.get('coords')
+                if coords_list:
+                    try:
+                        for coord in coords_list:
+                            coords.append(float(coord[0]))
+                            coords.append(float(coord[1]))
+                    except:
+                        coords = coords_list
                 self.fois[ID] = {
                     'id': ID,
                     'name': foi_ID_entry.get('name') or ID,
                     'srs': foi_ID_entry.get('srs') or SRS_DEFAULT,
-                    'coords': foi_ID_entry.get('coords'),
+                    'coords': coords,
                     'col': col,
                     'row':row}
 
@@ -474,7 +509,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                    self.properties[0]['row'] is None:
                     return self.properties[0].get('name')
             for property in self.properties:
-                #print "sosfeed:451 prop", row, col, property['col'], property['row']
+                #print "sosfeed:511 prop", row, col, property['col'], property['row']
                 if property['col'] == col or property['row'] == row:
                     return property.get('name')
             return None
@@ -596,7 +631,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                 foi = get_foi_ID(row_num, col_num)
                 vdate = get_vdate(row_num, col_num)
                 property = get_property_name(row_num, col_num)
-                #print "sosfeed:596 FDP", foi, vdate['date'], property
+                #print "sosfeed:636 FDP", foi, vdate['date'], property
                 if foi and vdate and property:
                     value = cell_value(sh, row_num, col_num)
                     if value:
@@ -679,13 +714,13 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                     for prop in self.unique_properties:
                         key = (foi.get('id'), _date, prop.get('name'))
                         val = self.values.get(key)
-                        #print "682", foi, _date, prop.get('name'), val
+                        #print "sosfeed:717", foi, _date, prop.get('name'), val
                         value_set.append(val)
                     data['values'].append(value_set)
                     """
                     data['values'] = u''.join([_date + token])
                     for key, prop in self.unique_properties.iteritems():
-                        #print "674", foi, _date, prop.get('name')
+                        #print "724", foi, _date, prop.get('name')
                         key = (foi, _date, prop.get('name'))
                         val = self.values.get(key)
                         try:
@@ -700,7 +735,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                 XML = self.create_XML(sheet_name=sheet_name, data=data)
                 if XML:
                     results.append(XML)
-                    print "\nSOSfeeder:704\n", XML
+                    print "\nSOSfeeder:740\n", XML
             return results
 
     def compute(self):

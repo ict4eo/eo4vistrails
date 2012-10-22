@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 ############################################################################
 ###
-### Copyright (C) 2010 CSIR Meraka Institute. All rights reserved.
+### Copyright (C) 2012 CSIR Meraka Institute. All rights reserved.
 ###
 ### This full package extends VisTrails, providing GIS/Earth Observation
 ### ingestion, pre-processing, transformation, analytic and visualisation
@@ -676,12 +676,26 @@ class ExcelChopper(ExcelBase):
                 else:
                     row_list = self.xls._parse_row(sheet, row,
                                               date_as_tuple=True)
-                    for col in self.process_cols:  # reverse order
-                        try:
-                            row_list.pop(col)  # not in output
-                        except:
-                            pass  # ignore invalid cols
-                    out_list.append(row_list)
+                    if not self.process_rows:
+                        if row_list[0] in [None, ''] and check_if_equal(row_list):
+                            pass  # do not add blank row to output
+                    else:
+                        if self.process_cols:
+                            for col in self.process_cols:  # reverse order
+                                try:
+                                    row_list.pop(col)  # not in output
+                                except:
+                                    pass  # ignore invalid cols
+                        else:
+                            # check for blank col
+                            pass
+                            """ This code will not suffice; as it does not
+                            check that the WHOLE column is blank...
+                            for col in range(len(row_list) - 1, 0, -1):
+                                if row_list[col] in [None, '']:
+                                    row_list.pop(col)  # no blanks in output
+                            """
+                        out_list.append(row_list)
             results[sheet_name] = out_list
         self.save_results(results)
 

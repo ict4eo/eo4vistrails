@@ -53,33 +53,47 @@
       <sa:position>
        <gml:Point>
         <gml:pos srsName="{{ foi.srs|default('urn:ogc:def:crs:EPSG::4326') }}">
-         {{ foi.coords }}
+         {% if foi.coords is iterable %}{% for coord in foi.coords %}{{ coord }} {% endfor %}{% endif %}
         </gml:pos>
        </gml:Point>
+       {#
+       <gml:Polygon srsName="{{ foi.srs|default('urn:ogc:def:crs:EPSG::4326') }}"
+        xsi:type="gml:PolygonType">
+        <gml:exterior>
+         <gml:LinearRing xsi:type="gml:LinearRingType">
+          <gml:posList>
+           52.90 7.52 52.7167 8.76667
+           52.7167 9.76667 51.7167 9.76667 52.90 7.52
+          </gml:posList>>
+         </gml:LinearRing>
+        </gml:exterior>
+       </gml:Polygon>
+       #}
       </sa:position>
      </sa:SamplingPoint>
   </om:featureOfInterest>
 
   <om:result>
+
    <swe:DataArray>
 
     <swe:elementCount>
      <swe:Count>
-      <swe:value>2</swe:value>  {# ??? #}
+      <swe:value>2{# ??? #}</swe:value>
      </swe:Count>
     </swe:elementCount>
 
     {% if components and components is iterable %}<swe:elementType name="Components">
-     <swe:DataRecord>{% for item in components %}
-      {% if item.type == 'Quantity' %}<swe:field name="{{ item.name }}">
+     <swe:DataRecord>
+      {% for item in components %}{% if item.type == 'Quantity' %}<swe:field name="{{ item.name }}">
        <swe:Quantity definition="{{ item.urn }}">
-        {% if item.units %}<swe:uom code="{{ item.units }}" />{% endif %}
-       </swe:Quantity>
-      </swe:field>{% else %}
-      <swe:field name="{{ item.name }}">
+        {% if item.units %}<swe:uom code="{{ item.units }}" />
+       {% endif %}</swe:Quantity>
+      </swe:field>
+      {% else %}<swe:field name="{{ item.name }}">
        <swe:{{ item.type }} definition="{{ item.urn }}" />
-      </swe:field>{% endif %}{% endfor %}
-     </swe:DataRecord>
+      </swe:field>
+     {% endif %}{% endfor %}</swe:DataRecord>
     </swe:elementType>{% endif %}
 
     <swe:encoding>
@@ -87,10 +101,10 @@
                     tokenSeparator="{{ separator.token|default(',', true) }}"
                     blockSeparator="{{ separator.block|default(';', true) }}" />
     </swe:encoding>
-
-    {% if values and values is iterable %}<swe:values>{% for dataset in values %}{% if dataset is iterable %}{% for data in dataset %}{{ data }}{% if not loop.last %},{% endif %}{% endfor %};{% endif %}{% endfor %}</swe:values>{% endif %}
+    {% if values and values is iterable %}<swe:values>{% for dataset in values %}{% if dataset is iterable %}{% for data in dataset %}{{ data|default('', true) }}{% if not loop.last %},{% endif %}{% endfor %};{% endif %}{% endfor %}</swe:values>{% endif %}
 
    </swe:DataArray>
+
   </om:result>
 
  </om:Observation>
