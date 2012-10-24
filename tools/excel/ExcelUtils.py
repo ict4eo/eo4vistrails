@@ -42,10 +42,11 @@ from core.modules.vistrails_module import Module, ModuleError
 from packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
 from packages.eo4vistrails.tools.utils.ThreadSafe import ThreadSafeMixin
 from packages.eo4vistrails.tools.utils.DropDownListWidget import ComboBoxWidget
+from packages.eo4vistrails.tools.utils.listutils import check_if_equal
 # local
 from readexcel import read_excel
 
-DATE_FORMAT = 'YYYY/MM/DD'
+DATE_FORMAT = 'YYYY-MM-DDTHH:MM:SS'
 SHEET_NAME_SIZE = 27  # maximum length of an Excel worksheet name (31 - 4)
 
 
@@ -215,10 +216,20 @@ edu.utah.sci.vistrails.basic:Boolean)',
                 for row_index, row in enumerate(results[key]):
                     for col_index, value in enumerate(row):
                         #print "excelutils:218", row_index, col_index, value
-                        if isinstance(value, (list, tuple)):  # date
-                            dt = datetime(*value)
-                            worksheet.write(row_index, col_index,
-                                            dt, date_style)
+                        if isinstance(value, (list, tuple)):  # date OR time
+                            try:
+                                _date = datetime(*value)
+                                worksheet.write(row_index, col_index,
+                                                _date, date_style)
+                            except ValueError:
+                                try:
+                                    _time = time(*value[3:])
+                                    worksheet.write(row_index, col_index,
+                                                    _time, date_style)
+                                except:
+                                    self.raiseError(
+                                        'Date "%s" format error in cell (%s, %s)' %
+                                        (value, row_index, col_index))
                         else:
                             worksheet.write(row_index, col_index,
                                             value)
@@ -404,19 +415,6 @@ edu.utah.sci.vistrails.basic:Integer)',
     def __init__(self):
         ExcelBase.__init__(self)
 
-    def check_if_equal(self, iterator):
-        """Check if all elements of iterable are the same.
-
-        http://stackoverflow.com/questions/3844801/\
-        check-if-all-elements-in-a-list-are-identical
-        """
-        try:
-            iterator = iter(iterator)
-            first = next(iterator)
-            return all(first == rest for rest in iterator)
-        except StopIteration:
-            return True
-
     def add_block(self, row, col):
         """Add new unique block and alter limits of existing blocks.
 
@@ -531,9 +529,9 @@ edu.utah.sci.vistrails.basic:Integer)',
                 for col in range(self.sheet.ncols):
                     col_list = self.xls._parse_column(self.sheet, col,
                                                       date_as_tuple=False)
-                    if col_list and col_list[0] in [None, ''] and \
-                    self.check_if_equal(col_list):  # all blanks!
-                            blank_cols.append(col)
+                    if col_list and col_list[0] in [None, ''] \
+                    and check_if_equal(col_list):  # all blanks!
+                        blank_cols.append(col)
                 if not '0' in blank_cols:
                     blank_cols.insert(0, -1)  # will always split at first col
             # process splits & create blocks
@@ -552,7 +550,7 @@ edu.utah.sci.vistrails.basic:Integer)',
                                                        date_as_tuple=False)
                         #print "excelutils 582", row, row_list[0]
                         if row == 0 or (row_list and row_list[0] in [None, '']\
-                        and self.check_if_equal(row_list)):  # all blank or #1
+                        and check_if_equal(row_list)):  # all blanks!
                             found_blank_rows = True
                             if row == 0:
                                 row = -1
@@ -631,8 +629,8 @@ class ExcelChopper(ExcelBase):
             from 1.
         rows:
             values:
-                a list of row numbers to be removed. If None, then no rows will
-                be removed. Row numbering starts from 1.
+                a list of row numbers to be removed. If None, then all empty
+                rows will be removed. Row numbering starts from 1.
             range:
                 a Boolean indicating if the row numbers specify a range.
 
@@ -671,23 +669,23 @@ class ExcelChopper(ExcelBase):
             sheet = self.xls.book.sheet_by_name(sheet_name)
             out_list = []
             for row in range(sheet.nrows):
-                if self.process_rows and row in self.process_rows:
+                if row in self.process_rows:
                     pass  # do not add to output
                 else:
                     row_list = self.xls._parse_row(sheet, row,
                                               date_as_tuple=True)
-                    if not self.process_rows:
-                        if row_list[0] in [None, ''] and check_if_equal(row_list):
-                            pass  # do not add blank row to output
+                    if row_list[0] in [None, ''] \
+                    and check_if_equal(row_list):
+                        pass  # do not add blank row to output
                     else:
-                        if self.process_cols:
+                        if len(self.process_cols) > 0:
                             for col in self.process_cols:  # reverse order
                                 try:
-                                    row_list.pop(col)  # not in output
+                                    row_list.pop(col)  # remove from output
                                 except:
-                                    pass  # ignore invalid cols
+                                    pass
                         else:
-                            # check for blank col
+                            # check/remove cols that are blank throughout???
                             pass
                             """ This code will not suffice; as it does not
                             check that the WHOLE column is blank...
@@ -749,7 +747,6 @@ class ExcelReplacer(ExcelBase):
             Can be None; then the current cell value will be replaced by an
             empty string.
 
-
     Output ports:
         file_out:
             output Excel file
@@ -788,10 +785,15 @@ edu.utah.sci.vistrails.basic:Boolean)',
                                                date_as_tuple=True)
                 if not self.process_rows or row in self.process_rows:
                     for col in self.process_cols:
-                        if partial and cell_current in row_list[col]:
-                            row_list[col] = row_list[col].replace(
-                                                            cell_current,
-                                                            cell_replace)
+                        if partial:
+                            try:
+                                iter(row_list[col])  # test if partial possible
+                                if cell_current in row_list[col]:
+                                    row_list[col] = row_list[col].replace(
+                                                                cell_current,
+                                                                cell_replace)
+                            except:
+                                pass
                         else:
                             if row_list[col] == cell_current:
                                 row_list[col] = cell_replace

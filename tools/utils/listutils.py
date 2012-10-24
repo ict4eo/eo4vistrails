@@ -52,6 +52,20 @@ def uniqify(seq, idfun=None):
     return result
 
 
+def check_if_equal(iterator):
+    """Check if all elements of iterable are the same.
+
+    http://stackoverflow.com/questions/3844801/\
+    check-if-all-elements-in-a-list-are-identical
+    """
+    try:
+        iterator = iter(iterator)
+        first = next(iterator)
+        return all(first == rest for rest in iterator)
+    except StopIteration:
+        return True
+
+
 def get_filter(items):
     """Create a list of values from numeric ranges defined in a string.
 

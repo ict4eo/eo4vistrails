@@ -41,7 +41,7 @@ import shutil
 
 ENCODING = "utf-8"  # will probably differ in some countries ???
 
-# TODO - consider recoding from line 180 using a Jinja template !!!
+# TODO - recode from "fyle.write('<html>')" using a Jinja template !!!
 
 ##############################################################################
 
@@ -58,6 +58,16 @@ class ExcelCell(SpreadsheetCell):
         Sheets:
             a List of sheet numbers, or names, that must be displayed.
             If None, then all sheets will be displayed.
+        ColumnWidths:
+            a List of values corresponding to column width in pixels. If there
+            is only one number, it wil be used for the all columns; if two
+            numbers, the first will be used for the first column, and the
+            second for all other columns; if three numbers, the first will be
+            used for the first column, and the second for the second colunns
+            and the third for all other columns... and so on.
+        References?
+            If True (checked), the column and row numbers will be shown on the
+            top and lefthand sides.
     """
     def compute(self):
         """ compute() -> None
@@ -66,6 +76,8 @@ class ExcelCell(SpreadsheetCell):
         if self.hasInputFromPort("File"):
             fileValue = self.getInputFromPort("File")
             fileHTML = self.interpreter.filePool.create_file(suffix='.html')
+            fileReference = self.getInputFromPort("References?")
+            columnWidths = self.forceGetInputFromPort("ColumnWidths", [])
             try:
                 fileSheets = self.getInputListFromPort("Sheets")
                 if isinstance(fileSheets[0], (list, tuple)):
@@ -76,7 +88,9 @@ class ExcelCell(SpreadsheetCell):
             fileValue = None
         self.cellWidget = self.displayAndWait(ExcelCellWidget, (fileValue,
                                                                 fileHTML,
-                                                                fileSheets))
+                                                                fileSheets,
+                                                                fileReference,
+                                                                columnWidths))
 
 
 class ExcelCellWidget(QCellWidget):
@@ -103,9 +117,13 @@ class ExcelCellWidget(QCellWidget):
 
         """
         self.fileSrc = None
-        (fileExcel, fileHTML, fileSheets) = inputPorts
+        (fileExcel, fileHTML, fileSheets, fileReference, columnWidths) = \
+                                                                    inputPorts
         if fileExcel:
-            html_file = self.create_html(fileExcel, fileHTML, fileSheets)
+            html_file = self.create_html(fileExcel, fileHTML, fileSheets,
+                                         date_as_tuple=False, css=None,
+                                         fileReference=fileReference,
+                                         columnWidths=columnWidths)
             if html_file:
                 try:
                     fi = open(html_file.name, "r")
@@ -122,7 +140,7 @@ class ExcelCellWidget(QCellWidget):
 
     def dumpToFile(self, filename):
         """ dumpToFile(filename) -> None
-        It will generate a screenshot of the cell contents and dump to filename.
+        It will generate a screenshot of the cell contents and dump to filename
         It will also create a copy of the original text file used with
         filename's base name and the original extension.
         """
@@ -149,7 +167,8 @@ class ExcelCellWidget(QCellWidget):
             raise ModuleError(self, msg)
 
     def create_html(self, file_in, file_out, sheets=None,
-                         date_as_tuple=False, css=None):
+                         date_as_tuple=False, css=None,
+                         fileReference=False, columnWidths=[]):
         """Return HTML in the output file from an Excel input file.
 
         Args:
@@ -166,6 +185,7 @@ class ExcelCellWidget(QCellWidget):
         if not css:
             # ??? Table-level css does not work;
             css = 'table, th, td { border: 1px solid black; }\
+                   td.ref ( background-color: white; color: black; } \
                    body {font-family: Arial, sans-serif; }'
             table_borders = ' border="1"'  # TEMPORARY WORK-AROUND
         try:
@@ -200,10 +220,30 @@ class ExcelCellWidget(QCellWidget):
             sheet_list = book.sheet_names()
         # create table per selected sheet
         for name in sheet_list:
+            # create style for column widths
+            widths = []
+            for col_n in range(0, book.sheet_by_name(name).ncols):
+                if len(columnWidths) == 1:
+                    columnWidths[0]  # all the same
+                elif len(columnWidths) > 0:
+                    try:
+                        widths.append(columnWidths[col_num])
+                    except:
+                        widths.append(columnWidths[-1])  # default is last
+                else:
+                    pass
+            # write data to file
             fyle.write('\n<h1>%s</h1>\n' % name)
             fyle.write('  <table%s>\n' % table_borders)
+            if fileReference:  # show grid col labels
+                fyle.write('    <tr>\n      ')
+                for col_n in range(0, book.sheet_by_name(name).ncols):
+                    fyle.write('<td class="ref">%s</td>' % str(col_n + 1))
+                fyle.write('    <tr>\n      ')
             for row_n in range(0, book.sheet_by_name(name).nrows):
                 fyle.write('    <tr>\n      ')
+                if fileReference:  # show grid row labels
+                    fyle.write('<td class="ref">%s</td>' % str(row_n + 1))
                 for col_n in range(0, book.sheet_by_name(name).ncols):
                     style = ''
                     value = book.sheet_by_name(name).cell(row_n, col_n).value
@@ -265,9 +305,15 @@ class ExcelCellWidget(QCellWidget):
                     elif type == 5:
                         value = xlrd.error_text_from_code[value]
                     # create cell with formatting
-                    if style:
+                    if style and len(widths) > 0:
+                        style = ' style="%s width=%spx"' % (style,
+                                                            widths[col_n])
+                    elif style:
                         style = ' style="%s"' % style
-                    fyle.write('<td%s>%s</td>' % (style, value or '&#160;'))
+                    elif len(widths) > 0:
+                        style = ' style="width=%spx"' % widths[col_n]
+                    fyle.write('<td%s">%s</td>' % \
+                               (style, value or '&#160;'))
                 fyle.write('    </tr>\n')
             fyle.write('  </table>\n')
         fyle.write('</body>\n')

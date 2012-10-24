@@ -145,7 +145,7 @@ class SOSFeeder(ThreadSafeMixin, Module):
         # template location
         current_dir = os.path.dirname(os.path.abspath(__file__))
         template_dir = os.path.join(current_dir, 'templates')
-        #print "SOSFeeder:75", current_dir, template_dir
+        #print "SOSFeeder:145", current_dir, template_dir
         self.env = Environment(loader=FileSystemLoader(template_dir),
                                trim_blocks=True)
 
@@ -411,34 +411,41 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                               "coords": [(p,q), (r,s) ...]},}
         """
 
-        def cell_value(sh, row_num, col_num):
-            """Return the correct type of value from an Excel cell."""
+        def cell_value(sheet, row_num, col_num):
+            """Return the correct type of value from a valid Excel cell."""
             row_num = max(row_num, 0)
             col_num = max(col_num, 0)
-            ctype = sh.cell(row_num, col_num).ctype
-            val = sh.cell(row_num, col_num).value
-            if ctype == 3:
-                date_tuple = xlrd.xldate_as_tuple(val, self.workbook.datemode)\
-                        + (offset, )
-                value = "%04d-%02d-%02dT%02d:%02d:%02d+%02d" % date_tuple
-            elif ctype == 2:
-                if val == int(val):
-                    value = int(val)
+            value = None
+            if row_num < sh.nrows and col_num < sh.ncols:
+                ctype = sheet.cell(row_num, col_num).ctype
+                val = sheet.cell(row_num, col_num).value
+                if ctype == 3:
+                    date_tuple = xlrd.xldate_as_tuple(val,
+                                                      self.workbook.datemode)\
+                                                      + (offset, )
+                    value = "%04d-%02d-%02dT%02d:%02d:%02d+%02d" % date_tuple
+                elif ctype == 2:
+                    if val == int(val):
+                        value = int(val)
+                    else:
+                        try:
+                            value = float(val)
+                        except:
+                            value = val
+                elif ctype == 5:
+                    value = xlrd.error_text_from_code[val]
                 else:
-                    try:
-                        value = float(val)
-                    except:
-                        value = val
-            elif ctype == 5:
-                value = xlrd.error_text_from_code[val]
-            else:
-                value = val
+                    value = val
             return value
 
         def add_property(name, source_type=None, row=None, col=None):
             """If property is found in lookup, add to properties attribute."""
-            prop = self.property_lookup.get(name)
-            if prop and len(prop) >= 3:
+            prop = self.property_lookup.get(name.strip(' '))
+            if not prop:
+                self.raiseError('Unable to locate property "%s" in the lookup' % \
+                                name)
+            #print "sosfeeder 447\n'%s'-'%s'" % (name.strip(' '), prop)
+            if len(prop) >= 3:
                 self.properties.append({
                     'name': name,
                     'type': prop[0] or 'Quantity',
@@ -454,6 +461,9 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                         'type': prop[0] or 'Quantity',
                         'urn': prop[1],
                         'units': prop[2]})
+            else:
+                self.raiseError('Invalid details for property "%s" in the lookup',\
+                                name)
 
         def add_foi(foi_ID, row=None, col=None):
             """If FOI is found in lookup, add to the FOI's dictionary."""
@@ -462,7 +472,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
             except:
                 ID = foi_ID
             foi_ID_entry = self.feature_lookup.get(ID)
-            #print "sosfeeder:465", foi_ID_entry, ID, type(ID)
+            #print "sosfeeder:475", foi_ID_entry, ID, type(ID)
             if foi_ID_entry:
                 # convert coords "list of tuples with unicode strings"
                 coords = []
@@ -480,7 +490,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                     'srs': foi_ID_entry.get('srs') or SRS_DEFAULT,
                     'coords': coords,
                     'col': col,
-                    'row':row}
+                    'row': row}
 
         def add_date(_date, row=None, col=None):
             """Add to date list."""
@@ -509,7 +519,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                    self.properties[0]['row'] is None:
                     return self.properties[0].get('name')
             for property in self.properties:
-                #print "sosfeed:511 prop", row, col, property['col'], property['row']
+                #print "sosfeed:511", row,col,property['col'],property['row']
                 if property['col'] == col or property['row'] == row:
                     return property.get('name')
             return None
@@ -523,14 +533,22 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                 if date['col'] == col or date['row'] == row:
                     return date
 
-        if self.configuration:
-            config = self.configuration
-        else:
-            self.raiseError('Internal Error: Configuration not set.')
+        # initialize
         if reset:
             self.period, self.values, self.separator = None, [], None
             self.core, self.properties, self.foi = None, [], None
         sh = self.workbook.sheet_by_name(sheet_name)
+        # input data checks & links
+        if self.configuration:
+            config = self.configuration
+        else:
+            self.raiseError('Internal Error: Configuration not set.')
+        if config['values']['rowcol'][0] - 1 > sh.nrows:
+            self.raiseError('Observation rows outside sheet limits!')
+        if config['values']['rowcol'][1] - 1 > sh.ncols:
+            self.raiseError('Observation columns outside sheet limits!')
+        self.data_row = config['values']['rowcol'][0] - 1
+        self.data_col = config['values']['rowcol'][1] - 1
         # meta data
         self.core = {
             'sensorID': config['sensor']['value'] or \
@@ -541,10 +559,6 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                            cell_value(sh,
                                       config['procedure']['rowcol'][0] - 1,
                                       config['procedure']['rowcol'][1] - 1)}
-        self.period = {
-            'start': None,  # TODO ! calculate this from max date
-            'end': None,  # TODO ! calculate this from min date
-            'offset': config['period']['offset'] or 0}
         self.separator = config['separator']
         # features
         self.fois = {}
@@ -557,12 +571,12 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
             add_foi(foi_ID)
         elif config['foi']['rowcol'][0] and not config['foi']['rowcol'][1]:
             row_num = config['foi']['rowcol'][0]
-            for col_num in range(0, sh.ncols):
+            for col_num in range(self.data_col, sh.ncols):
                 foi_ID = cell_value(sh, row_num - 1, col_num)
                 add_foi(foi_ID, row=None, col=col_num)
         elif config['foi']['rowcol'][1] and not config['foi']['rowcol'][0]:
             col_num = config['foi']['rowcol'][1]
-            for row_num in range(0, sh.nrows):
+            for row_num in range(self.data_row, sh.nrows):
                 foi_ID = cell_value(sh, row_num, col_num - 1)
                 add_foi(foi_ID, row=row_num, col=None)
         else:
@@ -574,22 +588,30 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
         if config['properties']['value']:
             name = config['properties']['value']
             add_property(name, source_type='constant')
-        elif config['properties']['rowcol'][0] and config['properties']['rowcol'][1]:
+        elif config['properties']['rowcol'][0] \
+        and config['properties']['rowcol'][1]:
             name = cell_value(sh, config['properties']['rowcol'][0] - 1,
                                   config['properties']['rowcol'][1] - 1)
             add_property(name, source_type='constant')
-        elif config['properties']['rowcol'][0] and not config['properties']['rowcol'][1]:
+        elif config['properties']['rowcol'][0] \
+        and not config['properties']['rowcol'][1]:
             row_num = config['properties']['rowcol'][0]
-            for col_num in range(0, sh.ncols):
+            for col_num in range(self.data_col, sh.ncols):
                 name = cell_value(sh, row_num - 1, col_num)
                 add_property(name, source_type='row', row=None, col=col_num)
-        elif config['properties']['rowcol'][1] and not config['properties']['rowcol'][0]:
+        elif config['properties']['rowcol'][1] \
+        and not config['properties']['rowcol'][0]:
             col_num = config['properties']['rowcol'][1]
-            for row_num in range(0, sh.nrows):
+            for row_num in range(self.data_row, sh.nrows):
                 name = cell_value(sh, row_num, col_num - 1)
                 add_property(name, source_type='col', row=row_num, col=None)
         else:
             self.raiseError('Property settings not configured properly!')
+        # add time (date?) as "always present"
+        self.unique_properties.insert(0, {
+            'name': "Time",
+            'type': "Time",
+            'urn': "urn:ogc:data:time:iso8601"})
         # dates
         self.unique_dates = []
         self.dates = []
@@ -600,19 +622,25 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
             value = cell_value(sh, config['period']['rowcol'][0] - 1,
                                   config['period']['rowcol'][1] - 1)
             add_date(value)
-        elif config['period']['rowcol'][0] and not config['period']['rowcol'][1]:
+        elif config['period']['rowcol'][0] \
+        and not config['period']['rowcol'][1]:
             row_num = config['period']['rowcol'][0]
-            for col_num in range(0, sh.ncols):
+            for col_num in range(self.data_col, sh.ncols):
                 value = cell_value(sh, row_num - 1, col_num)
                 add_date(value, row=row_num, col=None)
-        elif config['period']['rowcol'][1] and not config['period']['rowcol'][0]:
+        elif config['period']['rowcol'][1] \
+        and not config['period']['rowcol'][0]:
             col_num = config['period']['rowcol'][1]
-            for row_num in range(0, sh.nrows):
+            for row_num in range(self.data_row, sh.nrows):
                 value = cell_value(sh, row_num, col_num - 1)
                 add_date(value, row=None, col=col_num)
         else:
             self.raiseError('Date settings not configured properly!')
         self.unique_dates = uniqify(self.unique_dates)
+        self.period = {
+            'start': self.unique_dates[0],
+            'end': self.unique_dates[len(self.unique_dates) - 1],
+            'offset': config['period']['offset'] or 0}
 
         # observation data values
         offset = config['period']['offset']
@@ -620,18 +648,14 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
             offset = int(offset)
         except:
             offset = 0
-        if config['values']['rowcol'][0] - 1 > sh.nrows:
-            self.raiseError('Observation rows outside sheet limits!')
-        if config['values']['rowcol'][1] - 1 > sh.ncols:
-            self.raiseError('Observation columns outside sheet limits!')
         self.values = {}
-        for row_num in range(config['values']['rowcol'][0] - 1, sh.nrows):
-            for col_num in range(config['values']['rowcol'][1] - 1, sh.ncols):
+        for row_num in range(self.data_row, sh.nrows):
+            for col_num in range(self.data_col, sh.ncols):
                 # keys
                 foi = get_foi_ID(row_num, col_num)
                 vdate = get_vdate(row_num, col_num)
                 property = get_property_name(row_num, col_num)
-                #print "sosfeed:636 FDP", foi, vdate['date'], property
+                #print "sosfeed:656 FDP", foi, vdate['date'], property
                 if foi and vdate and property:
                     value = cell_value(sh, row_num, col_num)
                     if value:
@@ -714,28 +738,14 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                     for prop in self.unique_properties:
                         key = (foi.get('id'), _date, prop.get('name'))
                         val = self.values.get(key)
-                        #print "sosfeed:717", foi, _date, prop.get('name'), val
+                        #print "sosfeed:735", foi, _date, prop.get('name'), val
                         value_set.append(val)
                     data['values'].append(value_set)
-                    """
-                    data['values'] = u''.join([_date + token])
-                    for key, prop in self.unique_properties.iteritems():
-                        #print "724", foi, _date, prop.get('name')
-                        key = (foi, _date, prop.get('name'))
-                        val = self.values.get(key)
-                        try:
-                            value = unicode(val)  # convert int/float to unicode
-                        except:
-                            value = val
-                        if value:
-                            data['values'] = u''.join([data['values'], value, token])
-                    data['values'] = u''.join([data['values'], data['separator']['block']])
-                    """
 
                 XML = self.create_XML(sheet_name=sheet_name, data=data)
                 if XML:
                     results.append(XML)
-                    print "\nSOSfeeder:740\n", XML
+                    print "\nSOSfeeder:742\n", XML
             return results
 
     def compute(self):
@@ -800,7 +810,6 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
 
         # get property lookup details as dictionary
         self.property_lookup = {}
-        #print "sosfeeder:594", _prop_file, type(_prop_file), _prop_file.name
         if _prop_file and _prop_file.name:
             try:
                 reader = self.unicode_csv_reader(open(_prop_file.name),

@@ -112,19 +112,21 @@ class read_excel(object):
     def _parse_column(self, sheet, col_index, date_as_tuple=False):
         """Sanitize incoming Excel data; return list of column values."""
         values = []
-        for type, value in zip(
-                sheet.col_types(col_index), sheet.col_values(col_index)):
-            value = self.parse_cell_value(type, value, date_as_tuple)
-            values.append(value)
+        if col_index < sheet.ncols:
+            for type, value in zip(
+                    sheet.col_types(col_index), sheet.col_values(col_index)):
+                value = self.parse_cell_value(type, value, date_as_tuple)
+                values.append(value)
         return values
 
     def _parse_row(self, sheet, row_index, date_as_tuple=False):
         """Sanitize incoming Excel data; return list of row values."""
         values = []
-        for type, value in zip(
-                sheet.row_types(row_index), sheet.row_values(row_index)):
-            value = self.parse_cell_value(type, value, date_as_tuple)
-            values.append(value)
+        if row_index < sheet.nrows:
+            for type, value in zip(
+                    sheet.row_types(row_index), sheet.row_values(row_index)):
+                value = self.parse_cell_value(type, value, date_as_tuple)
+                values.append(value)
         return values
 
     def _parse_row_type(self, sheet, row_index, date_as_tuple=False):
