@@ -60,11 +60,11 @@ class ExcelCell(SpreadsheetCell):
             If None, then all sheets will be displayed.
         ColumnWidths:
             a List of values corresponding to column width in pixels. If there
-            is only one number, it wil be used for the all columns; if two
+            is only one number, it wil be used for all the columns; if two
             numbers, the first will be used for the first column, and the
             second for all other columns; if three numbers, the first will be
-            used for the first column, and the second for the second colunns
-            and the third for all other columns... and so on.
+            used for the first column, the second for the second column, and
+            the third for all other columns... and so on.
         References?
             If True (checked), the column and row numbers will be shown on the
             top and lefthand sides.
@@ -184,10 +184,10 @@ class ExcelCellWidget(QCellWidget):
             return None
         if not css:
             # ??? Table-level css does not work;
-            css = 'table, th, td { border: 1px solid black; }\
-                   td.ref ( background-color: white; color: black; } \
+            css = 'table, th, td { border: 1px solid black; } \
                    body {font-family: Arial, sans-serif; }'
             table_borders = ' border="1"'  # TEMPORARY WORK-AROUND
+        ref_style = 'background-color: black; color: white'  # grid reference
         try:
             book = xlrd.open_workbook(file_in.name, formatting_info=True)
         except:
@@ -236,19 +236,21 @@ class ExcelCellWidget(QCellWidget):
             fyle.write('\n<h1>%s</h1>\n' % name)
             fyle.write('  <table%s>\n' % table_borders)
             if fileReference:  # show grid col labels
-                fyle.write('    <tr>\n      ')
+                fyle.write('    <tr><td></td>\n      ')
                 for col_n in range(0, book.sheet_by_name(name).ncols):
-                    fyle.write('<td class="ref">%s</td>' % str(col_n + 1))
+                    fyle.write('<td style="%s">%s</td>' % (ref_style,
+                                                           str(col_n + 1)))
                 fyle.write('    <tr>\n      ')
             for row_n in range(0, book.sheet_by_name(name).nrows):
                 fyle.write('    <tr>\n      ')
                 if fileReference:  # show grid row labels
-                    fyle.write('<td class="ref">%s</td>' % str(row_n + 1))
+                    fyle.write('<td style="%s">*%s</td>' % (ref_style,
+                                                           str(row_n + 1)))
                 for col_n in range(0, book.sheet_by_name(name).ncols):
-                    style = ''
                     value = book.sheet_by_name(name).cell(row_n, col_n).value
                     type = book.sheet_by_name(name).cell(row_n, col_n).ctype
                     # check for styling
+                    style = ''
                     xfx = book.sheet_by_name(name).cell_xf_index(row_n, col_n)
                     xf = book.xf_list[xfx]
                     cell_font = font[xf.font_index]
@@ -301,17 +303,20 @@ class ExcelCellWidget(QCellWidget):
                                  datetuple[5] == 0:
                                 value = "%04d/%02d/%02d" % datetuple[:3]
                             else:  # full date
-                                value = "%04d/%02d/%02d %02d:%02d:%02d" % datetuple
+                                value = "%04d/%02d/%02d %02d:%02d:%02d" % \
+                                        datetuple
                     elif type == 5:
                         value = xlrd.error_text_from_code[value]
+                    else:
+                        value = ''
                     # create cell with formatting
                     if style and len(widths) > 0:
-                        style = ' style="%s width=%spx"' % (style,
+                        style = ' style="%s width:%spx"' % (style,
                                                             widths[col_n])
                     elif style:
                         style = ' style="%s"' % style
                     elif len(widths) > 0:
-                        style = ' style="width=%spx"' % widths[col_n]
+                        style = ' style="width:%spx"' % widths[col_n]
                     fyle.write('<td%s">%s</td>' % \
                                (style, value or '&#160;'))
                 fyle.write('    </tr>\n')
