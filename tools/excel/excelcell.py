@@ -68,6 +68,10 @@ class ExcelCell(SpreadsheetCell):
         References?
             If True (checked), the column and row numbers will be shown on the
             top and lefthand sides.
+
+    Output ports:
+        HTML File:
+            the HTML file displaying the Excel
     """
     def compute(self):
         """ compute() -> None
@@ -91,6 +95,7 @@ class ExcelCell(SpreadsheetCell):
                                                                 fileSheets,
                                                                 fileReference,
                                                                 columnWidths))
+        self.setResult('HTML File', fileHTML)
 
 
 class ExcelCellWidget(QCellWidget):
@@ -183,11 +188,12 @@ class ExcelCellWidget(QCellWidget):
         if not file_in or not file_out:
             return None
         if not css:
-            # ??? Table-level css does not work;
+            # ??? Table-level CSS does not work
             css = 'table, th, td { border: 1px solid black; } \
                    body {font-family: Arial, sans-serif; }'
             table_borders = ' border="1"'  # TEMPORARY WORK-AROUND
-        ref_style = 'background-color: black; color: white'  # grid reference
+        # grid reference style
+        ref_style = 'font-weight:bold; background-color:#808080; color:white;'
         try:
             book = xlrd.open_workbook(file_in.name, formatting_info=True)
         except:
@@ -204,9 +210,10 @@ class ExcelCellWidget(QCellWidget):
         fyle.write('\n</head>')
         fyle.write('<body>')
         font = book.font_list
-        alignment = {2: ' text-align: center;',
+        alignment = {1: ' text-align: left;',
+                     2: ' text-align: center;',
                      3: ' text-align: right;',
-                     1: ' text-align: left;'}
+                    }
         # list of selected sheets
         sheet_list = []
         if sheets:
@@ -227,7 +234,7 @@ class ExcelCellWidget(QCellWidget):
                     columnWidths[0]  # all the same
                 elif len(columnWidths) > 0:
                     try:
-                        widths.append(columnWidths[col_num])
+                        widths.append(columnWidths[col_n])
                     except:
                         widths.append(columnWidths[-1])  # default is last
                 else:
@@ -236,16 +243,17 @@ class ExcelCellWidget(QCellWidget):
             fyle.write('\n<h1>%s</h1>\n' % name)
             fyle.write('  <table%s>\n' % table_borders)
             if fileReference:  # show grid col labels
-                fyle.write('    <tr><td></td>\n      ')
+                fyle.write('    <tr><td style="%s">&#160;</td>      ' % \
+                           ref_style)
                 for col_n in range(0, book.sheet_by_name(name).ncols):
-                    fyle.write('<td style="%s">%s</td>' % (ref_style,
-                                                           str(col_n + 1)))
-                fyle.write('    <tr>\n      ')
+                    fyle.write('<td style="%s" align="center">%s</td>' %
+                               (ref_style, str(col_n + 1)))
+                fyle.write('    </tr>\n      ')
             for row_n in range(0, book.sheet_by_name(name).nrows):
                 fyle.write('    <tr>\n      ')
                 if fileReference:  # show grid row labels
-                    fyle.write('<td style="%s">*%s</td>' % (ref_style,
-                                                           str(row_n + 1)))
+                    fyle.write('<td style="%s" align="center">%s</td>' %
+                               (ref_style, str(row_n + 1)))
                 for col_n in range(0, book.sheet_by_name(name).ncols):
                     value = book.sheet_by_name(name).cell(row_n, col_n).value
                     type = book.sheet_by_name(name).cell(row_n, col_n).ctype
@@ -254,12 +262,10 @@ class ExcelCellWidget(QCellWidget):
                     xfx = book.sheet_by_name(name).cell_xf_index(row_n, col_n)
                     xf = book.xf_list[xfx]
                     cell_font = font[xf.font_index]
-                    #print row_n, col_n, xfx, cell_font.weight
                     if cell_font.italic:
                         style += ' font-style: italic;'
                     if cell_font.weight > 400:
                         style += ' font-weight: bold;'  # 700
-                        #print row_n, col_n, cell_font.bold
                     if cell_font.underline_type:
                         style += ' text-decoration: underline;'
                     if cell_font.struck_out:
@@ -268,18 +274,15 @@ class ExcelCellWidget(QCellWidget):
                     font_color = book.colour_map[cell_font.colour_index]
                     if font_color:
                         style += ' color:rgb(%s,%s,%s);' % font_color
-                        #print row_n, col_n, xfx, cell_color
                     # cell color
                     bgx = xf.background.pattern_colour_index
                     cell_color = book.colour_map[bgx]
                     if cell_color:
                         style += ' background-color:rgb(%s,%s,%s);' % cell_color
-                        #print row_n, col_n, xfx, cell_color
                     # text align
                     align = xf.alignment.hor_align
                     if align:
                         style += alignment.get(align) or ''
-                        #print row_n, col_n, xfx, align, style
                     # check data types
                     # 0:EMPTY; 1:TEXT (a Unicode string); 2:NUMBER (float);
                     # 3:DATE (float); 4:BOOLEAN (1 TRUE, 0 FALSE); 5: ERROR
@@ -296,11 +299,11 @@ class ExcelCellWidget(QCellWidget):
                         else:
                             # time only no date component
                             if datetuple[0] == 0 and datetuple[1] == 0 and \
-                               datetuple[2] == 0:
+                            datetuple[2] == 0:
                                 value = "%02d:%02d:%02d" % datetuple[3:]
                             # date only, no time
                             elif datetuple[3] == 0 and datetuple[4] == 0 and \
-                                 datetuple[5] == 0:
+                            datetuple[5] == 0:
                                 value = "%04d/%02d/%02d" % datetuple[:3]
                             else:  # full date
                                 value = "%04d/%02d/%02d %02d:%02d:%02d" % \
@@ -310,14 +313,11 @@ class ExcelCellWidget(QCellWidget):
                     else:
                         value = ''
                     # create cell with formatting
-                    if style and len(widths) > 0:
-                        style = ' style="%s width:%spx"' % (style,
-                                                            widths[col_n])
-                    elif style:
-                        style = ' style="%s"' % style
-                    elif len(widths) > 0:
-                        style = ' style="width:%spx"' % widths[col_n]
-                    fyle.write('<td%s">%s</td>' % \
+                    if len(widths) > 0:
+                        fyle.write('<td width="%spx" style="%s">%s</td>' % \
+                                   (widths[col_n], style, value or '&#160;'))
+                    else:
+                        fyle.write('<td style="%s">%s</td>' % \
                                (style, value or '&#160;'))
                 fyle.write('    </tr>\n')
             fyle.write('  </table>\n')

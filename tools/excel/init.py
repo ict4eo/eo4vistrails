@@ -83,6 +83,7 @@ def initialize(*args, **keywords):
         reg.add_input_port(ExcelCell, "Location", basic_widgets.CellLocation)
         reg.add_input_port(ExcelCell, "ColumnWidths", basic_modules.List)
         reg.add_input_port(ExcelCell, "References?", basic_modules.Boolean)
+        reg.add_output_port(ExcelCell, "HTML File", basic_modules.File)
 
         # Add other Excel utils
         reg.add_module(ExcelBase,
