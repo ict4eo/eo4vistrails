@@ -80,7 +80,7 @@ class ExcelCell(SpreadsheetCell):
         if self.hasInputFromPort("File"):
             fileValue = self.getInputFromPort("File")
             fileHTML = self.interpreter.filePool.create_file(suffix='.html')
-            fileReference = self.getInputFromPort("References?")
+            fileReference = self.forceGetInputFromPort("References?", False)
             columnWidths = self.forceGetInputFromPort("ColumnWidths", [])
             try:
                 fileSheets = self.getInputListFromPort("Sheets")

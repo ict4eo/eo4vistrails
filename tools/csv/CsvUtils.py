@@ -141,7 +141,7 @@ class CsvWriter(ThreadSafeMixin, Module):
             self.setResult('file_out', file_out)
             file_out.close()
         except Exception, e:
-            raise ModuleError(self, 'Cannot set/create CSV: %s' % str(e))
+            raise ModuleError(self, 'Cannot set/create CSV:\n %s' % str(e))
 
         csvfile = None  # flush to disk
 

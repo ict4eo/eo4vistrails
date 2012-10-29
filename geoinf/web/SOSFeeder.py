@@ -815,7 +815,9 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                 reader = self.unicode_csv_reader(open(_prop_file.name),
                                                 delimiter=',',
                                                 quotechar='"')
-                self.property_lookup = {row[0]: row[1:] for row in reader}
+                for row in reader:
+                    if row and len(row) > 1:
+                        self.property_lookup[row[0]] = row[1:]
             except IOError:
                 self.raiseError('Properties file "%s" does not exist' % \
                                 _prop_file.name)
@@ -830,12 +832,13 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                                                  delimiter=',',
                                                  quotechar='"')
                 for row in reader:
-                    coord_list = row[3].split(',')
-                    coords = [(cl.strip(' ').split(' ')[0],
-                               cl.strip(' ').split(' ')[1]) for cl in coord_list]
-                    self.feature_lookup[row[0]] = {'name': row[1],
-                                                   'srs': row[2],
-                                                   'coords': coords}
+                    if row:
+                        coord_list = row[3].split(',')
+                        coords = [(cl.strip(' ').split(' ')[0],
+                                   cl.strip(' ').split(' ')[1]) for cl in coord_list]
+                        self.feature_lookup[row[0]] = {'name': row[1],
+                                                       'srs': row[2],
+                                                       'coords': coords}
             except IOError:
                 self.raiseError('Feature file "%s" does not exist' % \
                                 _FOI_file.name)
