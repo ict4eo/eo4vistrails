@@ -85,6 +85,11 @@ def initialize(*args, **keywords):
         OGC_POST_DATA_PORT,
         (String, 'POST Data'))  # , True)
 
+    reg.add_output_port(
+        SOSFeeder,
+        DATA_PORT,
+        (String, 'Results'))  # , True)
+
     # ========================================================================
     # Standard Modules
     # ========================================================================
@@ -101,10 +106,8 @@ def initialize(*args, **keywords):
     reg.add_module(InsertObservation,
                    namespace=ogc_namespace)
 
-    """TO DO - activate when coding complete
     reg.add_module(RegisterSensor,
                    namespace=ogc_namespace)
-    """
 
     # SOS READER MODULE
     reg.add_module(SOS,

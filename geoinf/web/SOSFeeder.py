@@ -37,6 +37,7 @@ import xlrd
 # vistrails
 from core.modules.vistrails_module import Module, ModuleError
 # eo4vistrails
+from packages.eo4vistrails.geoinf.datamodels.WebRequest import WebRequest
 from packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
 from packages.eo4vistrails.tools.utils.ThreadSafe import ThreadSafeMixin
 from packages.eo4vistrails.tools.utils.listutils import uniqify
@@ -45,6 +46,7 @@ import init
 
 
 SRS_DEFAULT = 'urn:ogc:def:crs:EPSG::4326'
+SRS_DEFAULT_SHORT = 'EPSG::4326'
 
 
 @RPyCSafeModule()
@@ -61,12 +63,6 @@ class SOSFeeder(ThreadSafeMixin, Module):
     Input ports:
         OGC_URL:
             the network address of the SOS
-        file_in:
-            input Excel file
-        sheets:
-            a list of worksheet numbers, or names, that must be processed.
-            If None, then all sheets will be processed. Sheet numbering starts
-            from 1.
         active:
             Boolean port; if True (default is False) then outgoing data is
             POSTed directly to the specified SOS address (OGC_URL)
@@ -78,8 +74,6 @@ class SOSFeeder(ThreadSafeMixin, Module):
 
     _input_ports = [
         ('OGC_URL', '(edu.utah.sci.vistrails.basic:String)'),
-        ('file_in', '(edu.utah.sci.vistrails.basic:File)'),
-        ('sheets', '(edu.utah.sci.vistrails.basic:List)'),
         ('active', '(edu.utah.sci.vistrails.basic:Boolean)'), ]
     _output_ports = [
         ('PostData', '(edu.utah.sci.vistrails.basic:List)'), ]
@@ -87,6 +81,7 @@ class SOSFeeder(ThreadSafeMixin, Module):
     def __init__(self):
         ThreadSafeMixin.__init__(self)
         Module.__init__(self)
+        self.webRequest = WebRequest()
 
     def raiseError(self, msg, error=''):
         """Raise a VisTrails error with traceback display."""
@@ -96,6 +91,21 @@ class SOSFeeder(ThreadSafeMixin, Module):
             raise ModuleError(self, msg + ' - %s' % str(error))
         else:
             raise ModuleError(self, msg)
+
+    def unicode_csv_reader(self, utf8_data, dialect=csv.excel, **kwargs):
+        """Read and encode data from CSV as 'utf-8'.
+
+        NOTE:
+            Data from Excel is read as unicode; this is used to maintain
+            interoperability between excel data and csv data!
+
+        Source:
+            http://stackoverflow.com/questions/904041/\
+            reading-a-utf8-csv-file-with-python
+        """
+        csv_reader = csv.reader(utf8_data, dialect=dialect, **kwargs)
+        for row in csv_reader:
+            yield [unicode(cell, 'utf-8') for cell in row]
 
     def make_list(self, lst=None):
         """"Return a list from any given single element."""
@@ -124,24 +134,13 @@ class SOSFeeder(ThreadSafeMixin, Module):
 
     def compute(self):  # inherit and extend in child class
         # port data
-        self.URL = self.forceGetInputFromPort(init.OGC_URL_PORT, '')
-        self.file_in = self.getInputFromPort('data_file')
+        self.url = self.forceGetInputFromPort(init.OGC_URL_PORT, None)
+        self.file_in = self.forceGetInputFromPort('data_file', None)
         #_config = self.forceGetInputFromPort('configuration', None)
         self.active = self.forceGetInputFromPort('active', False)
         # validate port values
         if self.active and not self.URL:
             self.raiseError('SOS URL must be specified if feed is Active')
-        # open data file
-        try:
-            self.workbook = xlrd.open_workbook(self.file_in.name)
-        except:
-            self.raiseError("%s is not a valid Excel file" % self.file_in.name)
-        # get data sheets
-        self.sheets = self.make_list(self.forceGetInputListFromPort('sheets'))
-        self.set_sheet_list(self.sheets)
-        if not self.sheet_list:
-            self.raiseError("Unable to extract sheets from Excel file")
-
         # template location
         current_dir = os.path.dirname(os.path.abspath(__file__))
         template_dir = os.path.join(current_dir, 'templates')
@@ -152,36 +151,6 @@ class SOSFeeder(ThreadSafeMixin, Module):
     def create_data(self):
         """Create the XML for the POST to the SOS, using a Jinja template."""
         pass  # override in inherited classes
-
-
-class RegisterSensor(SOSFeeder):
-    """TODO - Extend SOS Feeder to register a sensor for a SOS."""
-
-    def __init__(self):
-        SOSFeeder.__init__(self)
-
-    def create_data(self, sheet_name=None):
-        """Create the XML for the POST to the SOS, using a Jinja template."""
-        return None  # TO DO !!!
-
-    def compute(self):
-        super(RegisterSensor, self).compute()
-        # check other port values
-
-        try:
-            results = []
-            for sheet_name in self.sheet_list:
-                XML = self.create_data(sheet_name)
-                results.append(XML)
-                #print "SOSfeed:600\n", XML
-                if self.active:
-                    # TO DO ...post XML data
-                    pass
-            # output POST data, if port is linked to another module
-            if init.OGC_POST_DATA_PORT in self.outputPorts:
-                self.setResult(init.OGC_POST_DATA_PORT, results)
-        except Exception, ex:
-            self.raiseError(ex)
 
 
 class InsertObservation(SOSFeeder):
@@ -323,9 +292,13 @@ class InsertObservation(SOSFeeder):
 
     Output ports:
         PostData:
-            an XML string; containing data POSTed to the SOS
+            a list of XML strings; each containing data for a single POST
+        Results:
+            a list; each item containing the result of a single POST
     """
     _input_ports = [
+        ('file_in', '(edu.utah.sci.vistrails.basic:File)'),
+        ('sheets', '(edu.utah.sci.vistrails.basic:List)'),
         ('procedure', '(edu.utah.sci.vistrails.basic:String,\
 edu.utah.sci.vistrails.basic:Integer,edu.utah.sci.vistrails.basic:Integer)',
             {"defaults": str(["", 0, 0]),
@@ -363,21 +336,6 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
 
     def __init__(self):
         SOSFeeder.__init__(self)
-
-    def unicode_csv_reader(self, utf8_data, dialect=csv.excel, **kwargs):
-        """Read and encode data from CSV as 'utf-8'.
-
-        NOTE:
-            Data from Excel is read as unicode; this is used to maintain
-            interoperability between excel data and csv data!
-
-        Source:
-            http://stackoverflow.com/questions/904041/\
-            reading-a-utf8-csv-file-with-python
-        """
-        csv_reader = csv.reader(utf8_data, dialect=dialect, **kwargs)
-        for row in csv_reader:
-            yield [unicode(cell, 'utf-8') for cell in row]
 
     def load_from_excel(self, sheet_name=None, reset=True):
         """Read data from a named Excel worksheet, and store in dictionaries
@@ -750,6 +708,16 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
 
     def compute(self):
         super(InsertObservation, self).compute()
+        # open data file
+        try:
+            self.workbook = xlrd.open_workbook(self.file_in.name)
+        except:
+            self.raiseError("A valid Excel file has not been specified")
+        # get data sheets
+        self.sheets = self.make_list(self.forceGetInputListFromPort('sheets'))
+        self.set_sheet_list(self.sheets)
+        if not self.sheet_list:
+            self.raiseError("Unable to extract sheets from Excel file")
         # get port values
         if self.forceGetInputFromPort('procedure'):
             _proc, _proc_row, _proc_col = self.forceGetInputFromPort('procedure')
@@ -868,7 +836,237 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
             if init.OGC_POST_DATA_PORT in self.outputPorts:
                 self.setResult(init.OGC_POST_DATA_PORT, results)
             if self.active:
-                # TO DO ... actually post XML data
-                pass
+                self.webRequest.url = self.url
+                dataset = []
+                for result in results:
+                    self.webRequest.data = results
+                    data = self.webRequest.runRequest()
+                    dataset.append(data)
+                # output results of POSTs, if port is linked to another module
+                if init.DATA_PORT in self.outputPorts:
+                    self.setResult(init.DATA_PORT, dataset)
+        except Exception, ex:
+            self.raiseError(ex)
+
+
+class RegisterSensor(SOSFeeder):
+    """Register a sensor for a SOS via supplied paramaters.
+
+    Input ports:
+        OGC_URL:
+            the network address of the SOS
+        active:
+            a Boolean port; if True (default) then outgoing data is POSTed
+            directly to the SOS
+        sensor:
+            The physical sensor or process that has carried out the observation
+
+            ID:
+                the ID of the sensor
+            name:
+                the name of the sensor
+            SRS:
+                the coordinate reference system (e.g. EPSG::4326)
+        coordinates:
+            The location that the sensor is associated with.  Location can
+            include a spatial reference, as well as an altitude.
+
+            filename:
+                the name of the CSV file containing the details for each
+                coordinate, in the form:
+                    "type", "units", "value"
+            list:
+                a list of dictionaries, each containing the co-ordinate details
+                for that sensor:
+                    [{"type": "type_1", "units":"units_1", "value": "value_1"},
+                     {"type": "type_2", "units":"units_2", "value": "value_2"},
+                    ]
+                these entries will be added to, and overwrite, and entries read
+                in from the file
+        property_details:
+            A set of information for each property; including its descriptive
+            name, the URN - as used by standards bodies, such OGC or NASA
+            (SWEET), and units of measure (in standard SI notation).
+
+            filename:
+                the name of the CSV file containing the details for each
+                property, in the form:
+                    "ID", "name", "URN_value", "units"
+            dictionary:
+                each dictionary entry is keyed on the property ID, with a
+                list containing the details for that property, in the format:
+                    {"ID_1": ["name_1", "URN_value1", "units_abc"],
+                     "ID_2": ["name_2", "URN_value2", "units_pqr"],}
+                these entries will be added to, and overwrite, and entries read
+                in from the file
+
+    Output ports:
+        PostData:
+            a list of XML strings; each containing data for a single POST
+        Results:
+            a list; each item containing the result of a single POST
+    """
+    _input_ports = [
+        ('sensor', '(edu.utah.sci.vistrails.basic:String,\
+edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
+            {"defaults": str(["", "", SRS_DEFAULT_SHORT]), "labels": str(["ID", "name", "srs"])}),
+        ('coordinates', '(edu.utah.sci.vistrails.basic:File,\
+edu.utah.sci.vistrails.basic:List)',
+            {"defaults": str(["", {}]), "labels": str(["file", "list"])}),
+        ('property_details', '(edu.utah.sci.vistrails.basic:File,\
+edu.utah.sci.vistrails.basic:Dictionary)',
+            {"defaults": str(["", {}]), "labels": str(["file", "dictionary"])}),
+    ]
+
+    def __init__(self):
+        SOSFeeder.__init__(self)
+
+    def create_results(self):
+        """Create list of XML POST datasets for each sensor.
+        """
+        results = []
+
+        data = {}
+        data['sensor'] = self.sensor
+        data['coords'] = self.coords
+        data['properties'] = self.property
+
+        XML = self.create_XML(sheet_name=None, data=data)
+        if XML:
+            results.append(XML)
+            print "\nSOSfeeder:936\n", XML
+            return results
+        else:
+            return None  # TO DO !!!
+
+    def create_XML(self, sheet_name=None, data={}):
+        """Create the XML for a RegisterSensor POST using a Jinja template
+        """
+        template = self.env.get_template('RegisterSensor.xml')
+
+        # test data
+        data['sensor'] = {
+            'ID': 'urn:ogc:object:feature:Sensor:Derwent-Station-2',
+            'name': 'Derwent: Station 2',
+            'srs': 'urn:ogc:def:crs:EPSG::4326'}
+        data['coords'] = []
+        data['coords'].append({
+            'name': 'Easting',
+            'value': '29.1',
+            'uom': 'degrees'})
+        data['coords'].append({
+            'name': 'Southing',
+            'value': '30.2',
+            'uom': 'degrees'})
+        data['properties'] = []
+        data['properties'].append({
+          'urn': 'http://www.opengis.net/def/uom/ISO-8601/0/Gregorian',
+          'name': 'Time',
+          'type': 'Time'})
+        data['properties'].append({
+          'name': 'temperature',
+          'urn': 'urn:ogc:def:phenomenon:OGC:1.0.30:temperature',
+          'name': 'temperature',
+          'type': 'Quantity',
+          'units': 'celcius'})
+        data['properties'].append({
+          'name': 'temperature',
+          'urn': 'urn:ogc:def:phenomenon:OGC:1.0.30:humidity',
+          'name': 'humidity',
+          'type': 'Quantity',
+          'units': 'percentage'})
+        """        """
+
+        data = template.render(sensor=data.get('sensor'),
+                               components=data.get('properties'),
+                               coords=data.get('coords'),)
+        return data  # XML
+
+    def compute(self):
+        super(RegisterSensor, self).compute()
+        # check other port values
+        if self.forceGetInputFromPort('sensor'):
+            _sensor_ID, _sensor_name, _sensor_srs = \
+                self.forceGetInputFromPort('sensor')
+        else:
+            _sensor_ID, _sensor_name = None, None
+        if self.forceGetInputFromPort('coordinates'):
+            _coords_file, _coords_list = \
+                self.forceGetInputFromPort('coordinates')
+        else:
+            _coords_file, _coords_list = None, None
+        if self.forceGetInputFromPort('property_details'):
+            _prop_file, _prop_dict = \
+                self.forceGetInputFromPort('property_details')
+        else:
+            _prop_file, _prop_dict = None, None
+
+        # validate port values
+        if not _sensor_ID:
+            self.raiseError('The sensor ID must be specified')
+        if not _prop_file and not _prop_dict:
+                self.raiseError('Either file or dictionary must be specified for %s'\
+                            % 'property details')
+        if not _coords_file and not _coords_lisy:
+            self.raiseError('Either file or list must be specified for %s'\
+                            % 'sensor co-ordinates details')
+
+        # sensor core metadata
+        self.sensor = {}
+        self.sensor['ID'] = _sensor_ID
+        self.sensor['name'] = _sensor_name
+        srs = _sensor_srs or SRS_DEFAULT_SHORT
+        self.sensor['name'] = 'urn:ogc:def:crs%s' % srs
+
+        # get sensor coords details as list of dictionaries
+        self.coords = {}
+        if _coords_file and _coords_file.name:
+            try:
+                reader = self.unicode_csv_reader(open(_coords_file.name),
+                                                delimiter=',',
+                                                quotechar='"')
+                for row in reader:
+                    if row and len(row) > 2:
+                        self.coords.append({'type': row[1],
+                                            'uom': row[2],
+                                            'value': row[3]})
+            except IOError:
+                self.raiseError('Sensor co-ordinates file "%s" does not exist' % \
+                                _coords_file.name)
+        if _coords_list:
+            self.coords.update(_coords_list)
+
+        # get property lookup details as dictionary
+        self.property = {}
+        if _prop_file and _prop_file.name:
+            try:
+                reader = self.unicode_csv_reader(open(_prop_file.name),
+                                                delimiter=',',
+                                                quotechar='"')
+                for row in reader:
+                    if row and len(row) > 1:
+                        self.property[row[0]] = row[1:]
+            except IOError:
+                self.raiseError('Properties file "%s" does not exist' % \
+                                _prop_file.name)
+        if _prop_dict:
+            self.property.update(_prop_dict)
+
+        # process configuration and generate output
+        try:
+            results = self.create_results()
+            # output POST data, if port is linked to another module
+            if init.OGC_POST_DATA_PORT in self.outputPorts:
+                self.setResult(init.OGC_POST_DATA_PORT, results)
+            if self.active:
+                self.webRequest.url = self.url
+                dataset = []
+                for result in results:
+                    self.webRequest.data = results
+                    data = self.webRequest.runRequest()
+                    dataset.append(data)
+                # output results of POSTs, if port is linked to another module
+                if init.DATA_PORT in self.outputPorts:
+                    self.setResult(init.DATA_PORT, dataset)
         except Exception, ex:
             self.raiseError(ex)

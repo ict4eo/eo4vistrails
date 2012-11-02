@@ -56,7 +56,7 @@
          {% if foi.coords is iterable %}{% for coord in foi.coords %}{{ coord }} {% endfor %}{% endif %}
         </gml:pos>
        </gml:Point>
-       {#
+       {# example for ring ... TODO
        <gml:Polygon srsName="{{ foi.srs|default('urn:ogc:def:crs:EPSG::4326') }}"
         xsi:type="gml:PolygonType">
         <gml:exterior>
