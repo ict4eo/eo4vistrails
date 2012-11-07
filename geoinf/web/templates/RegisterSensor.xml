@@ -25,6 +25,24 @@ http://schemas.opengis.net/sos/1.0.0/sosRegisterSensor.xsd http://www.opengis.ne
       </sml:IdentifierList>
      </sml:identification>
 
+     <!-- sml:capabilities element has to contain status and mobility information -->
+     <sml:capabilities>
+      <swe:SimpleDataRecord>
+       <!-- status whether sensor is collecting data at the moment (true) or not (false) -->
+       <swe:field name="status">
+        <swe:Boolean>
+         <swe:value>{{ sensor.status|default('true') }}</swe:value>
+        </swe:Boolean>
+       </swe:field>
+       <!-- status whether sensor is mobile (true) or fixed (false) -->
+       <swe:field name="mobile">
+        <swe:Boolean>
+         <swe:value>{{ sensor.mobile|default('false') }}</swe:value>
+        </swe:Boolean>
+        </swe:field>
+      </swe:SimpleDataRecord>
+     </sml:capabilities>
+
      <!-- last measured position of sensor -->
      <sml:position name="sensorPosition">
       <swe:Position referenceFrame="{{ sensor.srs|default('urn:ogc:def:crs:EPSG::4326') }}">
@@ -46,12 +64,6 @@ http://schemas.opengis.net/sos/1.0.0/sosRegisterSensor.xsd http://www.opengis.ne
      <!-- list containing the input phenomena for this sensor system -->
      <sml:inputs>
       <sml:InputList>
-       <!--
-       <sml:input name="Temperature">
-        <swe:ObservableProperty
-         definition="urn:ogc:def:phenomenon:OGC:1.0.30:temperature" />
-       </sml:input>
-       -->
       </sml:InputList>
      </sml:inputs>
 
@@ -68,13 +80,6 @@ http://schemas.opengis.net/sos/1.0.0/sosRegisterSensor.xsd http://www.opengis.ne
        {% endif %}</swe:Quantity>
        </sml:output>
       {% endfor %}
-       <!--
-       <sml:output name="temperature">
-        <swe:Quantity definition="urn:ogc:def:phenomenon:OGC:1.0.30:temperature">
-         <swe:uom code="Cel" />
-        </swe:Quantity>
-       </sml:output>
-       -->
       </sml:OutputList>
      </sml:outputs>
     </sml:System>

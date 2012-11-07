@@ -61,6 +61,7 @@ class DataRequest(NotCacheable, Module):
         """Raise a VisTrails error."""
         import traceback
         traceback.print_exc()
+        #print "DataRequest:64", msg, error
         if error:
             raise ModuleError(self, msg + ': %s' % str(error))
         else:

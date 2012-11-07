@@ -112,7 +112,7 @@ class WebRequest(DataRequest):
     def runRequest(self):
         """Execute an HTTP POST request for a given URL and data"""
         result = None
-        #print "\nWebRequest:106\n", self.url, self.requestType(), self.data
+        #print "\nWebRequest:115\n",self.url,self.requestType(),"\n",self.data
         if self.url:
             request_type = self.requestType()
             if request_type == 'GET':
@@ -133,21 +133,21 @@ class WebRequest(DataRequest):
                 response = urllib2.urlopen(req)
             except:
                 try:
-                    #print "WebRequest:130 - ignoring proxy..."
+                    #print "WebRequest:136 - ignoring proxy..."
                     proxy_support = urllib2.ProxyHandler({})  # disables proxy
                     opener = urllib2.build_opener(proxy_support)
                     urllib2.install_opener(opener)
                     response = urllib2.urlopen(req)
-                except urllib2.URLError, e:
-                    if hasattr(e, 'reason'):
+                except urllib2.URLError, ex:
+                    if hasattr(ex, 'reason'):
                         self.raiseError(
-                            'Failed to reach the server. Reason', e.reason)
-                    elif hasattr(e, 'code'):
+                            'Failed to reach the server. Reason', ex.reason)
+                    elif hasattr(ex, 'code'):
                         self.raiseError(
                             'The server couldn\'t fulfill the request. Error code',
-                            e.code)
-                except Exception, e:
-                    self.raiseError('Exception', e)
+                            ex.code)
+                except Exception, ex:
+                    self.raiseError(ex.message)
             if response:
                 result = response.read()
         else:

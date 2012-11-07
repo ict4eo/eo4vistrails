@@ -139,7 +139,7 @@ class SOSFeeder(ThreadSafeMixin, Module):
         #_config = self.forceGetInputFromPort('configuration', None)
         self.active = self.forceGetInputFromPort('active', False)
         # validate port values
-        if self.active and not self.URL:
+        if self.active and not self.url:
             self.raiseError('SOS URL must be specified if feed is Active')
         # template location
         current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -167,8 +167,8 @@ class InsertObservation(SOSFeeder):
             If None, then all sheets will be processed. Sheet numbering starts
             from 1.
         active:
-            a Boolean port; if True (default) then outgoing data is POSTed
-            directly to the SOS
+            a Boolean port; if True (default is False) then the outgoing data
+            is POSTed directly to the SOS
         procedure:
             The physical sensor or process that has carried out the observation
 
@@ -696,14 +696,14 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                     for prop in self.unique_properties:
                         key = (foi.get('id'), _date, prop.get('name'))
                         val = self.values.get(key)
-                        #print "sosfeed:735", foi, _date, prop.get('name'), val
+                        #print "sosfeed:699", foi, _date, prop.get('name'), val
                         value_set.append(val)
                     data['values'].append(value_set)
 
                 XML = self.create_XML(sheet_name=sheet_name, data=data)
                 if XML:
                     results.append(XML)
-                    print "\nSOSfeeder:742\n", XML
+                    #print "\nSOSfeeder:702\n", XML
             return results
 
     def compute(self):
@@ -839,7 +839,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                 self.webRequest.url = self.url
                 dataset = []
                 for result in results:
-                    self.webRequest.data = results
+                    self.webRequest.data = result
                     data = self.webRequest.runRequest()
                     dataset.append(data)
                 # output results of POSTs, if port is linked to another module
@@ -856,8 +856,8 @@ class RegisterSensor(SOSFeeder):
         OGC_URL:
             the network address of the SOS
         active:
-            a Boolean port; if True (default) then outgoing data is POSTed
-            directly to the SOS
+            a Boolean port; if True (default is Fallse) then the outgoing data
+            is POSTed directly to the SOS
         sensor:
             The physical sensor or process that has carried out the observation
 
@@ -924,20 +924,16 @@ edu.utah.sci.vistrails.basic:Dictionary)',
     def create_results(self):
         """Create list of XML POST datasets for each sensor.
         """
-        results = []
-
         data = {}
         data['sensor'] = self.sensor
         data['coords'] = self.coords
         data['properties'] = self.property
-
+        results = []
         XML = self.create_XML(sheet_name=None, data=data)
         if XML:
             results.append(XML)
-            print "\nSOSfeeder:936\n", XML
-            return results
-        else:
-            return None  # TO DO !!!
+            #print "\nSOSfeeder:936\n", type(XML), XML
+        return results
 
     def create_XML(self, sheet_name=None, data={}):
         """Create the XML for a RegisterSensor POST using a Jinja template
@@ -945,19 +941,24 @@ edu.utah.sci.vistrails.basic:Dictionary)',
         template = self.env.get_template('RegisterSensor.xml')
 
         # test data
+        """
         data['sensor'] = {
             'ID': 'urn:ogc:object:feature:Sensor:Derwent-Station-2',
             'name': 'Derwent: Station 2',
             'srs': 'urn:ogc:def:crs:EPSG::4326'}
         data['coords'] = []
         data['coords'].append({
-            'name': 'Easting',
+            'type': 'Easting',
             'value': '29.1',
             'uom': 'degrees'})
         data['coords'].append({
-            'name': 'Southing',
+            'type': 'Southing',
             'value': '30.2',
             'uom': 'degrees'})
+        data['coords'].append({
+            'type': 'height',
+            'value': '410',
+            'uom': 'metres'})
         data['properties'] = []
         data['properties'].append({
           'urn': 'http://www.opengis.net/def/uom/ISO-8601/0/Gregorian',
@@ -975,7 +976,7 @@ edu.utah.sci.vistrails.basic:Dictionary)',
           'name': 'humidity',
           'type': 'Quantity',
           'units': 'percentage'})
-        """        """
+        """
 
         data = template.render(sensor=data.get('sensor'),
                                components=data.get('properties'),
@@ -1007,7 +1008,7 @@ edu.utah.sci.vistrails.basic:Dictionary)',
         if not _prop_file and not _prop_dict:
                 self.raiseError('Either file or dictionary must be specified for %s'\
                             % 'property details')
-        if not _coords_file and not _coords_lisy:
+        if not _coords_file and not _coords_list:
             self.raiseError('Either file or list must be specified for %s'\
                             % 'sensor co-ordinates details')
 
@@ -1020,12 +1021,14 @@ edu.utah.sci.vistrails.basic:Dictionary)',
 
         # get sensor coords details as list of dictionaries
         self.coords = {}
+        #print "sosfeed:1024 coords", _coords_file, _coords_file.name
         if _coords_file and _coords_file.name:
             try:
                 reader = self.unicode_csv_reader(open(_coords_file.name),
                                                 delimiter=',',
                                                 quotechar='"')
                 for row in reader:
+                    #print "sosfeed:1030 row", row
                     if row and len(row) > 2:
                         self.coords.append({'type': row[1],
                                             'uom': row[2],
@@ -1062,11 +1065,11 @@ edu.utah.sci.vistrails.basic:Dictionary)',
                 self.webRequest.url = self.url
                 dataset = []
                 for result in results:
-                    self.webRequest.data = results
+                    self.webRequest.data = result
                     data = self.webRequest.runRequest()
                     dataset.append(data)
                 # output results of POSTs, if port is linked to another module
                 if init.DATA_PORT in self.outputPorts:
                     self.setResult(init.DATA_PORT, dataset)
         except Exception, ex:
-            self.raiseError(ex)
+            self.raiseError(ex.message)
