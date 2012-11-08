@@ -34,7 +34,7 @@
     </gml:TimeInstant>
   </om:samplingTime>{% endif %}
 
-  <om:procedure xlink:href="{{ core.procedureID }}" />
+  <om:procedure xlink:href="{{ core.sensorID }}" />
 
   <om:observedProperty>
    <swe:CompositePhenomenon gml:id="cpid0" dimension="1"> {# ??? #}

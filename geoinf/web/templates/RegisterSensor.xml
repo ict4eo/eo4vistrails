@@ -25,10 +25,10 @@ http://schemas.opengis.net/sos/1.0.0/sosRegisterSensor.xsd http://www.opengis.ne
       </sml:IdentifierList>
      </sml:identification>
 
-     <!-- sml:capabilities element has to contain status and mobility information -->
+     <!-- sml:capabilities has to contain status and mobility information -->
      <sml:capabilities>
       <swe:SimpleDataRecord>
-       <!-- status whether sensor is collecting data at the moment (true) or not (false) -->
+       <!-- status: sensor is collecting data at the moment (true) or not (false) -->
        <swe:field name="status">
         <swe:Boolean>
          <swe:value>{{ sensor.status|default('true') }}</swe:value>
@@ -48,48 +48,52 @@ http://schemas.opengis.net/sos/1.0.0/sosRegisterSensor.xsd http://www.opengis.ne
       <swe:Position referenceFrame="{{ sensor.srs|default('urn:ogc:def:crs:EPSG::4326') }}">
        <swe:location>
         <swe:Vector gml:id="STATION_LOCATION">
-         {% for coord in coords %}
-         <swe:coordinate name="{{ coord.type }}">
+         {% for coord in coords %}<swe:coordinate name="{{ coord.type }}">
           <swe:Quantity>
            <swe:uom code="{{ coord.uom }}" />
            <swe:value>{{ coord.value }}</swe:value>
           </swe:Quantity>
          </swe:coordinate>
-         {% endfor %}
-        </swe:Vector>
+         {% endfor %}</swe:Vector>
        </swe:location>
       </swe:Position>
      </sml:position>
 
-     <!-- list containing the input phenomena for this sensor system -->
+     <!-- list containing the input phenomena for this sensor system
      <sml:inputs>
       <sml:InputList>
       </sml:InputList>
-     </sml:inputs>
+     </sml:inputs>-->
 
      <!-- list containing the output phenomena of this sensor system;
       ATTENTION:
-      these phenomena are parsed and inserted into the database; they have to contain
-      offering elements to determine the correct offering for the sensors and measured
-      phenomena -->
+      These phenomena are parsed and inserted into the database; they have to
+      contain offering elements to determine the correct offering for the sensors
+       and measured phenomena -->
      <sml:outputs>
       <sml:OutputList>
-      {% for item in components %}{% if item.type == 'Quantity' %}<sml:output name="{{ item.name }}">
-       {% endif %}<swe:Quantity definition="{{ item.urn }}">
-        {% if item.units %}<swe:uom code="{{ item.units }}" />
-       {% endif %}</swe:Quantity>
+      {% for item in components %} <sml:output name="{{ item.name }}">
+        <swe:{{ item.type }} definition="{{ item.urn }}">
+         <gml:metaDataProperty>
+          <offering>
+           <id>{{ offering.ID|default('SOS') }}</id>
+           <name>{{ offering.name|default('Sensor Offering') }}</name>
+          </offering>
+         </gml:metaDataProperty>
+        {% if item.units %}  <swe:uom code="{{ item.units }}" />{% endif %}<!-- -->
+        </swe:{{ item.type }}>
        </sml:output>
-      {% endfor %}
-      </sml:OutputList>
+      {% endfor %}</sml:OutputList>
      </sml:outputs>
+
     </sml:System>
    </sml:member>
   </sml:SensorML>
  </SensorDescription>
 
  <!-- ObservationTemplate parameter; this has to be an empty measurement
-  or category at the moment, as the 52N SOS only supports Measurements or CategoryObservations
-  to be inserted -->
+  or category at the moment, as the 52N SOS only supports Measurements or
+  CategoryObservations to be inserted -->
  <ObservationTemplate>
   <om:Observation>
    <om:samplingTime />
@@ -99,4 +103,5 @@ http://schemas.opengis.net/sos/1.0.0/sosRegisterSensor.xsd http://www.opengis.ne
    <om:result/>
   </om:Observation>
  </ObservationTemplate>
+
 </RegisterSensor>

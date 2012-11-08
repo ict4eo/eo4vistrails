@@ -86,6 +86,7 @@ class SOSFeeder(ThreadSafeMixin, Module):
     def raiseError(self, msg, error=''):
         """Raise a VisTrails error with traceback display."""
         import traceback
+        #print "sosfeed 89", msg
         traceback.print_exc()
         if error:
             raise ModuleError(self, msg + ' - %s' % str(error))
@@ -402,15 +403,15 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
             if not prop:
                 self.raiseError('Unable to locate property "%s" in the lookup' % \
                                 name)
-            #print "sosfeeder 447\n'%s'-'%s'" % (name.strip(' '), prop)
+            #print "sosfeeder 407\n'%s'-'%s'" % (name.strip(' '), prop)
             if len(prop) >= 3:
                 self.properties.append({
                     'name': name,
                     'type': prop[0] or 'Quantity',
                     'urn': prop[1],
                     'units': prop[2],
-                    'row': row_num,
-                    'col': col_num,
+                    'row': row,
+                    'col': col,
                     'source': source_type})
                 if not self.unique_property_names.get(name):
                     self.unique_property_names[name] = name
@@ -430,7 +431,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
             except:
                 ID = foi_ID
             foi_ID_entry = self.feature_lookup.get(ID)
-            #print "sosfeeder:475", foi_ID_entry, ID, type(ID)
+            #print "sosfeeder:435", foi_ID_entry, ID, type(ID)
             if foi_ID_entry:
                 # convert coords "list of tuples with unicode strings"
                 coords = []
@@ -455,18 +456,19 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
             self.unique_dates.append(_date)
             self.dates.append({
                 'date': _date,
-                'row': row_num,
-                'col': col_num
+                'row': row,
+                'col': col
                 })
 
         def get_foi_ID(row=None, col=None):
             # fixed FOI value
             if len(self.fois) == 1:
-                if self.fois[0]['col'] is None and self.fois[0]['row'] is None:
-                    return self.fois[0].get('id')
+                foi = self.fois[self.fois.iterkeys().next()]  # first entry
+                if foi.get('col') is None and foi.get('row') is None:
+                    return foi.get('id')
             for key, foi in self.fois.iteritems():
                 if foi.get('col') == col or foi.get('row') == row:
-                    #print "465 match!", foi.get('col'), col, foi.get('id')
+                    #print "475 match!", foi.get('col'), col, foi.get('id')
                     return foi.get('id')
             return None
 
@@ -485,7 +487,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
         def get_vdate(row=None, col=None):
             # constant date
             if len(self.dates) == 1:
-                if date['col'] is None and date['row'] is None:
+                if self.dates[0]['col'] is None and self.dates[0]['row'] is None:
                     return self.dates[0]
             for date in self.dates:
                 if date['col'] == col or date['row'] == row:
@@ -624,14 +626,14 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
         """Create the XML for an InsertObservation POST using a Jinja template
         """
         template = self.env.get_template('InsertObservation.xml')
-        """
+        """        """
         # test data
         data['core'] = {
-            'sensorID': 'urn:ogc:object:feature:Sensor:Derwent-Station-2',
-            'procedureID': 'urn:ogc:object:feature:Sensor:Derwent-Station-2'}
+            'sensorID': 'urn:ogc:object:feature:Sensor:FooBar2',
+            'procedureID': 'urn:ogc:object:feature:Sensor:FooBar2'}
         data['period'] = {
-            'start': '2008-04-03T04:44:15+11:00',
-            'end': '2008-05-03T04:44:15+11:00'}
+            'start': '1963-12-13T00:00:00+2:00',
+            'end': '1963-12-13T00:00:00+2:00'}
         data['foi'] = {
             'name': 'Hobart 2',
             'id': 'Hobart-2',
@@ -665,7 +667,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
             ['1963-12-16T00:00:00+02', 21, 50],
             ['1963-12-17T00:00:00+02', 23, 55],
             ['1963-12-18T00:00:00+02', 24, 60]]
-        """
+
         data = template.render(period=data.get('period'),
                                values=data.get('values'),
                                separator=data.get('separator'),
@@ -679,6 +681,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
         """
         results = []
         for sheet_name in self.sheet_list:
+            #print "\nSOSfeeder:683 sheet", sheet_name
             # load data from worksheet into dictionaries
             self.load_from_excel(sheet_name)
             for key, foi in self.fois.iteritems():
@@ -703,7 +706,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                 XML = self.create_XML(sheet_name=sheet_name, data=data)
                 if XML:
                     results.append(XML)
-                    #print "\nSOSfeeder:702\n", XML
+                    #print "\nSOSfeeder:707\n", XML
             return results
 
     def compute(self):
@@ -858,6 +861,13 @@ class RegisterSensor(SOSFeeder):
         active:
             a Boolean port; if True (default is Fallse) then the outgoing data
             is POSTed directly to the SOS
+        offering:
+            The set of related sensors that form an offering
+
+            ID:
+                the ID of the offering
+            name:
+                the name of the offering
         sensor:
             The physical sensor or process that has carried out the observation
 
@@ -881,17 +891,19 @@ class RegisterSensor(SOSFeeder):
                     [{"type": "type_1", "units":"units_1", "value": "value_1"},
                      {"type": "type_2", "units":"units_2", "value": "value_2"},
                     ]
-                these entries will be added to, and overwrite, and entries read
+                where type can be: 'longitude', latitude' or 'altitude'
+                These entries will be added to, and overwrite, and entries read
                 in from the file
         property_details:
-            A set of information for each property; including its descriptive
+            A list of information for each property; including its descriptive
             name, the URN - as used by standards bodies, such OGC or NASA
             (SWEET), and units of measure (in standard SI notation).
 
             filename:
                 the name of the CSV file containing the details for each
                 property, in the form:
-                    "ID", "name", "URN_value", "units"
+                    "name", "type", "URN_value", "units"
+                where type is usually "Quantity".
             dictionary:
                 each dictionary entry is keyed on the property ID, with a
                 list containing the details for that property, in the format:
@@ -910,12 +922,15 @@ class RegisterSensor(SOSFeeder):
         ('sensor', '(edu.utah.sci.vistrails.basic:String,\
 edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
             {"defaults": str(["", "", SRS_DEFAULT_SHORT]), "labels": str(["ID", "name", "srs"])}),
+        ('offering', '(edu.utah.sci.vistrails.basic:String,\
+edu.utah.sci.vistrails.basic:String)',
+            {"defaults": str(["", ""]), "labels": str(["ID", "name"])}),
         ('coordinates', '(edu.utah.sci.vistrails.basic:File,\
 edu.utah.sci.vistrails.basic:List)',
             {"defaults": str(["", {}]), "labels": str(["file", "list"])}),
         ('property_details', '(edu.utah.sci.vistrails.basic:File,\
-edu.utah.sci.vistrails.basic:Dictionary)',
-            {"defaults": str(["", {}]), "labels": str(["file", "dictionary"])}),
+edu.utah.sci.vistrails.basic:List)',
+            {"defaults": str(["", {}]), "labels": str(["file", "list"])}),
     ]
 
     def __init__(self):
@@ -925,6 +940,7 @@ edu.utah.sci.vistrails.basic:Dictionary)',
         """Create list of XML POST datasets for each sensor.
         """
         data = {}
+        data['offering'] = self.offering
         data['sensor'] = self.sensor
         data['coords'] = self.coords
         data['properties'] = self.property
@@ -932,53 +948,49 @@ edu.utah.sci.vistrails.basic:Dictionary)',
         XML = self.create_XML(sheet_name=None, data=data)
         if XML:
             results.append(XML)
-            #print "\nSOSfeeder:936\n", type(XML), XML
+            #print "\nSOSfeeder:946\n", type(XML), "\n", XML
         return results
 
     def create_XML(self, sheet_name=None, data={}):
         """Create the XML for a RegisterSensor POST using a Jinja template
         """
         template = self.env.get_template('RegisterSensor.xml')
-
         # test data
         """
+        data['offering'] = {
+            'ID': 'TEST',
+            'name': 'Test Sensor Offering'}
         data['sensor'] = {
-            'ID': 'urn:ogc:object:feature:Sensor:Derwent-Station-2',
+            'ID': 'urn:ogc:object:feature:Sensor:Derwent-Station-99',
             'name': 'Derwent: Station 2',
             'srs': 'urn:ogc:def:crs:EPSG::4326'}
         data['coords'] = []
         data['coords'].append({
-            'type': 'Easting',
+            'type': 'longitude',
             'value': '29.1',
-            'uom': 'degrees'})
+            'uom': 'degree'})
         data['coords'].append({
-            'type': 'Southing',
+            'type': 'latitude',
             'value': '30.2',
-            'uom': 'degrees'})
+            'uom': 'degree'})
         data['coords'].append({
-            'type': 'height',
+            'type': 'altitude',
             'value': '410',
-            'uom': 'metres'})
+            'uom': 'm'})
         data['properties'] = []
-        data['properties'].append({
-          'urn': 'http://www.opengis.net/def/uom/ISO-8601/0/Gregorian',
-          'name': 'Time',
-          'type': 'Time'})
         data['properties'].append({
           'name': 'temperature',
           'urn': 'urn:ogc:def:phenomenon:OGC:1.0.30:temperature',
-          'name': 'temperature',
           'type': 'Quantity',
           'units': 'celcius'})
         data['properties'].append({
-          'name': 'temperature',
-          'urn': 'urn:ogc:def:phenomenon:OGC:1.0.30:humidity',
           'name': 'humidity',
+          'urn': 'urn:ogc:def:phenomenon:OGC:1.0.30:humidity',
           'type': 'Quantity',
           'units': 'percentage'})
         """
-
         data = template.render(sensor=data.get('sensor'),
+                               offering=data.get('offering'),
                                components=data.get('properties'),
                                coords=data.get('coords'),)
         return data  # XML
@@ -986,6 +998,11 @@ edu.utah.sci.vistrails.basic:Dictionary)',
     def compute(self):
         super(RegisterSensor, self).compute()
         # check other port values
+        if self.forceGetInputFromPort('offering'):
+            _offering_ID, _offering_name = \
+                self.forceGetInputFromPort('offering')
+        else:
+            _offering_ID, _offering_name = None, None
         if self.forceGetInputFromPort('sensor'):
             _sensor_ID, _sensor_name, _sensor_srs = \
                 self.forceGetInputFromPort('sensor')
@@ -997,7 +1014,7 @@ edu.utah.sci.vistrails.basic:Dictionary)',
         else:
             _coords_file, _coords_list = None, None
         if self.forceGetInputFromPort('property_details'):
-            _prop_file, _prop_dict = \
+            _prop_file, _prop_list = \
                 self.forceGetInputFromPort('property_details')
         else:
             _prop_file, _prop_dict = None, None
@@ -1012,6 +1029,11 @@ edu.utah.sci.vistrails.basic:Dictionary)',
             self.raiseError('Either file or list must be specified for %s'\
                             % 'sensor co-ordinates details')
 
+        # offering core metadata
+        self.offering = {}
+        self.offering['ID'] = _offering_ID
+        self.offering['name'] = _offering_name
+
         # sensor core metadata
         self.sensor = {}
         self.sensor['ID'] = _sensor_ID
@@ -1020,8 +1042,8 @@ edu.utah.sci.vistrails.basic:Dictionary)',
         self.sensor['name'] = 'urn:ogc:def:crs%s' % srs
 
         # get sensor coords details as list of dictionaries
-        self.coords = {}
-        #print "sosfeed:1024 coords", _coords_file, _coords_file.name
+        self.coords = []
+        #print "sosfeed:1044 coords", _coords_file, _coords_file.name
         if _coords_file and _coords_file.name:
             try:
                 reader = self.unicode_csv_reader(open(_coords_file.name),
@@ -1030,17 +1052,23 @@ edu.utah.sci.vistrails.basic:Dictionary)',
                 for row in reader:
                     #print "sosfeed:1030 row", row
                     if row and len(row) > 2:
-                        self.coords.append({'type': row[1],
-                                            'uom': row[2],
-                                            'value': row[3]})
+                        if row[1] in ['longitude', 'latitude', 'altitude']:
+                            self.coords.append({'type': row[1],
+                                                'uom': row[2],
+                                                'value': row[3]})
+                        else:
+                            self.raiseError("Sensor co-ordinate types must be 'longitude', 'latitude' or 'altitude'")
             except IOError:
                 self.raiseError('Sensor co-ordinates file "%s" does not exist' % \
                                 _coords_file.name)
         if _coords_list:
-            self.coords.update(_coords_list)
+            if len(_coords_list) == 1:
+                self.coords = _coords_list[0]  # remove vistrails wrapper
+            else:
+                self.coords = _coords_list
 
-        # get property lookup details as dictionary
-        self.property = {}
+        # get property lookup details as list of dictionaries
+        self.property = []
         if _prop_file and _prop_file.name:
             try:
                 reader = self.unicode_csv_reader(open(_prop_file.name),
@@ -1048,12 +1076,15 @@ edu.utah.sci.vistrails.basic:Dictionary)',
                                                 quotechar='"')
                 for row in reader:
                     if row and len(row) > 1:
-                        self.property[row[0]] = row[1:]
+                        self.property.append({'name': row[0],
+                                              'type': row[1] or 'Quantity',
+                                              'urn': row[2],
+                                              'units': row[3]})
             except IOError:
                 self.raiseError('Properties file "%s" does not exist' % \
                                 _prop_file.name)
-        if _prop_dict:
-            self.property.update(_prop_dict)
+        if _prop_list:
+            self.property.append(_prop_list)
 
         # process configuration and generate output
         try:
