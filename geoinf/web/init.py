@@ -62,6 +62,12 @@ def initialize(*args, **keywords):
 
     reg.add_input_port(
         SOSFeeder,
+        'TEST_MODE',
+        (Boolean, 'Run Test Data'),
+        optional=True)
+
+    reg.add_input_port(
+        SOSFeeder,
         OGC_URL_PORT,
         (String, 'URL String'))  # ,True)
 

@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <InsertObservation xmlns="http://www.opengis.net/sos/1.0"
     xmlns:ows="http://www.opengis.net/ows/1.1"
     xmlns:ogc="http://www.opengis.net/ogc"
@@ -37,53 +38,51 @@
   <om:procedure xlink:href="{{ core.sensorID }}" />
 
   <om:observedProperty>
-   <swe:CompositePhenomenon gml:id="cpid0" dimension="1"> {# ??? #}
+   <swe:CompositePhenomenon gml:id="cpid0" dimension="1">
     <gml:name>resultComponents</gml:name>
-    {# e.g. urn:ogc:def:phenomenon:OGC:1.0.30:temperature #}
-    {% for item in component %}
-    <swe:component xlink:href="{{ item.urn }}" />
-    {% endfor %}
-   </swe:CompositePhenomenon>
+    {% for item in components %}<swe:component xlink:href="{{ item.urn }}" />
+   {% endfor %}</swe:CompositePhenomenon>
   </om:observedProperty>
 
   <om:featureOfInterest>
+   <gml:FeatureCollection>
+    <gml:featureMember>
      <sa:SamplingPoint gml:id="{{ foi.id }}">
       <gml:name>{{ foi.name }}</gml:name>
       <sa:sampledFeature xlink:href=""/>
       <sa:position>
-       <gml:Point>
-        <gml:pos srsName="{{ foi.srs|default('urn:ogc:def:crs:EPSG::4326') }}">
-         {% if foi.coords is iterable %}{% for coord in foi.coords %}{{ coord }} {% endfor %}{% endif %}
-        </gml:pos>
-       </gml:Point>
-       {# example for ring ... TODO
-       <gml:Polygon srsName="{{ foi.srs|default('urn:ogc:def:crs:EPSG::4326') }}"
-        xsi:type="gml:PolygonType">
+       {% if foi.type == 'polygon' %}
+       <gml:Polygon srsName="{{ foi.srs|default('urn:ogc:def:crs:EPSG::4326') }}" xsi:type="gml:PolygonType">
         <gml:exterior>
          <gml:LinearRing xsi:type="gml:LinearRingType">
           <gml:posList>
-           52.90 7.52 52.7167 8.76667
-           52.7167 9.76667 51.7167 9.76667 52.90 7.52
-          </gml:posList>>
+           {% if foi.coords is iterable %}{% for coord in foi.coords %}{{ coord.0 }} {{ coord.1 }} {% endfor %}{% endif %}
+          </gml:posList>
          </gml:LinearRing>
         </gml:exterior>
        </gml:Polygon>
-       #}
+       {% else %}<gml:Point>{{ foi.coords }}
+        <gml:pos srsName="{{ foi.srs|default('urn:ogc:def:crs:EPSG::4326') }}">
+         {% if foi.coords is iterable %}{% for coord in foi.coords %}{{ coord.0 }} {{ coord.1 }} {% endfor %}{% endif %}
+        </gml:pos>
+       </gml:Point>
+       {% endif %}
       </sa:position>
      </sa:SamplingPoint>
+    </gml:featureMember>
+   </gml:FeatureCollection>
   </om:featureOfInterest>
 
   <om:result>
-
    <swe:DataArray>
 
     <swe:elementCount>
      <swe:Count>
-      <swe:value>2{# ??? #}</swe:value>
+      <swe:value>{{ components|length }}</swe:value>
      </swe:Count>
     </swe:elementCount>
 
-    {% if components and components is iterable %}<swe:elementType name="Components">
+    {% if components and components is iterable %}<swe:elementType name="SimpleDataArray">
      <swe:DataRecord>
       {% for item in components %}{% if item.type == 'Quantity' %}<swe:field name="{{ item.name }}">
        <swe:Quantity definition="{{ item.urn }}">
@@ -104,7 +103,6 @@
     {% if values and values is iterable %}<swe:values>{% for dataset in values %}{% if dataset is iterable %}{% for data in dataset %}{{ data|default('', true) }}{% if not loop.last %},{% endif %}{% endfor %};{% endif %}{% endfor %}</swe:values>{% endif %}
 
    </swe:DataArray>
-
   </om:result>
 
  </om:Observation>

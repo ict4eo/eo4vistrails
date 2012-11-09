@@ -1,9 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <RegisterSensor service="SOS" version="1.0.0"
- xmlns="http://www.opengis.net/sos/1.0" xmlns:swe="http://www.opengis.net/swe/1.0.1"
- xmlns:ows="http://www.opengeospatial.net/ows" xmlns:xlink="http://www.w3.org/1999/xlink"
- xmlns:gml="http://www.opengis.net/gml" xmlns:ogc="http://www.opengis.net/ogc"
- xmlns:om="http://www.opengis.net/om/1.0" xmlns:sml="http://www.opengis.net/sensorML/1.0.1"
+ xmlns="http://www.opengis.net/sos/1.0"
+ xmlns:sa="http://www.opengis.net/sampling/1.0"
+ xmlns:swe="http://www.opengis.net/swe/1.0.1"
+ xmlns:ows="http://www.opengeospatial.net/ows"
+ xmlns:xlink="http://www.w3.org/1999/xlink"
+ xmlns:gml="http://www.opengis.net/gml"
+ xmlns:ogc="http://www.opengis.net/ogc"
+ xmlns:om="http://www.opengis.net/om/1.0"
+ xmlns:sml="http://www.opengis.net/sensorML/1.0.1"
  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
  xsi:schemaLocation="http://www.opengis.net/sos/1.0
 http://schemas.opengis.net/sos/1.0.0/sosRegisterSensor.xsd http://www.opengis.net/om/1.0 http://schemas.opengis.net/om/1.0.0/extensions/observationSpecialization_override.xsd">
@@ -48,13 +53,27 @@ http://schemas.opengis.net/sos/1.0.0/sosRegisterSensor.xsd http://www.opengis.ne
       <swe:Position referenceFrame="{{ sensor.srs|default('urn:ogc:def:crs:EPSG::4326') }}">
        <swe:location>
         <swe:Vector gml:id="STATION_LOCATION">
-         {% for coord in coords %}<swe:coordinate name="{{ coord.type }}">
+         <swe:coordinate name="latitude">
           <swe:Quantity>
-           <swe:uom code="{{ coord.uom }}" />
-           <swe:value>{{ coord.value }}</swe:value>
+           <swe:uom code="{{ coords.uom|default('degree') }}" />
+           <swe:value>{{ sensor.latitude }}</swe:value>
           </swe:Quantity>
          </swe:coordinate>
-         {% endfor %}</swe:Vector>
+         <swe:coordinate name="longitude">
+          <swe:Quantity>
+           <swe:uom code="{{ coords.uom|default('degree') }}" />
+           <swe:value>{{ sensor.longitude }}</swe:value>
+          </swe:Quantity>
+         </swe:coordinate>
+         {% if sensor.altitude %}
+         <swe:coordinate name="altitude">
+          <swe:Quantity>
+           <swe:uom code="{{ coords.uom|default('m') }}" />
+           <swe:value>{{ sensor.altitude }}</swe:value>
+          </swe:Quantity>
+         </swe:coordinate>
+         {% endif %}
+         </swe:Vector>
        </swe:location>
       </swe:Position>
      </sml:position>
@@ -99,7 +118,20 @@ http://schemas.opengis.net/sos/1.0.0/sosRegisterSensor.xsd http://www.opengis.ne
    <om:samplingTime />
    <om:procedure />
    <om:observedProperty />
-   <om:featureOfInterest></om:featureOfInterest>
+   <om:featureOfInterest>
+    {% if foi %}
+    <sa:SamplingPoint gml:id="{{ foi.id }}">
+     <gml:name>{{ foi.name }}</gml:name>
+     <sa:position>
+      <gml:Point>
+       <gml:pos srsName="{{ foi.srs|default('urn:ogc:def:crs:EPSG::4326') }}">
+        {% if foi.coords is iterable %}{% for coord in foi.coords %}{{ coord.0 }} {{ coord.1 }} {% endfor %}{% endif %}
+       </gml:pos>
+      </gml:Point>
+     </sa:position>
+    </sa:SamplingPoint>
+    {% endif %}
+   </om:featureOfInterest>
    <om:result/>
   </om:Observation>
  </ObservationTemplate>
