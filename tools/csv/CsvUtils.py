@@ -45,10 +45,14 @@ class CsvReader(ThreadSafeMixin, Module):
     Input ports:
         fullfilename:
             name of input file (including a full directory path)
+        file_in:
+            the input file (only used if fullfilename not supplied)
         column_header_list:
             optional list of column headings
-        delimiter:
-            an optional item delimiter (defaults to a ",")
+        known_delimiter:
+            an optional item delimiter (defaults to a ',')
+        known_quote:
+            an optional quote character for strings (defaults to a '"')
 
     Output ports:
         read_data_listoflists:
@@ -56,8 +60,10 @@ class CsvReader(ThreadSafeMixin, Module):
     """
 
     _input_ports = [('fullfilename', '(edu.utah.sci.vistrails.basic:String)'),
+                    ('file_in', '(edu.utah.sci.vistrails.basic:File)'),
                     ('column_header_list', '(edu.utah.sci.vistrails.basic:List)'),
-                    ('known_delimiter', '(edu.utah.sci.vistrails.basic:String)')]
+                    ('known_delimiter', '(edu.utah.sci.vistrails.basic:String)'),
+                    ('known_quote', '(edu.utah.sci.vistrails.basic:String)')]
     _output_ports = [('read_data_listoflists', '(edu.utah.sci.vistrails.basic:List)')]
 
     def __init__(self):
@@ -65,17 +71,22 @@ class CsvReader(ThreadSafeMixin, Module):
         Module.__init__(self)
 
     def compute(self):
-        fn = self.getInputFromPort('fullfilename')
+        fn = self.forceGetInputFromPort('fullfilename', "")
+        fi = self.forceGetInputFromPort('file_in', None)
         chl = self.forceGetInputFromPort('column_header_list', "")
         kd = self.forceGetInputFromPort('known_delimiter', ",")
+        qc = self.forceGetInputFromPort('known_quote', '"')
 
         list_of_lists = []
+
+        if not fn and fi:
+            fn = fi.name
 
         if os.path.isfile(fn):
             try:
                 if len(chl) > 0:
                     list_of_lists.append(chl)
-                csvfile = csv.reader(open(fn, 'r'), delimiter=kd)
+                csvfile = csv.reader(open(fn, 'r'), delimiter=kd, quotechar=qc)
                 for row in csvfile:
                     list_of_lists.append(row)
                 self.setResult('read_data_listoflists', list_of_lists)
