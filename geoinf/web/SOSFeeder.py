@@ -32,6 +32,7 @@ import csv
 import os
 import os.path
 from jinja2 import Environment, PackageLoader, FileSystemLoader
+import cgi
 # third-party
 import xlrd
 # vistrails
@@ -46,7 +47,6 @@ import init
 
 
 SRS_DEFAULT = 'urn:ogc:def:crs:EPSG::4326'
-SRS_DEFAULT_SHORT = 'EPSG::4326'
 
 
 @RPyCSafeModule()
@@ -120,7 +120,7 @@ class SOSFeeder(ThreadSafeMixin, Module):
     def extract_pairs(self, string):
         """Return [(x1,y1), (x2,y2), ...] from "x1 y1, x2 y2. ..." string."""
         if string:
-            coord_list = string.replace('"','').strip(' ').split(',')
+            coord_list = string.replace('"', '').strip(' ').split(',')
             coords = [(cl.strip(' ').split(' ')[0],
                        cl.strip(' ').split(' ')[1]) \
                        for cl in coord_list]
@@ -193,7 +193,7 @@ class InsertObservation(SOSFeeder):
         feature:
             The feature-of-interest(s) (FOI) for which the observations were
             carried out; typically this corresponds to a monitoring station /
-            sampling point (but can be for example, a geographical area).
+            sampling point (but can be, for example, a geographical area).
 
             name:
                 the name of the single feature; set for all observations
@@ -207,24 +207,19 @@ class InsertObservation(SOSFeeder):
             taken from that specific cell.
         feature_details:
             An (optional) expanded set of information for each feature;
-            including SRS, latitude and longitude. Details can either come from
-            a dictionary or a CSV file.
+            including SRS, latitude and longitude.
 
-            filename:
-                the name of the CSV file containing the details for each
-                feature, in the form:
-                    name, SRS_value, "co-ordinates"
-                where `co-ordinates` can be a single pair of space-separated
-                lat/long values, or a comma-delimited list of such values.
-                The co-ordinate list must be wrapped in "" - e.g.
-                    name_1, SRS_1, "45.12 23.25, 44.13 22.15"
-            dictionary:
-               each dictionary entry is keyed on the feature ID, with a
-               nested dictionary of feature details, in the format:
-                    {"ID_1": {"name": "name_1", "srs": "SRS_1",
-                              "coords": [(a,b), (c,d) ...]},
-                     "ID_2": {"name": "name_2", "srs": "SRS_2",
-                              "coords": [(p,q), (r,s) ...]},}
+            A list-of-lists, containing the details for a number of features-
+            of-interest. Each feature is associated with a corresponding
+            sensor, with each list item in the form:
+                ID, "name", "co-ordinates", SRS
+            `co-ordinates` can be a single pair of space-separated
+            lat/long values, or a comma-delimited list of such values. SRS is
+            optional; if not supplied, the default ('urn:ogc:def:crs:EPSG::4326')
+            will be used.
+
+            The co-ordinate list must be wrapped in "" - e.g.
+                ID_1, name_1, "45.12 23.25, 44.13 22.15", SRS_1
         property:
             The ID(s) for the property(ies) measured or calculated as part of
             the observation; for example, the water flowrate at river guage.
@@ -241,27 +236,12 @@ class InsertObservation(SOSFeeder):
             If both row and column are filled in, the property ID is taken
             from that specific cell.
         property_details:
-            An (optional) expanded set of information for each property;
-            including its descriptive name, the URN - as used by standards
-            bodies, such OGC or NASA (SWEET), and units of measure (in
-            standard SI notation). Details can either come from a dictionary
-            or a CSV file.
-
-            filename:
-                the name of the CSV file containing the details for each
-                property, in the form:
-                    "ID", "name", "URN_value", "units"
-            dictionary:
-                each dictionary entry is keyed on the property ID, with a
-                list containing the details for that property, in the format:
-                    {"ID_1": ["name_1", "URN_value1", "units_abc"],
-                     "ID_2": ["name_2", "URN_value2", "units_pqr"],}
-                these entries will be added to, and overwrite, and entries read
-                in from the file
-
-            A dictionary of commonly used properties, for measurements made in
-            the environmental domain, is supplied with this program; this will
-            only be used if information is not available from the above sources
+            A list-of-lists, containing the details for each property;
+            including its descriptive name, the URN (Uniform Resource Name) -
+            as used by a standards body such OGC or NASA (SWEET) - and units of
+            measure (in standard SI notation). Each list item has the form:
+                "name", "URN", "units", "type"
+            where type is optional and defaults to "Quantity" if omitted.
         date:
             The date(s) on which the property which was measured or calculated.
             This should be in the format YYYY-MM-DD; or YYYY-MM-DD HH:SS if
@@ -320,18 +300,12 @@ edu.utah.sci.vistrails.basic:Integer,edu.utah.sci.vistrails.basic:Integer)',
 edu.utah.sci.vistrails.basic:Integer,edu.utah.sci.vistrails.basic:Integer)',
             {"defaults": str(["", 0, 0]),
              "labels": str(["name", "row", "column"])}),
-        ('feature_details', '(edu.utah.sci.vistrails.basic:File,\
-edu.utah.sci.vistrails.basic:Dictionary)',
-            {"defaults": str(["", {}]),
-             "labels": str(["file", "list"])}),
+        ('feature_details', '(edu.utah.sci.vistrails.basic:List)'),
         ('property', '(edu.utah.sci.vistrails.basic:String,\
 edu.utah.sci.vistrails.basic:Integer,edu.utah.sci.vistrails.basic:Integer)',
             {"defaults": str(["", 0, 0]),
              "labels": str(["ID", "row", "column"])}),
-        ('property_details', '(edu.utah.sci.vistrails.basic:File,\
-edu.utah.sci.vistrails.basic:Dictionary)',
-            {"defaults": str(["", {}]),
-             "labels": str(["file", "dictionary"])}),
+        ('property_details', '(edu.utah.sci.vistrails.basic:List)'),
         ('date', '(edu.utah.sci.vistrails.basic:String,\
 edu.utah.sci.vistrails.basic:Integer,edu.utah.sci.vistrails.basic:Integer,\
 edu.utah.sci.vistrails.basic:Integer)',
@@ -649,7 +623,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
             data['foi'] = {
                 'name': 'Test FooBar 1',
                 'id': 'TestFooBar1',
-                'srs': 'urn:ogc:def:crs:EPSG::4326',
+                'srs': SRS_DEFAULT,
                 'coords': [('-42.91', '147.33')]}
             data['separator'] = {
                 'decimal': '.',
@@ -742,18 +716,12 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
             _FOI, _FOI_row, _FOI_col = self.forceGetInputFromPort('feature')
         else:
             _FOI, _FOI_row, _FOI_col = None, None, None
-        if self.forceGetInputFromPort('feature_details'):
-            _FOI_file, _FOI_dict = self.forceGetInputFromPort('feature_details')
-        else:
-            _FOI_file, _FOI_dict = None, None
+        _feature = self.forceGetInputFromPort('feature_details', None)
         if self.forceGetInputFromPort('property'):
             _prop, _prop_row, _prop_col = self.forceGetInputFromPort('property')
         else:
             _prop, _prop_row, _prop_col = None, None, None
-        if self.forceGetInputFromPort('property_details'):
-            _prop_file, _prop_dict = self.forceGetInputFromPort('property_details')
-        else:
-            _prop_file, _prop_dict = None, None
+        _property = self.forceGetInputFromPort('property_details', None)
         if self.forceGetInputFromPort('date'):
             _date, _date_row, _date_col, _date_offset = \
                                             self.forceGetInputFromPort('date')
@@ -784,52 +752,43 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
         if not _date and not _date_row and not _date_col:
             self.raiseError('Either name, row or column must be specified for %s'\
                             % 'date')
-        if not _prop_file and not _prop_dict:
-            self.raiseError('Either file or dictionary must be specified for %s'\
-                            % 'property details')
-        if not _FOI_file and not _FOI_dict:
-            self.raiseError('Either file or dictionary must be specified for %s'\
-                            % 'feature details')
+        if not _property:
+            self.raiseError('The property details must be specified')
+        if not _feature:
+            self.raiseError('The feature details must be specified')
 
         # get property lookup details as dictionary
         self.property_lookup = {}
-        if _prop_file and _prop_file.name:
-            try:
-                reader = self.unicode_csv_reader(open(_prop_file.name),
-                                                delimiter=',',
-                                                quotechar='"')
-                for row in reader:
-                    if row and len(row) > 1:
-                        self.property_lookup[row[0]] = row[1:]
-            except IOError:
-                self.raiseError('Properties file "%s" does not exist' % \
-                                _prop_file.name)
-        if _prop_dict:
-            self.property_lookup.update(_prop_dict)
+        if _property:
+            for item in _property:
+                if item:
+                    if len(item) >= 3:
+                        _dict = dict(zip(xrange(len(item)), item))
+                        self.property_lookup['name'] = \
+                            cgi.escape(_dict.get(0) or "")
+                        self.property_lookup['type'] = \
+                            cgi.escape(_dict.get(1) or 'Quantity')
+                        self.property_lookup['urn'] = \
+                            cgi.escape(_dict.get(2) or "")
+                        self.property_lookup['units'] = \
+                            cgi.escape(_dict.get(3) or "")
+                    else:
+                        self.raiseError("Insufficient property values on each line'")
 
         # get FOI lookup details as dictionary
         self.feature_lookup = {}
-        if _FOI_file and _FOI_file.name:
-            try:
-                reader = self.unicode_csv_reader(open(_FOI_file.name),
-                                                 delimiter=',',
-                                                 quotechar='"')
-                for row in reader:
-                    if row:
-                        srs = row[2] or SRS_DEFAULT
-                        #print "sosfeed:818", row[3], "\n", self.extract_pairs(row[3])
-                        self.feature_lookup[row[0]] = {
-                                        'name': row[1],
-                                        'srs': srs.replace('"','').strip(' '),
-                                        'coords': self.extract_pairs(row[3])}
-            except IOError:
-                self.raiseError('Feature file "%s" does not exist' % \
-                                _FOI_file.name)
-            except IndexError:
-                self.raiseError('Feature file "%s" is not configured properly' % \
-                                _FOI_file.name)
-        if _FOI_dict:
-            self.feature_lookup.update(_FOI_dict)
+        if _feature:
+            for item in _feature:
+                #print "sosfeed:784 item", len(item), item, bool(item)
+                if item:
+                    if len(item) >= 3:
+                        _dict = dict(zip(xrange(len(item)), item))
+                        self.feature_lookup[cgi.escape(_dict.get(0) or "")] = {
+                            'name': cgi.escape(_dict.get(1)or ""),
+                            'coords': self.extract_pairs(_dict.get(2)),
+                            'srs': _dict.get(3) or SRS_DEFAULT}
+                    else:
+                        self.raiseError("Insufficient FOI values in each and/or every list.")
 
         # create configuration dictionary
         self.configuration = {
@@ -865,7 +824,11 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
 
 
 class RegisterSensor(SOSFeeder):
-    """Register a sensor for a SOS via supplied parameters.
+    """Register a sensor for a Sensor Observation Service (SOS) via a POST of
+    the supplied parameters.
+
+    Each sensor will be associated with each feature-of-interest supplied, so
+    multiple POST operations may be created.
 
     Input ports:
         OGC_URL:
@@ -885,17 +848,19 @@ class RegisterSensor(SOSFeeder):
             that has created the observation(s).
 
             ID:
-                the ID of the sensor
+                the unique identifier for the sensor
             name:
                 the name of the sensor
             SRS:
-                the coordinate reference system - the default is EPSG::4326
+                the coordinate reference system - the default is
+                urn:ogc:def:crs:EPSG::4326
             latitude:
                 the latitude of the sensor (default units are decimal_degrees)
             longitude:
                 the longitude of the sensor (default units are decimal_degrees)
             altitude:
                 the altitude of the sensor (default units are metres [m])
+            Note that only ID and name are required.
         sensor:
             A list-of-lists, containing the details for a number of sensors,
             with each list item containing data for one sensor in the form:
@@ -906,7 +871,7 @@ class RegisterSensor(SOSFeeder):
         coordinates:
             A list-of-lists, containing the details for each coordinate, with
             each nested list with each list in the form:
-                    "type", "units"
+                "type", "units"
 
             Coordinates are used to define the units associated with a sensor
             location; including longitude, latitude and altitude.  This is an
@@ -916,15 +881,16 @@ class RegisterSensor(SOSFeeder):
             A list-of-lists, containing the details for a number of features-
             of-interest. Each feature is associated with a corresponding
             sensor, with each list item in the form:
-                    name, SRS_value, "co-ordinates"
-            where `co-ordinates` can be a single pair of space-separated
-            lat/long values, or a comma-delimited list of such values.
+                ID, "name", "co-ordinates", SRS
+            `co-ordinates` can be a single pair of space-separated
+            lat/long values, or a comma-delimited list of such values. SRS is
+            optional; if not supplied, the default will be used (see above).
 
             The co-ordinate list must be wrapped in "" - e.g.
-                name_1, SRS_1, "45.12 23.25, 44.13 22.15"
+                ID_1, name_1, "45.12 23.25, 44.13 22.15", SRS_1
         property:
             A list-of-lists, containing the details for each property;
-            including its descriptive name, the URN (uniform resource name) -
+            including its descriptive name, the URN (Uniform Resource Name) -
             as used by a standards body such OGC or NASA (SWEET) - and units of
             measure (in standard SI notation). Each list item has the form:
                 "name", "URN", "units", "type"
@@ -941,7 +907,7 @@ class RegisterSensor(SOSFeeder):
 edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String,\
 edu.utah.sci.vistrails.basic:Float,edu.utah.sci.vistrails.basic:Float,\
 edu.utah.sci.vistrails.basic:Float)',
-            {"defaults": str(["", "", SRS_DEFAULT_SHORT, None, None, None]),
+            {"defaults": str(["", "", SRS_DEFAULT, "", "", ""]),
              "labels": str(["ID", "name", "srs", "longitude", "latitude", "altitude"])}),
         ('sensor', '(edu.utah.sci.vistrails.basic:List)'),
         ('offering', '(edu.utah.sci.vistrails.basic:String,\
@@ -960,20 +926,16 @@ edu.utah.sci.vistrails.basic:String)',
         """
         data = {}
         data['offering'] = self.offering
-        data['foi'] = self.foi
         data['properties'] = self.property
         results = []
-        for key, sensor in enumerate(self.sensors):
+        for sensor in self.sensors:
             data['sensor'] = sensor
-            # get matching FOI, if any
-            try:
-                data['foi'] = self.foi[key]
-            except IndexError:
-                data['foi'] = None
-            XML = self.create_XML(sheet_name=None, data=data)
-            if XML:
-                results.append(XML)
-                #print "\nSOSfeed:1003\n", XML
+            for foi in self.foi:
+                data['foi'] = foi
+                XML = self.create_XML(sheet_name=None, data=data)
+                if XML:
+                    results.append(XML)
+                    #print "\nSOSfeed:1003\n", XML
         return results
 
     def create_XML(self, sheet_name=None, data={}):
@@ -988,7 +950,7 @@ edu.utah.sci.vistrails.basic:String)',
             data['sensor'] = {
                 'ID': 'urn:ogc:object:feature:Sensor:TestFooBar1',
                 'name': 'Foo Bar 1',
-                'srs': 'urn:ogc:def:crs:EPSG::4326',
+                'srs': SRS_DEFAULT,
                 'latitude': '30.3',
                 'longitude': '29.1',
                 'altitude': '0'}
@@ -1005,7 +967,7 @@ edu.utah.sci.vistrails.basic:String)',
             data['foi'] = {
                 'name': 'Test FooBar 1',
                 'id': 'TestFooBar1',
-                'srs': 'urn:ogc:def:crs:EPSG::4326',
+                'srs': SRS_DEFAULT,
                 'coords': [(-42.91, 147.33)]}
             data['properties'] = []
             data['properties'].append({
@@ -1047,59 +1009,59 @@ edu.utah.sci.vistrails.basic:String)',
         _property = self.forceGetInputFromPort('property', None)
 
         # validate port values
-        if not _sensor and not (_sensor_ID and _sensor_lat and _sensor_lon):
+        if not _sensor and not (_sensor_ID and _sensor_name):
             self.raiseError('Either sensor or sensor details must be specified')
         if not _property:
             self.raiseError('Property details are required!')
 
         # offering core metadata
         self.offering = {}
-        self.offering['ID'] = _offering_ID
-        self.offering['name'] = _offering_name
+        self.offering['ID'] = cgi.escape(_offering_ID)
+        self.offering['name'] = cgi.escape(_offering_name)
 
         # sensor(s) core metadata
         self.sensors = []
         # single sensor
         if  _sensor_ID:
             sensor = {}
-            sensor['ID'] = _sensor_ID
-            sensor['name'] = _sensor_name
-            srs = _sensor_srs or SRS_DEFAULT_SHORT
-            sensor['srs'] = 'urn:ogc:def:crs%s' % srs
+            sensor['ID'] = cgi.escape(_sensor_ID)
+            sensor['name'] = cgi.escape(_sensor_name)
+            srs = _sensor_srs or SRS_DEFAULT
+            sensor['srs'] = srs
             sensor['latitude'] = _sensor_lat
             sensor['longitude'] = _sensor_lon
             sensor['altitude'] = _sensor_alt
             self.sensors.append(sensor)
         # multiple sensors
         if _sensor:
-            for row in _sensor:
-                if row and len(row) > 2:
-                    _dict = dict(zip(xrange(len(row)), row))
-                    self.sensors.append({'ID': _dict.get(0),
-                                         'name': _dict.get(1),
-                                         'latitude': _dict.get(2),
-                                         'longitude': _dict.get(3),
-                                         'altitude': _dict.get(4),
-                                         'srs': _dict.get(5) or SRS_DEFAULT,})
-                else:
-                    self.raiseError("Sensor does not contain sufficient data in each and/or every list.")
+            for item in _sensor:
+                if item:
+                    if len(item) >= 2:
+                        _dict = dict(zip(xrange(len(item)), item))
+                        self.sensors.append({
+                            'ID': cgi.escape(_dict.get(0) or ""),
+                            'name': cgi.escape(_dict.get(1) or ""),                            'latitude': _dict.get(2),
+                            'longitude': _dict.get(3),
+                            'altitude': _dict.get(4),
+                            'srs': _dict.get(5) or SRS_DEFAULT})
+                    else:
+                        self.raiseError("Sensor does not contain sufficient data in each and/or every list.")
 
         # get sensor coords details as list of dictionaries
         self.coords = []
         if _coords:
-            for row in _coords:
-                #print "sosfeed:1090 row", row
-                if row and len(row) > 2:
-                    _dict = dict(zip(xrange(len(row)), row))
-                    if _dict.get(0) in ['longitude', 'latitude', 'altitude']:
-                        self.coords.append({'type': _dict.get(0),
-                                            'uom': _dict.get(1),
-                                            'value': _dict.get(2)})
+            for item in _coords:
+                #print "sosfeed:1090 item", item
+                if item:
+                    if len(item) >= 2:
+                        _dict = dict(zip(xrange(len(item)), item))
+                        if _dict.get(0) in ['longitude', 'latitude', 'altitude']:
+                            self.coords.append({'type': _dict.get(0),
+                                                'uom': _dict.get(1)})
+                        else:
+                            self.raiseError("Sensor co-ordinate types must be 'longitude', 'latitude' or 'altitude'")
                     else:
-                        self.raiseError("Sensor co-ordinate types must be 'longitude', 'latitude' or 'altitude'")
-                else:
-                   self.raiseError("Insufficient coordinates values in each and/or every list.")
-
+                        self.raiseError("Insufficient coordinates values in each and/or every list.")
         else:
             self.coords.append({'type': 'longitude', 'uom': 'degree'})
             self.coords.append({'type': 'latitude', 'uom': 'degree'})
@@ -1108,29 +1070,33 @@ edu.utah.sci.vistrails.basic:String)',
         # get FOI lookup details as list of dictionaries
         self.foi = []
         if _FOI:
-            for row in _FOI:
-                if row and len(row) > 3:
-                    _dict = dict(zip(xrange(len(row)), row))
-                    self.foi.append({'name': _dict.get(0),
-                                     'id': _dict.get(1),
-                                     'srs': _dict.get(2),
-                                     'coords': self.extract_pairs(_dict.get(3))})
-                else:
-                   self.raiseError("Insufficient FOI values in each and/or every list.")
-
+            for item in _FOI:
+                #print "sosfeed:1115 item", len(item), item, bool(item)
+                if item:
+                    if len(item) >= 3:
+                        _dict = dict(zip(xrange(len(item)), item))
+                        self.foi.append({
+                            'id':  cgi.escape(_dict.get(0) or ""),
+                            'name': cgi.escape(_dict.get(1)or ""),
+                            'coords': self.extract_pairs(_dict.get(2)),
+                            'srs': _dict.get(3) or SRS_DEFAULT})
+                    else:
+                        self.raiseError("Insufficient FOI values in each and/or every list.")
 
         # get property lookup details as list of dictionaries
         self.property = []
-        if _prop:
-            for row in _prop:
-                if row and len(row) > 3:
-                    _dict = dict(zip(xrange(len(row)), row))
-                    self.property.append({'name': _dict.get(0),
-                                          'type': _dict.get(1) or 'Quantity',
-                                          'urn': _dict.get(2),
-                                          'units': _dict.get(3)})
-                else:
-                     self.raiseError("Insufficient property values on each line'")
+        if _property:
+            for item in _property:
+                if item:
+                    if len(item) >= 3:
+                        _dict = dict(zip(xrange(len(item)), item))
+                        self.property.append({
+                            'name': cgi.escape(_dict.get(0) or ""),
+                            'type': cgi.escape(_dict.get(1) or 'Quantity'),
+                            'urn': cgi.escape(_dict.get(2) or ""),
+                            'units': cgi.escape(_dict.get(3) or "")})
+                    else:
+                        self.raiseError("Insufficient property values on each line'")
 
         # process configuration and generate output
         try:

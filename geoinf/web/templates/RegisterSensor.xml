@@ -48,6 +48,7 @@ http://schemas.opengis.net/sos/1.0.0/sosRegisterSensor.xsd http://www.opengis.ne
       </swe:SimpleDataRecord>
      </sml:capabilities>
 
+     {% if sensor.latitude and sensor.longitude %}{# sos error if no pos #}{% endif %}
      <!-- last measured position of sensor -->
      <sml:position name="sensorPosition">
       <swe:Position referenceFrame="{{ sensor.srs|default('urn:ogc:def:crs:EPSG::4326') }}">
@@ -55,14 +56,14 @@ http://schemas.opengis.net/sos/1.0.0/sosRegisterSensor.xsd http://www.opengis.ne
         <swe:Vector gml:id="STATION_LOCATION">
          <swe:coordinate name="latitude">
           <swe:Quantity>
-           <swe:uom code="{{ coords.uom|default('degree') }}" />
-           <swe:value>{{ sensor.latitude }}</swe:value>
+           <swe:uom code="{{ coords.uom|default('decimals_degrees') }}" />
+           <swe:value>{{ sensor.latitude|default('0.0') }}</swe:value>
           </swe:Quantity>
          </swe:coordinate>
          <swe:coordinate name="longitude">
           <swe:Quantity>
-           <swe:uom code="{{ coords.uom|default('degree') }}" />
-           <swe:value>{{ sensor.longitude }}</swe:value>
+           <swe:uom code="{{ coords.uom|default('decimals_degrees') }}" />
+           <swe:value>{{ sensor.longitude|default('0.0') }}</swe:value>
           </swe:Quantity>
          </swe:coordinate>
          {% if sensor.altitude %}
@@ -77,6 +78,7 @@ http://schemas.opengis.net/sos/1.0.0/sosRegisterSensor.xsd http://www.opengis.ne
        </swe:location>
       </swe:Position>
      </sml:position>
+
 
      <!-- list containing the input phenomena for this sensor system
      <sml:inputs>
