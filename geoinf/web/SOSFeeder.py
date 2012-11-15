@@ -117,14 +117,24 @@ class SOSFeeder(ThreadSafeMixin, Module):
         else:
             return [lst]
 
+    def escaped(self, item):
+        """Return item with &, <, > and " replaced by HTML entity"""
+        try:
+            return cgi.escape(item, True)
+        except AttributeError:
+            return item
+
     def extract_pairs(self, string):
         """Return [(x1,y1), (x2,y2), ...] from "x1 y1, x2 y2. ..." string."""
         if string:
-            coord_list = string.replace('"', '').strip(' ').split(',')
-            coords = [(cl.strip(' ').split(' ')[0],
-                       cl.strip(' ').split(' ')[1]) \
-                       for cl in coord_list]
-            return coords
+            try:
+                coord_list = string.replace('"', '').strip(' ').split(',')
+                coords = [(cl.strip(' ').split(' ')[0],
+                           cl.strip(' ').split(' ')[1]) \
+                           for cl in coord_list]
+                return coords
+            except:
+                self.raiseError('Incorrect coordinates list: "%s"' % string)
         return []
 
     def set_sheet_list(self, sheets=[]):
@@ -346,8 +356,8 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                 }
             self.property_lookup: dictionary
                 details for each property, in the format:
-                    {"ID_1": ["name_1", "URN_value1", "units_abc"],
-                     "ID_2": ["name_2", "URN_value2", "units_pqr"],}
+                    {"ID_1": ["type_1", "URN_value1", "units_abc"],
+                     "ID_2": ["type_2", "URN_value2", "units_pqr"],}
             self.feature_lookup: dictionary
                 details for each feature, in the format:
                     {"ID_1": {"name": "name_1", "srs": "SRS_1",
@@ -497,10 +507,6 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
         self.data_col = config['values']['rowcol'][1] - 1
         # meta data
         self.core = {
-            'sensorID': config['sensor']['value'] or \
-                        cell_value(sh,
-                                   config['sensor']['rowcol'][0] - 1,
-                                   config['sensor']['rowcol'][1] - 1),
             'procedureID': config['procedure']['value'] or \
                            cell_value(sh,
                                       config['procedure']['rowcol'][0] - 1,
@@ -510,21 +516,21 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
         self.fois = {}
         if config['foi']['value']:
             foi_ID = config['foi']['value']
-            add_foi(foi_ID)
+            add_foi(self.escaped(foi_ID))
         elif config['foi']['rowcol'][0] and config['foi']['rowcol'][1]:
             foi_ID = cell_value(sh, config['foi']['rowcol'][0] - 1,
                                   config['foi']['rowcol'][1] - 1)
-            add_foi(foi_ID)
+            add_foi(self.escaped(foi_ID))
         elif config['foi']['rowcol'][0] and not config['foi']['rowcol'][1]:
             row_num = config['foi']['rowcol'][0]
             for col_num in range(self.data_col, sh.ncols):
                 foi_ID = cell_value(sh, row_num - 1, col_num)
-                add_foi(foi_ID, row=None, col=col_num)
+                add_foi(self.escaped(foi_ID), row=None, col=col_num)
         elif config['foi']['rowcol'][1] and not config['foi']['rowcol'][0]:
             col_num = config['foi']['rowcol'][1]
             for row_num in range(self.data_row, sh.nrows):
                 foi_ID = cell_value(sh, row_num, col_num - 1)
-                add_foi(foi_ID, row=row_num, col=None)
+                add_foi(self.escaped(foi_ID), row=row_num, col=None)
         else:
             self.raiseError('Feature settings not configured properly!')
         # properties
@@ -533,24 +539,26 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
         self.unique_property_names = {}
         if config['properties']['value']:
             name = config['properties']['value']
-            add_property(name, source_type='constant')
+            add_property(self.escaped(name), source_type='constant')
         elif config['properties']['rowcol'][0] \
         and config['properties']['rowcol'][1]:
             name = cell_value(sh, config['properties']['rowcol'][0] - 1,
                                   config['properties']['rowcol'][1] - 1)
-            add_property(name, source_type='constant')
+            add_property(self.escaped(name), source_type='constant')
         elif config['properties']['rowcol'][0] \
         and not config['properties']['rowcol'][1]:
             row_num = config['properties']['rowcol'][0]
             for col_num in range(self.data_col, sh.ncols):
                 name = cell_value(sh, row_num - 1, col_num)
-                add_property(name, source_type='row', row=None, col=col_num)
+                add_property(self.escaped(name), source_type='row',
+                             row=None, col=col_num)
         elif config['properties']['rowcol'][1] \
         and not config['properties']['rowcol'][0]:
             col_num = config['properties']['rowcol'][1]
             for row_num in range(self.data_row, sh.nrows):
                 name = cell_value(sh, row_num, col_num - 1)
-                add_property(name, source_type='col', row=row_num, col=None)
+                add_property(self.escaped(name), source_type='col',
+                             row=row_num, col=None)
         else:
             self.raiseError('Property settings not configured properly!')
         # add time (date?) as "always present"
@@ -615,7 +623,6 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
         """        """
         if self.test_mode:
             data['core'] = {
-                'sensorID': 'urn:ogc:object:feature:Sensor:TestFooBar1',
                 'procedureID': 'urn:ogc:object:feature:Sensor:TestFooBar1'}
             data['period'] = {
                 'start': '1963-11-13T00:00:00+2:00',
@@ -764,14 +771,10 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                 if item:
                     if len(item) >= 3:
                         _dict = dict(zip(xrange(len(item)), item))
-                        self.property_lookup['name'] = \
-                            cgi.escape(_dict.get(0) or "")
-                        self.property_lookup['type'] = \
-                            cgi.escape(_dict.get(1) or 'Quantity')
-                        self.property_lookup['urn'] = \
-                            cgi.escape(_dict.get(2) or "")
-                        self.property_lookup['units'] = \
-                            cgi.escape(_dict.get(3) or "")
+                        self.property_lookup[self.escaped(_dict.get(0) or "")] =\
+                            [self.escaped(_dict.get(1) or 'Quantity'),
+                             self.escaped(_dict.get(2) or ""),
+                             self.escaped(_dict.get(3) or "")]
                     else:
                         self.raiseError("Insufficient property values on each line'")
 
@@ -783,8 +786,8 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                 if item:
                     if len(item) >= 3:
                         _dict = dict(zip(xrange(len(item)), item))
-                        self.feature_lookup[cgi.escape(_dict.get(0) or "")] = {
-                            'name': cgi.escape(_dict.get(1)or ""),
+                        self.feature_lookup[self.escaped(_dict.get(0) or "")] = {
+                            'name': self.escaped(_dict.get(1)or ""),
                             'coords': self.extract_pairs(_dict.get(2)),
                             'srs': _dict.get(3) or SRS_DEFAULT}
                     else:
@@ -792,7 +795,6 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
 
         # create configuration dictionary
         self.configuration = {
-            'sensor': {'value': _FOI, 'rowcol': (_FOI_row, _FOI_col)},
             'procedure': {'value': _proc, 'rowcol': (_proc_row, _proc_col)},
             'period': {'value': _date, 'rowcol': (_date_row, _date_col),
                        'offset': _date_offset},
@@ -930,12 +932,11 @@ edu.utah.sci.vistrails.basic:String)',
         results = []
         for sensor in self.sensors:
             data['sensor'] = sensor
-            for foi in self.foi:
-                data['foi'] = foi
-                XML = self.create_XML(sheet_name=None, data=data)
-                if XML:
-                    results.append(XML)
-                    #print "\nSOSfeed:1003\n", XML
+            data['foi'] = self.foi
+            XML = self.create_XML(sheet_name=None, data=data)
+            if XML:
+                results.append(XML)
+                #print "\nSOSfeed:943\n", XML
         return results
 
     def create_XML(self, sheet_name=None, data={}):
@@ -964,11 +965,11 @@ edu.utah.sci.vistrails.basic:String)',
             data['coords'].append({
                 'type': 'altitude',
                 'uom': 'm'})
-            data['foi'] = {
+            data['foi'] = [{
                 'name': 'Test FooBar 1',
                 'id': 'TestFooBar1',
                 'srs': SRS_DEFAULT,
-                'coords': [(-42.91, 147.33)]}
+                'coords': [(-42.91, 147.33)]}]
             data['properties'] = []
             data['properties'].append({
               'name': 'temperature',
@@ -1016,16 +1017,16 @@ edu.utah.sci.vistrails.basic:String)',
 
         # offering core metadata
         self.offering = {}
-        self.offering['ID'] = cgi.escape(_offering_ID)
-        self.offering['name'] = cgi.escape(_offering_name)
+        self.offering['ID'] = self.escaped(_offering_ID)
+        self.offering['name'] = self.escaped(_offering_name)
 
         # sensor(s) core metadata
         self.sensors = []
         # single sensor
         if  _sensor_ID:
             sensor = {}
-            sensor['ID'] = cgi.escape(_sensor_ID)
-            sensor['name'] = cgi.escape(_sensor_name)
+            sensor['ID'] = self.escaped(_sensor_ID)
+            sensor['name'] = self.escaped(_sensor_name)
             srs = _sensor_srs or SRS_DEFAULT
             sensor['srs'] = srs
             sensor['latitude'] = _sensor_lat
@@ -1039,8 +1040,9 @@ edu.utah.sci.vistrails.basic:String)',
                     if len(item) >= 2:
                         _dict = dict(zip(xrange(len(item)), item))
                         self.sensors.append({
-                            'ID': cgi.escape(_dict.get(0) or ""),
-                            'name': cgi.escape(_dict.get(1) or ""),                            'latitude': _dict.get(2),
+                            'ID': self.escaped(_dict.get(0) or ""),
+                            'name': self.escaped(_dict.get(1) or ""),
+                            'latitude': _dict.get(2),
                             'longitude': _dict.get(3),
                             'altitude': _dict.get(4),
                             'srs': _dict.get(5) or SRS_DEFAULT})
@@ -1076,8 +1078,8 @@ edu.utah.sci.vistrails.basic:String)',
                     if len(item) >= 3:
                         _dict = dict(zip(xrange(len(item)), item))
                         self.foi.append({
-                            'id':  cgi.escape(_dict.get(0) or ""),
-                            'name': cgi.escape(_dict.get(1)or ""),
+                            'id':  self.escaped(_dict.get(0) or ""),
+                            'name': self.escaped(_dict.get(1)or ""),
                             'coords': self.extract_pairs(_dict.get(2)),
                             'srs': _dict.get(3) or SRS_DEFAULT})
                     else:
@@ -1091,10 +1093,10 @@ edu.utah.sci.vistrails.basic:String)',
                     if len(item) >= 3:
                         _dict = dict(zip(xrange(len(item)), item))
                         self.property.append({
-                            'name': cgi.escape(_dict.get(0) or ""),
-                            'type': cgi.escape(_dict.get(1) or 'Quantity'),
-                            'urn': cgi.escape(_dict.get(2) or ""),
-                            'units': cgi.escape(_dict.get(3) or "")})
+                            'name': self.escaped(_dict.get(0) or ""),
+                            'type': self.escaped(_dict.get(1) or 'Quantity'),
+                            'urn': self.escaped(_dict.get(2) or ""),
+                            'units': self.escaped(_dict.get(3) or "")})
                     else:
                         self.raiseError("Insufficient property values on each line'")
 

@@ -17,7 +17,7 @@
     http://schemas.opengis.net/om/1.0.0/extensions/observationSpecialization_override.xsd"
     service="SOS" version="1.0.0">
 
- <AssignedSensorId>{{ core.sensorID }}</AssignedSensorId>
+ <AssignedSensorId>{{ core.procedureID }}</AssignedSensorId>
 
  <om:Observation>
 
@@ -35,7 +35,7 @@
     </gml:TimeInstant>
   </om:samplingTime>{% endif %}
 
-  <om:procedure xlink:href="{{ core.sensorID }}" />
+  <om:procedure xlink:href="{{ core.procedureID }}" />
 
   <om:observedProperty>
    <swe:CompositePhenomenon gml:id="cpid0" dimension="1">

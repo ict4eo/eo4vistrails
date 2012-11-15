@@ -79,7 +79,6 @@ http://schemas.opengis.net/sos/1.0.0/sosRegisterSensor.xsd http://www.opengis.ne
       </swe:Position>
      </sml:position>
 
-
      <!-- list containing the input phenomena for this sensor system
      <sml:inputs>
       <sml:InputList>
@@ -121,20 +120,41 @@ http://schemas.opengis.net/sos/1.0.0/sosRegisterSensor.xsd http://www.opengis.ne
    <om:procedure />
    <om:observedProperty />
    <om:featureOfInterest>
-    {% if foi %}
-    <sa:SamplingPoint gml:id="{{ foi.id }}">
-     <gml:name>{{ foi.name }}</gml:name>
+   {% if foi %}
+    {% if foi|length() == 1 %}
+    {% for feature in foi %}
+    <sa:SamplingPoint gml:id="{{ feature.id }}">
+     <gml:name>{{ feature.name }}</gml:name>
      <sa:position>
       <gml:Point>
-       <gml:pos srsName="{{ foi.srs|default('urn:ogc:def:crs:EPSG::4326') }}">
-        {% if foi.coords is iterable %}{% for coord in foi.coords %}{{ coord.0 }} {{ coord.1 }} {% endfor %}{% endif %}
+       <gml:pos srsName="{{ feature.srs|default('urn:ogc:def:crs:EPSG::4326') }}">
+        {% if feature.coords is iterable %}{% for coord in feature.coords %}{{ coord.0 }} {{ coord.1 }} {% endfor %}{% endif %}
        </gml:pos>
       </gml:Point>
      </sa:position>
     </sa:SamplingPoint>
+    {% endfor %}
+    {% elif foi|length() > 1 %}
+    <gml:FeatureCollection>
+     {% for feature in foi %}
+     <gml:featureMember>
+      <sa:SamplingPoint gml:id="{{ feature.id }}">
+       <gml:name>{{ feature.name }}</gml:name>
+       <sa:position>
+        <gml:Point>
+         <gml:pos srsName="{{ feature.srs|default('urn:ogc:def:crs:EPSG::4326') }}">
+          {% if feature.coords is iterable %}{% for coord in feature.coords %}{{ coord.0 }} {{ coord.1 }} {% endfor %}{% endif %}
+         </gml:pos>
+        </gml:Point>
+       </sa:position>
+      </sa:SamplingPoint>
+     </gml:featureMember>
+     {% endfor %}
+    </gml:FeatureCollection>
     {% endif %}
+   {% endif %}
    </om:featureOfInterest>
-   <om:result/>
+   <om:result />
   </om:Observation>
  </ObservationTemplate>
 
