@@ -237,7 +237,7 @@ edu.utah.sci.vistrails.basic:Boolean)',
         return new_file
 
     def save_results(self, results):
-        """Save results into designated output file and assign to port."""
+        """Save results into designated output file and assign to a port."""
         if results:
             new_file = self.excel_write(results, self.file_name_out)
             if new_file:
@@ -389,6 +389,10 @@ class ExcelSplitter(ExcelBase):
             value:
                 the cell value (string) on which the split will take place (if
                 'cell_match' is not 'Is Blank')
+
+                for date value, the format used must be 'YYYY-MM-DD HH:MM:SS.x'
+                for example, to find all dates in November 2010, use a value of
+                2010-11, and a "Contains" `type`
             case_sensitive:
                 a Boolean switch to determine if the `cell_match` is case
                 sensitive or not (the default is *not* case sensitive)
@@ -456,18 +460,31 @@ edu.utah.sci.vistrails.basic:Integer)',
         """
         for col_no, col_value in enumerate(row_list):
             # get column value as search-able type
-            if col_value[1] == 2:  # float
+            if col_value[1] == 1:  # text
+                value = col_value[0]
+            elif col_value[1] == 2:  # float
                 value = str(col_value[0])
-            elif col_value[1] == 1:  # text
-                value = col_value[0]
+            elif col_value[1] == 3:  # date
+                value = str(col_value[0])  # eg. '2012-11-16 09:40:37.75'
+            elif col_value[1] == 4:  # bool
+                if col_value[0]:
+                    value = 'true'
+                else:
+                    value = 'false'
+            elif col_value[1] == 5:
+                value = xlrd.error_text_from_code[col_value[0]]
+            elif col_value[1] == 0:  # empty
+                value = ""
             else:
                 value = col_value[0]
-            # switch for case-sensitivity
+            # switch for case-sensitive
+            cell_value = self.cell_value
             if not self.case_sensitive:
-                value = value.lower()
-                cell_value = self.cell_value.lower()
-            else:
-                cell_value = self.cell_value
+                try:
+                    value = value.lower()
+                    cell_value = self.cell_value.lower()
+                except:
+                    pass
             # change row/col split locations according to split_offset
             split_row, split_col = row_no, col_no
             col_offset, row_offset = None, None
@@ -528,7 +545,7 @@ edu.utah.sci.vistrails.basic:Integer)',
             if self.cell_match in ['blank', 'cols']:
                 for col in range(self.sheet.ncols):
                     col_list = self.xls._parse_column(self.sheet, col,
-                                                      date_as_tuple=False)
+                                                      date_as_tuple=True)
                     if col_list and col_list[0] in [None, ''] \
                     and check_if_equal(col_list):  # all blanks!
                         blank_cols.append(col)
@@ -542,12 +559,12 @@ edu.utah.sci.vistrails.basic:Integer)',
                     if not self.process_rows or row in self.process_rows:
                         # get list of row (value, type)
                         row_list = self.xls._parse_row_type(self.sheet, row,
-                                                        date_as_tuple=False)
+                                                        date_as_tuple=True)
                         self.process_row(row, row_list)
                 elif self.cell_match in ['blank', 'rows']:
                     if not self.process_rows or row in self.process_rows:
                         row_list = self.xls._parse_row(self.sheet, row,
-                                                       date_as_tuple=False)
+                                                       date_as_tuple=True)
                         #print "excelutils 582", row, row_list[0]
                         if row == 0 or (row_list and row_list[0] in [None, '']\
                         and check_if_equal(row_list)):  # all blanks!
@@ -595,10 +612,17 @@ edu.utah.sci.vistrails.basic:Integer)',
                 row_slice = sheet.row_slice(row, block[1][1], block[2][1])
                 worksheet_row = worksheet.row(r)
                 for col_index, col_cell in enumerate(row_slice):
-                    worksheet_row.write(col_index,
-                                        self.xls.parse_cell_value(
-                                                            col_cell.ctype,
-                                                            col_cell.value))
+                    value = self.xls.parse_cell_value(col_cell.ctype,
+                                                      col_cell.value,
+                                                      date_as_datetime=True)
+                    #print "excelutils:619",r,col_index,":",col_cell.ctype,value
+                    if col_cell.ctype == 3:  # date
+                        style = xlwt.XFStyle()
+                        style.num_format_str = DATE_FORMAT
+                        worksheet_row.write(col_index, value, style)
+                    else:
+                        worksheet_row.write(col_index, value)
+
                 if r > 500:
                     worksheet.flush_row_data
                     # Recommended that flush_row_data is called for every 1000
@@ -673,7 +697,7 @@ class ExcelChopper(ExcelBase):
                     pass  # do not add to output
                 else:
                     row_list = self.xls._parse_row(sheet, row,
-                                              date_as_tuple=True)
+                                                   date_as_tuple=True)
                     if row_list[0] in [None, ''] \
                     and check_if_equal(row_list):
                         pass  # do not add blank row to output
@@ -882,7 +906,7 @@ class ExcelFiller(ExcelBase):
                 self.process_cols = range(0, sheet.ncols)
             out_list = []
             if direction == 'rows':
-                # process along a row...
+                # process along a row
                 for row in range(sheet.nrows):
                     row_list = self.xls._parse_row(sheet, row,
                                                    date_as_tuple=True)
@@ -898,7 +922,7 @@ class ExcelFiller(ExcelBase):
                     out_list.append(row_list)
             elif direction == 'cols':
                 current = self.xls._parse_row(sheet, 0, date_as_tuple=True)
-                # process down a column...
+                # process down a column
                 for row in range(sheet.nrows):
                     if not self.process_rows or row in self.process_rows:
                         row_list = self.xls._parse_row(sheet, row,

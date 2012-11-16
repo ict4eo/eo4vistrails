@@ -66,6 +66,9 @@ class SOSFeeder(ThreadSafeMixin, Module):
         active:
             Boolean port; if True (default is False) then outgoing data is
             POSTed directly to the specified SOS address (OGC_URL)
+        missing_data:
+            the value that is used as a substitute for any missing values;
+            defaults to -9999
 
     Output ports:
         PostData:
@@ -74,7 +77,8 @@ class SOSFeeder(ThreadSafeMixin, Module):
 
     _input_ports = [
         ('OGC_URL', '(edu.utah.sci.vistrails.basic:String)'),
-        ('active', '(edu.utah.sci.vistrails.basic:Boolean)'), ]
+        ('active', '(edu.utah.sci.vistrails.basic:Boolean)'),
+        ('missing_data', '(edu.utah.sci.vistrails.basic:String)'),]
     _output_ports = [
         ('PostData', '(edu.utah.sci.vistrails.basic:List)'), ]
 
@@ -159,6 +163,7 @@ class SOSFeeder(ThreadSafeMixin, Module):
         # port data
         self.url = self.forceGetInputFromPort(init.OGC_URL_PORT, None)
         self.file_in = self.forceGetInputFromPort('data_file', None)
+        self.missing_data = self.forceGetInputFromPort('missing_data', '-9999')
         #_config = self.forceGetInputFromPort('configuration', None)
         self.active = self.forceGetInputFromPort('active', False)
         # validate port values
@@ -181,6 +186,9 @@ class InsertObservation(SOSFeeder):
             the network address of the SOS
         file_in:
             input Excel file
+        missing_data:
+            the value that is used as a substitute for any missing values;
+            defaults to -9999
         sheets:
             a list of worksheet numbers, or names, that must be processed.
             If None, then all sheets will be processed. Sheet numbering starts
@@ -225,7 +233,7 @@ class InsertObservation(SOSFeeder):
                 ID, "name", "co-ordinates", SRS
             `co-ordinates` can be a single pair of space-separated
             lat/long values, or a comma-delimited list of such values. SRS is
-            optional; if not supplied, the default ('urn:ogc:def:crs:EPSG::4326')
+            optional; if not supplied, the default 'urn:ogc:def:crs:EPSG::4326'
             will be used.
 
             The co-ordinate list must be wrapped in "" - e.g.
@@ -285,13 +293,13 @@ class InsertObservation(SOSFeeder):
 
             decimal:
                 a single character used to demarcate a decimal fraction (this
-                defaults to ".")
+                defaults to full-stop ".")
             token:
                 a single character used to separate items in a single
-                observation (this defaults to ",")
+                observation (this defaults to a comma ",")
             block:
                 a single character used to separate sets of observations (this
-                defaults to ";")
+                defaults to a back-tick "`")
 
     Output ports:
         PostData:
@@ -327,7 +335,7 @@ edu.utah.sci.vistrails.basic:Integer)',
              "labels": str(["row", "column"])}),
         ('separators', '(edu.utah.sci.vistrails.basic:String,\
 edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
-            {"defaults": str([".", ",", ";"]),
+            {"defaults": str([".", ",", "`"]),
              "labels": str(["decimal", "token", "block"])}),
     ]
 
@@ -397,8 +405,8 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
             """If property is found in lookup, add to properties attribute."""
             prop = self.property_lookup.get(name.strip(' '))
             if not prop:
-                self.raiseError('Unable to locate property "%s" in the lookup' % \
-                                name)
+                self.raiseError('Unable to locate property "%s" in the lookup'\
+                                % name)
             #print "sosfeed 407\n'%s'-'%s'" % (name.strip(' '), prop)
             if len(prop) >= 3:
                 self.properties.append({
@@ -417,7 +425,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                         'urn': prop[1],
                         'units': prop[2]})
             else:
-                self.raiseError('Invalid details for property "%s" in the lookup',\
+                self.raiseError('Invalid property details "%s" in the lookup',\
                                 name)
 
         def add_foi(foi_ID, row=None, col=None):
@@ -483,7 +491,8 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
         def get_vdate(row=None, col=None):
             # constant date
             if len(self.dates) == 1:
-                if self.dates[0]['col'] is None and self.dates[0]['row'] is None:
+                if self.dates[0]['col'] is None and \
+                self.dates[0]['row'] is None:
                     return self.dates[0]
             for date in self.dates:
                 if date['col'] == col or date['row'] == row:
@@ -512,6 +521,12 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                                       config['procedure']['rowcol'][0] - 1,
                                       config['procedure']['rowcol'][1] - 1)}
         self.separator = config['separator']
+        # period/timezone offset
+        offset = config['period']['offset']
+        try:
+            offset = int(offset)
+        except:
+            offset = 0
         # features
         self.fois = {}
         if config['foi']['value']:
@@ -581,13 +596,13 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
             row_num = config['period']['rowcol'][0]
             for col_num in range(self.data_col, sh.ncols):
                 value = cell_value(sh, row_num - 1, col_num)
-                add_date(value, row=row_num, col=None)
+                add_date(value, row=None, col=col_num)
         elif config['period']['rowcol'][1] \
         and not config['period']['rowcol'][0]:
             col_num = config['period']['rowcol'][1]
             for row_num in range(self.data_row, sh.nrows):
                 value = cell_value(sh, row_num, col_num - 1)
-                add_date(value, row=None, col=col_num)
+                add_date(value, row=row_num, col=None)
         else:
             self.raiseError('Date settings not configured properly!')
         self.unique_dates = uniqify(self.unique_dates)
@@ -597,11 +612,6 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
             'offset': config['period']['offset'] or 0}
 
         # observation data values
-        offset = config['period']['offset']
-        try:
-            offset = int(offset)
-        except:
-            offset = 0
         self.values = {}
         for row_num in range(self.data_row, sh.nrows):
             for col_num in range(self.data_col, sh.ncols):
@@ -609,12 +619,13 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                 foi = get_foi_ID(row_num, col_num)
                 vdate = get_vdate(row_num, col_num)
                 property = get_property_name(row_num, col_num)
-                #print "sosfeed:626 FDP", foi, vdate['date'], property
+                #print "sosfeed:622 FDP", foi, vdate, property
                 if foi and vdate and property:
                     value = cell_value(sh, row_num, col_num)
                     if value:
-                        # data
-                        self.values[(foi, vdate.get('date'), property)] = value
+                        #TODO - check why extra value is inserted ???
+                        self.values[(foi, vdate.get('date'), property)] = \
+                            self.escaped(value)  # e.g. replace "<" sign
 
     def create_XML(self, sheet_name=None, data={}):
         """Create the XML for an InsertObservation POST using a Jinja template
@@ -635,7 +646,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
             data['separator'] = {
                 'decimal': '.',
                 'token': ',',
-                'block': ';'}
+                'block': '`'}
             data['properties'] = []
             data['properties'].append({
               'urn': 'http://www.opengis.net/def/uom/ISO-8601/0/Gregorian',
@@ -660,13 +671,15 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                 ['1963-11-16T00:00:00+02', 21, 50],
                 ['1963-11-17T00:00:00+02', 23, 55],
                 ['1963-11-18T00:00:00+02', 24, 60]]
+            data['missing'] = '-9999'
 
         data = template.render(period=data.get('period'),
                                values=data.get('values'),
                                separator=data.get('separator'),
                                core=data.get('core'),
                                components=data.get('properties'),
-                               foi=data.get('foi'),)
+                               foi=data.get('foi'),
+                               missing=data.get('missing'),)
         return data  # XML
 
     def create_results(self):
@@ -685,6 +698,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                 data['foi'] = foi
                 data['separator'] = self.separator
                 data['properties'] = self.unique_properties
+                data['missing'] = self.missing_data
 
                 token = data['separator']['token']
                 for _date in self.unique_dates:
@@ -692,7 +706,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                     for prop in self.unique_properties:
                         key = (foi.get('id'), _date, prop.get('name'))
                         val = self.values.get(key)
-                        #print "sosfeed:709", foi, _date, prop.get('name'), val
+                        #print "sosfeed:699", foi.get('id'), _date, prop.get('name'), val
                         value_set.append(val)
                     data['values'].append(value_set)
 
@@ -716,7 +730,8 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
             self.raiseError("Unable to extract sheets from Excel file")
         # get port values
         if self.forceGetInputFromPort('procedure'):
-            _proc, _proc_row, _proc_col = self.forceGetInputFromPort('procedure')
+            _proc, _proc_row, _proc_col = \
+                                        self.forceGetInputFromPort('procedure')
         else:
             _proc, _proc_row, _proc_col = None, None, None
         if self.forceGetInputFromPort('feature'):
@@ -725,7 +740,8 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
             _FOI, _FOI_row, _FOI_col = None, None, None
         _feature = self.forceGetInputFromPort('feature_details', None)
         if self.forceGetInputFromPort('property'):
-            _prop, _prop_row, _prop_col = self.forceGetInputFromPort('property')
+            _prop, _prop_row, _prop_col = \
+                                        self.forceGetInputFromPort('property')
         else:
             _prop, _prop_row, _prop_col = None, None, None
         _property = self.forceGetInputFromPort('property_details', None)
@@ -742,22 +758,22 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
             _sep_decimal, _sep_token, sep_block = \
                                     self.forceGetInputFromPort('separators')
         else:
-            _sep_decimal, _sep_token, _sep_block = ".", ",", ";"
+            _sep_decimal, _sep_token, _sep_block = ".", ",", "`"
 
         # validate port values
         if not _proc and not _proc_row and not _proc_col:
-            self.raiseError('Either name, row or column must be specified for %s'\
+            self.raiseError('Name, row or column must be specified for %s'\
                             % 'procedure')
         if not _FOI and not _FOI_row and not _FOI_col:
-            self.raiseError('Either ID, row or column must be specified for %s'\
+            self.raiseError('ID, row or column must be specified for %s'\
                             % 'feature')
         if not _prop and not _prop_row and not _prop_col:
-            self.raiseError('Either name, row or column must be specified for %s'\
+            self.raiseError('Name, row or column must be specified for %s'\
                             % 'property')
         if not _obs_row and not _obs_col:
             self.raiseError('Observation row and column must be specified.')
         if not _date and not _date_row and not _date_col:
-            self.raiseError('Either name, row or column must be specified for %s'\
+            self.raiseError('Name, row or column must be specified for %s'\
                             % 'date')
         if not _property:
             self.raiseError('The property details must be specified')
@@ -771,7 +787,8 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                 if item:
                     if len(item) >= 3:
                         _dict = dict(zip(xrange(len(item)), item))
-                        self.property_lookup[self.escaped(_dict.get(0) or "")] =\
+                        self.property_lookup[
+                            self.escaped(_dict.get(0) or "")] =\
                             [self.escaped(_dict.get(1) or 'Quantity'),
                              self.escaped(_dict.get(2) or ""),
                              self.escaped(_dict.get(3) or "")]
@@ -838,6 +855,9 @@ class RegisterSensor(SOSFeeder):
         active:
             a Boolean port; if True (default is False) then the outgoing data
             is POSTed directly to the SOS
+        missing_data:
+            the value that is used as a substitute for any missing values;
+            defaults to -9999
         offering:
             The set of related sensors that form part of an offering
 
@@ -878,7 +898,8 @@ class RegisterSensor(SOSFeeder):
             Coordinates are used to define the units associated with a sensor
             location; including longitude, latitude and altitude.  This is an
             optional port; if no input is supplied the defaults will be used:
-            longitude and latitude in "decimal_degrees" and altitude in "metres".
+            longitude and latitude in "decimal_degrees" and altitude in
+            "metres".
         feature:
             A list-of-lists, containing the details for a number of features-
             of-interest. Each feature is associated with a corresponding
@@ -910,7 +931,8 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String,\
 edu.utah.sci.vistrails.basic:Float,edu.utah.sci.vistrails.basic:Float,\
 edu.utah.sci.vistrails.basic:Float)',
             {"defaults": str(["", "", SRS_DEFAULT, "", "", ""]),
-             "labels": str(["ID", "name", "srs", "longitude", "latitude", "altitude"])}),
+             "labels": str(["ID", "name", "srs",
+                            "longitude", "latitude", "altitude"])}),
         ('sensor', '(edu.utah.sci.vistrails.basic:List)'),
         ('offering', '(edu.utah.sci.vistrails.basic:String,\
 edu.utah.sci.vistrails.basic:String)',
@@ -1000,11 +1022,11 @@ edu.utah.sci.vistrails.basic:String)',
             _offering_ID, _offering_name = None, None
 
         if self.forceGetInputFromPort('sensor_details'):
-            _sensor_ID, _sensor_name, _sensor_srs, _sensor_lat, _sensor_lon, _sensor_alt = \
-                self.forceGetInputFromPort('sensor_details')
+            _sensor_ID, _sensor_name, _sensor_srs, _sensor_lat, _sensor_lon,\
+                _sensor_alt = self.forceGetInputFromPort('sensor_details')
         else:
-            _sensor_ID, _sensor_name, _sensor_srs, _sensor_lat, _sensor_lon, _sensor_alt = \
-                None, None, None, None, None, None
+            _sensor_ID, _sensor_name, _sensor_srs, _sensor_lat, _sensor_lon, \
+                _sensor_alt = None, None, None, None, None, None
         _coords = self.forceGetInputFromPort('coordinates', None)
         _FOI = self.forceGetInputFromPort('feature', None)
         _property = self.forceGetInputFromPort('property', None)

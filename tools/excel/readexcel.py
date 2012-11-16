@@ -1,4 +1,5 @@
 # library
+import datetime
 import os
 import os.path
 import sys
@@ -7,7 +8,8 @@ import xlrd
 
 
 class read_excel(object):
-    """Extract data from an Excel File either as a dict or a list.
+    """Extract data from an Excel File either as a dict, or a list of values,
+    or a list of (value, type) tuples.
 
     Uses the xlrd module (version 0.5.2 or later), supporting Excel versions:
     2004, 2002, XP, 2000, 97, 95, 5, 4, 3
@@ -23,17 +25,26 @@ class read_excel(object):
     returned as strings in "yyyy/mm/dd" format or "yyyy/mm/dd hh:mm:ss", as
     appropriate. However, when specifying date_as_tuple=True, dates will be
     returned as a (Year, Month, Day, Hour, Min, Second) tuple, for usage with
-    mxDateTime or DateTime. Numbers are returned as either INT or FLOAT,
-    whichever is needed to support the data. Text, Booleans, and error codes
+    mxDateTime or DateTime. Numbers are returned as either `int` or `float`,
+    whichever is needed to support the data. Text, booleans, and error codes
     are also returned as appropriate representations.
 
     Example of use:
-        xls = read_excel('testdata.xls')
+        import readexcel as rx
+        xls = rx.read_excel('testdata.xls')
+        # all sheets
         for sheet_name in xls.book.sheet_names():
+            print sheet_name
             for row in xls.iter_dict(sheet_name):
                 print row
+        # first sheet
+        sheets = xls.set_sheet_list()
+        sheet = sheets[0]
+        it = xls.iter_tuples(sheet)
+        for row in it:
+            print row
 
-    Original Credit:
+    Original code:
         http://gizmojo.org/code/readexcel/
     """
 
@@ -79,7 +90,8 @@ class read_excel(object):
         else:
             self.sheet_list = self.book.sheet_names()
 
-    def parse_cell_value(self, type, value, date_as_tuple=False):
+    def parse_cell_value(self, type, value, date_as_tuple=False,
+                         date_as_datetime=False):
         # Data Type Codes:
         #  EMPTY 0
         #  TEXT 1 a Unicode string
@@ -94,6 +106,8 @@ class read_excel(object):
             datetuple = xlrd.xldate_as_tuple(value, self.book.datemode)
             if date_as_tuple:
                 value = datetuple
+            elif date_as_datetime:
+                value = datetime.datetime(*datetuple)
             else:
                 # time only, no date component
                 if datetuple[0] == 0 and datetuple[1] == 0 and \
@@ -139,7 +153,7 @@ class read_excel(object):
         return values
 
     def iter_dict(self, sheet_name, date_as_tuple=False):
-        """Iterator for the worksheet's rows as dictionaries """
+        """Iterator for a worksheet's rows as dictionaries """
         sheet = self.book.sheet_by_name(sheet_name)  # XLRDError
         # parse first row, set dict keys & first_row_index
         keys = []
@@ -163,8 +177,15 @@ class read_excel(object):
                             self._parse_row(sheet, i, date_as_tuple)))
 
     def iter_list(self, sheet_name, date_as_tuple=False):
-        """Iterator for the worksheet's rows as lists """
+        """Iterator for a worksheet's rows as lists of values"""
         sheet = self.book.sheet_by_name(sheet_name)  # XLRDError
         for i in range(sheet.nrows):
             if self._is_data_row(sheet, i):
                 yield self._parse_row(sheet, i, date_as_tuple)
+
+    def iter_tuples(self, sheet_name, date_as_tuple=True):
+        """Iterator for a worksheet's rows as lists of (value, type) tuples"""
+        sheet = self.book.sheet_by_name(sheet_name)  # XLRDError
+        for i in range(sheet.nrows):
+            if self._is_data_row(sheet, i):
+                yield self._parse_row_type(sheet, i, date_as_tuple)
