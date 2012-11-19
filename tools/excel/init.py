@@ -1,10 +1,10 @@
 ###########################################################################
 ##
-## Copyright (C) 2010 CSIR Meraka Institute. All rights reserved.
+## Copyright (C) 2012 CSIR Meraka Institute. All rights reserved.
 ##
 ## eo4vistrails extends VisTrails, providing GIS/Earth Observation
 ## ingestion, pre-processing, transformation, analytic and visualisation
-## capabilities . Included is the abilty to run code transparently in
+## capabilities . Included is the ability to run code transparently in
 ## OpenNebula cloud environments. There are various software
 ## dependencies, but all are FOSS.
 ##
@@ -23,7 +23,7 @@
 ## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ##
 ############################################################################
-"""This package provides Excel capabilities for eo4vistrails.
+"""This package provides Excel capabilities.
 """
 
 
@@ -57,11 +57,12 @@ def initialize(*args, **keywords):
 
     if core.requirements.python_module_exists('xlrd') and \
        core.requirements.python_module_exists('xlwt'):
+
         from excelcell import ExcelCell  # filename of Vistrails module
         from ExcelUtils import ExcelChopper, ExcelExtractor, ExcelFiller, \
                                ExcelReplacer, ExcelSplitter, ExcelBase, \
-                               ExcelDirectionComboBox, ExcelMatchComboBox, \
-                               ExcelSplitComboBox
+                               ExcelMerger, ExcelDirectionComboBox, \
+                               ExcelMatchComboBox, ExcelSplitComboBox
         excel_namespace = "tools|excel"
 
         # abstract modules - drop-down lists
@@ -98,6 +99,8 @@ def initialize(*args, **keywords):
         reg.add_module(ExcelReplacer,
                        namespace=excel_namespace)
         reg.add_module(ExcelSplitter,
+                       namespace=excel_namespace)
+        reg.add_module(ExcelMerger,
                        namespace=excel_namespace)
 
     else:

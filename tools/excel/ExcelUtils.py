@@ -47,7 +47,7 @@ from packages.eo4vistrails.tools.utils.listutils import check_if_equal
 from readexcel import read_excel
 
 DATE_FORMAT = 'YYYY-MM-DDTHH:MM:SS'
-SHEET_NAME_SIZE = 27  # maximum length of an Excel worksheet name (31 - 4)
+SHEET_NAME_SIZE = 27  # maximum length of an Excel worksheet name (i.e. 31 - 4)
 
 
 @RPyCSafeModule()
@@ -330,6 +330,94 @@ class ExcelExtractor(ExcelBase):
             self.setResult('data_dictionary', _dict)
         except Exception, e:
             self.raiseError('Unable to run compute: %s' % str(e))
+
+
+@RPyCSafeModule()
+class ExcelMerger(ExcelBase):
+    """Read Excel file and merge values from adajacent rows/columns according
+    to specific parameters.
+
+    ExcelMerger will combine items in the set of columns specified and replace
+    the item in the first column (of the set) with the combined result.  This
+    will be repeated for all of the specified rows of the specified sheets.
+    If no columns are specified, then no merger will occur.
+
+    Input ports:
+        file_in:
+            input Excel file
+        file_name_out:
+            an optional full directory path and filename to be write; if None
+            then a temporary file will be created
+        sheets:
+            a list of worksheet numbers, or names, that must be processed.
+            If None, then all sheets will be processed. Sheet numbering starts
+            from 1.
+        rows:
+            values:
+                a list of row numbers to be processed.  If None, then all rows
+                will be processed. Row numbering starts from 1.
+            range:
+                a Boolean indicating if the row numbers specify a range.
+
+            If range is `False`, the row values are just numbers of individual
+            rows. If range is `True`, the following notation applies:
+                 *  N: the first N rows
+                 *  N, M: all rows from N to M inclusive
+                 *  N, M, P: every "Pth" row, between N to M inclusive
+        columns:
+            values:
+                a list of column numbers to be processed. If None, then NO
+                columns will be processed. Column numbering starts from 1.
+            range:
+                a Boolean indicating if the column numbers specify a range.
+
+            If range is `False`, the column values are just numbers of
+            individual columns. If range is `True`, the following notation
+            applies:
+                 *  N: the first N columns
+                 *  N, M: all columns from N to M inclusive
+                 *  N, M, P: every "Pth" column, between N to M inclusive
+        cell_joiner: string
+            the string that is to be used as a spacer between the merged cell
+            values (defaults to a single space)
+
+    Output ports:
+        file_out:
+            output Excel file
+    """
+
+    _input_ports = [
+        ('cell_joiner', '(edu.utah.sci.vistrails.basic:String)'),
+    ]
+
+    def __init__(self):
+        ExcelBase.__init__(self)
+
+    def compute(self):
+        super(ExcelMerger, self).compute()
+        cell_joiner = self.forceGetInputFromPort('cell_joiner', " ")
+        results = {}
+        # create output dict; one entry per selected sheet name
+        for sheet_name in self.xls.sheet_list:
+            sheet = self.xls.book.sheet_by_name(sheet_name)
+            out_list = []
+            if self.process_cols:
+                # process all rows by default
+                if not self.process_rows:
+                    self.process_rows = range(sheet.nrows)
+                for row in self.process_rows:
+                    row_list = self.xls._parse_row(sheet, row,
+                                               date_as_tuple=True)
+                    items = [row_list[col] for col in self.process_cols \
+                                           if row_list[col] is not None]
+                    try:
+                        new_value = cell_joiner.join(items)
+                        row_list[col] = new_value
+                    except TypeError:
+                        self.raiseError('Unable to merge numeric values!')
+                    out_list.append(row_list)
+                results[sheet_name] = out_list
+        self.save_results(results)
 
 
 @RPyCSafeModule()
