@@ -101,9 +101,11 @@ class CsvWriter(ThreadSafeMixin, Module):
 
     Input ports:
         directory path:
-            place to which the file will be written
+            place to which the file will be written; if not specified, a
+            temporary directory will be created and used
         filename:
-            name of output file
+            name of output file; if not specified, a temporary file will be
+            created and used
         column_header_list:
             optional list of column headings
         data_values_listoflists:
@@ -130,14 +132,20 @@ class CsvWriter(ThreadSafeMixin, Module):
         Module.__init__(self)
 
     def compute(self):
-        fn = self.getInputFromPort('filename')
-        dp = self.getInputFromPort('directorypath')
+        fn = self.forceGetInputFromPort('filename', None)
+        dp = self.forceGetInputFromPort('directorypath', None)
         chl = self.forceGetInputFromPort('column_header_list', [])
         dvll = self.forceGetInputFromPort('data_values_listoflists', [])
+        output_type = 'csv'
 
-        if not os.path.isdir(dp):
-            os.mkdir(dp)
-        newfile = os.path.join(dp, fn)
+        if dp and fn:
+            if not os.path.isdir(dp):
+                os.mkdir(dp)
+            newfile = os.path.join(dp, fn)
+        else:
+            _file = self.interpreter.filePool.create_file(suffix=".%s" % \
+                                                          output_type)
+            newfile = _file.name
 
         try:
             file_out = open(newfile, 'w')

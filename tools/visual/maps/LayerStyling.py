@@ -85,9 +85,11 @@ class VectorLayerStyling(LayerStyling):
         label:
             the display name for the layer
         opacity:
-            the percentage transparency for the layer (100 is no transparency)
+            the percentage transparency for the layer; the default is 100,
+            which is no transparency
         fill_color:
-            the color with which to fill the layer
+            the color with which to fill the layer; this defaults to a random
+            color.
 
     See also:
         http://www.qgis.org/pyqgis-cookbook/vector.html
@@ -103,7 +105,10 @@ class VectorLayerStyling(LayerStyling):
         opacity = self.forceGetInputFromPort('opacity', 100)
         layer_name = self.forceGetInputFromPort('label', None)
         rgb_fill_color = self.forceGetInputFromPort('fill_color', None)
-        symbol_color = self.RGBToHTMLColor(rgb_fill_color.tuple)
+        if rgb_fill_color:
+            symbol_color = self.RGBToHTMLColor(rgb_fill_color.tuple)
+        else:
+            symbol_color = self.RGBToHTMLColor(None)
         symbol_opacity = min(100, max(0, opacity)) / 100.0
 
         # assumes QGIS > 1.4 (start of usage of RendererV2)

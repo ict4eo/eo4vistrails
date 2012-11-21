@@ -28,6 +28,7 @@
 handle data feeds to an OGC SOS (including InsertObservation & RegisterSensor)
 """
 # library
+import copy
 import csv
 import os
 import os.path
@@ -47,6 +48,10 @@ import init
 
 
 SRS_DEFAULT = 'urn:ogc:def:crs:EPSG::4326'
+USE_TIMEFIELD = True  # allows 'time' to be inserted as an extra property
+MISSING_DATA = '-9999'  # default replacement for a missing observation value
+TRUE = 'True'
+FALSE = 'False'
 
 
 @RPyCSafeModule()
@@ -78,7 +83,7 @@ class SOSFeeder(ThreadSafeMixin, Module):
     _input_ports = [
         ('OGC_URL', '(edu.utah.sci.vistrails.basic:String)'),
         ('active', '(edu.utah.sci.vistrails.basic:Boolean)'),
-        ('missing_data', '(edu.utah.sci.vistrails.basic:String)'),]
+        ('missing_data', '(edu.utah.sci.vistrails.basic:String)'), ]
     _output_ports = [
         ('PostData', '(edu.utah.sci.vistrails.basic:List)'), ]
 
@@ -90,7 +95,7 @@ class SOSFeeder(ThreadSafeMixin, Module):
     def raiseError(self, msg, error=''):
         """Raise a VisTrails error with traceback display."""
         import traceback
-        #print "sosfeed 89", msg
+        #print "sosfeed 98", msg
         traceback.print_exc()
         if error:
             raise ModuleError(self, msg + ' - %s' % str(error))
@@ -122,14 +127,14 @@ class SOSFeeder(ThreadSafeMixin, Module):
             return [lst]
 
     def escaped(self, item):
-        """Return item with &, <, > and " replaced by HTML entity"""
+        """Return item with &, <, > and " replaced by equivalent HTML entity"""
         try:
             return cgi.escape(item, True)
         except AttributeError:
             return item
 
     def extract_pairs(self, string):
-        """Return [(x1,y1), (x2,y2), ...] from "x1 y1, x2 y2. ..." string."""
+        """Return [(x1,y1), (x2,y2), ...] from a "x1 y1, x2 y2, ..." string."""
         if string:
             try:
                 coord_list = string.replace('"', '').strip(' ').split(',')
@@ -163,7 +168,7 @@ class SOSFeeder(ThreadSafeMixin, Module):
         # port data
         self.url = self.forceGetInputFromPort(init.OGC_URL_PORT, None)
         self.file_in = self.forceGetInputFromPort('data_file', None)
-        self.missing_data = self.forceGetInputFromPort('missing_data', '-9999')
+        self.missing_data = self.forceGetInputFromPort('missing_data', str(MISSING_DATA))
         #_config = self.forceGetInputFromPort('configuration', None)
         self.active = self.forceGetInputFromPort('active', False)
         # validate port values
@@ -172,7 +177,6 @@ class SOSFeeder(ThreadSafeMixin, Module):
         # template location
         current_dir = os.path.dirname(os.path.abspath(__file__))
         template_dir = os.path.join(current_dir, 'templates')
-        #print "sosfeed:145", current_dir, template_dir
         self.env = Environment(loader=FileSystemLoader(template_dir),
                                trim_blocks=True)
 
@@ -256,8 +260,9 @@ class InsertObservation(SOSFeeder):
         property_details:
             A list-of-lists, containing the details for each property;
             including its descriptive name, the URN (Uniform Resource Name) -
-            as used by a standards body such OGC or NASA (SWEET) - and units of
-            measure (in standard SI notation). Each list item has the form:
+            as used by a standards body such OGC or NASA
+            (http://sweet.jpl.nasa.gov/) - and units of measure (in standard SI
+            notation). Each list item has the form:
                 "name", "URN", "units", "type"
             where type is optional and defaults to "Quantity" if omitted.
         date:
@@ -300,6 +305,12 @@ class InsertObservation(SOSFeeder):
             block:
                 a single character used to separate sets of observations (this
                 defaults to a back-tick "`")
+        error_codes:
+            A list used to substitute numeric values for text in the SOS.  For
+            example, an entry of "Not detected" could correspond to a code
+            of -9990, whereas "Not sampled" could be -9991. Each list entry
+            has the form:
+                "name", value
 
     Output ports:
         PostData:
@@ -337,6 +348,7 @@ edu.utah.sci.vistrails.basic:Integer)',
 edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
             {"defaults": str([".", ",", "`"]),
              "labels": str(["decimal", "token", "block"])}),
+        ('error_codes', '(edu.utah.sci.vistrails.basic:List)'),
     ]
 
     def __init__(self):
@@ -361,7 +373,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                 'separator': {'decimal': char, 'token': char, 'block': char},
                 'properties': {'value': xxx, 'rowcol': (row, col)},
                 'values': {'rowcol': (row, col)},
-                }
+                    }
             self.property_lookup: dictionary
                 details for each property, in the format:
                     {"ID_1": ["type_1", "URN_value1", "units_abc"],
@@ -407,7 +419,6 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
             if not prop:
                 self.raiseError('Unable to locate property "%s" in the lookup'\
                                 % name)
-            #print "sosfeed 407\n'%s'-'%s'" % (name.strip(' '), prop)
             if len(prop) >= 3:
                 self.properties.append({
                     'name': name,
@@ -435,7 +446,6 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
             except:
                 ID = foi_ID
             foi_ID_entry = self.feature_lookup.get(ID)
-            #print "sosfeed:435", foi_ID_entry, ID, type(ID)
             if foi_ID_entry:
                 # convert coords "list of tuples with unicode strings"
                 coords = []
@@ -472,7 +482,6 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                     return foi.get('id')
             for key, foi in self.fois.iteritems():
                 if foi.get('col') == col or foi.get('row') == row:
-                    #print "sosfeed:475", foi.get('col'), col, foi.get('id')
                     return foi.get('id')
             return None
 
@@ -497,6 +506,81 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
             for date in self.dates:
                 if date['col'] == col or date['row'] == row:
                     return date
+
+        def get_sos_error_code(string):
+            """Find a numeric code corresponding to an error."""
+            if string:
+                lookup = string.strip(' ').lower()
+                return self.error_codes.get(lookup)
+            return None
+
+        def sos_cell_value(sheet, row_num, col_num, property):
+            """Return a cell value appropriate for insertion in the SOS.
+
+            Cell Type Codes:
+                EMPTY 0: null or None
+                TEXT 1: a Unicode string
+                NUMBER 2: float
+                DATE 3: float
+                BOOLEAN 4: int; 1 means TRUE, 0 means FALSE
+                ERROR 5
+
+            SOS Data Type Codes:
+                Quantity: numeric value (float, integer)
+                Category, Text: text value
+                Boolean: True/False value
+                Count: integer
+                Time: time field
+
+            Notes:
+                For sake of simplicity, text values (Quantity and Text) are
+                treated the same way, as are numerics (Quantity and Count).
+            """
+            value = sheet.cell(row_num, col_num).value
+            ctype = sheet.cell(row_num, col_num).ctype
+            prop_type = 'Quantity'  # default
+            for prop in self.properties:
+                if prop['name'] == property:
+                    prop_type = prop['type'] or 'Quantity'
+            if prop_type in ['Quantity', 'Count']:
+                if ctype in [0, 3, 4, 5]:
+                    value = None
+                elif ctype == 1:
+                    value = get_sos_error_code(value)
+            elif prop_type  in ['Category', 'Text']:
+                if ctype == 1:
+                    value = self.escaped(value)  # e.g. replace "<" with &#lt;
+                if ctype == 2:
+                    value = str(value)
+                elif ctype == 3:
+                    datetuple = xlrd.xldate_as_tuple(value, self.book.datemode)
+                    value = "%04d/%02d/%02d %02d:%02d:%02d" % datetuple
+                elif ctype in [0, 5]:
+                    value = None
+                elif ctype == 4:
+                    if value:
+                        value = TRUE
+                    else:
+                        value = FALSE
+            elif prop_type == 'Boolean':
+                if ctype in [0, 5]:
+                    value = None
+                elif ctype == 1:
+                    if value[0].lower() == 't':
+                        value = TRUE
+                    else:
+                        value = FALSE
+                elif ctype in [2, 4]:
+                    if value > 0:
+                        value = TRUE
+                    else:
+                        value = FALSE
+            elif prop_type == 'Time':
+                if ctype == 3:
+                    datetuple = xlrd.xldate_as_tuple(value, self.book.datemode)
+                    value = datetime.datetime(*datetuple)
+                else:
+                    value = None
 
         # initialize
         if reset:
@@ -576,11 +660,6 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                              row=row_num, col=None)
         else:
             self.raiseError('Property settings not configured properly!')
-        # add time (date?) as "always present"
-        self.unique_properties.insert(0, {
-            'name': "Time",
-            'type': "Time",
-            'urn': "urn:ogc:data:time:iso8601"})
         # dates
         self.unique_dates = []
         self.dates = []
@@ -619,13 +698,10 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                 foi = get_foi_ID(row_num, col_num)
                 vdate = get_vdate(row_num, col_num)
                 property = get_property_name(row_num, col_num)
-                #print "sosfeed:622 FDP", foi, vdate, property
+                #print "sosfeed:702 FDP", foi, vdate, property
                 if foi and vdate and property:
-                    value = cell_value(sh, row_num, col_num)
-                    if value:
-                        #TODO - check why extra value is inserted ???
-                        self.values[(foi, vdate.get('date'), property)] = \
-                            self.escaped(value)  # e.g. replace "<" sign
+                    value = sos_cell_value(sh, row_num, col_num, property)
+                    self.values[(foi, vdate.get('date'), property)] = value
 
     def create_XML(self, sheet_name=None, data={}):
         """Create the XML for an InsertObservation POST using a Jinja template
@@ -671,7 +747,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                 ['1963-11-16T00:00:00+02', 21, 50],
                 ['1963-11-17T00:00:00+02', 23, 55],
                 ['1963-11-18T00:00:00+02', 24, 60]]
-            data['missing'] = '-9999'
+            data['missing'] = str(MISSING_DATA)
 
         data = template.render(period=data.get('period'),
                                values=data.get('values'),
@@ -687,7 +763,6 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
         """
         results = []
         for sheet_name in self.sheet_list:
-            #print "\nsosfeed:688 sheet", sheet_name
             # load data from worksheet into dictionaries
             self.load_from_excel(sheet_name)
             for key, foi in self.fois.iteritems():
@@ -696,8 +771,8 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                 data['core'] = self.core
                 data['period'] = self.period
                 data['foi'] = foi
+                data['properties'] = copy.copy(self.unique_properties)
                 data['separator'] = self.separator
-                data['properties'] = self.unique_properties
                 data['missing'] = self.missing_data
 
                 token = data['separator']['token']
@@ -706,14 +781,21 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                     for prop in self.unique_properties:
                         key = (foi.get('id'), _date, prop.get('name'))
                         val = self.values.get(key)
-                        #print "sosfeed:699", foi.get('id'), _date, prop.get('name'), val
+                        #print "sosfeed:785", foi.get('id'), _date, prop.get('name'), val
                         value_set.append(val)
                     data['values'].append(value_set)
+
+                if USE_TIMEFIELD:
+                    # add time (date?) as "always present"
+                    data['properties'].insert(0, {
+                        'name': "Time",
+                        'type': "Time",
+                        'urn': "urn:ogc:data:time:iso8601"})
 
                 XML = self.create_XML(sheet_name=sheet_name, data=data)
                 if XML:
                     results.append(XML)
-                    #print "\nsosfeed:719\n", XML
+                    #print "\nsosfeed:796\n", XML
             return results
 
     def compute(self):
@@ -759,6 +841,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                                     self.forceGetInputFromPort('separators')
         else:
             _sep_decimal, _sep_token, _sep_block = ".", ",", "`"
+        _error_codes = self.forceGetInputFromPort('error_codes', {})
 
         # validate port values
         if not _proc and not _proc_row and not _proc_col:
@@ -780,6 +863,20 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
         if not _feature:
             self.raiseError('The feature details must be specified')
 
+        # get error_code details as dictionary
+        self.error_codes = {}
+        if _error_codes:
+            for item in _error_codes:
+                if item:
+                    if len(item) == 2:
+                        _dict = dict(zip(xrange(len(item)), item))
+                        try:
+                            self.error_codes[_dict.get(0)] = float(_dict.get(1))
+                        except (ValueError, TypeError) as e:
+                            self.raiseError("Invalid error code number")
+                    else:
+                        self.raiseError("Incorrect number of error codes on each line")
+
         # get property lookup details as dictionary
         self.property_lookup = {}
         if _property:
@@ -793,13 +890,13 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                              self.escaped(_dict.get(2) or ""),
                              self.escaped(_dict.get(3) or "")]
                     else:
-                        self.raiseError("Insufficient property values on each line'")
+                        self.raiseError("Insufficient property values on each line")
 
         # get FOI lookup details as dictionary
         self.feature_lookup = {}
         if _feature:
             for item in _feature:
-                #print "sosfeed:784 item", len(item), item, bool(item)
+                #print "sosfeed:894 item", len(item), item, bool(item)
                 if item:
                     if len(item) >= 3:
                         _dict = dict(zip(xrange(len(item)), item))
@@ -808,7 +905,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                             'coords': self.extract_pairs(_dict.get(2)),
                             'srs': _dict.get(3) or SRS_DEFAULT}
                     else:
-                        self.raiseError("Insufficient FOI values in each and/or every list.")
+                        self.raiseError("Insufficient FOI values in each and/or every list")
 
         # create configuration dictionary
         self.configuration = {
@@ -914,8 +1011,9 @@ class RegisterSensor(SOSFeeder):
         property:
             A list-of-lists, containing the details for each property;
             including its descriptive name, the URN (Uniform Resource Name) -
-            as used by a standards body such OGC or NASA (SWEET) - and units of
-            measure (in standard SI notation). Each list item has the form:
+            as used by a standards body such OGC or NASA
+            (http://sweet.jpl.nasa.gov/) - and units of measure (in standard SI
+            notation). Each list item has the form:
                 "name", "URN", "units", "type"
             where type is optional and defaults to "Quantity" if omitted.
 
@@ -958,7 +1056,7 @@ edu.utah.sci.vistrails.basic:String)',
             XML = self.create_XML(sheet_name=None, data=data)
             if XML:
                 results.append(XML)
-                #print "\nSOSfeed:943\n", XML
+                #print "\nSOSfeed:1063\n", XML
         return results
 
     def create_XML(self, sheet_name=None, data={}):
@@ -1075,7 +1173,6 @@ edu.utah.sci.vistrails.basic:String)',
         self.coords = []
         if _coords:
             for item in _coords:
-                #print "sosfeed:1090 item", item
                 if item:
                     if len(item) >= 2:
                         _dict = dict(zip(xrange(len(item)), item))
@@ -1095,7 +1192,6 @@ edu.utah.sci.vistrails.basic:String)',
         self.foi = []
         if _FOI:
             for item in _FOI:
-                #print "sosfeed:1115 item", len(item), item, bool(item)
                 if item:
                     if len(item) >= 3:
                         _dict = dict(zip(xrange(len(item)), item))

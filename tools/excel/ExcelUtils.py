@@ -260,7 +260,7 @@ edu.utah.sci.vistrails.basic:Boolean)',
             _rows = self.make_list(_rows)
         else:
             _rows, self.row_range = [], False
-        #print "excelutils:253", type(_rows), _rows, self.row_range
+        #print "excelutils:263", type(_rows), _rows, self.row_range
         if self.forceGetInputFromPort('columns'):
             _cols, self.col_range = self.forceGetInputFromPort('columns')
             _cols = self.make_list(_cols)
@@ -408,8 +408,10 @@ class ExcelMerger(ExcelBase):
                 for row in self.process_rows:
                     row_list = self.xls._parse_row(sheet, row,
                                                date_as_tuple=True)
-                    items = [row_list[col] for col in self.process_cols \
-                                           if row_list[col] is not None]
+                    # note that self.process_cols are in descending order
+                    items = [row_list[col]
+                             for col in reversed(self.process_cols)
+                             if row_list[col] is not None]
                     try:
                         new_value = cell_joiner.join(items)
                         row_list[col] = new_value
@@ -597,7 +599,7 @@ edu.utah.sci.vistrails.basic:Integer)',
                 if row_offset > 0:
                     split_row = min(split_row + row_offset, self.sheet.nrows)
             # perform value comparison
-            #print "excelutils:526", row_no, col_no, split_row, split_col
+            #print "excelutils:602", row_no, col_no, split_row, split_col
             if self.cell_match == 'exact' and value == cell_value:
                 self.add_block(split_row, split_col)
             elif self.cell_match == 'starts' and \
@@ -619,7 +621,7 @@ edu.utah.sci.vistrails.basic:Integer)',
             self.split_offset = self.forceGetInputFromPort('split_offset')
         else:
             self.split_offset = (0, 0)
-        #print "excelutils:548", type(self.split_offset), self.split_offset
+        #print "excelutils:624", type(self.split_offset), self.split_offset
 
         # switch to sensible default (???) if a value is filled in
         if self.cell_value and not self.cell_match:
@@ -653,7 +655,7 @@ edu.utah.sci.vistrails.basic:Integer)',
                     if not self.process_rows or row in self.process_rows:
                         row_list = self.xls._parse_row(self.sheet, row,
                                                        date_as_tuple=True)
-                        #print "excelutils 582", row, row_list[0]
+                        #print "excelutils 658", row, row_list[0]
                         if row == 0 or (row_list and row_list[0] in [None, '']\
                         and check_if_equal(row_list)):  # all blanks!
                             found_blank_rows = True
@@ -696,14 +698,14 @@ edu.utah.sci.vistrails.basic:Integer)',
                                          block[0][0:SHEET_NAME_SIZE]))
             for r, row in enumerate(range(block[1][0], block[2][0])):
                 sheet = self.xls.book.sheet_by_name(block[0])
-                #print "slicing row:cols", row, ":", block[1][1], block[2][1]
+                #print "excelutils:701", row, ":", block[1][1], block[2][1]
                 row_slice = sheet.row_slice(row, block[1][1], block[2][1])
                 worksheet_row = worksheet.row(r)
                 for col_index, col_cell in enumerate(row_slice):
                     value = self.xls.parse_cell_value(col_cell.ctype,
                                                       col_cell.value,
                                                       date_as_datetime=True)
-                    #print "excelutils:619",r,col_index,":",col_cell.ctype,value
+                    #print "excelutils:709",r,col_index,":",col_cell.ctype,value
                     if col_cell.ctype == 3:  # date
                         style = xlwt.XFStyle()
                         style.num_format_str = DATE_FORMAT
