@@ -132,7 +132,7 @@ class SensorObservationService(object):
 
         # FilterCapabilities
         val = self._capabilities.find('{http://www.opengis.net/sos/1.0}Filter_Capabilities')
-        if val:
+        if val is not None:
             self.filters = filter.FilterCapabilities(val)
         else:
             val = self._capabilities.find('{http://www.opengis.net/sos/1.0}FilterCapabilities')
@@ -155,9 +155,9 @@ class SensorObservationService(object):
         # Contents
         self.contents = []
         elem_set = self._capabilities.find('{http://www.opengis.net/sos/1.0}Contents/{http://www.opengis.net/sos/1.0}ObservationOfferingList')
-        if elem_set:
+        if elem_set is not None:
             for elem in elem_set:
-                if elem:
+                if elem is not None:
                     #print  "owslib.sos.py:161", type(elem), "\n", elem
                     meta = ContentsMetadata(elem)
                     # attempt to find defaults at ObservationOfferingList level
@@ -340,7 +340,7 @@ class ContentsMetadata:
         # time
         self.time = None
         time_ = elem.find(util.nspath('time', SOS_NAMESPACE))  # sos
-        if time_:
+        if time_ is not None:
             time_period = time_.find(util.nspath('TimePeriod', GML_NAMESPACE))
             if time_period:
                 val = time_period.find(util.nspath('beginPosition', GML_NAMESPACE))
@@ -351,7 +351,7 @@ class ContentsMetadata:
         # bbox
         self.bounding_box = None
         bound = elem.find(util.nspath('boundedBy', GML_NAMESPACE))
-        if bound:
+        if bound is not None:
             env = bound.find(util.nspath('Envelope', GML_NAMESPACE))
             if env is not None:
                 try:  # sometimes the SRS attribute is (wrongly) not provided

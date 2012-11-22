@@ -111,19 +111,21 @@ class VectorLayerStyling(LayerStyling):
             symbol_color = self.RGBToHTMLColor(None)
         symbol_opacity = min(100, max(0, opacity)) / 100.0
 
-        # assumes QGIS > 1.4 (start of usage of RendererV2)
-        layer_symbol = qgis.core.QgsSymbolV2.defaultSymbol(
-            vector_layer.geometryType())
-        # set symbol properties
-        layer_symbol.setColor(QtGui.QColor(symbol_color))
-        layer_symbol.setAlpha(symbol_opacity)
-        # TODO - find a way to add fill styling; might be different for point/line/poly
-        # set layer renderer
-        renderer_V2 = qgis.core.QgsSingleSymbolRendererV2(layer_symbol)
-        vector_layer.setRendererV2(renderer_V2)
-        # layer props
-        if layer_name:
-            vector_layer.setLayerName(layer_name)
+        if vector_layer:
+            # assumes QGIS > 1.4 (start of usage of RendererV2)
+            layer_symbol = qgis.core.QgsSymbolV2.defaultSymbol(
+                vector_layer.geometryType())
+            # set symbol properties
+            if layer_symbol:
+                layer_symbol.setColor(QtGui.QColor(symbol_color))
+                layer_symbol.setAlpha(symbol_opacity)
+                # TODO - find a way to add fill styling; might be different for point/line/poly
+                # set layer renderer
+                renderer_V2 = qgis.core.QgsSingleSymbolRendererV2(layer_symbol)
+                vector_layer.setRendererV2(renderer_V2)
+            # layer props
+            if layer_name:
+                vector_layer.setLayerName(layer_name)
 
         self.setResult('vector_layer', vector_layer)
 

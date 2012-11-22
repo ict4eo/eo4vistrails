@@ -23,8 +23,8 @@
 ## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ##
 ############################################################################
-"""This module provides a means to visualise an Excel file, in a Vistrails
-spreadsheet cell, as an HMTL table.
+"""This module provides a means to visualise a Python list-of-lists, in a
+Vistrails spreadsheet cell, as an HMTL table.
 """
 # library
 import os.path
@@ -39,32 +39,23 @@ from packages.spreadsheet.basic_widgets import SpreadsheetCell
 from packages.spreadsheet.spreadsheet_cell import QCellWidget
 import shutil
 
-ENCODING = "utf-8"  # will probably differ in some countries ???
-
-# TODO - recode from "fyle.write('<html>')" using a Jinja template !!!
+ENCODING = "utf-8"  # will differ in some countries; add as hidden port ???
 
 ##############################################################################
 
 
 class ListCell(SpreadsheetCell):
     """
-    ExcelCell is a custom module to view lists as HTML tables
+    ListCell is a custom module to view lists as HTML tables
 
     Input ports:
         Location:
             the Location of the output display cell
         List:
             a standard List
-        ColumnWidths:
-            a List of values corresponding to column width in pixels. If there
-            is only one number, it wil be used for all the columns; if two
-            numbers, the first will be used for the first column, and the
-            second for all other columns; if three numbers, the first will be
-            used for the first column, the second for the second column, and
-            the third for all other columns... and so on.
-        References?
-            If True (checked), the column and row numbers will be shown on the
-            top and lefthand sides.
+        LineNumbers?
+            If True (checked), the line numbers will be shown on the lefthand
+            side of the table.
 
     Output ports:
         HTML File:
@@ -191,49 +182,23 @@ class ListCellWidget(QCellWidget):
         fyle.write('\n  <style type="text/css">%s\n</style>' % css)
         fyle.write('\n</head>')
         fyle.write('<body>')
-        font = book.font_list
         alignment = {1: ' text-align: left;',
                      2: ' text-align: center;',
                      3: ' text-align: right;',
                     }
 
-        # create style for column widths
-        widths = []
-        for col_n in range(0, book.sheet_by_name(name).ncols):
-            if len(columnWidths) == 1:
-                columnWidths[0]  # all the same
-            elif len(columnWidths) > 0:
-                try:
-                    widths.append(columnWidths[col_n])
-                except:
-                    widths.append(columnWidths[-1])  # default is last
-            else:
-                pass
         # write data to file
-        fyle.write('\n<h1>%s</h1>\n' % name)
         fyle.write('  <table%s>\n' % table_borders)
-        """
-        if fileReference:  # show grid col labels
-            fyle.write('    <tr><td style="%s">&#160;</td>      ' % \
-                       ref_style)
-            for col_n in range(0, book.sheet_by_name(name).ncols):
-                fyle.write('<td style="%s" align="center">%s</td>' %
-                           (ref_style, str(col_n + 1)))
-            fyle.write('    </tr>\n      ')
-        """
-        for row_n, row in iterate(list_in):
+
+        for row_n, row in enumerate(list_in):
             fyle.write('    <tr>\n      ')
             if fileReference:  # show grid row labels
                 fyle.write('<td style="%s" align="center">%s</td>' %
                            (ref_style, str(row_n + 1)))
-            for col_n, value in iterate(row):
+            for col_n, value in enumerate(row):
                 style = ""
+                # check data types and change alignment???
                 """
-                # text align
-                align = xf.alignment.hor_align
-                if align:
-                    style += alignment.get(align) or ''
-                # check data types
                 # 0:EMPTY; 1:TEXT (a Unicode string); 2:NUMBER (float);
                 # 3:DATE (float); 4:BOOLEAN (1 TRUE, 0 FALSE); 5: ERROR
                 if type == 1:
@@ -241,7 +206,7 @@ class ListCellWidget(QCellWidget):
                 elif type == 2:
                     if value == int(value):
                         value = int(value)
-                    style += ' text-align:right;'
+                    style += alignment[1]
                 elif type == 3:
                     datetuple = xlrd.xldate_as_tuple(value, book.datemode)
                     if date_as_tuple:

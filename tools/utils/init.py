@@ -44,12 +44,14 @@ def registerControl(module):
 
 def initialize(*args, **keywords):
     from core.modules import basic_modules
+    from packages.spreadsheet import basic_widgets
     from core.modules.vistrails_module import Module
 
     import DropDownListWidget
     from Array import NDArrayEO
     from Experiment import Timer
     from ListFilter import ListFilter
+    from ListCell import ListCell
     from Random import Random
     from session import Session
     from ThreadSafe import Fork, ThreadTestModule, ThreadSafeFold, \
@@ -108,6 +110,15 @@ def initialize(*args, **keywords):
         Fork,
         'modules',
         basic_modules.Module)
+
+    # Add ListCell
+    reg.add_module(ListCell,
+                   namespace=utils_namespace)
+    reg.add_input_port(ListCell, "List", basic_modules.List)
+    #reg.add_input_port(ListCell, "File", basic_modules.File)
+    reg.add_input_port(ListCell, "Location", basic_widgets.CellLocation)
+    reg.add_input_port(ListCell, "LineNumber?", basic_modules.Boolean)
+    reg.add_output_port(ListCell, "HTML File", basic_modules.File)
 
     # ListFilter
     reg.add_module(ListFilter,

@@ -298,7 +298,7 @@ class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
             om_obs_result = doc.elem_tag(om_member,
                                        'Observation/result',
                                        doc.get_ns('om'))
-            if om_obs_result:
+            if om_obs_result is not None:
                 result = {}
                 # meta data - feature information
                 feature = {}

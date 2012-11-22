@@ -258,7 +258,7 @@ class Histogram(ParentPlot):
                     ranges.append(compress.min())
                 range_max = array(ranges).max()
                 range_min = array(ranges).min()
-                #print "plot:214-combined", combined, range_min, range_max
+                #print "plot:261-combined", combined, range_min, range_max
                 if self.all_the_same(lengths):
                     # pylab.hist FAILS if all series have the same length:
                     # http://old.nabble.com/Inconsistent-behavior-in-plt.hist-tt27857685.html
@@ -281,7 +281,7 @@ class Histogram(ParentPlot):
         else:
             # a set of normal values (not contained in nested list)
             dataset = self.list_to_floats(data_in)
-            #print "plot:258", dataset, "\n bins", bins, "\n cumu", cumulative,\
+            #print "plot:284", dataset, "\n bins", bins, "\n cumu", cumulative,\
             #    "\n face", self.facecolor
             pylab.hist(dataset, bins, histtype=hist_type,
                        cumulative=cumulative, facecolor=self.facecolor)
@@ -377,7 +377,7 @@ class SinglePlot(ParentPlot):
         # flatten if double [[ wrapped
         if len(xyData) == 1 and type(xyData[0]) == list:
             xyData = xyData[0]
-        #print "plot:413", xyData
+        #print "plot:383", xyData
         if xyData and len(xyData) == 2:
             y_data_m = self.list_to_floats(xyData[1])
             fig = pylab.figure()
@@ -521,16 +521,18 @@ class MultiPlot(ParentPlot):
 
                 if plot_type == 'date':
                     ax.plot_date(x_data_m, y_data_m, xdate=True,
-                                    marker=MARKER[marker_number],
-                                    markerfacecolor=self.facecolor)
+                                 marker=MARKER[marker_number],
+                                 markerfacecolor=self.facecolor)
                     fig.autofmt_xdate()  # pretty-format date axis
                 elif plot_type == 'scatter':
-                    ax.scatter(x_data_m, y_data_m, marker=MARKER[marker_number],
+                    ax.scatter(x_data_m, y_data_m,
+                               marker=MARKER[marker_number],
                                facecolor=self.facecolor)
                 elif plot_type == 'line':
-                    ax.plot(x_data_m, y_data_m, marker=MARKER[marker_number],
-                            linestyle=line_style,
-                            markerfacecolor=self.facecolor)
+                    ax.plot(x_data_m, y_data_m,
+                            marker=MARKER[marker_number],
+                            markerfacecolor=self.facecolor,
+                            linestyle=line_style)
                 else:
                     raise NameError('plot_type %s  is undefined.' % plot_type)
 

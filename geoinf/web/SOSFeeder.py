@@ -95,10 +95,9 @@ class SOSFeeder(ThreadSafeMixin, Module):
     def raiseError(self, msg, error=''):
         """Raise a VisTrails error with traceback display."""
         import traceback
-        #print "sosfeed 98", msg
         traceback.print_exc()
         if error:
-            raise ModuleError(self, msg + ' - %s' % str(error))
+            raise ModuleError(self, msg + ': %s' % str(error))
         else:
             raise ModuleError(self, msg)
 
@@ -508,14 +507,17 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                     return date
 
         def get_sos_error_code(string):
-            """Find a numeric code corresponding to an error."""
+            """Find a numeric code, if any, corresponding to an error."""
             if string:
                 lookup = string.strip(' ').lower()
                 return self.error_codes.get(lookup)
             return None
 
         def sos_cell_value(sheet, row_num, col_num, property):
-            """Return a cell value appropriate for insertion in the SOS.
+            """Return a value appropriate for insertion in the SOS.
+
+            Mismatches between property type codes and type of data in a
+            spreadsheet cell will result in a value of 'None' being returned.
 
             Cell Type Codes:
                 EMPTY 0: null or None
@@ -525,7 +527,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                 BOOLEAN 4: int; 1 means TRUE, 0 means FALSE
                 ERROR 5
 
-            SOS Data Type Codes:
+            SOS Property Data Type Codes:
                 Quantity: numeric value (float, integer)
                 Category, Text: text value
                 Boolean: True/False value
@@ -542,8 +544,9 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
             for prop in self.properties:
                 if prop['name'] == property:
                     prop_type = prop['type'] or 'Quantity'
+            print "sosfeed:548", row_num, col_num, ctype, prop_type, value
             if prop_type in ['Quantity', 'Count']:
-                if ctype in [0, 3, 4, 5]:
+                if ctype in [0, 5]:
                     value = None
                 elif ctype == 1:
                     value = get_sos_error_code(value)
@@ -566,11 +569,14 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                 if ctype in [0, 5]:
                     value = None
                 elif ctype == 1:
-                    if value[0].lower() == 't':
-                        value = TRUE
-                    else:
-                        value = FALSE
-                elif ctype in [2, 4]:
+                    if value:
+                        if value[0].lower() in ['t', '+']:
+                            value = TRUE
+                        elif value[0].lower() in ['f', '-']:
+                            value = FALSE
+                        else:
+                            value = get_sos_error_code(value)
+                elif ctype in [2, 3, 4]:
                     if value > 0:
                         value = TRUE
                     else:
@@ -581,6 +587,11 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                     value = datetime.datetime(*datetuple)
                 else:
                     value = None
+            else:
+                self.raiseError('Unknown swe property type: "%s"' % prop_type)
+            print "   sosfeed:593", value
+            return value
+
 
         # initialize
         if reset:
