@@ -37,6 +37,8 @@ from PyQt4.QtGui import *
 # vistrails
 from core.modules.vistrails_module import Module, ModuleError
 from core.modules.module_configure import StandardModuleConfigurationWidget
+# dependent packages
+from packages.NumSciPy.Array import NDArray
 # eo4vistrails
 # local
 from pydap.client import open_url, open_dods
@@ -63,7 +65,10 @@ class pyDAP(Module):
         dataSlice = self.getInputFromPort("dataSlice")
         myDataSet = open_dods(str(url) + '.dods?' + str(dataSlice))
         result = myDataSet.data
-        self.setResult("data", result)
+        outArray = NDArray()
+        outArray.set_array(result)
+        self.setResult("data", outArray)
+        #self.setResult("data", result)
 
 
 class pyDAPConfigurationWidget(StandardModuleConfigurationWidget):
