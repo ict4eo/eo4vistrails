@@ -54,8 +54,12 @@ class pyDAP(Module):
 
     _input_ports = [('url', '(edu.utah.sci.vistrails.basic:String)'),
                     ('dataSlice', '(edu.utah.sci.vistrails.basic:String)')]
-    _output_ports = [('data',
-                      '(edu.utah.sci.vistrails.numpyscipy:Numpy Array:numpy|array)')]
+    _output_ports = [('data', '(edu.utah.sci.vistrails.numpyscipy:Numpy Array:numpy|array)'),
+                     ('latitude', '(edu.utah.sci.vistrails.numpyscipy:Numpy Array:numpy|array)'),
+                     ('longitude', '(edu.utah.sci.vistrails.numpyscipy:Numpy Array:numpy|array)'),
+                     ('alt', '(edu.utah.sci.vistrails.numpyscipy:Numpy Array:numpy|array)'),
+                     ('time', '(edu.utah.sci.vistrails.numpyscipy:Numpy Array:numpy|array)'),
+                     ]
 
     def __init__(self):
         Module.__init__(self)
@@ -65,9 +69,15 @@ class pyDAP(Module):
         dataSlice = self.getInputFromPort("dataSlice")
         myDataSet = open_dods(str(url) + '.dods?' + str(dataSlice))
         result = myDataSet.data
-        outArray = NDArray()
-        outArray.set_array(result)
-        self.setResult("data", outArray)
+        #TODO: should reurn list of arrays but this will require a new type to be added
+        # for instance NDArrayList
+        my_first_data_item_key = myDataSet.keys()[0]
+        dict_of_arrays = myDataSet.get(my_first_data_item_key)
+        for output_port, known_field_name in (('time','time'), ('latitude','latitude'), ('longitude','longitude'), ('data',my_first_data_item_key)):
+            outArray = NDArray()
+            outArray.set_array(dict_of_arrays.get(known_field_name).data)
+            self.setResult(output_port, outArray)
+            
         #self.setResult("data", result)
 
 
