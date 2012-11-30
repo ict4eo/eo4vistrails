@@ -7,6 +7,7 @@
 #
 # WARNING! All changes made in this file will be lost!
 
+
 from PyQt4 import QtCore, QtGui
 
 try:
@@ -77,11 +78,10 @@ class Ui_pyDAPForm(object):
     def retranslateUi(self, pyDAPForm):
         pyDAPForm.setWindowTitle(QtGui.QApplication.translate("pyDAPForm", "pyDAP Client", None, QtGui.QApplication.UnicodeUTF8))
         self.label.setText(QtGui.QApplication.translate("pyDAPForm", "Url:", None, QtGui.QApplication.UnicodeUTF8))
-        self.UrlLineEdit.setText(QtGui.QApplication.translate("pyDAPForm", "http://ict4eo1.dhcp.meraka.csir.co.za/pydap/ccam_atlas_csiro.210012.nc", None, QtGui.QApplication.UnicodeUTF8))
+        self.UrlLineEdit.setText(QtGui.QApplication.translate("pyDAPForm", "", None, QtGui.QApplication.UnicodeUTF8))
         self.fetchVarsButton.setText(QtGui.QApplication.translate("pyDAPForm", "Fetch", None, QtGui.QApplication.UnicodeUTF8))
         self.groupBox.setTitle(QtGui.QApplication.translate("pyDAPForm", "Metadata", None, QtGui.QApplication.UnicodeUTF8))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab), QtGui.QApplication.translate("pyDAPForm", "NetCDF File Variables", None, QtGui.QApplication.UnicodeUTF8))
         self.okButton.setText(QtGui.QApplication.translate("pyDAPForm", "GetData", None, QtGui.QApplication.UnicodeUTF8))
         self.cancelButton.setText(QtGui.QApplication.translate("pyDAPForm", "Cancel", None, QtGui.QApplication.UnicodeUTF8))
         self.cancelButton.setShortcut(QtGui.QApplication.translate("pyDAPForm", "C", None, QtGui.QApplication.UnicodeUTF8))
-

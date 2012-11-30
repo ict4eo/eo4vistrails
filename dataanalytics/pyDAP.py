@@ -46,6 +46,8 @@ from pyDAPForm import Ui_pyDAPForm
 import init
 
 
+DEFAULT_URL = "http://ict4eo.meraka.csir.co.za/eo2h_pydap/netcdfs/trmm_global_cube.nc"
+#DEFAULT_URL ="http://ict4eo1.dhcp.meraka.csir.co.za/pydap/ccam_atlas_csiro.210012.nc"
 variableNames = []
 
 
@@ -69,17 +71,18 @@ class pyDAP(Module):
         dataSlice = self.getInputFromPort("dataSlice")
         myDataSet = open_dods(str(url) + '.dods?' + str(dataSlice))
         result = myDataSet.data
-        #TODO: should reurn list of arrays but this will require a new type to be added
-        # for instance NDArrayList
+        #TODO: should return list of arrays but this will require a new type
+        # to be added to eo4vistrails; for instance NDArrayList
         my_first_data_item_key = myDataSet.keys()[0]
         dict_of_arrays = myDataSet.get(my_first_data_item_key)
-        for output_port, known_field_name in (('time','time'), ('latitude','latitude'), ('longitude','longitude'), ('data',my_first_data_item_key)):
+        for output_port, known_field_name in (('time','time'),
+                                              ('latitude','latitude'),
+                                              ('longitude','longitude'),
+                                              ('data',my_first_data_item_key)):
             outArray = NDArray()
             outArray.set_array(dict_of_arrays.get(known_field_name).data)
             self.setResult(output_port, outArray)
-            
         #self.setResult("data", result)
-
 
 class pyDAPConfigurationWidget(StandardModuleConfigurationWidget):
     """A widget to configure the  pyDAP Client."""
@@ -91,6 +94,7 @@ class pyDAPConfigurationWidget(StandardModuleConfigurationWidget):
         self.parent_widget = module
         self.ui = Ui_pyDAPForm()
         self.ui.setupUi(self)
+        self.ui.UrlLineEdit.setText(DEFAULT_URL)
         self.connect(self.ui.fetchVarsButton,
                      QtCore.SIGNAL("clicked()"),
                      self.createRequest)

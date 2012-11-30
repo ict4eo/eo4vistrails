@@ -46,7 +46,7 @@ from packages.eo4vistrails.tools.utils.synhigh import \
 from packages.eo4vistrails.geoinf.datamodels.QgsLayer import QgsRasterLayer
 from packages.eo4vistrails.tools.utils.ModuleHelperMixin import ModuleHelperMixin
 
-debug = True
+DEBUG = False
 
 
 class RasterLangCode(NotCacheable, ModuleHelperMixin, ThreadSafeMixin, RPyCModule):
@@ -156,10 +156,10 @@ class RasterLangCode(NotCacheable, ModuleHelperMixin, ThreadSafeMixin, RPyCModul
         def execute(s):
             exec s in locals_
 
-        if debug: print "Starting executing in main thread"
+        if DEBUG: print "Starting executing in main thread"
         self.run_code_common(locals_, execute, code_str, use_input, use_output,
                              pre_code_string, post_code_string)
-        if debug: print "Finished executing in main thread"
+        if DEBUG: print "Finished executing in main thread"
 
 #    def _original_compute(self):
     def compute(self):
@@ -230,19 +230,19 @@ class RasterLang(RasterLangCode):
 
         for k in outputDict.iterkeys():
             if k in locals_ and not locals_[k] is None:
-                if debug:
+                if DEBUG:
                     print "%s == %s  -> %s" % \
                           (self.getPortType(k), NDArray, issubclass(NDArray, \
                            self.getPortType(k)))
                 if issubclass(self.getPortType(k), NDArray):
-                    if debug:
+                    if DEBUG:
                         print "NDArray, got %s of type %s" % \
                               (k, type(locals_[k]))
                     outArray = NDArray()
                     outArray.set_array(numpy.asarray(locals_[k]))
                     self.setResult(k, outArray)
                 elif issubclass(self.getPortType(k), QgsRasterLayer):
-                    if debug:
+                    if DEBUG:
                         print "QgsRasterLayer, got %s of type %s" % \
                               (k, type(locals_[k]))
                     #TODO: This should all be done using a gal inmemorybuffer but
@@ -258,7 +258,7 @@ class RasterLang(RasterLangCode):
                     outlayer = QgsRasterLayer(fileName, k)
                     self.setResult(k, outlayer)
                 else:
-                    if debug:
+                    if DEBUG:
                         print "???, got %s of type %s" % (k, type(locals_[k]))
                     self.setResult(k, locals_[k])
 
@@ -295,16 +295,16 @@ class layerAsArray(ThreadSafeMixin, RPyCModule):
         ThreadSafeMixin.__init__(self)
 
     def preCompute(self):
-        if debug:
+        if DEBUG:
             print "In preCompute"
         layer = self.getInputFromPort('RasterLayer')
-        if debug:
+        if DEBUG:
             print "layer: %s" % layer
         g = gdal.Open(str(layer.source()))
-        if debug:
+        if DEBUG:
             print "g: %s" % g
         #TODO: Need to check the ctype that the image is
-        if debug:
+        if DEBUG:
             print "trying to allocate shared memory"
         self.allocateSharedMemoryArray('numpy array', ctypes.c_float,
                                        (g.RasterYSize, g.RasterXSize))
@@ -405,21 +405,21 @@ class SaveArrayToRaster(NotCacheable, ThreadSafeMixin, RPyCModule):
         ThreadSafeMixin.__init__(self)
 
     def compute(self):
-        if debug:
+        if DEBUG:
             print 'output file'
         outfile = self.getInputFromPort('output file')
-        if debug:
+        if DEBUG:
             print 'numpy array'
         ndarray = self.getInputFromPort('numpy array')
-        if debug:
+        if DEBUG:
             print 'prototype'
         prototype = self.getInputFromPort('prototype')
-        if debug:
+        if DEBUG:
             print 'format'
         outformat = self.getInputFromPort('format')
 
         if prototype.noDatavalue:
-            if debug:
+            if DEBUG:
                 print "protoype nodata", prototype.noDatavalue
 
         writeImage(ndarray.get_array(), prototype, outfile.name, outformat)
@@ -469,7 +469,7 @@ def writeImage(arrayData, prototype, path, format):
         nbands = dims[0]
 
     #lookup the data type from the array and do the mapping
-    if debug:
+    if DEBUG:
         print "arraytype:  %s dtype: %s, type: %s, gdaltype: %s" % \
             (type(arrayData),
              arrayData.dtype,

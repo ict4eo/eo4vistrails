@@ -45,7 +45,7 @@ import init
 DEFAULT_URL_SOS = 'http://www.saeonocean.co.za/SOS_SMALL/sos'
 #'http://www.saeonocean.co.za/ARCSOS/sos'
 #'http://ict4eo.meraka.csir.co.za/sadcosos/sos.py'  # 'http://giv-sos.uni-muenster.de:8080/52nSOSv3/sos'
-DEFAULT_URL_WFS = 'http://ict4eo.meraka.csir.co.za:8080/geoserver/wfs'
+DEFAULT_URL_WFS = 'http://ict4eo.meraka.csir.co.za/geoserver/ows'
 DEFAULT_URL_WCS = 'http://afis.meraka.org.za/geoserver/wcs'
 DEFAULT_URL = ''
 
