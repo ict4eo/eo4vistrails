@@ -37,8 +37,8 @@ Add brief description of what this netCDF client does ???
 # library
 import sys
 # third party
-import netcdf4
 try:
+    # primary/current netCDF4 library
     from netCDF4 import Dataset
 except:
     # fallback if netCDF4 library not available
@@ -46,8 +46,6 @@ except:
     from scipy.io.netcdf import netcdf_file as Dataset
 import numpy
 from PyQt4 import QtCore, QtGui, Qt
-#from PyQt4.QtCore import *
-#from PyQt4.QtGui import *
 # vistrails
 from core.modules.vistrails_module import Module, ModuleError
 from core.modules.module_configure import StandardModuleConfigurationWidget
@@ -71,7 +69,7 @@ class netcdf4Reader(Module):
     def compute(self):
         try:
             nc4File = self.getInputFromPort("ncFile")
-            varName = self.getInputFromPort("varName")
+            #??? varName = self.getInputFromPort("varName")
             dimLimits = self.getInputFromPort("dimLimits")
             self.inputFile = Dataset(str(nc4File.name), 'r')
             part_1 = self.inputFile.variables[str(varName)]
@@ -118,7 +116,6 @@ class netcdf4ConfigurationWidget(StandardModuleConfigurationWidget):
         self.keys = self.myFile.variables.keys()
         #print "netcdf:118", self.keys
         dimensions = []
-        metadata = {}
         listOfTuples = []
         i = 0
         for varIds in self.keys:
@@ -138,7 +135,6 @@ class netcdf4ConfigurationWidget(StandardModuleConfigurationWidget):
         layout.addWidget(self.ui.treeView)
 
     def addItems(self, parent, elements):
-        count = 3
         addColumnTest = False
         for text, children in elements:
             bounds = "[0:"
@@ -168,7 +164,7 @@ class netcdf4ConfigurationWidget(StandardModuleConfigurationWidget):
         countCheckedVars = 0
 
         rows = self.model.rowCount()
-        for i in range(0, self.model.rowCount()):
+        for i in range(0, rows):
             node = self.model.item(i)
             #print "netcdf:171", i, node
             if node.checkState() == 2:

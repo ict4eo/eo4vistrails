@@ -44,8 +44,7 @@ def missing(package_name, module_name):
 
 
 def warning(package_name, module_name):
-    print "WARNING: %s package not installed; %s Module has reduced \
-    functionality" % \
+    print "WARNING: %s package not installed; %s Module has reduced functionality" % \
         (package_name, module_name)
 
 
@@ -137,12 +136,16 @@ def initialize(*args, **keywords):
                    configureWidgetType=octave.OctaveSourceConfigurationWidget)
 
     if core.requirements.python_module_exists('rpy2'):
-        import rpy2Stats  # filename of Vistrails module
-        r_namespace = "scripting|r"
-        reg.add_module(rpy2Stats.Rpy2Script,
+        try:
+            import rpy2.robjects  # test if R (R_HOME) installed/defined
+            import rpy2Stats  # filename of Vistrails module
+            r_namespace = "scripting|r"
+            reg.add_module(rpy2Stats.Rpy2Script,
                        name="Rpy2Script",
                        namespace=r_namespace,
                        configureWidgetType=rpy2Stats.RSourceConfigurationWidget)
+        except RuntimeError:
+            missing('R', 'Rpy2Script')
     else:
         missing('rpy2', 'Rpy2Script')
 
@@ -158,7 +161,7 @@ def initialize(*args, **keywords):
 
     if not core.requirements.python_module_exists('netCDF4'):
         warning('netCDF4', 'netcdfClient')
-    # module still usable with fallback
+    # module still usable with fallback to scipy reader (only ver. 3 format)
     import netcdf4  # filename of Vistrails module
     netcdf_namespace = "data|datacube"
     reg.add_module(netcdf4.netcdf4Reader,
