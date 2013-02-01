@@ -97,7 +97,7 @@ http://schemas.opengis.net/sos/1.0.0/sosRegisterSensor.xsd http://www.opengis.ne
          <gml:metaDataProperty>
           <offering>
            <id>{{ offering.ID|default('SOS') }}</id>
-           <name>{{ offering.name|default('Sensor Offering') }}</name>
+           <name>{{ offering.name|truncate(length=99, end='')|default('Sensor Offering') }}</name>
           </offering>
          </gml:metaDataProperty>
         {% if item.units %}  <swe:uom code="{{ item.units }}" />{% endif %}<!-- -->
@@ -110,6 +110,7 @@ http://schemas.opengis.net/sos/1.0.0/sosRegisterSensor.xsd http://www.opengis.ne
    </sml:member>
   </sml:SensorML>
  </SensorDescription>
+
 
  <!-- ObservationTemplate parameter; this has to be an empty measurement
   or category at the moment, as the 52N SOS only supports Measurements or
@@ -124,7 +125,8 @@ http://schemas.opengis.net/sos/1.0.0/sosRegisterSensor.xsd http://www.opengis.ne
     {% if foi|length() == 1 %}
     {% for feature in foi %}
     <sa:SamplingPoint gml:id="{{ feature.id }}">
-     <gml:name>{{ feature.name }}</gml:name>
+     <gml:name>{{ feature.name|safe|truncate(length=99, end='') }}</gml:name>
+     <gml:description>{{ feature.name|safe }}</gml:description>
      <sa:position>
       <gml:Point>
        <gml:pos srsName="{{ feature.srs|default('urn:ogc:def:crs:EPSG::4326') }}">
@@ -139,7 +141,8 @@ http://schemas.opengis.net/sos/1.0.0/sosRegisterSensor.xsd http://www.opengis.ne
      {% for feature in foi %}
      <gml:featureMember>
       <sa:SamplingPoint gml:id="{{ feature.id }}">
-       <gml:name>{{ feature.name }}</gml:name>
+       <gml:name>{{ feature.name|safe|truncate(length=99, end='') }}</gml:name>
+       <gml:description>{{ feature.name|safe }}</gml:description>
        <sa:position>
         <gml:Point>
          <gml:pos srsName="{{ feature.srs|default('urn:ogc:def:crs:EPSG::4326') }}">

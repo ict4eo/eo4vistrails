@@ -120,8 +120,8 @@ class WebRequest(DataRequest):
             elif request_type == 'POST':
                 user_agent = 'Mozilla/4.0 (compatible; MSIE 5.5; Windows NT)'
                 headers = {'User-Agent': user_agent,
-                           'Content-Type': 'application/xml'}
-                req = urllib2.Request(self.url, self.data, headers)
+                           'Content-Type': 'text/xml; charset=utf-8'}
+                req = urllib2.Request(self.url, self.data.encode('utf-8'), headers)
             else:
                 raise ModuleError(
                     self,
@@ -130,14 +130,15 @@ class WebRequest(DataRequest):
 
             response = None
             try:
-                response = urllib2.urlopen(req)
+                result = urllib2.urlopen(req).read().decode('UTF-8', 'ignore')
             except:
                 try:
-                    #print "WebRequest:136 - ignoring proxy..."
+                    print "WebRequest:136 - ignoring proxy..."
                     proxy_support = urllib2.ProxyHandler({})  # disables proxy
                     opener = urllib2.build_opener(proxy_support)
                     urllib2.install_opener(opener)
-                    response = urllib2.urlopen(req)
+                    #response = urllib2.urlopen(req)
+                    result = urllib2.urlopen(req).read().decode('UTF-8', 'ignore')
                 except urllib2.URLError, ex:
                     if hasattr(ex, 'reason'):
                         self.raiseError(
@@ -148,8 +149,8 @@ class WebRequest(DataRequest):
                             ex.code)
                 except Exception, ex:
                     self.raiseError(ex.message)
-            if response:
-                result = response.read()
+            #if response:
+            #    result = response.read()
         else:
             pass  # ignore and do nothing ...
         return result

@@ -221,7 +221,7 @@ class ExcelCellWidget(QCellWidget):
                 if index + 1 in sheets or name in sheets:
                     sheet_list.append(name)
             if not sheet_list:
-                self.raiseError('Invalid list of sheets; please check Excel file')
+                self.raiseError('Invalid list of sheets; please check file')
                 return None
         else:
             sheet_list = book.sheet_names()
@@ -243,7 +243,7 @@ class ExcelCellWidget(QCellWidget):
             fyle.write('\n<h1>%s</h1>\n' % name)
             fyle.write('  <table%s>\n' % table_borders)
             if fileReference:  # show grid col labels
-                fyle.write('    <tr><td style="%s">&#160;</td>      ' % \
+                fyle.write('    <tr><td style="%s">&#160;</td>      ' %
                            ref_style)
                 for col_n in range(0, book.sheet_by_name(name).ncols):
                     fyle.write('<td style="%s" align="center">%s</td>' %
@@ -314,10 +314,10 @@ class ExcelCellWidget(QCellWidget):
                         value = ''
                     # create cell with formatting
                     if len(widths) > 0:
-                        fyle.write('<td width="%spx" style="%s">%s</td>' % \
+                        fyle.write('<td width="%spx" style="%s">%s</td>' %
                                    (widths[col_n], style, value or '&#160;'))
                     else:
-                        fyle.write('<td style="%s">%s</td>' % \
+                        fyle.write('<td style="%s">%s</td>' %
                                (style, value or '&#160;'))
                 fyle.write('    </tr>\n')
             fyle.write('  </table>\n')

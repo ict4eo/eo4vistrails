@@ -116,6 +116,7 @@ def initialize(*args, **keywords):
                    namespace=utils_namespace)
     reg.add_input_port(ListCell, "List", basic_modules.List)
     #reg.add_input_port(ListCell, "File", basic_modules.File)
+    reg.add_input_port(ListCell, "Heading", basic_modules.String)
     reg.add_input_port(ListCell, "Location", basic_widgets.CellLocation)
     reg.add_input_port(ListCell, "LineNumber?", basic_modules.Boolean)
     reg.add_output_port(ListCell, "HTML File", basic_modules.File)

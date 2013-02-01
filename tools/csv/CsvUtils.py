@@ -26,6 +26,10 @@
 #############################################################################
 """This module forms part of the eo4vistrails capabilities. It is used to
 handle reading, writing and filtering CSV files, with or without headers.
+
+Note that the default behaviour of the Python CSV reader has been modified to
+assume UTF-8 (and not ASCII) encoding; this is because much CSV data is created
+from Excel spreadsheets, where non-standard characters are commonly inserted.
 """
 # library
 import csv
@@ -36,6 +40,21 @@ from core.modules.vistrails_module import Module, ModuleError
 # eo4vistrails
 from packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
 from packages.eo4vistrails.tools.utils.ThreadSafe import ThreadSafeMixin
+
+
+def unicode_csv_reader(utf8_data, dialect=csv.excel, encoding='utf-8',
+                       **kwargs):
+    """Data read in as UTF-8 and not ascii.
+
+    Source:
+        http://stackoverflow.com/questions/904041/reading-a-utf8-csv-file-with-python
+    Notes:
+        If input data is NOT in utf-8, but e.g. in ISO-8859-1, then pass in the
+        `encoding` parameter.
+    """
+    csv_reader = csv.reader(utf8_data, dialect=dialect, **kwargs)
+    for row in csv_reader:
+        yield [unicode(cell, encoding) for cell in row]
 
 
 @RPyCSafeModule()
@@ -86,7 +105,7 @@ class CsvReader(ThreadSafeMixin, Module):
             try:
                 if len(chl) > 0:
                     list_of_lists.append(chl)
-                csvfile = csv.reader(open(fn, 'r'), delimiter=kd, quotechar=qc)
+                csvfile = unicode_csv_reader(open(fn, 'r'), delimiter=kd, quotechar=qc)
                 for row in csvfile:
                     list_of_lists.append(row)
                 self.setResult('read_data_listoflists', list_of_lists)
@@ -418,7 +437,7 @@ class CsvFilter(ThreadSafeMixin, Module):
         return str
 
     def compute(self):
-        file_in =  self.forceGetInputFromPort('file_in', None)
+        file_in = self.forceGetInputFromPort('file_in', None)
         fullname = self.forceGetInputFromPort('filename_in', "")
         delimiter = self.forceGetInputFromPort('delimiter', ",")
         sample = self.forceGetInputFromPort("sample_set", False)
@@ -447,7 +466,7 @@ class CsvFilter(ThreadSafeMixin, Module):
         if filename:
             try:
                 # U == universal newline mode; overcome issues with weird files
-                csvfile = csv.reader(open(filename, 'rU'), delimiter=delimiter)
+                csvfile = unicode_csv_reader(open(filename, 'rU'), delimiter=delimiter)
                 cols_checked = False
                 COL_MSG = "The column filter values exceed the number of columns in the file's row."
                 #print "csvutils.458:", header_in, header_out

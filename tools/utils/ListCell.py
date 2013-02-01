@@ -31,6 +31,16 @@ import os.path
 import sys
 from datetime import date, datetime, time
 # third-party
+"""
+from core.bundles import py_import
+from core import debug
+try:
+    pkg_dict = {'linux-ubuntu': 'python-xlrd',
+                'linux-fedora': 'python-xlrd'}
+    xlrd = py_import('xlrd', pkg_dict)
+except Exception, e:
+    debug.critical("Exception: %s" % e)
+"""
 import xlrd
 from PyQt4 import QtCore, QtGui
 # vistrails
@@ -45,16 +55,20 @@ ENCODING = "utf-8"  # will differ in some countries; add as hidden port ???
 
 
 class ListCell(SpreadsheetCell):
-    """
-    ListCell is a custom module to view lists as HTML tables
+    """ListCell is a custom module to view list-of-lists as an HTML table.
+
+    Each outer list is a line in the table; each item in the nested list is a
+    cell.
 
     Input ports:
+        Heading:
+            a heading to display above the table
         Location:
             the Location of the output display cell
         List:
             a standard List
         LineNumbers?
-            If True (checked), the line numbers will be shown on the lefthand
+            If True (checked), the line numbers will be shown on the left-hand
             side of the table.
 
     Output ports:
@@ -67,16 +81,17 @@ class ListCell(SpreadsheetCell):
         """
         if self.hasInputFromPort("List"):
             list_in = self.getInputFromPort("List")
-            fileHTML = self.interpreter.filePool.create_file(suffix='.html')
+            file_HTML = self.interpreter.filePool.create_file(suffix='.html')
             fileReference = self.forceGetInputFromPort("References?", False)
+            tableHeading = self.forceGetInputFromPort("Heading", "")
             columnWidths = self.forceGetInputFromPort("ColumnWidths", [])
         else:
             fileValue = None
-        self.cellWidget = self.displayAndWait(ListCellWidget, (list_in,
-                                                                fileHTML,
-                                                                fileReference,
-                                                                columnWidths))
-        self.setResult('HTML File', fileHTML)
+        self.cellWidget = self.displayAndWait(ListCellWidget,
+                                              (list_in, file_HTML,
+                                               fileReference, columnWidths,
+                                               tableHeading))
+        self.setResult('HTML File', file_HTML)
 
 
 class ListCellWidget(QCellWidget):
@@ -103,12 +118,10 @@ class ListCellWidget(QCellWidget):
 
         """
         self.fileSrc = None
-        (list_in, fileHTML, fileReference, columnWidths) = inputPorts
-        if list_in:
-            html_file = self.create_html(list_in, fileHTML,
-                                         date_as_tuple=False, css=None,
-                                         fileReference=fileReference,
-                                         columnWidths=columnWidths)
+        self.list_in, self.file_HTML, self.fileReference, self.columnWidths, \
+            self.tableHeading = inputPorts
+        if self.list_in:
+            html_file = self.create_html()
             if html_file:
                 try:
                     fi = open(html_file.name, "r")
@@ -119,9 +132,9 @@ class ListCellWidget(QCellWidget):
                 fi.close()
                 self.fileSrc = html_file.name
             else:
-                self.browser.setText("HTML file could not be created!")
+                self.browser.setText("The HTML table could not be created!")
         else:
-            self.browser.setText("No list is specified!")
+            self.browser.setText("No list is specified for display!")
 
     def dumpToFile(self, filename):
         """ dumpToFile(filename) -> None
@@ -151,89 +164,70 @@ class ListCellWidget(QCellWidget):
         else:
             raise ModuleError(self, msg)
 
-    def create_html(self, list_in, file_out,
-                         date_as_tuple=False, css=None,
-                         fileReference=False, columnWidths=[]):
-        """Return HTML in the output file from an Excel input file.
+    def create_html(self, css=None):
+        """Return output file, containing HTML table, from a list-of-lists.
 
         Args:
-            list_in: List object
-                points to List
-            file_out: File object
-                points to (temporary) HTML file
+            css: string
+                styling for the HTML (NOT WORKING)
         """
-        if not list_in or not file_out:
+        if not self.list_in or not self.file_HTML:
             return None
+        width = self.columnWidths or 20
+        table_borders = ' border="1" width="%spx"' % width  # remove if css works
         if not css:
             # ??? Table-level CSS does not work
-            css = 'table, th, td { border: 1px solid black; } \
-                   body {font-family: Arial, sans-serif; }'
-            table_borders = ' border="1"'  # TEMPORARY WORK-AROUND
+            css = """
+                table, th, td { border: 1px solid black;}
+                td {width: %spx}
+                body {font-family: Arial, sans-serif; }""" % width
+
         # grid reference style
         ref_style = 'font-weight:bold; background-color:#808080; color:white;'
         try:
-            fyle = open(file_out.name, 'w')
+            fyle = open(self.file_HTML.name, 'w')
         except:
-            self.raiseError('Unable to open or access %s' % file_out.name)
+            self.raiseError('Unable to open or access "%s"' %
+                            self.file_HTML.name)
             return None
-
-        fyle.write('<html>')
-        fyle.write('\n<head>')
-        fyle.write('\n  <style type="text/css">%s\n</style>' % css)
-        fyle.write('\n</head>')
-        fyle.write('<body>')
+        # settings
         alignment = {1: ' text-align: left;',
                      2: ' text-align: center;',
                      3: ' text-align: right;',
                     }
+        # append data to output list
+        output = []
+        output.append('<html>')
+        output.append('\n<head>')
+        output.append('\n  <style type="text/css">%s\n</style>' % css)
+        output.append('\n</head>')
+        output.append('<body>')
+        if self.tableHeading:
+            output.append('<h1>%s</h1>' % self.tableHeading)
+        output.append('  <table%s>\n' % table_borders)
 
-        # write data to file
-        fyle.write('  <table%s>\n' % table_borders)
-
-        for row_n, row in enumerate(list_in):
-            fyle.write('    <tr>\n      ')
-            if fileReference:  # show grid row labels
-                fyle.write('<td style="%s" align="center">%s</td>' %
+        for row_n, row in enumerate(self.list_in):
+            output.append('    <tr>\n      ')
+            if self.fileReference:  # show grid row labels
+                output.append('<td style="%s" align="center">%s</td>' %
                            (ref_style, str(row_n + 1)))
             for col_n, value in enumerate(row):
-                style = ""
-                # check data types and change alignment???
-                """
-                # 0:EMPTY; 1:TEXT (a Unicode string); 2:NUMBER (float);
-                # 3:DATE (float); 4:BOOLEAN (1 TRUE, 0 FALSE); 5: ERROR
-                if type == 1:
-                    value = value.encode(ENCODING, 'ignore')
-                elif type == 2:
-                    if value == int(value):
-                        value = int(value)
-                    style += alignment[1]
-                elif type == 3:
-                    datetuple = xlrd.xldate_as_tuple(value, book.datemode)
-                    if date_as_tuple:
-                        value = datetuple
-                    else:
-                        # time only no date component
-                        if datetuple[0] == 0 and datetuple[1] == 0 and \
-                        datetuple[2] == 0:
-                            value = "%02d:%02d:%02d" % datetuple[3:]
-                        # date only, no time
-                        elif datetuple[3] == 0 and datetuple[4] == 0 and \
-                        datetuple[5] == 0:
-                            value = "%04d/%02d/%02d" % datetuple[:3]
-                        else:  # full date
-                            value = "%04d/%02d/%02d %02d:%02d:%02d" % \
-                                    datetuple
-                elif type == 5:
-                    value = xlrd.error_text_from_code[value]
-                else:
-                    value = ''
-                """
+                style = alignment[1]
+                # change alignment for numbers
+                try:
+                    float(value)
+                    style = alignment[3]
+                except:
+                    pass
                 # create cell with formatting
-                fyle.write('<td style="%s">%s</td>' % \
+                output.append('<td style="%s">%s</td>' %
                            (style, value or '&#160;'))
-            fyle.write('    </tr>\n')
-        fyle.write('  </table>\n')
-        fyle.write('</body>\n')
-        fyle.write('</html>\n')
+            output.append('    </tr>\n')
+        output.append('  </table>\n')
+        output.append('</body>\n')
+        output.append('</html>\n')
+        # write output list (as string) to file and return
+        html = u'\n'.join(output)
+        fyle.write(html.encode('utf-8'))
         fyle.close()
         return fyle
