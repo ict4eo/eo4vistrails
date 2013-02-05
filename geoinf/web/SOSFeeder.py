@@ -936,6 +936,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
         self.property_lookup = {}
         if _property:
             for item in _property:
+                #print "sosfeed:939 prop item", len(item), item
                 if item:
                     if len(item) >= 3:
                         _dict = dict(zip(xrange(len(item)), item))
@@ -951,7 +952,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
         self.feature_lookup = {}
         if _feature:
             for key, item in enumerate(_feature):
-                #print "sosfeed:946 item", len(item), item, bool(item)
+                #print "sosfeed:954 foi item", key, len(item), item
                 if item:
                     if len(item) >= 3:
                         _dict = dict(zip(xrange(len(item)), item))
@@ -1238,6 +1239,7 @@ edu.utah.sci.vistrails.basic:String)',
         self.coords = []
         if _coords:
             for item in _coords:
+                #print "sosfeed:1242 coords item", len(item), item
                 if item:
                     if len(item) >= 2:
                         _dict = dict(zip(xrange(len(item)), item))
@@ -1256,6 +1258,7 @@ edu.utah.sci.vistrails.basic:String)',
         self.foi = []
         if _FOI:
             for key, item in enumerate(_FOI):
+                #print "sosfeed:1261 foi item", key, len(item), item
                 if item:
                     if len(item) >= 3:
                         _dict = dict(zip(xrange(len(item)), item))
@@ -1275,6 +1278,7 @@ edu.utah.sci.vistrails.basic:String)',
         self.property = []
         if _property:
             for item in _property:
+                #print "sosfeed:1281 prop item", len(item), item
                 if item:
                     if len(item) >= 3:
                         _dict = dict(zip(xrange(len(item)), item))

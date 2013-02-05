@@ -42,17 +42,17 @@ from packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
 from packages.eo4vistrails.tools.utils.ThreadSafe import ThreadSafeMixin
 
 
-def unicode_csv_reader(utf8_data, dialect=csv.excel, encoding='utf-8',
+def unicode_csv_reader(utf8_file, dialect=csv.excel, encoding='utf-8',
                        **kwargs):
     """Data read in as UTF-8 and not ascii.
 
     Source:
         http://stackoverflow.com/questions/904041/reading-a-utf8-csv-file-with-python
     Notes:
-        If input data is NOT in utf-8, but e.g. in ISO-8859-1, then pass in the
-        `encoding` parameter.
+        If input file is NOT in a utf-8 encoded format, but e.g. in ISO-8859-1,
+        then pass in the `encoding` parameter.
     """
-    csv_reader = csv.reader(utf8_data, dialect=dialect, **kwargs)
+    csv_reader = csv.reader(utf8_file, dialect=dialect, **kwargs)
     for row in csv_reader:
         yield [unicode(cell, encoding) for cell in row]
 
@@ -105,7 +105,17 @@ class CsvReader(ThreadSafeMixin, Module):
             try:
                 if len(chl) > 0:
                     list_of_lists.append(chl)
-                csvfile = unicode_csv_reader(open(fn, 'r'), delimiter=kd, quotechar=qc)
+                file_in = open(fn, 'r')
+                sniffer = csv.Sniffer()
+                dialect = sniffer.sniff(file_in.read(1024))  # need a string here
+                if dialect.delimiter != kd:
+                    raise ModuleError(self,
+                        'The detected file delimiter %s does not match the supplied one: %s' %
+                        (dialect.delimiter, kd))
+                file_in.seek(0)  # reset to start of file
+                csvfile = unicode_csv_reader(file_in,
+                                             delimiter=kd,
+                                             quotechar=qc)
                 for row in csvfile:
                     list_of_lists.append(row)
                 self.setResult('read_data_listoflists', list_of_lists)
