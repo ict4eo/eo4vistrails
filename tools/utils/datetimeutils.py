@@ -118,7 +118,7 @@ def parse_datetime(string):
                             "YYYY-MM-DD HH:MM:SS.ssssss",
                             "YYYY-MM-DD HH:MM:SS+HH:MM",
                             "YYYY-MM-DD HH:MM:SS"
-    where ssssss represents fractional seconds.
+    where ssssss represents fractional seconds. The '-' may be replaced by a '/'.
 
     Alternative formats may use a 'T' as a separator between date and time.
 

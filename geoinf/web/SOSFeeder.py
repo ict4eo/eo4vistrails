@@ -43,6 +43,7 @@ from core.modules.vistrails_module import Module, ModuleError
 from packages.eo4vistrails.geoinf.datamodels.WebRequest import WebRequest
 from packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
 from packages.eo4vistrails.tools.utils.ThreadSafe import ThreadSafeMixin
+import packages.eo4vistrails.tools.utils.datetimeutils as datetimeutils
 from packages.eo4vistrails.tools.utils.listutils import uniqify
 #names of ports as constants
 import init
@@ -100,9 +101,9 @@ class SOSFeeder(ThreadSafeMixin, Module):
         import traceback
         traceback.print_exc()
         if error:
-            raise ModuleError(self, msg + ': %s' % str(error))
+            raise ModuleError(self, str(msg) + ': %s' % str(error))
         else:
-            raise ModuleError(self, msg)
+            raise ModuleError(self, str(msg))
 
     def unicode_csv_reader(self, utf8_data, dialect=csv.excel, **kwargs):
         """Read and encode data from CSV as 'utf-8'.
@@ -510,9 +511,16 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
 
         def add_date(_date, row=None, col=None):
             """Add to date list."""
-            self.unique_dates.append(_date)
+            # validate date
+            try:
+                date_string = datetimeutils.get_date(
+                    _date, date_format='%Y-%m-%dT%H:%M:%S')
+            except:
+                self.raiseError('Invalid date or date format: %s' % _date)
+            # add validated date
+            self.unique_dates.append(date_string)
             self.dates.append({
-                'date': _date,
+                'date': date_string,
                 'row': row,
                 'col': col
                 })
@@ -718,7 +726,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
         self.unique_dates = []
         self.dates = []
         if config['period']['value']:
-            value = config['period']['value']
+            value = config['period']['value']  # user-entered date
             add_date(value)
         elif config['period']['rowcol'][0] and config['period']['rowcol'][1]:
             value = cell_value(sh, config['period']['rowcol'][0] - 1,
@@ -752,7 +760,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                 foi = get_foi_ID(row_num, col_num)
                 vdate = get_vdate(row_num, col_num)
                 property = get_property_name(row_num, col_num)
-                #print "sosfeed:742 FDP", foi, vdate, property
+                #print "sosfeed:742 FoiDateProp", foi, vdate, property
                 if foi and vdate and property:
                     value = sos_cell_value(sh, row_num, col_num, property)
                     self.values[(foi, vdate.get('date'), property)] = value

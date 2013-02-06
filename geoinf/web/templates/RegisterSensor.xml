@@ -94,6 +94,7 @@ http://schemas.opengis.net/sos/1.0.0/sosRegisterSensor.xsd http://www.opengis.ne
       <sml:OutputList>
       {% for item in components %} <sml:output name="{{ item.name }}">
         <swe:{{ item.type }} definition="{{ item.urn }}">
+         <gml:description>{{ item.name|truncate(length=199, end='') }}</gml:description>
          <gml:metaDataProperty>
           <offering>
            <id>{{ offering.ID|default('SOS') }}</id>
