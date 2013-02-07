@@ -89,18 +89,19 @@ http://schemas.opengis.net/sos/1.0.0/sosRegisterSensor.xsd http://www.opengis.ne
       ATTENTION:
       These phenomena are parsed and inserted into the database; they have to
       contain offering elements to determine the correct offering for the sensors
-       and measured phenomena -->
+       and measured phenomena
+       NB: Ordering of gml elements IS important! -->
      <sml:outputs>
       <sml:OutputList>
       {% for item in components %} <sml:output name="{{ item.name }}">
         <swe:{{ item.type }} definition="{{ item.urn }}">
-         <gml:description>{{ item.name|truncate(length=199, end='') }}</gml:description>
          <gml:metaDataProperty>
           <offering>
            <id>{{ offering.ID|default('SOS') }}</id>
            <name>{{ offering.name|truncate(length=99, end='')|default('Sensor Offering') }}</name>
           </offering>
          </gml:metaDataProperty>
+         <gml:description>{{ item.name|truncate(length=199, end='') }}</gml:description>
         {% if item.units %}  <swe:uom code="{{ item.units }}" />{% endif %}<!-- -->
         </swe:{{ item.type }}>
        </sml:output>
