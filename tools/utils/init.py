@@ -119,6 +119,7 @@ def initialize(*args, **keywords):
     reg.add_input_port(ListCell, "Heading", basic_modules.String)
     reg.add_input_port(ListCell, "Location", basic_widgets.CellLocation)
     reg.add_input_port(ListCell, "LineNumber?", basic_modules.Boolean)
+    reg.add_input_port(ListCell, "Disabled?", basic_modules.Boolean)
     reg.add_output_port(ListCell, "HTML File", basic_modules.File)
 
     # ListFilter

@@ -48,7 +48,7 @@ ENCODING = "utf-8"  # will probably differ in some countries ???
 
 class ExcelCell(SpreadsheetCell):
     """
-    ExcelCell is a custom module to view Excel files as HTML
+    ExcelCell is a custom module to view Excel files as HTML tables.
 
     Input ports:
         Location:
@@ -68,6 +68,8 @@ class ExcelCell(SpreadsheetCell):
         References?
             If True (checked), the column and row numbers will be shown on the
             top and lefthand sides.
+        Disabled?
+            If True, then the output is not displayed.
 
     Output ports:
         HTML File:
@@ -77,6 +79,7 @@ class ExcelCell(SpreadsheetCell):
         """ compute() -> None
         Create HTML and dispatch the contents to the VisTrails spreadsheet
         """
+        disabled = self.forceGetInputFromPort("Disabled?", False)
         if self.hasInputFromPort("File"):
             fileValue = self.getInputFromPort("File")
             fileHTML = self.interpreter.filePool.create_file(suffix='.html')
@@ -90,12 +93,14 @@ class ExcelCell(SpreadsheetCell):
                 fileSheets = []
         else:
             fileValue = None
-        self.cellWidget = self.displayAndWait(ExcelCellWidget, (fileValue,
-                                                                fileHTML,
-                                                                fileSheets,
-                                                                fileReference,
-                                                                columnWidths))
-        self.setResult('HTML File', fileHTML)
+        if not disabled:
+            self.cellWidget = self.displayAndWait(ExcelCellWidget,
+                                                  (fileValue,
+                                                   fileHTML,
+                                                   fileSheets,
+                                                   fileReference,
+                                                   columnWidths))
+            self.setResult('HTML File', fileHTML)
 
 
 class ExcelCellWidget(QCellWidget):

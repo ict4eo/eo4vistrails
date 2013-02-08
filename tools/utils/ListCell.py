@@ -70,6 +70,8 @@ class ListCell(SpreadsheetCell):
         LineNumbers?
             If True (checked), the line numbers will be shown on the left-hand
             side of the table.
+        Disabled?
+            If True, then the output is not displayed.
 
     Output ports:
         HTML File:
@@ -79,6 +81,7 @@ class ListCell(SpreadsheetCell):
         """ compute() -> None
         Create HTML and dispatch the contents to the VisTrails spreadsheet
         """
+        disabled = self.forceGetInputFromPort("Disabled?", False)
         if self.hasInputFromPort("List"):
             list_in = self.getInputFromPort("List")
             file_HTML = self.interpreter.filePool.create_file(suffix='.html')
@@ -87,11 +90,12 @@ class ListCell(SpreadsheetCell):
             columnWidths = self.forceGetInputFromPort("ColumnWidths", [])
         else:
             fileValue = None
-        self.cellWidget = self.displayAndWait(ListCellWidget,
-                                              (list_in, file_HTML,
-                                               fileReference, columnWidths,
-                                               tableHeading))
-        self.setResult('HTML File', file_HTML)
+        if not disabled:
+            self.cellWidget = self.displayAndWait(ListCellWidget,
+                                                  (list_in, file_HTML,
+                                                   fileReference, columnWidths,
+                                                   tableHeading))
+            self.setResult('HTML File', file_HTML)
 
 
 class ListCellWidget(QCellWidget):
@@ -164,6 +168,12 @@ class ListCellWidget(QCellWidget):
         else:
             raise ModuleError(self, msg)
 
+    def is_sequence(self, arg):
+        """Check that sequence is not, in fact, a string."""
+        return (not hasattr(arg, "strip") and
+                hasattr(arg, "__getitem__") or
+                hasattr(arg, "__iter__"))
+
     def create_html(self, css=None):
         """Return output file, containing HTML table, from a list-of-lists.
 
@@ -207,6 +217,8 @@ class ListCellWidget(QCellWidget):
         output.append('  <table%s>\n' % table_borders)
 
         for row_n, row in enumerate(self.list_in):
+            if row and not self.is_sequence(row):
+                row = [row, ]
             output.append('    <tr>\n      ')
             if self.fileReference:  # show grid row labels
                 output.append('<td style="%s" align="center">%s</td>' %
