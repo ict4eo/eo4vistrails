@@ -276,9 +276,9 @@ class CsvFilter(ThreadSafeMixin, Module):
         import traceback
         traceback.print_exc()
         if error:
-            raise ModuleError(self, msg + ': %s' % str(error))
+            raise ModuleError(self, str(msg) + ': %s' % str(error))
         else:
-            raise ModuleError(self, msg)
+            raise ModuleError(self, str(msg))
 
     def transpose_array(self, lists):
         """Swap rows and columns from a 'list of lists'.

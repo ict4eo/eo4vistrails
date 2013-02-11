@@ -71,7 +71,7 @@ def list_to_dates(items, date_format='%Y-%m-%d', missing=1e-10):
 
 
 def get_date(string, date_format='%Y-%m-%d', missing=1e-10):
-    """Return a formatted date from a string."""
+    """Return a formatted date, or date/time, value from a string."""
     if string:
         _dt = parse_datetime(string)
         return _dt.strftime(date_format)
@@ -117,6 +117,7 @@ def parse_datetime(string):
     Acceptable formats are: "YYYY-MM-DD HH:MM:SS.ssssss+HH:MM",
                             "YYYY-MM-DD HH:MM:SS.ssssss",
                             "YYYY-MM-DD HH:MM:SS+HH:MM",
+                            "YYYY-MM-DD HH:MM:SS+HH",
                             "YYYY-MM-DD HH:MM:SS"
     where ssssss represents fractional seconds. The '-' may be replaced by a '/'.
 
@@ -155,15 +156,23 @@ def parse_datetime(string):
     if re.search(r'([-+]\d{4})', string):
         m = re.match(r'(.*?)(?:\.(\d+))?(([-+]\d{4}))?$', string)
         datestr, fractional, tzname, tz = m.groups()
-        #print "datetimeutils:153", tz
+        #print "datetimeutils:159", tz
         tz_field = re.findall(r'([-+]\d{4})', string)[0]
-        #print "datetimeutils:153", tz_field
+        #print "datetimeutils:161", tz_field
         tzhour = tz_field[1:3]
         tzmin = tz_field[3:5]
+    elif re.search(r'([-+]\d{2})', string):
+        m = re.match(r'(.*?)(?:\.(\d+))?(([-+]\d{2}))?$', string)
+        datestr, fractional, tzname, tz = m.groups()
+        #print "datetimeutils:167", tz
+        tz_field = re.findall(r'([-+]\d{2})', string)[0]
+        #print "datetimeutils:169", tz_field
+        tzhour = tz_field[1:3]
+        tzmin = '00'
     else:
         m = re.match(r'(.*?)(?:\.(\d+))?(([-+]\d{1,2}):(\d{2}))?$', string)
         datestr, fractional, tzname, tzhour, tzmin = m.groups()
-    #print "dtu:167", datestr, '*', tzname, '*', tzhour, '*', tzmin
+    #print "datetimeutils:176", datestr, '*', tzname, '*', tzhour, '*', tzmin
 
     # Create tzinfo object representing the timezone
     # expressed in the input string.  The names we give
@@ -180,12 +189,12 @@ def parse_datetime(string):
         tz = FixedOffset(timedelta(hours=tzhour,
                                    minutes=tzmin), tzname)
 
-    # Convert the date/time field into a python datetime
-    # object.
+    # Convert the date/time field into a python datetime object.
     try:
         x = datetime.strptime(datestr, "%Y-%m-%d %H:%M:%S")
     except ValueError:
         x = datetime.strptime(datestr, "%Y-%m-%d")
+    #print "datetimeutils:197", x
 
     # Convert the fractional second portion into a count
     # of microseconds.
@@ -196,4 +205,6 @@ def parse_datetime(string):
 
     # Return updated datetime object with microseconds and
     # timezone information.
-    return x.replace(microsecond=int(fractional), tzinfo=tz)
+    y = x.replace(microsecond=int(fractional), tzinfo=tz)
+    #print "datetimeutils:209", y
+    return y

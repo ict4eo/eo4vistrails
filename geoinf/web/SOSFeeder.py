@@ -510,7 +510,8 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                 self.validate_srs(self.fois[ID]['srs'])
 
         def add_date(_date, row=None, col=None):
-            """Add to date list."""
+            """Add a date string to the date list."""
+            print "sosfeed:514", _date, type(_date)
             # validate date
             try:
                 date_string = datetimeutils.get_date(

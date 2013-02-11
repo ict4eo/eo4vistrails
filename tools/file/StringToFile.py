@@ -73,9 +73,9 @@ class StringToFile(ThreadSafeMixin, Module):
         import traceback
         traceback.print_exc()
         if error:
-            raise ModuleError(self, msg + ' - %s' % str(error))
+            raise ModuleError(self, str(msg) + ': %s' % str(error))
         else:
-            raise ModuleError(self, msg)
+            raise ModuleError(self, str(msg))
 
     def compute(self):
         _string = self.forceGetInputFromPort('string', None)
@@ -93,10 +93,12 @@ class StringToFile(ThreadSafeMixin, Module):
 
         try:
             if not _overwrite and os.path.isfile(_filename):
-                print 'foo'
                 self.raiseError('File already exists')
             text_file = open(_filename, 'w')
-            text_file.write(_string)
+            try:
+                text_file.write(_string)
+            except TypeError, e:
+                self.raiseError("Unable to write to file", e)
             text_file.close()
 
         except Exception, ex:
