@@ -360,12 +360,12 @@ class CsvFilter(ThreadSafeMixin, Module):
          *  A list of paired tuples if valid inputs, else None
 
         """
-        #print "csv:334", lists
+        #print "csv:364", lists
         pair_list = []
         if pairs:
             try:
                 item_list = pairs.split(';')
-                #print "csv:339", item_list
+                #print "csv:369", item_list
                 for key, item in enumerate(item_list):
                     if ',' in item:
                         pair_values = item.split(',')
@@ -462,7 +462,7 @@ class CsvFilter(ThreadSafeMixin, Module):
         list_of_lists = []
         cols_list = self.get_filter_specs(filter_cols)
         rows_list = self.get_filter_specs(filter_rows)
-        #print "csvutils.431: ", cols_list, rows_list
+        #print "csvutils.461: ", cols_list, rows_list
         if not header_in:
             header_out = False  # cannot process a row that is not there...
 
@@ -479,12 +479,12 @@ class CsvFilter(ThreadSafeMixin, Module):
                 csvfile = unicode_csv_reader(open(filename, 'rU'), delimiter=delimiter)
                 cols_checked = False
                 COL_MSG = "The column filter values exceed the number of columns in the file's row."
-                #print "csvutils.458:", header_in, header_out
+                #print "csvutils.482:", header_in, header_out
                 for key, row in enumerate(csvfile):
                     #all rows are read in as a list of strings
                     if key == 0 and header_in and not header_out:
                         # skip header row
-                        #print "csvutils:452 - skip header_out", key
+                        #print "csvutils:487 - skip header_out", key
                         pass
                     elif key > 9  and sample:
                         # have the sample data now...
@@ -512,7 +512,7 @@ class CsvFilter(ThreadSafeMixin, Module):
                                     if k + 1 in cols_list:
                                         row_out.append(c)
                                 list_of_lists.append(row_out)
-                #print "csvutils.486: lists_0", list_of_lists
+                #print "csvutils.516: lists_0", list_of_lists
                 # convert list-of-lists back to numbers, where possible
                 list_of_lists = [[self.to_num(a) for a in b] \
                                  for b in list_of_lists]

@@ -511,7 +511,6 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
 
         def add_date(_date, row=None, col=None):
             """Add a date string to the date list."""
-            print "sosfeed:514", _date, type(_date)
             # validate date
             try:
                 date_string = datetimeutils.get_date(
