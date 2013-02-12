@@ -40,7 +40,7 @@ environments.
 """
 identifier = 'za.co.csir.eo4vistrails'
 name = 'EO4VisTrails'
-revision = 4
+revision = 5
 version = '0.1.%s' % revision
 author_list = 'tvanzyl,gmcferren,bcwele,dhohls,pshabangu,bsibolla,mmtsetfwa'
 flags = {}

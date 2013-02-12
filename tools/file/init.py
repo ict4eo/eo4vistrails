@@ -37,6 +37,7 @@ def initialize(*args, **keywords):
     from Command import Command
     from DirUtils import ListDirContent
     from StringToFile import StringToFile
+    from FileToString import FileToString
     from DataWriter import VectorLayerToFile, DataWriterTypeComboBox
 
     reg = get_module_registry()
@@ -72,6 +73,9 @@ def initialize(*args, **keywords):
                    namespace=files_namespace)
 
     reg.add_module(StringToFile,
+                   namespace=files_namespace)
+
+    reg.add_module(FileToString,
                    namespace=files_namespace)
 
     reg.add_module(VectorLayerToFile,
