@@ -33,7 +33,7 @@ debug = False
 # thirdparty
 from PyQt4 import QtCore, QtGui
 # vistrails
-from gui.modules.constant_configuration import ConstantWidgetMixin
+from core.modules.constant_configuration import ConstantWidgetMixin
 
 
 class ComboBoxWidget(QtGui.QComboBox, ConstantWidgetMixin):

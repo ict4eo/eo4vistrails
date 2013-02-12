@@ -109,23 +109,23 @@ def to_matplotlib_date(string, missing=1e-10):
 
 def parse_datetime(string):
     """Create datetime object from string version of a date/time.
-
+    
     Takes a string in a common date/time format, e.g. produced by calling str()
     on a Python datetime object or from an OGC web service, and returns a
     standard datetime instance.
-
+    
     Acceptable formats are: "YYYY-MM-DD HH:MM:SS.ssssss+HH:MM",
                             "YYYY-MM-DD HH:MM:SS.ssssss",
                             "YYYY-MM-DD HH:MM:SS+HH:MM",
                             "YYYY-MM-DD HH:MM:SS+HH",
                             "YYYY-MM-DD HH:MM:SS"
     where ssssss represents fractional seconds. The '-' may be replaced by a '/'.
-
+    
     Alternative formats may use a 'T' as a separator between date and time.
-
+    
     The timezone is optional and may be either positive or negative
     hours/minutes east of UTC.  The timezone may omit the ':' separator.
-
+    
     Source:
         http://kbyanc.blogspot.com/2007/09/python-reconstructing-datetimes-from
         .html
@@ -146,12 +146,12 @@ def parse_datetime(string):
     # standard separators
     if '/' in string:
         string = string.replace('/', '-')
-
+        
     # Split string in the form 2007-06-18 19:39:25.3300-07:00
     # into its constituent date/time, microseconds, and
     # timezone fields where microseconds and timezone are
     # optional.
-
+    
     # some timezone fields omit the ':'
     if re.search(r'([-+]\d{4})', string):
         m = re.match(r'(.*?)(?:\.(\d+))?(([-+]\d{4}))?$', string)
@@ -161,19 +161,21 @@ def parse_datetime(string):
         #print "datetimeutils:161", tz_field
         tzhour = tz_field[1:3]
         tzmin = tz_field[3:5]
-    elif re.search(r'([-+]\d{2})', string):
-        m = re.match(r'(.*?)(?:\.(\d+))?(([-+]\d{2}))?$', string)
-        datestr, fractional, tzname, tz = m.groups()
-        #print "datetimeutils:167", tz
-        tz_field = re.findall(r'([-+]\d{2})', string)[0]
-        #print "datetimeutils:169", tz_field
-        tzhour = tz_field[1:3]
-        tzmin = '00'
+#TERENCE HACKED THIS OUT CRAZY GUY, FIXED A ERROR, BUT NOT SURE WHAT THE STORY
+#WITH THIS REG EXPRESION IS
+#    elif re.search(r'([-+]\d{2})', string):
+#        m = re.match(r'(.*?)(?:\.(\d+))?(([-+]\d{2}))?$', string)
+#        datestr, fractional, tzname, tz = m.groups()
+#        #print "datetimeutils:167", tz
+#        tz_field = re.findall(r'([-+]\d{2})', string)[0]
+#        #print "datetimeutils:169", tz_field
+#        tzhour = tz_field[1:3]
+#        tzmin = '00'
     else:
         m = re.match(r'(.*?)(?:\.(\d+))?(([-+]\d{1,2}):(\d{2}))?$', string)
         datestr, fractional, tzname, tzhour, tzmin = m.groups()
     #print "datetimeutils:176", datestr, '*', tzname, '*', tzhour, '*', tzmin
-
+    
     # Create tzinfo object representing the timezone
     # expressed in the input string.  The names we give
     # for the timezones are lame: they are just the offset
@@ -188,21 +190,21 @@ def parse_datetime(string):
             tzname = 'UTC'
         tz = FixedOffset(timedelta(hours=tzhour,
                                    minutes=tzmin), tzname)
-
+    
     # Convert the date/time field into a python datetime object.
-    try:
+    try:        
         x = datetime.strptime(datestr, "%Y-%m-%d %H:%M:%S")
     except ValueError:
         x = datetime.strptime(datestr, "%Y-%m-%d")
     #print "datetimeutils:197", x
-
+    
     # Convert the fractional second portion into a count
     # of microseconds.
     if fractional is None:
         fractional = '0'
     fracpower = 6 - len(fractional)
     fractional = float(fractional) * (10 ** fracpower)
-
+    
     # Return updated datetime object with microseconds and
     # timezone information.
     y = x.replace(microsecond=int(fractional), tzinfo=tz)
