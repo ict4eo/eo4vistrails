@@ -109,26 +109,43 @@ def to_matplotlib_date(string, missing=1e-10):
 
 def parse_datetime(string):
     """Create datetime object from string version of a date/time.
-    
+
     Takes a string in a common date/time format, e.g. produced by calling str()
     on a Python datetime object or from an OGC web service, and returns a
     standard datetime instance.
-    
-    Acceptable formats are: "YYYY-MM-DD HH:MM:SS.ssssss+HH:MM",
-                            "YYYY-MM-DD HH:MM:SS.ssssss",
-                            "YYYY-MM-DD HH:MM:SS+HH:MM",
+
+    Acceptable formats are: "YYYY-MM-DD HH:MM:SS.sss+HHMM",
+                            "YYYY-MM-DD HH:MM:SS.sss",
+                            "YYYY-MM-DD HH:MM:SS+HHMM",
                             "YYYY-MM-DD HH:MM:SS+HH",
                             "YYYY-MM-DD HH:MM:SS"
-    where ssssss represents fractional seconds. The '-' may be replaced by a '/'.
-    
+    where sss represents fractional seconds. The '-' may be replaced by a '/'.
+
     Alternative formats may use a 'T' as a separator between date and time.
-    
+
     The timezone is optional and may be either positive or negative
-    hours/minutes east of UTC.  The timezone may omit the ':' separator.
-    
+    hours/minutes east of UTC.  The timezone should omit the ':' separator; if
+    present it will be removed.
+
     Source:
+    =======
         http://kbyanc.blogspot.com/2007/09/python-reconstructing-datetimes-from
         .html
+
+    Tests:
+    ======
+    assert parse_datetime('2012-08-09') == datetime(2012, 8, 9, 0, 0)
+    assert parse_datetime('2012-08-09 12:12:23') == datetime(2012, 8, 9, 12, 12, 23)
+    assert parse_datetime('2012-08-09 12:12:23.456') == datetime(2012, 8, 9, 12, 12, 23, 456000)
+    # assert fails because tzinfo objects differ...
+    assert parse_datetime('2012-08-09 12:12:23+02') == \
+        datetime(2012, 8, 9, 12, 12, 23, tzinfo=FixedOffset(timedelta(hours=2),'UTC'))
+    assert parse_datetime('2012-08-09 12:12:23.456+02') == \
+        datetime(2012, 8, 9, 12, 12, 23, 456000, tzinfo=FixedOffset(timedelta(hours=2),'UTC'))
+     assert parse_datetime('2012-08-09 12:12:23+0200') == \
+        datetime(2012, 8, 9, 12, 12, 23, tzinfo=FixedOffset(timedelta(hours=2),'UTC'))
+    assert parse_datetime('2012-08-09 12:12:23.456+02:30') == \
+        datetime(2012, 8, 9, 12, 12, 23, 456000, tzinfo=FixedOffset(timedelta(hours=2, minutes=30),'UTC'))
     """
     # Pre-checks on string data
     if string is None:
@@ -143,45 +160,44 @@ def parse_datetime(string):
             string = string.replace('Z', '')
         else:
             string = string.replace('Z', '+')
+    if '+' in string and string[-3:-2] == ':':
+        string = '%s%s' % (string[:-3], string[-2:])
     # standard separators
     if '/' in string:
         string = string.replace('/', '-')
-        
-    # Split string in the form 2007-06-18 19:39:25.3300-07:00
-    # into its constituent date/time, microseconds, and
-    # timezone fields where microseconds and timezone are
-    # optional.
-    
-    # some timezone fields omit the ':'
-    if re.search(r'([-+]\d{4})', string):
+    #print "datetimeutils:167", string
+
+    # Split string in the (general) form 2007-06-18 19:39:25.3300-0700
+    # into its constituent date/time, microseconds, and timezone fields where
+    # microseconds and timezone are optional.
+
+    # check for HHMM timezone entry
+    if len(string) > 10 and re.search(r'([-+]\d{4})', string):
         m = re.match(r'(.*?)(?:\.(\d+))?(([-+]\d{4}))?$', string)
         datestr, fractional, tzname, tz = m.groups()
         #print "datetimeutils:159", tz
         tz_field = re.findall(r'([-+]\d{4})', string)[0]
-        #print "datetimeutils:161", tz_field
+        #print "datetimeutils:181", tz_field
         tzhour = tz_field[1:3]
         tzmin = tz_field[3:5]
-#TERENCE HACKED THIS OUT CRAZY GUY, FIXED A ERROR, BUT NOT SURE WHAT THE STORY
-#WITH THIS REG EXPRESION IS
-#    elif re.search(r'([-+]\d{2})', string):
-#        m = re.match(r'(.*?)(?:\.(\d+))?(([-+]\d{2}))?$', string)
-#        datestr, fractional, tzname, tz = m.groups()
-#        #print "datetimeutils:167", tz
-#        tz_field = re.findall(r'([-+]\d{2})', string)[0]
-#        #print "datetimeutils:169", tz_field
-#        tzhour = tz_field[1:3]
-#        tzmin = '00'
+    # check for HH timezone entry
+    elif len(string) > 10 and re.search(r'([-+]\d{2})', string):
+        m = re.match(r'(.*?)(?:\.(\d+))?(([-+]\d{2}))?$', string)
+        datestr, fractional, tzname, tz = m.groups()
+        #print "datetimeutils:187", tz
+        tz_field = re.findall(r'([-+]\d{2})', string)[0]
+        #print "datetimeutils:189", tz_field
+        tzhour = tz_field[1:3]
+        tzmin = '00'
     else:
         m = re.match(r'(.*?)(?:\.(\d+))?(([-+]\d{1,2}):(\d{2}))?$', string)
         datestr, fractional, tzname, tzhour, tzmin = m.groups()
-    #print "datetimeutils:176", datestr, '*', tzname, '*', tzhour, '*', tzmin
-    
-    # Create tzinfo object representing the timezone
-    # expressed in the input string.  The names we give
-    # for the timezones are lame: they are just the offset
-    # from UTC (as it appeared in the input string).  We
-    # handle UTC specially since it is a very common case
-    # and we know its name.
+    #print "datetimeutils:196", datestr, '*', tzname, '*', tzhour, '*', tzmin
+
+    # Create tzinfo object representing the timezone expressed in the input
+    # string.  The names we give for the timezones are lame: they are just the
+    # offset from UTC (as it appeared in the input string).  Handle UTC
+    # specially since it is a very common case and we know its name.
     if tzname is None:
         tz = None
     else:
@@ -190,23 +206,21 @@ def parse_datetime(string):
             tzname = 'UTC'
         tz = FixedOffset(timedelta(hours=tzhour,
                                    minutes=tzmin), tzname)
-    
+
     # Convert the date/time field into a python datetime object.
-    try:        
+    try:
         x = datetime.strptime(datestr, "%Y-%m-%d %H:%M:%S")
     except ValueError:
         x = datetime.strptime(datestr, "%Y-%m-%d")
-    #print "datetimeutils:197", x
-    
-    # Convert the fractional second portion into a count
-    # of microseconds.
+    #print "datetimeutils:214", x
+
+    # Convert the fractional second portion into a count of microseconds.
     if fractional is None:
         fractional = '0'
     fracpower = 6 - len(fractional)
     fractional = float(fractional) * (10 ** fracpower)
-    
-    # Return updated datetime object with microseconds and
-    # timezone information.
+
+    # Return updated datetime object with microseconds and timezone information
     y = x.replace(microsecond=int(fractional), tzinfo=tz)
-    #print "datetimeutils:209", y
+    #print "datetimeutils:224", y
     return y

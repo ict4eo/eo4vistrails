@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<InsertObservation xmlns="http://www.opengis.net/sos/1.0"
+    xmlns:ows="http://www.opengis.net/ows/1.1"
+    xmlns:ogc="http://www.opengis.net/ogc"
+    xmlns:om="http://www.opengis.net/om/1.0"
+    xmlns:sos="http://www.opengis.net/sos/1.0"
+    xmlns:sa="http://www.opengis.net/sampling/1.0"
+    xmlns:gml="http://www.opengis.net/gml"
+    xmlns:swe="http://www.opengis.net/swe/1.0.1"
+    xmlns:xlink="http://www.w3.org/1999/xlink"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.opengis.net/sos/1.0
+    http://schemas.opengis.net/sos/1.0.0/sosInsert.xsd
+    http://www.opengis.net/sampling/1.0
+    http://schemas.opengis.net/sampling/1.0.0/sampling.xsd
+    http://www.opengis.net/om/1.0
+    http://schemas.opengis.net/om/1.0.0/extensions/observationSpecialization_override.xsd"
+    service="SOS" version="1.0.0">
+
+  <AssignedSensorId>{{ foi.id }}</AssignedSensorId>
+ 
+   <om:Observation>
+
+    <om:samplingTime>
+     <gml:TimeInstant>
+      <gml:timePosition>{{ period.start }}</gml:timePosition>
+     </gml:TimeInstant>
+    </om:samplingTime>
+
+   <om:procedure xlink:href="{{ foi.id }}"/>
+
+   <om:observedProperty>
+    <swe:CompositePhenomenon gml:id="cpid0" dimension="1">
+     <gml:name>resultComponents</gml:name>
+     {% for item in components %}<swe:component xlink:href="{{ item.urn }}" />
+    {% endfor %}</swe:CompositePhenomenon>
+   </om:observedProperty>
+
+   <om:featureOfInterest>
+    <gml:FeatureCollection>
+     <gml:featureMember>
+      <sa:SamplingPoint gml:id="{{ foi.id }}">
+       <gml:name>{{ foi.name }}</gml:name>
+       <sa:sampledFeature xlink:href=""/>
+       <sa:position>
+        {% if foi.type == 'polygon' %}
+        <gml:Polygon srsName="{{ foi.srs|default('urn:ogc:def:crs:EPSG::4326') }}" xsi:type="gml:PolygonType">
+         <gml:exterior>
+          <gml:LinearRing xsi:type="gml:LinearRingType">
+           <gml:posList>
+            {% if foi.coords is iterable %}{% for coord in foi.coords %}{{ coord.0 }} {{ coord.1 }} {% endfor %}{% endif %}
+           </gml:posList>
+          </gml:LinearRing>
+         </gml:exterior>
+        </gml:Polygon>
+        {% else %}<gml:Point>
+         <gml:pos srsName="{{ foi.srs|default('urn:ogc:def:crs:EPSG::4326') }}">
+          {% if foi.coords is iterable %}{{ foi.coords.0 }} {{ foi.coords.1 }}{% endif %}
+         </gml:pos>
+        </gml:Point>
+        {% endif %}
+       </sa:position>
+      </sa:SamplingPoint>
+     </gml:featureMember>
+    </gml:FeatureCollection>
+   </om:featureOfInterest>
+
+   <om:result>
+    <swe:DataArray>
+ 
+     <swe:elementCount>
+      <swe:Count>
+       <swe:value>{{ components|length }}</swe:value>
+      </swe:Count>
+     </swe:elementCount>
+ 
+     {% if components and components is iterable %}<swe:elementType name="SimpleDataArray">
+      <swe:DataRecord>
+       <swe:field name="feature">
+        <swe:Text definition="http://www.opengis.net/def/property/OGC/0/FeatureOfInterest" />
+       </swe:field>
+       {% for item in components %}{% if item.type == 'Quantity' %}<swe:field name="{{ item.name }}">
+        <swe:Quantity definition="{{ item.urn }}">
+         {% if item.units %}<swe:uom code="{{ item.units }}" />
+        {% endif %}</swe:Quantity>
+       </swe:field>
+       {% else %}<swe:field name="{{ item.name }}">
+        <swe:{{ item.type }} definition="{{ item.urn }}" />
+       </swe:field>
+      {% endif %}{% endfor %}</swe:DataRecord>
+     </swe:elementType>{% endif %}
+ 
+     <swe:encoding>
+      <swe:TextBlock decimalSeparator="{{ separator.decimal|default('.', true) }}"
+                     tokenSeparator="{{ separator.token|default(',', true) }}"
+                     blockSeparator="{{ separator.block|default('`', true) }}" />
+     </swe:encoding>
+     {% if values and values is iterable %}<swe:values>{% for dataset in values %}{% if dataset is iterable %}{{ foi.id }}{{ separator.token|default(',', true) }}{% for data in dataset %}{{ data|default(missing, true) }}{% if not loop.last %}{{ separator.token|default(',', true) }}{% endif %}{% endfor %}{{ separator.block|default('`', true) }}{% endif %}{% endfor %}</swe:values>{% endif %}
+ 
+    </swe:DataArray>
+   </om:result>
+
+  </om:Observation>
+
+</InsertObservation>

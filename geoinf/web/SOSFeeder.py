@@ -56,6 +56,7 @@ TRUE = 'True'
 FALSE = 'False'
 REGISTER_SENSOR = 'RegisterSensor.xml'
 INSERT_OBSERVATION = 'InsertObservation.xml'
+INSERT_OBSERVATION_FOI = 'InsertObservationFOI.xml'
 
 
 @RPyCSafeModule()
@@ -88,6 +89,7 @@ class SOSFeeder(ThreadSafeMixin, Module):
         ('OGC_URL', '(edu.utah.sci.vistrails.basic:String)'),
         ('active', '(edu.utah.sci.vistrails.basic:Boolean)'),
         ('missing_data', '(edu.utah.sci.vistrails.basic:String)'), ]
+
     _output_ports = [
         ('PostData', '(edu.utah.sci.vistrails.basic:List)'), ]
 
@@ -238,9 +240,14 @@ class InsertObservation(SOSFeeder):
         active:
             a Boolean port; if True (default is False) then the outgoing data
             is POSTed directly to the SOS
+        use_foi_as_procedure:
+            Boolean port; if True (default is False) then each FOI is used as
+            a different procedure.  Any date from the `procedure` port will be
+            ignored.
         procedure:
             The physical sensor or analysis process that has recorded or
-            carried out the observations.
+            carried out the observations.  Either the "value" must be set, or
+            the row-and-column must be set.
 
             value:
                 the name of the procedure, which is set for all observations
@@ -359,6 +366,7 @@ class InsertObservation(SOSFeeder):
     _input_ports = [
         ('file_in', '(edu.utah.sci.vistrails.basic:File)'),
         ('sheets', '(edu.utah.sci.vistrails.basic:List)'),
+        ('use_foi_as_procedure', '(edu.utah.sci.vistrails.basic:Boolean)'),
         ('procedure', '(edu.utah.sci.vistrails.basic:String,\
 edu.utah.sci.vistrails.basic:Integer,edu.utah.sci.vistrails.basic:Integer)',
             {"defaults": str(["", 0, 0]),
@@ -416,12 +424,12 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                 details for each property, in the format:
                     {"ID_1": ["type_1", "URN_value1", "units_abc"],
                      "ID_2": ["type_2", "URN_value2", "units_pqr"],}
-            self.feature_lookup: dictionary
-                details for each feature, in the format:
-                    {"ID_1": {"name": "name_1", "srs": "SRS_1",
-                              "coords": [(a,b), (c,d) ...]},
-                     "ID_2": {"name": "name_2", "srs": "SRS_2",
-                              "coords": [(p,q), (r,s) ...]},}
+            self.feature_lookup: list of dictionaries
+                details for each feature (as a dictionary), in the format:
+                    [{"id": "ID_1", "name": "name_1", "srs": "SRS_1",
+                       "coords": [(a,b), (c,d) ...]},
+                     {"id": "ID_2", "name": "name_2", "srs": "SRS_2",
+                      "coords": [(p,q), (r,s) ...]},}]
         """
 
         def cell_value(sheet, row_num, col_num):
@@ -487,8 +495,15 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                 ID = unicode(foi_ID)  # convert Excel int to unicode
             except:
                 ID = foi_ID
-            foi_ID_entry = self.feature_lookup.get(ID)
+            foi_ID_entry = None
+            # use ID and/or Name to try and locate feature
+            for feature in self.feature_lookup:
+                #print "sosfeed:501",ID,feature.get('id'),feature.get('name')
+                if feature.get('id') == ID or feature.get('name') == ID:
+                    foi_ID_entry = feature
+                    break
             if foi_ID_entry:
+                ID = foi_ID_entry.get('id')
                 # convert coords "list of tuples with unicode strings"
                 coords = []
                 coords_list = foi_ID_entry.get('coords')
@@ -500,13 +515,19 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                     except:
                         coords = coords_list
                 foi_name = foi_ID_entry.get('name') or ID
+                try:
+                    srs_name = unicode(foi_ID_entry.get('srs')).strip() or \
+                                SRS_DEFAULT
+                except:
+                    srs_name = SRS_DEFAULT
                 self.fois[ID] = {
                     'id': ID,
                     'name': foi_name.replace('"', "'"),
-                    'srs': foi_ID_entry.get('srs') or SRS_DEFAULT,
+                    'srs': srs_name,
                     'coords': coords,
                     'col': col,
                     'row': row}
+                #print "sosfeed:526", foi_ID_entry.get('srs'), self.fois[ID])
                 self.validate_srs(self.fois[ID]['srs'])
 
         def add_date(_date, row=None, col=None):
@@ -543,7 +564,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                    self.properties[0]['row'] is None:
                     return self.properties[0].get('name')
             for property in self.properties:
-                #print "sosfeed:531", row,col,property['col'],property['row']
+                #print "sosfeed:561", row,col,property['col'],property['row']
                 if property['col'] == col or property['row'] == row:
                     return property.get('name')
             return None
@@ -596,7 +617,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
             for prop in self.properties:
                 if prop['name'] == property:
                     prop_type = prop['type'] or 'Quantity'
-            #print "sosfeed:584", row_num, col_num, ctype, prop_type, value
+            #print "sosfeed:614", row_num, col_num, ctype, prop_type, value
             if prop_type in ['Quantity', 'Count']:
                 if ctype in [0, 5]:
                     value = None
@@ -641,7 +662,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                     value = None
             else:
                 self.raiseError('Unknown swe property type: "%s"' % prop_type)
-            #print "   sosfeed:629", value
+            #print "   sosfeed:659", value
             return value
 
         # initialize
@@ -760,7 +781,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                 foi = get_foi_ID(row_num, col_num)
                 vdate = get_vdate(row_num, col_num)
                 property = get_property_name(row_num, col_num)
-                #print "sosfeed:742 FoiDateProp", foi, vdate, property
+                #print "sosfeed:777 FoiDateProp", foi, vdate, property
                 if foi and vdate and property:
                     value = sos_cell_value(sh, row_num, col_num, property)
                     self.values[(foi, vdate.get('date'), property)] = value
@@ -772,6 +793,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
         template = self.env.get_template(template_name)
         """        """
         if self.test_mode:
+            self.foi_as_procedure = False
             data['core'] = {
                 'procedureID': 'urn:ogc:object:feature:Sensor:TestFooBar1'}
             data['period'] = {
@@ -819,7 +841,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                                components=data.get('properties'),
                                foi=data.get('foi'),
                                missing=data.get('missing'),)
-        return data  # XML
+        return data  # XML from Jinja template
 
     def create_results(self):
         """Create list of XML POST datasets for each feature of interest.
@@ -828,6 +850,8 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
         for sheet_name in self.sheet_list:
             # load data from worksheet into dictionaries
             self.load_from_excel(sheet_name)
+            if not self.fois:
+                self.raiseError('No features-of-interest available')
             for key, foi in self.fois.iteritems():
                 data = {}
                 data['values'] = []
@@ -839,26 +863,48 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                 data['missing'] = self.missing_data
 
                 token = data['separator']['token']
-                for _date in self.unique_dates:
-                    value_set = [_date, ]
-                    for prop in self.unique_properties:
-                        key = (foi.get('id'), _date, prop.get('name'))
-                        val = self.values.get(key)
-                        #print "sosfeed:835", foi.get('id'), _date, prop.get('name'), val
-                        value_set.append(val)
+
+                # decide which approach to use
+                if self.foi_as_procedure:
+                    for _date in self.unique_dates:
+                        value_set = [_date, ]
+                        for prop in self.unique_properties:
+                            key = (foi.get('id'), _date, prop.get('name'))
+                            val = self.values.get(key)
+                            #print "sosfeed:875", foi.get('id'), _date, prop.get('name'), val
+                            value_set.append(val)
                     data['values'].append(value_set)
-
-                if USE_TIMEFIELD:
-                    # add time (date?) as "always present"
-                    data['properties'].insert(0, {
-                        'name': "Time",
-                        'type': "Time",
-                        'urn': "urn:ogc:data:time:iso8601"})
-
-                XML = self.create_XML(sheet_name=sheet_name, data=data)
-                if XML:
-                    results.append(XML)
-                    #print "\nsosfeed:846\n", XML
+                    #print "sosfeed:878", data['values']
+                    if USE_TIMEFIELD:
+                        # add time (date?) as "always present"
+                        data['properties'].insert(0, {
+                            'name': "Time",
+                            'type': "Time",
+                            'urn': "urn:ogc:data:time:iso8601"})
+                    XML = self.create_XML(sheet_name=sheet_name, data=data,
+                                    template_name=INSERT_OBSERVATION_FOI)
+                    if XML:
+                        results.append(XML)
+                        #print "\nsosfeed:888\n", XML
+                else:
+                    for _date in self.unique_dates:
+                        value_set = [_date, ]
+                        for prop in self.unique_properties:
+                            key = (foi.get('id'), _date, prop.get('name'))
+                            val = self.values.get(key)
+                            #print "sosfeed:885", foi.get('id'), _date, prop.get('name'), val
+                            value_set.append(val)
+                        data['values'].append(value_set)
+                    if USE_TIMEFIELD:
+                        # add time (date?) as "always present"
+                        data['properties'].insert(0, {
+                            'name': "Time",
+                            'type': "Time",
+                            'urn': "urn:ogc:data:time:iso8601"})
+                    XML = self.create_XML(sheet_name=sheet_name, data=data)
+                    if XML:
+                        results.append(XML)
+                        #print "\nsosfeed:897\n", XML
             return results
 
     def compute(self):
@@ -874,6 +920,9 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
         if not self.sheet_list:
             self.raiseError("Unable to extract sheets from Excel file")
         # get port values
+        self.foi_as_procedure = self.forceGetInputFromPort(
+                                    'use_foi_as_procedure',
+                                    False)
         if self.forceGetInputFromPort('procedure'):
             _proc, _proc_row, _proc_col = \
                                         self.forceGetInputFromPort('procedure')
@@ -907,7 +956,8 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
         _error_codes = self.forceGetInputFromPort('error_codes', {})
 
         # validate port values
-        if not _proc and not _proc_row and not _proc_col:
+        if not _proc and not _proc_row and not _proc_col \
+        and not self.foi_as_procedure:
             self.raiseError('Name, row or column must be specified for %s'\
                             % 'procedure')
         if not _FOI and not _FOI_row and not _FOI_col:
@@ -944,7 +994,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
         self.property_lookup = {}
         if _property:
             for item in _property:
-                #print "sosfeed:939 prop item", len(item), item
+                #print "sosfeed:982 prop item", len(item), item
                 if item:
                     if len(item) >= 3:
                         _dict = dict(zip(xrange(len(item)), item))
@@ -956,24 +1006,28 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                     else:
                         self.raiseError("Insufficient property values on each line")
 
-        # get FOI lookup details as dictionary
-        self.feature_lookup = {}
+        # get FOI lookup details as a list of dictionaries
+        self.feature_lookup = []
         if _feature:
             for key, item in enumerate(_feature):
-                #print "sosfeed:954 foi item", key, len(item), item
+                #print "sosfeed:1004 key len item", key, len(item), item
                 if item:
                     if len(item) >= 3:
                         _dict = dict(zip(xrange(len(item)), item))
-                        self.feature_lookup[self.escaped(_dict.get(0) or "")] = {
+                        feature = {
+                            'id': self.escaped(_dict.get(0) or ""),
                             'name': self.escaped(_dict.get(1)or ""),
                             'coords': self.extract_pairs(_dict.get(2), key + 1),
                             'srs': _dict.get(3) or SRS_DEFAULT}
+                        self.feature_lookup.append(feature)
                     else:
                         self.raiseError("Insufficient FOI values in each and/or every list")
+        #print "sosfeed:1024", self.feature_lookup
 
         # create configuration dictionary
         self.configuration = {
-            'procedure': {'value': _proc, 'rowcol': (_proc_row, _proc_col)},
+            'procedure': {'is_procedure': self.foi_as_procedure,
+                          'value': _proc, 'rowcol': (_proc_row, _proc_col)},
             'period': {'value': _date, 'rowcol': (_date_row, _date_col),
                        'offset': _date_offset},
             'foi': {'value': _FOI, 'rowcol': (_FOI_row, _FOI_col)},
@@ -986,6 +1040,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
         # process configuration and generate output
         try:
             results = self.create_results()
+            #print "sosfeed:1043", results
             # output POST data, if port is linked to another module
             if init.OGC_POST_DATA_PORT in self.outputPorts:
                 self.setResult(init.OGC_POST_DATA_PORT, results)
@@ -1007,8 +1062,11 @@ class RegisterSensor(SOSFeeder):
     """Register a sensor for a Sensor Observation Service (SOS) via a POST of
     the supplied parameters.
 
-    Each sensor will be associated with each feature-of-interest supplied, so
-    multiple POST operations may be created.
+    Each sensor can be associated with each feature-of-interest (FOI) supplied,
+    in which case multiple POST operations may be created.  If the 'Use FOI as
+    Sensor' option is set, then all other sensor data is ignored and each FOI
+    is also created as a sensor, with an exactly matching FOI.  This option
+    may also generate multiple POST requests.
 
     Input ports:
         OGC_URL:
@@ -1026,9 +1084,13 @@ class RegisterSensor(SOSFeeder):
                 the ID of the offering
             name:
                 the name of the offering
+        use_foi_as_sensor:
+            Boolean port; if True (default is False) then each FOI is used to
+            create a sensor.
         sensor_details:
             A single physical sensor, computation, simulation, or process
-            that has created the observation(s).
+            that has created the observation(s). This is also termed a
+            "procedure" in the SOS specification.
 
             ID:
                 the unique identifier for the sensor
@@ -1088,6 +1150,7 @@ class RegisterSensor(SOSFeeder):
             a list; each item containing the result of a single POST
     """
     _input_ports = [
+        ('use_foi_as_sensor', '(edu.utah.sci.vistrails.basic:Boolean)'),
         ('sensor_details', '(edu.utah.sci.vistrails.basic:String,\
 edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String,\
 edu.utah.sci.vistrails.basic:Float,edu.utah.sci.vistrails.basic:Float,\
@@ -1114,17 +1177,22 @@ edu.utah.sci.vistrails.basic:String)',
         data = {}
         data['offering'] = self.offering
         data['properties'] = self.property
+        data['settings'] = self.settings
         results = []
-        for sensor in self.sensors:
+        for key, sensor in enumerate(self.sensors):
             data['sensor'] = sensor
-            data['foi'] = self.foi
+            if self.foi_as_sensor:
+                # use a 1:1 mapping for sensor:FOI
+                data['foi'] = [self.foi[key], ]
+            else:
+                data['foi'] = self.foi
             try:
                 XML = self.create_XML(sheet_name=None, data=data)
             except Exception, e:
                 self.raiseError('Unable to create XML for POST: %s' % e)
             if XML:
                 results.append(XML)
-                #print "\nSOSfeed:1117\n", XML
+                #print "\nSOSfeed:1181\n", XML
         return results
 
     def create_XML(self, sheet_name=None, data={}, template_name=REGISTER_SENSOR):
@@ -1169,16 +1237,20 @@ edu.utah.sci.vistrails.basic:String)',
               'urn': 'urn:ogc:def:phenomenon:OGC:1.0.30:humidity',
               'type': 'Quantity',
               'units': 'percentage'})
+            data['settings'] = {
+                'foi_as_sensor': False,
+            }
 
         try:
             #foi = data.get('foi')
             #for f in foi:
-            #    print "sosfeed:1159  srs:", type(f.get('srs')), f.get('srs')
+            #    print "sosfeed:1249  srs:", type(f.get('srs')), f.get('srs')
             data = template.render(sensor=data.get('sensor'),
                                    offering=data.get('offering'),
                                    foi=data.get('foi'),
                                    components=data.get('properties'),
-                                   coords=data.get('coords'),)
+                                   coords=data.get('coords'),
+                                   settings=data.get('settings'))
         except Exception, e:
             self.raiseError('Unable to render XML template: %s' % e)
             return None
@@ -1186,7 +1258,9 @@ edu.utah.sci.vistrails.basic:String)',
 
     def compute(self):
         super(RegisterSensor, self).compute()
-        # check other port values
+        # get port values
+        self.foi_as_sensor = self.forceGetInputFromPort('use_foi_as_sensor',
+                                                        False)
         _sensor = self.forceGetInputFromPort('sensor', None)
         if self.forceGetInputFromPort('offering'):
             _offering_ID, _offering_name = \
@@ -1205,10 +1279,15 @@ edu.utah.sci.vistrails.basic:String)',
         _property = self.forceGetInputFromPort('property', None)
 
         # validate port values
-        if not _sensor and not (_sensor_ID and _sensor_name):
+        if not _sensor and not (_sensor_ID and _sensor_name) \
+        and (self.foi_as_sensor and not _FOI):
             self.raiseError('Either sensor or sensor details must be specified')
         if not _property:
             self.raiseError('Property details are required!')
+
+        # overall SOS settings; add as required - use to drive XML template
+        self.settings = {}
+        self.settings['foi_as_sensor'] = self.foi_as_sensor
 
         # offering core metadata
         self.offering = {}
@@ -1218,7 +1297,7 @@ edu.utah.sci.vistrails.basic:String)',
         # sensor(s) core metadata
         self.sensors = []
         # single sensor
-        if  _sensor_ID:
+        if  _sensor_ID and not self.foi_as_sensor:
             sensor = {}
             sensor['ID'] = self.escaped(_sensor_ID)
             sensor['name'] = self.escaped(_sensor_name)
@@ -1229,7 +1308,7 @@ edu.utah.sci.vistrails.basic:String)',
             sensor['altitude'] = _sensor_alt
             self.sensors.append(sensor)
         # multiple sensors
-        if _sensor:
+        if _sensor and not self.foi_as_sensor:
             for item in _sensor:
                 if item:
                     if len(item) >= 2:
@@ -1247,7 +1326,7 @@ edu.utah.sci.vistrails.basic:String)',
         self.coords = []
         if _coords:
             for item in _coords:
-                #print "sosfeed:1242 coords item", len(item), item
+                #print "sosfeed:1312 coords item", len(item), item
                 if item:
                     if len(item) >= 2:
                         _dict = dict(zip(xrange(len(item)), item))
@@ -1266,27 +1345,50 @@ edu.utah.sci.vistrails.basic:String)',
         self.foi = []
         if _FOI:
             for key, item in enumerate(_FOI):
-                #print "sosfeed:1261 foi item", key, len(item), item
+                #print "sosfeed:1336 foi item", key, len(item), item
                 if item:
                     if len(item) >= 3:
                         _dict = dict(zip(xrange(len(item)), item))
                         #pprint.pprint(_dict)
                         if _dict.get(4):
-                            self.validate_srs(_dict.get(4), key + 1)
+                            srs = _dict.get(4).strip()
+                            if srs:
+                                self.validate_srs(srs, key + 1)
+                        else:
+                            srs = ''
                         self.foi.append({
                             'id': self.escaped(_dict.get(0) or ""),
                             'name': self.escaped(_dict.get(1)or ""),
                             'coords': self.extract_pairs(_dict.get(2), key + 1),
                             'altitude': self.to_float(_dict.get(3)) or 0,
-                            'srs': _dict.get(4) or SRS_DEFAULT})
+                            'srs': srs or SRS_DEFAULT})
                     else:
-                        self.raiseError("Insufficient FOI values in each and/or every list.")
-
+                        self.raiseError(
+                            "Insufficient FOI values in each and/or every list.")
+        # equate sensors to FOI
+        if self.foi_as_sensor:
+            for foi in self.foi:
+                lat, lon = '0.00', '0.00'
+                coords = foi.get('coords')
+                #TODO - handle case where a sensor is represented by a polygon
+                try:
+                    if coords:
+                        lat = coords[0][0]
+                        lon = coords[0][1]
+                except:
+                    pass
+                self.sensors.append({
+                    'ID': foi.get('id'),
+                    'name': foi.get('name'),
+                    'latitude': lat,
+                    'longitude': lon,
+                    'altitude': foi.get('altitude'),
+                    'srs': foi.get('srs')})
         # get property lookup details as list of dictionaries
         self.property = []
         if _property:
             for item in _property:
-                #print "sosfeed:1281 prop item", len(item), item
+                #print "sosfeed:1377 prop item", len(item), item
                 if item:
                     if len(item) >= 3:
                         _dict = dict(zip(xrange(len(item)), item))
@@ -1296,7 +1398,8 @@ edu.utah.sci.vistrails.basic:String)',
                             'urn': self.escaped(_dict.get(2) or ""),
                             'units': self.escaped(_dict.get(3) or "")})
                     else:
-                        self.raiseError("Insufficient property values on each line'")
+                        self.raiseError(
+                            "Insufficient property values on each line'")
         # process configuration and generate output
         try:
             results = self.create_results()

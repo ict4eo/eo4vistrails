@@ -30,8 +30,8 @@ http://schemas.opengis.net/sos/1.0.0/sosRegisterSensor.xsd http://www.opengis.ne
       </sml:IdentifierList>
      </sml:identification>
 
-     <!-- sml:capabilities has to contain status and mobility information -->
-     <sml:capabilities>
+     <!-- sml:characteristics has to contain status and mobility information -->
+     <sml:characteristics>
       <swe:SimpleDataRecord>
        <!-- status: sensor is collecting data at the moment (true) or not (false) -->
        <swe:field name="status">
@@ -46,7 +46,20 @@ http://schemas.opengis.net/sos/1.0.0/sosRegisterSensor.xsd http://www.opengis.ne
         </swe:Boolean>
         </swe:field>
       </swe:SimpleDataRecord>
+     </sml:characteristics>
+
+     <!-- sml:capabilities used to link to a sensor to an FOI -->
+     {% if settings.foi_as_sensor %}
+     <sml:capabilities>
+      <swe:DataRecord>
+       <swe:field name="FeatureOfInterestID">
+        <swe:Text definition="FeatureOfInterest identifier">
+         <swe:value>{{ foi.0.id }}</swe:value>
+        </swe:Text>
+       </swe:field>
+      </swe:DataRecord>
      </sml:capabilities>
+     {% endif %}
 
      {% if sensor.latitude and sensor.longitude %}{# sos error if no pos #}{% endif %}
      <!-- last measured position of sensor -->
