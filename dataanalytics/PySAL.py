@@ -35,7 +35,7 @@ from core.modules.vistrails_module import Module
 # local
 
 
-class PySALModule(object):
+class PySALModule():
     pass
 
 

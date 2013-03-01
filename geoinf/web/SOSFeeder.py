@@ -57,6 +57,7 @@ FALSE = 'False'
 REGISTER_SENSOR = 'RegisterSensor.xml'
 INSERT_OBSERVATION = 'InsertObservation.xml'
 INSERT_OBSERVATION_FOI = 'InsertObservationFOI.xml'
+SKIP_EMPTY = True  # ignore any missing properties; do not raise error
 
 
 @RPyCSafeModule()
@@ -427,9 +428,9 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
             self.feature_lookup: list of dictionaries
                 details for each feature (as a dictionary), in the format:
                     [{"id": "ID_1", "name": "name_1", "srs": "SRS_1",
-                       "coords": [(a,b), (c,d) ...]},
+                      "coords": [(a,b), (c,d) ...], "altitude": 999},
                      {"id": "ID_2", "name": "name_2", "srs": "SRS_2",
-                      "coords": [(p,q), (r,s) ...]},}]
+                      "coords": [(p,q), (r,s) ...], "altitude": 999},}]
         """
 
         def cell_value(sheet, row_num, col_num):
@@ -460,34 +461,38 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
             return value
 
         def add_property(name, source_type=None, row=None, col=None):
-            """If property is found in lookup, add to properties attribute."""
+            """If property is found in lookup, add to properties attribute.
+
+            Set SKIP_EMPTY to True to ignore any empty property.
+            """
             try:
                 prop = self.property_lookup.get(name.strip(' '))
             except AttributeError:
                 self.raiseError('Property "%s" is not in the correct format'\
                                 % name)
-            if not prop:
+            if not prop and not SKIP_EMPTY:
                 self.raiseError('Unable to locate property "%s" in the lookup'\
                                 % name)
-            if len(prop) >= 3:
-                self.properties.append({
-                    'name': name.replace('"', "'"),
-                    'type': prop[0] or 'Quantity',
-                    'urn': prop[1],
-                    'units': prop[2],
-                    'row': row,
-                    'col': col,
-                    'source': source_type})
-                if not self.unique_property_names.get(name):
-                    self.unique_property_names[name] = name
-                    self.unique_properties.append({
+            if prop:
+                if len(prop) >= 3:
+                    self.properties.append({
                         'name': name.replace('"', "'"),
                         'type': prop[0] or 'Quantity',
                         'urn': prop[1],
-                        'units': prop[2]})
-            else:
-                self.raiseError('Invalid property details "%s" in the lookup',\
-                                name)
+                        'units': prop[2],
+                        'row': row,
+                        'col': col,
+                        'source': source_type})
+                    if not self.unique_property_names.get(name):
+                        self.unique_property_names[name] = name
+                        self.unique_properties.append({
+                            'name': name.replace('"', "'"),
+                            'type': prop[0] or 'Quantity',
+                            'urn': prop[1],
+                            'units': prop[2]})
+                else:
+                    self.raiseError('Invalid property details "%s" in the lookup',\
+                                    name)
 
         def add_foi(foi_ID, row=None, col=None):
             """If FOI is found in lookup, add to the FOI's dictionary."""
@@ -503,6 +508,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                     foi_ID_entry = feature
                     break
             if foi_ID_entry:
+                #print "sosfeed:506", foi_ID_entry
                 ID = foi_ID_entry.get('id')
                 # convert coords "list of tuples with unicode strings"
                 coords = []
@@ -527,8 +533,8 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                     'coords': coords,
                     'col': col,
                     'row': row}
-                #print "sosfeed:526", foi_ID_entry.get('srs'), self.fois[ID])
-                self.validate_srs(self.fois[ID]['srs'])
+                #print "sosfeed:531", foi_ID_entry.get('srs'), self.fois[ID]['srs']
+                self.validate_srs(self.fois[ID]['srs'], line=row)
 
         def add_date(_date, row=None, col=None):
             """Add a date string to the date list."""
@@ -1018,7 +1024,8 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                             'id': self.escaped(_dict.get(0) or ""),
                             'name': self.escaped(_dict.get(1)or ""),
                             'coords': self.extract_pairs(_dict.get(2), key + 1),
-                            'srs': _dict.get(3) or SRS_DEFAULT}
+                            'altitude': self.escaped(_dict.get(3)or ""),
+                            'srs': _dict.get(4) or SRS_DEFAULT}
                         self.feature_lookup.append(feature)
                     else:
                         self.raiseError("Insufficient FOI values in each and/or every list")

@@ -17,7 +17,7 @@ import os
 sys.path.insert(0, os.path.abspath('../' + '/'))  # !
 print "Project Directory:", sys.path[0]  # !
 
-sys.path.insert(0, os.path.abspath('/home/dhohls/Downloads/VisTrails/vistrails-src-1.6-e9f97c5908ac/vistrails/'))
+sys.path.insert(0, os.path.abspath('/home/derek/Downloads/VisTrails/vistrails-src-1.7-51517a6cdab6/vistrails/'))
 print "VisTrails Directory:", sys.path[0]
 
 """
@@ -129,7 +129,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'EO4VisTrails'
-copyright = u'2012, Meraka.CSIR'
+copyright = u'2011-2013, Meraka.CSIR'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

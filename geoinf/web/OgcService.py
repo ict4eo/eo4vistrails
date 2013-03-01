@@ -77,9 +77,13 @@ class OGC(NotCacheable):
         def write_gml_data(data):
             """Write GML data to file; return pointer to file object."""
             if data:
+                #print "ogcservice:80 data", type(data), "\n", data
                 fileObj = self.interpreter.filePool.create_file(suffix=".gml")
                 _file = open(fileObj.name, "w")
-                _file.writelines(self.webRequest.data)
+                try:
+                    _file.writelines(data)  # WAS self.webRequest.data ???
+                except:
+                    _file.writelines(data.encode('UTF-8'))  # convert to unico
                 _file.close()
                 return fileObj
             else:
