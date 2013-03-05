@@ -15,10 +15,12 @@ DataModels
 .. automodule:: geoinf.datamodels
    :members:
 
-Test!
------
 
-.. automodule:: geoinf.datamodels.Test
+DataRequest
+-------------------
+
+.. automodule:: geoinf.datamodels.DataRequest
+.. autoclass:: DataRequest
    :members:
 
 
@@ -28,11 +30,6 @@ Feature
 .. automodule:: geoinf.datamodels.Feature
    :members:
 
-GeoStrings
-----------
-
-.. automodule:: geoinf.datamodels.GeoJSON
-   :members:
 
 QgsLayer
 --------
@@ -58,76 +55,8 @@ TemporalVectorLayer
 .. automodule:: geoinf.datamodels.TemporalVectorLayer
    :members:
 
+WebRequest
+-------------------
 
-GRASS
-=====
-
-.. automodule:: geoinf.grass
+.. automodule:: geoinf.datamodels.WebRequest
    :members:
-
-GrassSession
-------------
-
-.. automodule:: geoinf.grass.GrassSession
-   :members:
-
-OGC
-===
-
-.. automodule:: geoinf.ogc
-   :members:
-
-Common
-------
-
-.. automodule:: geoinf.ogc.Common
-   :members:
-
-OgcService
-----------
-
-.. automodule:: geoinf.ogc.OgcService
-   :members:
-
-PortConfigurationWidget
------------------------
-
-.. automodule:: geoinf.ogc.PortConfigurationWidget
-   :members:
-
-
-SOS
----
-
-.. automodule:: geoinf.ogc.SOS
-   :members:
-
-
-WCS
----
-
-.. automodule:: geoinf.ogc.WCS
-   :members:
-
-WFS
----
-
-.. automodule:: geoinf.ogc.WFS
-   :members:
-
-WPS
----
-
-.. automodule:: geoinf.ogc.WPS
-   :members:
-
-
-PostGIS
-=======
-
-PostGIS
--------
-
-.. automodule:: geoinf.postgis.PostGIS
-   :members:
-

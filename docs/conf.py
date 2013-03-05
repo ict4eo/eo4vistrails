@@ -20,6 +20,8 @@ print "Project Directory:", sys.path[0]  # !
 sys.path.insert(0, os.path.abspath('/home/derek/Downloads/VisTrails/vistrails-src-1.7-51517a6cdab6/vistrails/'))
 print "VisTrails Directory:", sys.path[0]
 
+print "-----------------------------------------------------------------------"
+
 """
 From: http://read-the-docs.readthedocs.org/en/latest/faq.html#i-get-import-errors-on-libraries-that-depend-on-c-modules
 """
@@ -68,6 +70,12 @@ MOCK_MODULES = ['h5py', 'geojson', 'gdal', 'gdalnumeric',
                 'core.system',
                 'core.utils',
 
+                'plots',
+                'plots.standard',
+                'plots.standard.plot',
+                'plots.windrose',
+                'plots.windrose.plot',
+
                 'packages',
                 'packages.eo4vistrails',
                 'packages.eo4vistrails.datacube',
@@ -77,6 +85,7 @@ MOCK_MODULES = ['h5py', 'geojson', 'gdal', 'gdalnumeric',
                 'packages.eo4vistrails.geoinf.datamodels',
                 'packages.eo4vistrails.geoinf.datamodels.Feature',
                 'packages.eo4vistrails.geoinf.datamodels.QgsLayer',
+                'packages.eo4vistrails.geoinf.datamodels.PostGISRequest',
                 'packages.eo4vistrails.geoinf.datamodels.Raster',
                 'packages.eo4vistrails.geoinf.datamodels.TemporalVectorLayer',
                 'packages.eo4vistrails.geoinf.web',
@@ -98,18 +107,21 @@ MOCK_MODULES = ['h5py', 'geojson', 'gdal', 'gdalnumeric',
                 'packages.eo4vistrails.tools.visual.plots.windrose',
                 'packages.eo4vistrails.tools.visual.plots.windrose.windrose',
                 'packages.eo4vistrails.tools.utils',
+                'packages.eo4vistrails.tools.utils.Array',
+                'packages.eo4vistrails.tools.utils.datetimeutils',
+                'packages.eo4vistrails.tools.utils.DropDownListWidget',
+                'packages.eo4vistrails.tools.utils.ListCell',
+                'packages.eo4vistrails.tools.utils.ListFilter',
+                'packages.eo4vistrails.tools.utils.ModuleHelperMixin',
                 'packages.eo4vistrails.tools.utils.Parser',
+                'packages.eo4vistrails.tools.utils.session',
+                'packages.eo4vistrails.tools.utils.synhigh',
                 'packages.eo4vistrails.tools.utils.ThreadSafe',
                 'packages.eo4vistrails.rpyc',
                 'packages.eo4vistrails.rpyc.RPyC',
                 'packages.eo4vistrails.rpyc.RPyCHelper',
                 'packages.eo4vistrails.utils',
-                'packages.eo4vistrails.utils.Array',
                 'packages.eo4vistrails.utils.DataRequest',
-                'packages.eo4vistrails.utils.DropDownListWidget',
-                'packages.eo4vistrails.utils.ModuleHelperMixin',
-                'packages.eo4vistrails.utils.session',
-                'packages.eo4vistrails.utils.synhigh',
                 'packages.eo4vistrails.utils.WebRequest',
                 'packages.pylab',
                 'packages.pylab.plot'

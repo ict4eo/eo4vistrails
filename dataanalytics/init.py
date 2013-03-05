@@ -30,6 +30,45 @@ data analytics (including scripting) to VisTrails.
 #History
 #Terence van Zyl, 15 Dec 2010, Version 1.0
 
+from core.bundles import py_import
+from core import debug
+
+"""This auto-import does not work because net NOT in Ubuntu repo: March 2013"""
+try:
+    pkg_dict = {'linux-ubuntu': 'python-networkx',
+                'linux-fedora': 'python-networkx'}
+    Networkx = py_import('networkx', pkg_dict)
+except Exception, e:
+    debug.critical("Exception: %s" % e)
+
+
+"""This auto-import does not work because pydap NOT in Ubuntu repo: March 2013
+try:
+    pkg_dict = {'linux-ubuntu': 'python-pydap',
+                'linux-fedora': 'python-pydap'}
+    pydap = py_import('pydap', pkg_dict)
+except Exception, e:
+    debug.critical("Exception: %s" % e)
+"""
+
+"""This auto-import does not work because netCDF4 NOT in Ubuntu repo: March 2013
+try:
+    pkg_dict = {'linux-ubuntu': 'python-netCDF4',
+                'linux-fedora': 'python-netCDF4'}
+    netCDF4 = py_import('netCDF4', pkg_dict)
+except Exception, e:
+    debug.critical("Exception: %s" % e)
+"""
+
+"""This auto-import does not work because pysal NOT in Ubuntu repo: March 2013
+try:
+    pkg_dict = {'linux-ubuntu': 'python-pysal',
+                'linux-fedora': 'python-pysal'}
+    pysal = py_import('pysal', pkg_dict)
+except Exception, e:
+    debug.critical("Exception: %s" % e)
+"""
+
 #Input ports
 dataSlice = "dataSlice"
 url = "url"

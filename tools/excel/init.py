@@ -26,6 +26,15 @@
 """This package provides Excel capabilities.
 """
 
+from core.bundles import py_import
+from core import debug
+try:
+    pkg_dict = {'linux-ubuntu': 'python-xlrd',
+                'linux-fedora': 'python-xlrd'}
+    xlrd = py_import('xlrd', pkg_dict)  # also tried 'python-xlrd'
+except Exception, e:
+    debug.critical("Exception: %s" % e)
+
 
 def missing(package_name, module_name):
     print "WARNING: %s package not installed; %s Module disabled" % \
