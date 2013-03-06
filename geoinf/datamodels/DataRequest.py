@@ -24,8 +24,8 @@
 ### WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ###
 #############################################################################
-"""This module forms part of the eo4vistrails capabilities - it is used to
-handle data and PostGIS requests for processing inside vistrails.
+"""This module forms part of the eo4vis1trails capabilities - it is used
+as a base module for building requests.
 """
 # library
 # third party
@@ -39,7 +39,7 @@ from core.modules.vistrails_module import Module, NotCacheable, ModuleError
 class DataRequest(NotCacheable, Module):
     """DataRequest is the topmost, abstract class in the request type hierachy.
 
-    Other request types such as WebRequest and PostGISrequest inherit from it.
+    Other request types such as `WebRequest` and `PostGISRequest` inherit from it.
 
     The input ports reflect exactly the QgsMapLayer framework inputs,
     because the QGIS framework forms the foundation of the data layer - see:

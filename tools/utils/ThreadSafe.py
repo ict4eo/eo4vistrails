@@ -40,7 +40,7 @@ import core.packagemanager
 from packages.controlflow.fold import *
 
 
-class _ThreadSafeMixin(object):
+class _ThreadSafeMixin():
     pass
 
 

@@ -155,27 +155,6 @@ class RasterImportCommonWidget(QtGui.QWidget):
         self.lbxDetails.addItem(str(metadata))
 
 
-def initialize(*args, **keywords):
-    """sets everything up"""
-    # We'll first create a local alias for the module_registry so that
-    # we can refer to it in a shorter way.
-    reg = core.modules.module_registry.get_module_registry()
-    reg.add_module(RasterModel)
-    """
-    #input ports
-    #reg.add_input_port(
-        RasterModel,
-        "service_version",
-        (core.modules.basic_modules.String,
-        'Web Map Service version - default 1.1.1'))
-    """
-    #output ports
-    reg.add_output_port(
-        RasterModel,
-        "OGRDataset",
-        (ogr.Dataset, 'Raster data in OGR Dataset'))
-
-
 class RasterImportConfigurationWidget(OgcConfigurationWidget):
     """makes use of code style from OgcConfigurationWidget"""
 
@@ -198,3 +177,24 @@ class RasterImportConfigurationWidget(OgcConfigurationWidget):
                 None,
                 QtGui.QApplication.UnicodeUTF8))
         self.tabs.setCurrentIndex(0)
+
+
+def initialize(*args, **keywords):
+    """sets everything up"""
+    # We'll first create a local alias for the module_registry so that
+    # we can refer to it in a shorter way.
+    reg = core.modules.module_registry.get_module_registry()
+    reg.add_module(RasterModel)
+    """
+    #input ports
+    #reg.add_input_port(
+        RasterModel,
+        "service_version",
+        (core.modules.basic_modules.String,
+        'Web Map Service version - default 1.1.1'))
+    """
+    #output ports
+    reg.add_output_port(
+        RasterModel,
+        "OGRDataset",
+        (ogr.Dataset, 'Raster data in OGR Dataset'))

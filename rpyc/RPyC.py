@@ -61,7 +61,10 @@ class _RPyCSafeModule(object):
 # import either actual, or "dummy" rpyc modules
 manager = core.packagemanager.get_package_manager()
 if manager.has_package('za.co.csir.rpyc4vistrails'):
-    from packages.rpyc4vistrails.RPyC import RPyCModule, RPyCSafeModule
+    try:
+        from packages.rpyc4vistrails.RPyC import RPyCModule, RPyCSafeModule
+    except:
+        pass
 else:
     RPyCModule = _RPyCModule
     RPyCSafeModule = _RPyCSafeModule

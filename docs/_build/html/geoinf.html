@@ -71,12 +71,12 @@ visualisation capabilities through the QGIS API.</p>
 and time-series data. Proposes use of gdal, ogr (or GeoJson) and hdf</p>
 <div class="section" id="module-geoinf.datamodels.DataRequest">
 <span id="datarequest"></span><h3>DataRequest<a class="headerlink" href="#module-geoinf.datamodels.DataRequest" title="Permalink to this headline">¶</a></h3>
-<p>This module forms part of the eo4vistrails capabilities - it is used to
-handle data and PostGIS requests for processing inside vistrails.</p>
+<p>This module forms part of the eo4vis1trails capabilities - it is used
+as a base module for building requests.</p>
 <dl class="attribute">
 <dt id="geoinf.datamodels.DataRequest.DataRequest">
 <tt class="descclassname">geoinf.datamodels.DataRequest.</tt><tt class="descname">DataRequest</tt><a class="headerlink" href="#geoinf.datamodels.DataRequest.DataRequest" title="Permalink to this definition">¶</a></dt>
-<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">&lt;Mock</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x27621d0&gt;</span></tt></p>
+<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">&lt;Mock</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x2810d10&gt;</span></tt></p>
 </dd></dl>
 
 </div>
@@ -91,16 +91,64 @@ provided classes.</p>
 <dd><p>sets everything up</p>
 </dd></dl>
 
+<dl class="attribute">
+<dt id="geoinf.datamodels.Feature.FeatureModel">
+<tt class="descclassname">geoinf.datamodels.Feature.</tt><tt class="descname">FeatureModel</tt><a class="headerlink" href="#geoinf.datamodels.Feature.FeatureModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">&lt;Mock</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x2b02450&gt;</span></tt></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="geoinf.datamodels.Feature.MemFeatureModel">
+<tt class="descclassname">geoinf.datamodels.Feature.</tt><tt class="descname">MemFeatureModel</tt><a class="headerlink" href="#geoinf.datamodels.Feature.MemFeatureModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">&lt;Mock</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x2b02510&gt;</span></tt></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="geoinf.datamodels.Feature.FileFeatureModel">
+<tt class="descclassname">geoinf.datamodels.Feature.</tt><tt class="descname">FileFeatureModel</tt><a class="headerlink" href="#geoinf.datamodels.Feature.FileFeatureModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">&lt;Mock</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x2b028d0&gt;</span></tt></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="geoinf.datamodels.Feature.FeatureModelGeometryComparitor">
+<tt class="descclassname">geoinf.datamodels.Feature.</tt><tt class="descname">FeatureModelGeometryComparitor</tt><a class="headerlink" href="#geoinf.datamodels.Feature.FeatureModelGeometryComparitor" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">&lt;Mock</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x2b024d0&gt;</span></tt></p>
+</dd></dl>
+
 </div>
 <div class="section" id="module-geoinf.datamodels.QgsLayer">
 <span id="qgslayer"></span><h3>QgsLayer<a class="headerlink" href="#module-geoinf.datamodels.QgsLayer" title="Permalink to this headline">¶</a></h3>
 <p>This module provides a data structure for storing raster and vector data
 in the formats defined by QGIS.</p>
+<dl class="attribute">
+<dt id="geoinf.datamodels.QgsLayer.QgsMapLayer">
+<tt class="descclassname">geoinf.datamodels.QgsLayer.</tt><tt class="descname">QgsMapLayer</tt><a class="headerlink" href="#geoinf.datamodels.QgsLayer.QgsMapLayer" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">&lt;Mock</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x2d5fdd0&gt;</span></tt></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="geoinf.datamodels.QgsLayer.QgsVectorLayer">
+<tt class="descclassname">geoinf.datamodels.QgsLayer.</tt><tt class="descname">QgsVectorLayer</tt><a class="headerlink" href="#geoinf.datamodels.QgsLayer.QgsVectorLayer" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">&lt;Mock</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x2d74050&gt;</span></tt></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="geoinf.datamodels.QgsLayer.QgsRasterLayer">
+<tt class="descclassname">geoinf.datamodels.QgsLayer.</tt><tt class="descname">QgsRasterLayer</tt><a class="headerlink" href="#geoinf.datamodels.QgsLayer.QgsRasterLayer" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">&lt;Mock</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x2d74650&gt;</span></tt></p>
+</dd></dl>
+
 </div>
 <div class="section" id="module-geoinf.datamodels.QgsLayerWriter">
 <span id="qgslayerwriter"></span><h3>QgsLayerWriter<a class="headerlink" href="#module-geoinf.datamodels.QgsLayerWriter" title="Permalink to this headline">¶</a></h3>
 <p>This module provides a means for saving raster and vector data to file,
 in the format defined by QGIS.</p>
+<dl class="attribute">
+<dt id="geoinf.datamodels.QgsLayerWriter.QgsLayerWriter">
+<tt class="descclassname">geoinf.datamodels.QgsLayerWriter.</tt><tt class="descname">QgsLayerWriter</tt><a class="headerlink" href="#geoinf.datamodels.QgsLayerWriter.QgsLayerWriter" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">&lt;Mock</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x2af3090&gt;</span></tt></p>
+</dd></dl>
+
 </div>
 <div class="section" id="module-geoinf.datamodels.Raster">
 <span id="raster"></span><h3>Raster<a class="headerlink" href="#module-geoinf.datamodels.Raster" title="Permalink to this headline">¶</a></h3>
@@ -109,7 +157,187 @@ All eo4vistrails modules dealing with raster data must extend this class.</p>
 <dl class="function">
 <dt id="geoinf.datamodels.Raster.initialize">
 <tt class="descclassname">geoinf.datamodels.Raster.</tt><tt class="descname">initialize</tt><big>(</big><em>*args</em>, <em>**keywords</em><big>)</big><a class="headerlink" href="#geoinf.datamodels.Raster.initialize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add module to the Vistrails registry; specify input &amp; output ports.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="geoinf.datamodels.Raster._GdalMemModel">
+<em class="property">class </em><tt class="descclassname">geoinf.datamodels.Raster.</tt><tt class="descname">_GdalMemModel</tt><a class="headerlink" href="#geoinf.datamodels.Raster._GdalMemModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Used as both a storage mechanism for MemRasterModel instances
+and as a general GDAL constructor, i.e. whether you want an
+in-memory GDAL data provider or not, data will always be passed
+into GDAL control via instances of _GdalMemModel</p>
+<dl class="method">
+<dt id="geoinf.datamodels.Raster._GdalMemModel.dumpToFile">
+<tt class="descname">dumpToFile</tt><big>(</big><em>filesource</em>, <em>datasetType='GTiff'</em><big>)</big><a class="headerlink" href="#geoinf.datamodels.Raster._GdalMemModel.dumpToFile" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="geoinf.datamodels.Raster._GdalMemModel.loadContentFromFile">
+<tt class="descname">loadContentFromFile</tt><big>(</big><em>sourceDS</em>, <em>getStatement=''</em><big>)</big><a class="headerlink" href="#geoinf.datamodels.Raster._GdalMemModel.loadContentFromFile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loads content off filesystem, e.g. from a geotiff</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>uri</strong> (<em>str</em>) &#8211; a path to a file</li>
+<li><strong>getStatement</strong> (<em>str</em>) &#8211; the XML of the request parameters</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">None</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Expects datasets with one layer, so some arcane formats are out...</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="geoinf.datamodels.Raster._GdalMemModel.loadContentFromURI">
+<tt class="descname">loadContentFromURI</tt><big>(</big><em>uri</em>, <em>getStatement=''</em><big>)</big><a class="headerlink" href="#geoinf.datamodels.Raster._GdalMemModel.loadContentFromURI" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loads content off web service, feed etc.; e.g., a WCS</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>uri</strong> (<em>str</em>) &#8211; the URI of the service endpoint
+Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do
+eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim
+ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut
+aliquip ex ea commodo consequat.</li>
+<li><strong>getStatement</strong> (<em>str</em>) &#8211; the XML of the request parameters</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">None</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p>These arguments allow creation of GET/POST requests, and also
+allow us to make GDAL sensibly deal with the inputs.</p>
+<p>For WCS, we expect a WCS GetCoverage request to be incoming.
+GDAL, our raster &#8220;swiss army knife&#8221;, expects to access a WCS from a
+config file on the filesystem, that looks like:</p>
+<div class="highlight-xml"><div class="highlight"><pre><span class="nt">&lt;WCS_GDAL&gt;</span>
+    <span class="nt">&lt;ServiceURL&gt;</span>
+        http://ict4eo.meraka.csir.co.za/geoserver/wcs?
+    <span class="nt">&lt;/ServiceURL&gt;</span>
+    <span class="nt">&lt;CoverageName&gt;</span>
+        nurc:Img_Sample
+    <span class="nt">&lt;/CoverageName&gt;</span>
+<span class="nt">&lt;/WCS_GDAL&gt;</span>
+</pre></div>
+</div>
+<p>and is called something like <em>ict4eowcs.wcs</em>.</p>
+<p>GDAL needs read/write access to this file, for it then writes the
+capabilities to it for later reference.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="attribute">
+<dt id="geoinf.datamodels.Raster.RasterModel">
+<tt class="descclassname">geoinf.datamodels.Raster.</tt><tt class="descname">RasterModel</tt><a class="headerlink" href="#geoinf.datamodels.Raster.RasterModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">&lt;Mock</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x2bbfc50&gt;</span></tt></p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-geoinf.datamodels.RasterImport">
+<span id="rasterimport"></span><h3>RasterImport<a class="headerlink" href="#module-geoinf.datamodels.RasterImport" title="Permalink to this headline">¶</a></h3>
+<p>This module provides a Raster file Import</p>
+<dl class="function">
+<dt id="geoinf.datamodels.RasterImport.initialize">
+<tt class="descclassname">geoinf.datamodels.RasterImport.</tt><tt class="descname">initialize</tt><big>(</big><em>*args</em>, <em>**keywords</em><big>)</big><a class="headerlink" href="#geoinf.datamodels.RasterImport.initialize" title="Permalink to this definition">¶</a></dt>
 <dd><p>sets everything up</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="geoinf.datamodels.RasterImport.rand">
+<tt class="descclassname">geoinf.datamodels.RasterImport.</tt><tt class="descname">rand</tt><big>(</big><em>d0</em>, <em>d1</em>, <em>...</em>, <em>dn</em><big>)</big><a class="headerlink" href="#geoinf.datamodels.RasterImport.rand" title="Permalink to this definition">¶</a></dt>
+<dd><p>Random values in a given shape.</p>
+<p>Create an array of the given shape and propagate it with
+random samples from a uniform distribution
+over <tt class="docutils literal"><span class="pre">[0,</span> <span class="pre">1)</span></tt>.</p>
+<dl class="docutils">
+<dt>d0, d1, ..., dn <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd>Shape of the output.</dd>
+</dl>
+<dl class="docutils">
+<dt>out <span class="classifier-delimiter">:</span> <span class="classifier">ndarray, shape <tt class="docutils literal"><span class="pre">(d0,</span> <span class="pre">d1,</span> <span class="pre">...,</span> <span class="pre">dn)</span></tt></span></dt>
+<dd>Random values.</dd>
+</dl>
+<p>random</p>
+<p>This is a convenience function. If you want an interface that
+takes a shape-tuple as the first argument, refer to
+<cite>random</cite>.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>
+<span class="go">array([[ 0.14022471,  0.96360618],  #random</span>
+<span class="go">       [ 0.37601032,  0.25528411],  #random</span>
+<span class="go">       [ 0.49313049,  0.94909878]]) #random</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="geoinf.datamodels.RasterImport.randn">
+<tt class="descclassname">geoinf.datamodels.RasterImport.</tt><tt class="descname">randn</tt><big>(</big><span class="optional">[</span><em>d1</em>, <em>...</em>, <em>dn</em><span class="optional">]</span><big>)</big><a class="headerlink" href="#geoinf.datamodels.RasterImport.randn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a sample (or samples) from the &#8220;standard normal&#8221; distribution.</p>
+<p>If positive, int_like or int-convertible arguments are provided,
+<cite>randn</cite> generates an array of shape <tt class="docutils literal"><span class="pre">(d1,</span> <span class="pre">...,</span> <span class="pre">dn)</span></tt>, filled
+with random floats sampled from a univariate &#8220;normal&#8221; (Gaussian)
+distribution of mean 0 and variance 1 (if any of the <math xmlns="http://www.w3.org/1998/Math/MathML">
+<mrow><msub><mi>d</mi><mi>i</mi></msub></mrow></math> are
+floats, they are first converted to integers by truncation). A single
+float randomly sampled from the distribution is returned if no
+argument is provided.</p>
+<p>This is a convenience function.  If you want an interface that takes a
+tuple as the first argument, use <cite>numpy.random.standard_normal</cite> instead.</p>
+<dl class="docutils">
+<dt>d1, ..., dn <span class="classifier-delimiter">:</span> <span class="classifier"><cite>n</cite> ints, optional</span></dt>
+<dd>The dimensions of the returned array, should be all positive.</dd>
+</dl>
+<dl class="docutils">
+<dt>Z <span class="classifier-delimiter">:</span> <span class="classifier">ndarray or float</span></dt>
+<dd>A <tt class="docutils literal"><span class="pre">(d1,</span> <span class="pre">...,</span> <span class="pre">dn)</span></tt>-shaped array of floating-point samples from
+the standard normal distribution, or a single such float if
+no parameters were supplied.</dd>
+</dl>
+<p>random.standard_normal : Similar, but takes a tuple as its argument.</p>
+<p>For random samples from <math xmlns="http://www.w3.org/1998/Math/MathML">
+<mrow><mi>N</mi><mo>(</mo><mi>μ</mi><mo>,</mo><msup><mi>σ</mi><mn>2</mn></msup><mo>)</mo></mrow></math>, use:</p>
+<p><tt class="docutils literal"><span class="pre">sigma</span> <span class="pre">*</span> <span class="pre">np.random.randn(...)</span> <span class="pre">+</span> <span class="pre">mu</span></tt></p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">()</span>
+<span class="go">2.1923875335537315 #random</span>
+</pre></div>
+</div>
+<p>Two-by-four array of samples from N(3, 6.25):</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="mf">2.5</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span> <span class="o">+</span> <span class="mi">3</span>
+<span class="go">array([[-4.49401501,  4.00950034, -1.81814867,  7.29718677],  #random</span>
+<span class="go">       [ 0.39924804,  4.68456316,  4.99394529,  4.84057254]]) #random</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="geoinf.datamodels.RasterImport.RasterImport">
+<tt class="descclassname">geoinf.datamodels.RasterImport.</tt><tt class="descname">RasterImport</tt><a class="headerlink" href="#geoinf.datamodels.RasterImport.RasterImport" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">&lt;Mock</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x32c3ad0&gt;</span></tt></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="geoinf.datamodels.RasterImport.RasterImportCommonWidget">
+<tt class="descclassname">geoinf.datamodels.RasterImport.</tt><tt class="descname">RasterImportCommonWidget</tt><a class="headerlink" href="#geoinf.datamodels.RasterImport.RasterImportCommonWidget" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">&lt;Mock</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x32c3bd0&gt;</span></tt></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="geoinf.datamodels.RasterImport.RasterImportConfigurationWidget">
+<tt class="descclassname">geoinf.datamodels.RasterImport.</tt><tt class="descname">RasterImportConfigurationWidget</tt><a class="headerlink" href="#geoinf.datamodels.RasterImport.RasterImportConfigurationWidget" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">&lt;Mock</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x32f1050&gt;</span></tt></p>
 </dd></dl>
 
 </div>
@@ -118,12 +346,46 @@ All eo4vistrails modules dealing with raster data must extend this class.</p>
 <p>This module provides a data structure for creating and storing vector data,
 as well as associated attribute data (typically time-series data), based on the
 format defined by QGIS, from different input data types.</p>
+<dl class="attribute">
+<dt id="geoinf.datamodels.TemporalVectorLayer.TemporalVectorLayer">
+<tt class="descclassname">geoinf.datamodels.TemporalVectorLayer.</tt><tt class="descname">TemporalVectorLayer</tt><a class="headerlink" href="#geoinf.datamodels.TemporalVectorLayer.TemporalVectorLayer" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">&lt;Mock</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x37e8810&gt;</span></tt></p>
+</dd></dl>
+
 </div>
 <div class="section" id="module-geoinf.datamodels.WebRequest">
 <span id="webrequest"></span><h3>WebRequest<a class="headerlink" href="#module-geoinf.datamodels.WebRequest" title="Permalink to this headline">¶</a></h3>
 <p>This module forms part of the eo4vistrails capabilities - it is used to
 handle web request (e.g. for WFS, WCS or SOS) processing inside vistrails.</p>
+<dl class="attribute">
+<dt id="geoinf.datamodels.WebRequest.WebRequest">
+<tt class="descclassname">geoinf.datamodels.WebRequest.</tt><tt class="descname">WebRequest</tt><a class="headerlink" href="#geoinf.datamodels.WebRequest.WebRequest" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">&lt;Mock</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x3942290&gt;</span></tt></p>
+</dd></dl>
+
 </div>
+</div>
+<div class="section" id="module-geoinf.geostrings">
+<span id="geostrings"></span><h2>GeoStrings<a class="headerlink" href="#module-geoinf.geostrings" title="Permalink to this headline">¶</a></h2>
+<p>This package provides core and general purpose code for eo4vistrails geoinf
+module. In particular, it provides geo-constanst for use in other modules.</p>
+</div>
+<div class="section" id="module-geoinf.helpers">
+<span id="helpers"></span><h2>Helpers<a class="headerlink" href="#module-geoinf.helpers" title="Permalink to this headline">¶</a></h2>
+<p>This package provides core and general purpose helper code for eo4vistrails geoinf module.
+In particular, provides a tool for defining Areas, Lines and Points of interest for use elsewhere in 
+GIS environments and statistical environments.</p>
+</div>
+<div class="section" id="module-geoinf.postgis">
+<span id="postgis"></span><h2>PostGIS<a class="headerlink" href="#module-geoinf.postgis" title="Permalink to this headline">¶</a></h2>
+<p>This package provides GIS capabilities for eo4vistrails.
+In particular, it provides PostGIS clients via psycopg2.</p>
+<p>This is not an SQL Builder - it assumes you know SQL
+and, in particular, spatial SQL as provided by PostGIS.
+Thus you will need to write raw SQl &#8220;by hand&#8221;.</p>
+<p>The package merely provisions a session
+a.k.a. a PostGIS connection and allows random queries to be
+executed against your chosen database.</p>
 </div>
 </div>
 
@@ -142,10 +404,14 @@ handle web request (e.g. for WFS, WCS or SOS) processing inside vistrails.</p>
 <li><a class="reference internal" href="#module-geoinf.datamodels.QgsLayer">QgsLayer</a></li>
 <li><a class="reference internal" href="#module-geoinf.datamodels.QgsLayerWriter">QgsLayerWriter</a></li>
 <li><a class="reference internal" href="#module-geoinf.datamodels.Raster">Raster</a></li>
+<li><a class="reference internal" href="#module-geoinf.datamodels.RasterImport">RasterImport</a></li>
 <li><a class="reference internal" href="#module-geoinf.datamodels.TemporalVectorLayer">TemporalVectorLayer</a></li>
 <li><a class="reference internal" href="#module-geoinf.datamodels.WebRequest">WebRequest</a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#module-geoinf.geostrings">GeoStrings</a></li>
+<li><a class="reference internal" href="#module-geoinf.helpers">Helpers</a></li>
+<li><a class="reference internal" href="#module-geoinf.postgis">PostGIS</a></li>
 </ul>
 </li>
 </ul>
@@ -198,7 +464,7 @@ handle web request (e.g. for WFS, WCS or SOS) processing inside vistrails.</p>
       </ul>
     </div>
     <div class="footer">
-        &copy; Copyright 2011-2013, Meraka.CSIR.
+        &copy; Copyright 2011-2013, Meraka, CSIR.
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
     </div>
   </body>

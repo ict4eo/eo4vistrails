@@ -50,8 +50,8 @@ import os.path
 #import resource - LINUX specific; causes error under Windows
 from core.system import packages_directory
 
-sys.path = [os.path.join(packages_directory(), 'eo4vistrails/lib')] + sys.path
-# CAUSES ERROR ???  TODO - check under Windows and Linux
+#sys.path = [os.path.join(packages_directory(), 'eo4vistrails/lib')] + sys.path
+# CAUSES ERROR IN Sphinx documentation ???  TODO - check under Windows and Linux
 # resource.setrlimit(resource.RLIMIT_NOFILE,(resource.getrlimit(
 #  resource.RLIMIT_NOFILE)[1], 4096))
 

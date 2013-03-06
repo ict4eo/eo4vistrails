@@ -63,8 +63,7 @@ GML_LON_NAMES = ['longitude', 'x-position']
 #TODO: find out why geometry data is not extracted into CSV, R etc files ???
 
 
-class TemporalVectorLayer(QgsVectorLayer, qgis.core.QgsVectorLayer):
-    # TO DO - OMIT qgis.core.QgsVectorLayer
+class TemporalVectorLayer(QgsVectorLayer):
     """Create an extended vector layer, based on a QGIS vector layer.
 
     Associated data is stored, and can be referenced, in a local file.

@@ -61,11 +61,14 @@ class _GdalMemModel():
 
     def loadContentFromFile(self, sourceDS, getStatement=""):
         """Loads content off filesystem, e.g. from a geotiff
+        
+        :param str uri:
+            a path to a file
+        :param str getStatement:
+            the XML of the request parameters
+        :rtype: None
+        
         Expects datasets with one layer, so some arcane formats are out...
-        sourceDS is a path to a file.
-        {
-        geotiff
-        }
         """
         if os.path.exists(sourceDS):
             self.datasource = self.driver.CreateCopy("working_ds",
@@ -74,20 +77,26 @@ class _GdalMemModel():
             raise ValueError("Path to GDAL dataset does not exist")
 
     def loadContentFromURI(self, uri, getStatement=""):
-        """Loads content off web service, feed etc, like a WCS
-
-        Args:
-            uri:
-                string of the service endpoint
-            getStatement:
-                a string of the XML of the request parameters
-
-            These two variables allow creation of get/post requests and also
-            allow us to make GDAL sensibly deal with the inputs.
-
+        """Loads content off web service, feed etc.; e.g., a WCS
+        
+        :param str uri: the URI of the service endpoint
+            Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do
+            eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim
+            ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut
+            aliquip ex ea commodo consequat.
+        :param str getStatement:
+            the XML of the request parameters
+        :rtype: None
+        
+        These arguments allow creation of GET/POST requests, and also
+        allow us to make GDAL sensibly deal with the inputs.
+        
         For WCS, we expect a WCS GetCoverage request to be incoming.
-        GDAL, our ratser swiss army knife, expects to access a wcs from a
+        GDAL, our raster "swiss army knife", expects to access a WCS from a
         config file on the filesystem, that looks like:
+        
+        .. code-block:: xml
+        
             <WCS_GDAL>
                 <ServiceURL>
                     http://ict4eo.meraka.csir.co.za/geoserver/wcs?
@@ -96,11 +105,11 @@ class _GdalMemModel():
                     nurc:Img_Sample
                 </CoverageName>
             </WCS_GDAL>
-        and is called something like ict4eowcs.wcs
-
-        GDAL needs RW access to this file, for it then writes the capabilities
-        to it for later reference.
-
+        
+        and is called something like *ict4eowcs.wcs*.
+        
+        GDAL needs read/write access to this file, for it then writes the
+        capabilities to it for later reference.
         """
         #first, get a temporary file location that is writeable
         temp_filepath = core.system.default_dot_vistrails() + \
@@ -199,7 +208,7 @@ class RasterModel(Module):
 
 
 def initialize(*args, **keywords):
-    """sets everything up"""
+    """Add module to the Vistrails registry; specify input & output ports."""
     # create alias for the module_registry to refer to it in a shorter way.
     reg = core.modules.module_registry.get_module_registry()
     reg.add_module(RasterModel)
