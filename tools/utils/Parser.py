@@ -24,7 +24,7 @@
 ### WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ###
 #############################################################################
-"""This module forms part of the eo4vistrails capabilities - it is used to
+"""This module forms part of EO4VisTrails capabilities - it is used to
 handle XML file processing.
 """
 
@@ -203,10 +203,12 @@ class Parser(object):
 
     def elem_attr_value(self, element, attribute, namespace=None):
         """Return an attribute value for an element.
-
-        NOTE: elementtree considers an element to "not exist" if it does not
+        
+        *NOTE:* elementtree considers an element to "not exist" if it does not
         contain tag data; even though it may have attributes, so this test:
+        
             if element:
+        
         is insufficient to check that an element does/does not exist in the
         source document.
         """

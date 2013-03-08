@@ -26,7 +26,7 @@
 """This module provides PostGIS clients via psycopg2.
 
 This module is *not* a SQL Builder - it assumes you know SQL and, in particular,
-spatial SQL as provided by PostGIS.
+spatial SQL as provided by PostGIS. Thus you will need to write raw SQl "by hand".
 
 This module provides a session i.e. a PostGIS connection, and allows manually-
 created SQL queries to be executed against the chosen database.
@@ -55,7 +55,7 @@ from packages.eo4vistrails.tools.utils.synhigh import SyntaxSourceConfigurationW
 
 
 class PostGisSession(Session):
-    """Responsible for making a connection to a postgis database.
+    """Responsible for making a connection to a PostGIS database.
 
     Ultimately, objects of this class will need to be passed from
     execution step to execution step, so may need to be a constant?
@@ -81,7 +81,7 @@ class PostGisSession(Session):
 
 @RPyCSafeModule()
 class PostGisNumpyReturningCursor(ThreadSafeMixin, RPyCModule):
-    """Returns data in the form of a eo4vistrails FeatureModel,
+    """Returns data in the form of a FeatureModel,
     if user binds to self output port"""
     #multi inheritance of module subclasses is problematic
 
@@ -154,7 +154,7 @@ class PostGisNumpyReturningCursor(ThreadSafeMixin, RPyCModule):
 
 @RPyCSafeModule()
 class PostGisFeatureReturningCursor(ThreadSafeMixin, RPyCModule):
-    """Returns data in the form of a eo4vistrails FeatureModel
+    """Returns data in the form of a FeatureModel
     if user binds to self output port
     """
     #multi inheritance of module subclasses is a problem #TO DO: clarify this!
@@ -219,8 +219,8 @@ class PostGisFeatureReturningCursor(ThreadSafeMixin, RPyCModule):
 
 @RPyCSafeModule()
 class PostGisBasicReturningCursor(ThreadSafeMixin, RPyCModule):
-    """
-    Returns data in the form of a python list (as per psycopg2).
+    """Returns data in the form of a Python list (as per psycopg2).
+
     Only one dataset per module is allowed, defined by the SQL
     statement in the editor
     """
@@ -360,9 +360,9 @@ class PostGisNonReturningCursor(NotCacheable, ThreadSafeMixin, RPyCModule):
 
 @RPyCSafeModule()
 class PostGisCopyFrom(NotCacheable, ThreadSafeMixin, RPyCModule):
-    """
-        Copies from CSV file to a table
-        http://initd.org/psycopg/docs/cursor.html#cursor.copy_from
+    """Copies from CSV file to a table
+    
+    See: `<http://initd.org/psycopg/docs/cursor.html#cursor.copy_from>`_
     """
 
     _input_ports = [('PostGisSessionObject', '(za.co.csir.eo4vistrails:PostGisSession:data|postGIS)'),
@@ -423,9 +423,9 @@ class PostGisCopyFrom(NotCacheable, ThreadSafeMixin, RPyCModule):
 
 @RPyCSafeModule()
 class PostGisCopyTo(NotCacheable, ThreadSafeMixin, Module):
-    """
-        Copies from CSV file to a table
-        http://initd.org/psycopg/docs/cursor.html#cursor.copy_from
+    """Copies from CSV file to a table
+    
+    See: `<http://initd.org/psycopg/docs/cursor.html#cursor.copy_from>`_
     """
 
     _input_ports = [('PostGisSessionObject', '(za.co.csir.eo4vistrails:PostGisSession:data|postGIS)'),
@@ -486,19 +486,17 @@ class PostGisCopyTo(NotCacheable, ThreadSafeMixin, Module):
 
 
 class reprojectPostGISTable(Module):
-    '''
-    Using PostGIS SRID codes, transforms the coordinates of geometries of a table
+    """Using PostGIS SRID codes, transforms the coordinates of geometries of a table
     from one spatial reference to another.
-
-    The SRID must exist in the target database spatial_ref_sys table
-
+    
+    The SRID must exist in the target database spatial_ref_sys table.
+    
     Requires:
     - PostGisSessionObject
     - SRID:: Integer - the index of the spatial reference
     - tablename:: String - the target table, which must exist in the target database
-                                    and have a geometry column
-
-    '''
+                           and have a geometry column
+    """
     def __init__(self):
         Module.__init__(self)
 
@@ -560,6 +558,8 @@ class reprojectPostGISTable(Module):
 
 
 class SQLSourceConfigurationWidget(SyntaxSourceConfigurationWidget):
+    """TODO:  Document this class."""
+
     def __init__(self, module, controller, parent=None):
         SyntaxSourceConfigurationWidget.__init__(self, module, controller,
                                                  "SQL", parent=parent)

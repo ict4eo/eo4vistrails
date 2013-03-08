@@ -191,6 +191,7 @@ class Rpy2Script(Script, ModuleHelperMixin):
 
 
 class RSourceConfigurationWidget(SyntaxSourceConfigurationWidget):
+
     def __init__(self, module, controller, parent=None):
         displayedComboItems = {'String': True,
                                'Float': True,

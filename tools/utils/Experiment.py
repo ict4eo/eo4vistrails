@@ -32,6 +32,7 @@
 from core.modules.vistrails_module import Module, NotCacheable
 from time import time
 
+
 class Timer(NotCacheable, Module):
     """ Container class for the random class """
 
@@ -44,7 +45,7 @@ class Timer(NotCacheable, Module):
                     ('input 5', '(edu.utah.sci.vistrails.basic:Module)'),
                     ('input 6', '(edu.utah.sci.vistrails.basic:Module)'),
                     ('input 7', '(edu.utah.sci.vistrails.basic:Module)'),
-                    ('input 8', '(edu.utah.sci.vistrails.basic:Module)') ,
+                    ('input 8', '(edu.utah.sci.vistrails.basic:Module)'),
                     ('input names', '(edu.utah.sci.vistrails.basic:List)')
                     ]
 
@@ -66,7 +67,7 @@ class Timer(NotCacheable, Module):
                                                    pipeline, module_remap)
 
     def update(self):
-        self.start_time  = time()
+        self.start_time = time()
         Module.update(self)
 
     def compute(self):
@@ -77,29 +78,29 @@ class Timer(NotCacheable, Module):
 
         values = []
         for i in range(8):
-            value = self.forceGetInputFromPort('input %s'%(i+1), None)
+            value = self.forceGetInputFromPort('input %s' % (i + 1), None)
             if value:
                 values.append(value)
 
         names = self.forceGetInputFromPort('input names')
-        names = names + ['_?_' for _ in xrange(len(values)-len(names))] + ['total_time']
+        names = names + ['_?_' for _ in xrange(len(values) - len(names))] + ['total_time']
 
         report = ""
         csv_report = ""
 
         for value, name in zip(values, names[0:8]):
             if value:
-                report += "%s:%s "%(name, value)
-                csv_report += "%s,"%value
-        report += "total_time:%s"%total_time
-        csv_report += "%s\n"%total_time
+                report += "%s:%s " % (name, value)
+                csv_report += "%s," % value
+        report += "total_time:%s" % total_time
+        csv_report += "%s\n" % total_time
 
         if file_sink:
             try:
                 file_sink_file = open(file_sink.name, "r+")
             except IOError:
                 file_sink_file = open(file_sink.name, "w")
-                file_sink_file.write(",".join(names[0:8])+"\n")
+                file_sink_file.write(",".join(names[0:8]) + "\n")
             file_sink_file.seek(0, 2)
             file_sink_file.write(csv_report)
             file_sink_file.close()

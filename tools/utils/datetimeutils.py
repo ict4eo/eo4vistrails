@@ -24,7 +24,7 @@
 ##
 ############################################################################
 """This package provides general purpose date and time utility routines for
-eo4vistrails.
+EO4VisTrails.
 """
 
 # library
@@ -40,9 +40,9 @@ HOUR = timedelta(hours=1)
 
 class FixedOffset(tzinfo):
     """Fixed offset in minutes east from UTC.
-
+    
     Source:
-        http://docs.python.org/library/datetime.html
+        `<http://docs.python.org/library/datetime.html>`_
     """
 
     def __init__(self, offset, name):
@@ -109,42 +109,40 @@ def to_matplotlib_date(string, missing=1e-10):
 
 def parse_datetime(string):
     """Create datetime object from string version of a date/time.
-
+    
     Takes a string in a common date/time format, e.g. produced by calling str()
     on a Python datetime object or from an OGC web service, and returns a
     standard datetime instance.
-
-    Acceptable formats are: "YYYY-MM-DD HH:MM:SS.sss+HHMM",
-                            "YYYY-MM-DD HH:MM:SS.sss",
-                            "YYYY-MM-DD HH:MM:SS+HHMM",
-                            "YYYY-MM-DD HH:MM:SS+HH",
-                            "YYYY-MM-DD HH:MM:SS"
+    
+    Acceptable formats are:
+    *   "YYYY-MM-DD HH:MM:SS.sss+HHMM"
+    *   "YYYY-MM-DD HH:MM:SS+HHMM"
+    *   "YYYY-MM-DD HH:MM:SS+HH"
+    *   "YYYY-MM-DD HH:MM:SS"
     where sss represents fractional seconds. The '-' may be replaced by a '/'.
-
+    
     Alternative formats may use a 'T' as a separator between date and time.
-
+    
     The timezone is optional and may be either positive or negative
     hours/minutes east of UTC.  The timezone should omit the ':' separator; if
     present it will be removed.
-
+    
     Source:
-    =======
-        http://kbyanc.blogspot.com/2007/09/python-reconstructing-datetimes-from
-        .html
-
-    Tests:
-    ======
-    assert parse_datetime('2012-08-09') == datetime(2012, 8, 9, 0, 0)
-    assert parse_datetime('2012-08-09 12:12:23') == datetime(2012, 8, 9, 12, 12, 23)
-    assert parse_datetime('2012-08-09 12:12:23.456') == datetime(2012, 8, 9, 12, 12, 23, 456000)
-    # assert fails because tzinfo objects differ...
-    assert parse_datetime('2012-08-09 12:12:23+02') == \
+        `<http://kbyanc.blogspot.com/2007/09/python-reconstructing-datetimes-from.html>`_
+    
+    .. code-block:: python
+    
+        assert parse_datetime('2012-08-09') == datetime(2012, 8, 9, 0, 0)
+        assert parse_datetime('2012-08-09 12:12:23') == datetime(2012, 8, 9, 12, 12, 23)
+        assert parse_datetime('2012-08-09 12:12:23.456') == datetime(2012, 8, 9, 12, 12, 23, 456000)
+        # assert fails because tzinfo objects differ...
+        assert parse_datetime('2012-08-09 12:12:23+02') == \
         datetime(2012, 8, 9, 12, 12, 23, tzinfo=FixedOffset(timedelta(hours=2),'UTC'))
-    assert parse_datetime('2012-08-09 12:12:23.456+02') == \
+        assert parse_datetime('2012-08-09 12:12:23.456+02') == \
         datetime(2012, 8, 9, 12, 12, 23, 456000, tzinfo=FixedOffset(timedelta(hours=2),'UTC'))
-     assert parse_datetime('2012-08-09 12:12:23+0200') == \
+        assert parse_datetime('2012-08-09 12:12:23+0200') == \
         datetime(2012, 8, 9, 12, 12, 23, tzinfo=FixedOffset(timedelta(hours=2),'UTC'))
-    assert parse_datetime('2012-08-09 12:12:23.456+02:30') == \
+        assert parse_datetime('2012-08-09 12:12:23.456+02:30') == \
         datetime(2012, 8, 9, 12, 12, 23, 456000, tzinfo=FixedOffset(timedelta(hours=2, minutes=30),'UTC'))
     """
     # Pre-checks on string data

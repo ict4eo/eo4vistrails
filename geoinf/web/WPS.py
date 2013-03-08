@@ -26,8 +26,7 @@
 """This module provides an OGC (Open Geospatial Consortium) Web Processing
 Service (WPS) Client via pyWPS.
 
-This code is based on ideas and methods from the QGIS WPS Plugin (09/11/2009)
-
+This code is based on ideas and methods from the QGIS WPS Plugin (2009-11-09)
 """
 # library
 import mimetypes
@@ -40,14 +39,12 @@ import urllib
 from httplib import HTTPConnection
 from urlparse import urlparse
 # third party
-
 # !!! all * imports removed 12/1/12 - code MAY be broken - needs testing !!!
-
 #from PyQt4.QtCore import *  # poor practice; breaks RTD docs
-#from PyQt4.QtGui import **  # poor practice; breaks RTD docs
-#from PyQt4.QtNetwork import **  # poor practice; breaks RTD docs
-#from qgis.core import **  # poor practice; breaks RTD docs
-#from qgis.gui import **  # poor practice; breaks RTD docs
+#from PyQt4.QtGui import *  # poor practice; breaks RTD docs
+#from PyQt4.QtNetwork import *  # poor practice; breaks RTD docs
+#from qgis.core import *  # poor practice; breaks RTD docs
+#from qgis.gui import *  # poor practice; breaks RTD docs
 from PyQt4 import QtXml, QtCore, QtGui, QtSql
 from qgis.core import QgsFeature, QgsRectangle, QgsMapLayerRegistry,\
     QgsDataSourceURI
@@ -90,7 +87,7 @@ MAP_LAYER = 'za.co.csir.eo4vistrails:QgsMapLayer:data'
 
 
 def xmlExecuteRequestInputStart(identifier, namespace=False, title=None):
-    """TODO: add doc string"""
+    """TODO: write docstring"""
     if identifier:
         string = ""
         if namespace:
@@ -110,7 +107,7 @@ def xmlExecuteRequestInputStart(identifier, namespace=False, title=None):
 
 
 def xmlExecuteRequestInputEnd():
-    """TODO: add doc string"""
+    """TODO: write docstring"""
     string = ""
     string += "</wps:Data>\n"
     string += "</wps:Input>\n"
@@ -148,7 +145,8 @@ def isMimeTypeRaster(mimeType):
 
 
 class WPS(Module):
-    """TODO: write doc string
+    """The WFS module allows connection to a web-based OGC 
+    (Open Geospatial Consortium) web processing service.
     """
 
     def __init__(self):
@@ -474,9 +472,10 @@ class WPS(Module):
             self.errorHandler(resultXML)
 
     def createTmpGML(self, vLayer, processSelection="False"):
-        """TODO: add doc string
-
-        * vLayer is an actual QGIS vector layer (not a string)
+        """TODO: write docstring
+        
+        .. note::
+            vLayer is an actual QGIS vector layer (not a string)
         """
         myQTempFile = QtCore.QTemporaryFile()
         myQTempFile.open()
@@ -523,8 +522,9 @@ class WPS(Module):
 
     def createTmpBase64(self, rLayer):
         """Encode raster data to base64 format, for use in XML POST string.
-
-        * rLayer is an actual QGIS raster layer (not a string)
+        
+        .. note::
+            rLayer is an actual QGIS raster layer (not a string)
         """
         import base64
         # disk-based approach with file manipulation
@@ -585,7 +585,7 @@ class WPS(Module):
             self.raiseError(resultXML)
 
     def createGMLFileWriter(self, myTempFile, fields, geometryType, encoding):
-        """TODO: add doc string"""
+        """TODO: write docstring"""
         writer = QgsVectorFileWriter(
             myTempFile,
             encoding,
@@ -600,10 +600,9 @@ class WPS(Module):
         return writer
 
     def getFieldList(self, vlayer):
-        """Get the Llist of Fields.
+        """Get the list of Fields.
 
-        Returns:
-            QGsFieldMap
+        :rtype: QGsFieldMap
         """
         fProvider = vlayer.dataProvider()
         feat = QgsFeature()
@@ -616,8 +615,11 @@ class WPS(Module):
 
     def insertElement(self, source, element, node, namespace=None):
         """Return updated source with element inserted at a specified node.
-
-        All items must arrive as strings; result is also a string"""
+        
+        All items must arrive as strings
+        
+        :rtype: string
+        """
         #print "\nWPS:592 insertElement:\n **Source**", source, "\n**Element**",element, "\n**node**", node
         if node:
             if not ':' in node:
@@ -649,7 +651,7 @@ class WPS(Module):
 
     def uniqueLayerName(self, name):
         """TODO: Check the output ports and assign unique name to output layer
-        We need to discuss how to go about this"""
+        """
         #print 'WPS:622 output layer'
         mapLayers = QgsMapLayerRegistry.instance().mapLayers()
         i = 1
@@ -665,7 +667,7 @@ class WPS(Module):
 
 
 class WPSConfigurationWidget(PortConfigurationWidget):
-    """TODO: add doc string"""
+    """TODO: write docstring"""
 
     def __init__(self, module, controller, parent=None):
         """ UntupleConfigurationWidget(module: Module,

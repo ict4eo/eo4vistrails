@@ -23,8 +23,9 @@
 ## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ##
 ############################################################################
-"""This package provides GIS capabilities for eo4vistrails.
-In particular, provides GRASS, PostGIS, OGC clients and some
+"""This package provides GIS capabilities for EO4VisTrails.
+
+In particular, it provides GRASS, PostGIS, OGC web clients and some
 visualisation capabilities through the QGIS API.
 """
 identifier = 'za.co.csir.eo4vistrails'

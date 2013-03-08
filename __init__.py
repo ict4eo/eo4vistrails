@@ -50,8 +50,9 @@ import os.path
 #import resource - LINUX specific; causes error under Windows
 from core.system import packages_directory
 
+# BELOW CAUSES ERROR IN Sphinx documentation
 #sys.path = [os.path.join(packages_directory(), 'eo4vistrails/lib')] + sys.path
-# CAUSES ERROR IN Sphinx documentation ???  TODO - check under Windows and Linux
+# BELOW CAUSES ERROR - TODO - check under Windows and Linux
 # resource.setrlimit(resource.RLIMIT_NOFILE,(resource.getrlimit(
 #  resource.RLIMIT_NOFILE)[1], 4096))
 
@@ -63,9 +64,10 @@ def set_flag(module_name):
 
 def package_requirements():
     import core.requirements
-    # MUST EXIST
+    # WARNING
     if not core.requirements.python_module_exists('owslib'):
-        raise core.requirements.MissingRequirement('owslib')  # ??? still true
+        print "%s is missing" % 'owslib'  # ??? still true
+    # MUST EXIST
     if not core.requirements.python_module_exists('qgis'):
         raise core.requirements.MissingRequirement('qgis')
     if not core.requirements.python_module_exists('osgeo'):

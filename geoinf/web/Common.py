@@ -23,18 +23,22 @@
 ### WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ###
 #############################################################################
-"""This module provides a small api for fetching the service and dealing with
-OGC (Open Geospatial Consortium) Web Service Metadata which is common to the
-various services (via owslib).
+"""This module provides a small API for fetching the service and dealing with
+OGC (Open Geospatial Consortium) Web Service metadata, which is common to all
+the various services (via owslib).
 
 Requirements:
     owslib 0.3.4
 
 NOTE:
-    As at 2010-11-09, you will need to patch version 0.3.4b for owslib sos.py:
-        `self.filters=filter.Filter_Capabilities(val)`
-    should be:
-        `self.filters=filter.FilterCapabilities(val)`
+
+As at 2010-11-09, you will need to patch version 0.3.4b for owslib sos.py::
+
+    self.filters=filter.Filter_Capabilities(val)
+
+should be::
+
+    self.filters=filter.FilterCapabilities(val)
 
 """
 
@@ -52,10 +56,10 @@ except:
 
 
 class OgcService():
-    """TODO:  - add docstring / summary description
-
-    Parameters
-    ----------
+    """Base class for OGC service operations.
+    
+    Input ports:
+    
         service_url: string
             URL for OGC service
         service_type: string
@@ -69,12 +73,12 @@ class OgcService():
         capabilities:
             a full capabilities document - if provided, no call will be made
             by owslib to the service_url, and this will be used instead
-
-    Notes
-    -----
-      Namespace issues pervade wfs in owslib e.g.
-      * cannot handle when geoserver shortcuts a namespace with an abbreviation
-      * wfs will never load a 1.1.0 instance, but it should be loaded as wfs200
+    
+    Notes:
+    
+        Namespace issues pervade WFS in owslib e.g.
+        *  cannot handle when geoserver shortcuts a namespace with an abbreviation
+        *  wfs will never load a 1.1.0 instance, but it should be loaded as wfs200
     """
 
     def __init__(self, service_url, service_type, service_version, timeout=180,

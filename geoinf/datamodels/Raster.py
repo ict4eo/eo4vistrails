@@ -80,10 +80,6 @@ class _GdalMemModel():
         """Loads content off web service, feed etc.; e.g., a WCS
         
         :param str uri: the URI of the service endpoint
-            Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do
-            eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim
-            ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut
-            aliquip ex ea commodo consequat.
         :param str getStatement:
             the XML of the request parameters
         :rtype: None
@@ -198,7 +194,7 @@ class _GdalMemModel():
 
 
 class RasterModel(Module):
-    """TO DO - add docstring"""
+    """TODO - add docstring"""
 
     def __init__(self):
         Module.__init__(self)

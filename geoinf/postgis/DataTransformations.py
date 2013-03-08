@@ -24,7 +24,8 @@
 ### WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ###
 #############################################################################
-"""This module ???
+"""This module provides tools to transform data into a format suitable for
+insertion into a PostgreSQL database.
 """
 # library
 # third-party
@@ -40,7 +41,7 @@ from packages.eo4vistrails.tools.utils.ThreadSafe import ThreadSafeMixin
 
 #@RPyCSafeModule()
 class InputStream(Module):
-    '''TODO: add documentation'''
+    """TODO: add documentation"""
 
     _input_ports = [('in_datalist', '(edu.utah.sci.vistrails.basic:List)'),
                     ('in_python_datatype',
@@ -64,9 +65,10 @@ class InputStream(Module):
 
 #@RPyCSafeModule()
 class pgSQLMergeInsert(Module):
-    '''Take a set of lists of data and zip them into a set of records that
-    can be inserted into a postgreSQL database
-    '''
+    """Take a set of lists of data and zip them into a set of records.
+    
+    These records can be inserted into a PostgreSQL database.
+    """
 
     _input_ports = [('input_streams', '(edu.utah.sci.vistrails.basic:List)'),
                     ('dbsession',

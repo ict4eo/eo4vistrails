@@ -1,3 +1,31 @@
+###########################################################################
+##
+## Copyright (C) 2012 CSIR Meraka Institute. All rights reserved.
+##
+## eo4vistrails extends VisTrails, providing GIS/Earth Observation
+## ingestion, pre-processing, transformation, analytic and visualisation
+## capabilities . Included is the ability to run code transparently in
+## OpenNebula cloud environments. There are various software
+## dependencies, but all are FOSS.
+##
+## This file may be used under the terms of the GNU General Public
+## License version 2.0 as published by the Free Software Foundation
+## and appearing in the file LICENSE.GPL included in the packaging of
+## this file.  Please review the following to ensure GNU General Public
+## Licensing requirements will be met:
+## http://www.opensource.org/licenses/gpl-license.php
+##
+## If you are unsure which license is appropriate for your use (for
+## instance, you are interested in developing a commercial derivative
+## of VisTrails), please contact us at vistrails@sci.utah.edu.
+##
+## This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
+## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+##
+############################################################################
+"""This module provides a means to read an Excel file and convert the data to
+a Python data structure.
+"""
 # library
 import datetime
 import os
@@ -10,17 +38,17 @@ import xlrd
 class read_excel(object):
     """Extract data from an Excel File either as a dict, or a list of values,
     or a list of (value, type) tuples.
-
+    
     Uses the xlrd module (version 0.5.2 or later), supporting Excel versions:
     2004, 2002, XP, 2000, 97, 95, 5, 4, 3
-
+    
     Data is extracted via iterators that can either return one row at a time
     (either as a dict or as a list) or one column at a time.
-
+    
     The dict generator assumes that the worksheet is in tabular format,
     with the first "data" row containing the variable names and all subsequent
     rows containing values.
-
+    
     Extracted data is represented fairly logically. By default dates are
     returned as strings in "yyyy/mm/dd" format or "yyyy/mm/dd hh:mm:ss", as
     appropriate. However, when specifying date_as_tuple=True, dates will be
@@ -30,6 +58,9 @@ class read_excel(object):
     are also returned as appropriate representations.
 
     Example of use:
+    
+    .. code-block:: python
+        
         import readexcel as rx
         xls = rx.read_excel('testdata.xls')
         # all sheets
@@ -45,7 +76,8 @@ class read_excel(object):
             print row
 
     Original code:
-        http://gizmojo.org/code/readexcel/
+    
+        `<http://gizmojo.org/code/readexcel/>`_
     """
 
     def __init__(self, filename):
@@ -77,10 +109,9 @@ class read_excel(object):
     def set_sheet_list(self, sheets=[]):
         """Set the required list of sheet names.
 
-        Args:
-            sheets: a list
-                the required sheets; either sheet names or sheet numbers.
-                Sheet numbering starts from 1.
+        :param list sheets:
+            the required sheets; either sheet names or sheet numbers.
+            Sheet numbering starts from 1.
         """
         if sheets:
             #print "readexcel:85 sheets", sheets

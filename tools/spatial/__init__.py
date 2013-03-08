@@ -23,7 +23,8 @@
 ## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ##
 ############################################################################
-"""This package provides spatial capabilities for eo4vistrails.
+"""This package provides spatial capabilities for EO4VisTrails.
+
 In particular, it provides tools for computational geometry operations,
 including creators, accessors, comparitors and transformers.
 """

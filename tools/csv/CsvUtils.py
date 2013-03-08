@@ -24,12 +24,14 @@
 ### WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ###
 #############################################################################
-"""This module forms part of the eo4vistrails capabilities. It is used to
-handle reading, writing and filtering CSV files, with or without headers.
+"""This module is used to handle reading, writing and filtering CSV files,
+with or without headers.
 
-Note that the default behaviour of the Python CSV reader has been modified to
-assume UTF-8 (and not ASCII) encoding; this is because much CSV data is created
-from Excel spreadsheets, where non-standard characters are commonly inserted.
+.. note::
+    The default behaviour of the Python CSV reader has been modified to
+    assume UTF-8 (and not ASCII) encoding; this is because data is often created
+    from Excel spreadsheets, where non-standard characters are commonly used.
+
 """
 # library
 import csv
@@ -44,13 +46,14 @@ from packages.eo4vistrails.tools.utils.ThreadSafe import ThreadSafeMixin
 
 def unicode_csv_reader(utf8_file, dialect=csv.excel, encoding='utf-8',
                        **kwargs):
-    """Data read in as UTF-8 and not ascii.
-
+    """Data read in as UTF-8 and not ASCII.
+    
     Source:
-        http://stackoverflow.com/questions/904041/reading-a-utf8-csv-file-with-python
+        `<http://stackoverflow.com/questions/904041/reading-a-utf8-csv-file-with-python>`_
+    
     Notes:
         If input file is NOT in a utf-8 encoded format, but e.g. in ISO-8859-1,
-        then pass in the `encoding` parameter.
+        then pass in the *encoding* parameter.
     """
     csv_reader = csv.reader(utf8_file, dialect=dialect, **kwargs)
     for row in csv_reader:
@@ -60,8 +63,9 @@ def unicode_csv_reader(utf8_file, dialect=csv.excel, encoding='utf-8',
 @RPyCSafeModule()
 class CsvReader(ThreadSafeMixin, Module):
     """Simple csv file reader utility.
-
-    Input ports:
+    
+    Input ports
+    
         fullfilename:
             name of input file (including a full directory path)
         file_in:
@@ -127,8 +131,9 @@ class CsvReader(ThreadSafeMixin, Module):
 @RPyCSafeModule()
 class CsvWriter(ThreadSafeMixin, Module):
     """Simple csv file writer utility.
-
+    
     Input ports:
+    
         directory path:
             place to which the file will be written; if not specified, a
             temporary directory will be created and used
@@ -197,8 +202,9 @@ class CsvWriter(ThreadSafeMixin, Module):
 @RPyCSafeModule()
 class CsvFilter(ThreadSafeMixin, Module):
     """Read CSV file and filter data according to specific parameters.
-
+    
     Input ports:
+        
         file_in:
             an optional file object to be read
         filename_in:
@@ -231,13 +237,14 @@ class CsvFilter(ThreadSafeMixin, Module):
             output tuples (see the `datapairs` output port) to be extracted
             from incoming lists; each X or Y represents a different list (this
             notation assumes a starting list number of '1')
-
+    
     The "filter_" specification uses the following syntax:
      *  N: a single integer; or a single Excel column letter
      *  N-M: a range of integers; or a range of Excel column letters
      *  N, M, ...: multiple different single/range values
-
+    
     Output ports:
+        
         csv_file:
             a CSV file, containing all filtered data from the file
         dataset:
@@ -347,18 +354,14 @@ class CsvFilter(ThreadSafeMixin, Module):
 
     def create_paired_tuples(self, pairs, lists):
         """Create a list of paired tuples from a 'list of lists'.
-
-        Accepts:
-
-         *  pairs - a string, that uses the  syntax:
-             *  N,M: a single paired set of values
-             *  N,M; O,P; ...: multiple paired values
+        
+        :param str pairs: uses the syntax:
+            *  N,M: a single paired set of values
+            *  N,M; O,P; ...: multiple paired values
             (where positional numbering starts from `1`)
-         *  lists - a list of lists
-
-        Returns:
-         *  A list of paired tuples if valid inputs, else None
-
+        :param list lists:  a list of lists
+        
+        :rtype list: containing paired tuples if valid inputs, else None
         """
         #print "csv:364", lists
         pair_list = []
@@ -391,18 +394,13 @@ class CsvFilter(ThreadSafeMixin, Module):
 
     def get_filter_specs(self, items):
         """Create a list of values from numeric ranges defined in a string.
-
-        Accepts:
-
-        A single string, with a specification that uses the following syntax:
+        
+        :param item str: A string, with a specification that uses the following syntax:
          *  N: a single integer; or a single Excel column letter
          *  N-M: a range of integers; or a range of Excel column letters
          *  N, M, ...: multiple different single/range values
-
-        Returns:
-
-         *  A list of integers
-
+        
+        :rtype: list of integers
         """
 
         def to_int(index):

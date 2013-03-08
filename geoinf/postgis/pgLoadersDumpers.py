@@ -23,18 +23,17 @@
 ## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ##
 ############################################################################
-"""This module provides PostGIS Loader/ dumper functionality.
+"""This module provides PostGIS Loader/ Dumper functionality.
 
-These modules rely on the presence of psql
+These modules rely on the presence of psql, and essentially wrap:
 
-These modules essentially wrap:
-shp2pgsql -> vector data (as shapefile) loader
-pgsql2shp -> vector data to shapefile dumper
+*    shp2pgsql -> vector data (as shapefile) loader
+*    pgsql2shp -> vector data to shapefile dumper
+*    wktRaster loader
+*    wktRaster dumper
 
-wktRaster loader
-wktRaster dumper
-
-maybe a multidimensional loader???
+.. note::
+    In future, maybe add a multidimensional loader?
 """
 
 
@@ -47,26 +46,28 @@ from core.modules import basic_modules
 from packages.eo4vistrails.tools.utils.ThreadSafe import ThreadSafeMixin
 from packages.eo4vistrails.rpyc.RPyC import RPyCModule, RPyCSafeModule
 # local
-from subprocess import call,  Popen,  PIPE
+from subprocess import call, Popen, PIPE
 
 
 class Shape2PostGIS(Module):
-    '''
-    A wrapper for the PostGIS utility shp2pgsql
-
+    """A wrapper for the PostGIS utility shp2pgsql
+    
     Takes a PostGIS Session object to extract connection info
-
+    
     Requires:
-    - a shapefile (be sure that when you choose the shapefile,
-      delete the .shp extension
-    - a tablename
+    
+    *   a shapefile (be sure that when you choose the shapefile,
+        delete the .shp extension
+    *   a tablename
+    
+    Optionally:
 
-    Optionally
-    - choose to spatially index
-    - choose a character encoding (defaults to LATIN1)
-    - choose to simplify geometries
-    - choose a SRS (defaults to WGS84 Lat/Lon, a.k.a. EPSG:4326)
-    '''
+    *   choose to spatially index
+    *   choose a character encoding (defaults to LATIN1)
+    *   choose to simplify geometries
+    *   choose a SRS (defaults to WGS84 Lat/Lon, a.k.a. EPSG:4326)
+    '"""
+
     def __init__(self):
         Module.__init__(self)
 

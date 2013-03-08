@@ -23,13 +23,13 @@
 ## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ##
 ############################################################################
-"""This module provides a Session object for defining a connection to GRASS
-Defines a temporary GRASS location on either a local or cloud machine.
-Defines and maintains a list of the layers available.
+"""This module provides a Session object for defining a connection to GRASS.
+It defines a temporary GRASS location on either a local or cloud machine. It
+also defines and maintains a list of the layers available.
 
 Also see:
- * http://grass.osgeo.org/programming6/pythonlib.html
- * http://grass.osgeo.org/wiki/GRASS_and_Python
+*   `<http://grass.osgeo.org/programming6/pythonlib.html>`_
+*   `<http://grass.osgeo.org/wiki/GRASS_and_Python>`_
 """
 #export GISBASE="/usr/local/grass-6.4.svn/"
 #export PATH="$PATH:$GISBASE/bin:$GISBASE/scripts"
@@ -42,7 +42,7 @@ Also see:
 # library
 # third-party
 # vistrails
-from utils.session import Session
+from packages.eo4vistrails.tools.utils.session import Session
 # eo4vistrails
 from packages.eo4vistrails.geoinf.SpatialTemporalConfigurationWidget import \
     SpatialTemporalConfigurationWidget
@@ -57,7 +57,7 @@ class GrassSession(Session):
     def compute(self):
         pass
 
-    def updateLayers(self,  layername,  layertype):
+    def updateLayers(self, layername, layertype):
         """Updates info on layers available in current GRASS location
         requires a string for the layername and a string, one of{'v', 'r'}
         to denote the type"""
@@ -66,7 +66,7 @@ class GrassSession(Session):
         if layername.lower() == 'r':
             self.layers['raster'].append(layername)
 
-    def readLayers(self,  layertype):
+    def readLayers(self, layertype):
         """Reads info on layers available in current GRASS location
         requires a string for the layername and a string, one of{'v', 'r'}
         to denote the type"""
@@ -87,7 +87,7 @@ class GrassSessionConfigurationWidget(SpatialTemporalConfigurationWidget):
 
 
 def initialize(*args, **keywords):
-    """sets everything up"""
+    """Add module to the VisTrails registry."""
     # We'll first create a local alias for the module_registry so that
     # we can refer to it in a shorter way.
     reg = core.modules.module_registry.get_module_registry()

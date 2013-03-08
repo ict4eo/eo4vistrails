@@ -40,8 +40,9 @@ from packages.eo4vistrails.tools.utils.ThreadSafe import ThreadSafeMixin
 @RPyCSafeModule()
 class StringToFile(ThreadSafeMixin, Module):
     """Accept a string and write it to a text file.
-
+    
     Input ports:
+    
         string: string
             a standard VisTrails (Python) string
         filename: string
@@ -51,11 +52,11 @@ class StringToFile(ThreadSafeMixin, Module):
             from the string (if negative, slices the last N chars)
         overwrite: boolean
             if not True (default), then existing file will not be overwritten
-
+    
     Output ports:
+    
         file:
             the output file created from the string
-
     """
 
     _input_ports = [('string', '(edu.utah.sci.vistrails.basic:String)'),

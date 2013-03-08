@@ -23,8 +23,9 @@
 ## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ##
 ############################################################################
-"""This package provides GIS capabilities for eo4vistrails.
-In particular, provides spatial and file tools and utilities, inlcuding some
+"""This package provides GIS capabilities for EO4VisTrails.
+
+In particular, it provides spatial and file tools and utilities, including some
 visualisation capabilities.
 """
 identifier = 'za.co.csir.eo4vistrails'

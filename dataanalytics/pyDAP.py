@@ -24,16 +24,13 @@
 ## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ##
 ############################################################################
-'''
-    Read netcdf file from OpenDAP server.
-'''
+"""This package is used to access netcdf files from an OpenDAP server.
+"""
 # library
 import os
 # third party
 import numpy
 from PyQt4 import QtCore, QtGui, Qt
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
 # vistrails
 from core.modules.vistrails_module import Module, ModuleError
 from core.modules.module_configure import StandardModuleConfigurationWidget
@@ -84,8 +81,9 @@ class pyDAP(Module):
             self.setResult(output_port, outArray)
         #self.setResult("data", result)
 
+
 class pyDAPConfigurationWidget(StandardModuleConfigurationWidget):
-    """A widget to configure the  pyDAP Client."""
+    """A widget to configure the pyDAP Client."""
 
     def __init__(self, module, controller, parent=None):
         StandardModuleConfigurationWidget.__init__(self, module, controller, parent)

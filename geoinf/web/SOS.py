@@ -50,7 +50,6 @@ import init
 
 class SOS(OGC, FeatureModel):
     """Override for base OGC service class
-
     """
 
     def __init__(self):
@@ -213,7 +212,7 @@ class SosCommonWidget(QtGui.QWidget):
 
     def getBoundingBoxOffering(self):
         """Return a tuple containing box co-ordinates.
-
+        
         Format: top-left X, top-left Y, bottom-left X, bottom-left Y
         """
         return (
@@ -224,6 +223,7 @@ class SosCommonWidget(QtGui.QWidget):
 
     def getTimeIntervalOffering(self):
         """Return a tuple containing start / end in universal time."""
+
         return (
             self.lblStartTime.text(),
             self.lblEndTime.text(),)
@@ -432,15 +432,15 @@ class SOSConfigurationWidget(OgcConfigurationWidget,
 
     def get_valid_srs(self, srsURN):
         """Return a valid EPSG srsName according to OGC 09-048r3
-
+        
         Accepts:
-          * valid srs string in URN form (delimited by :)
-
+        * valid srs string in URN form (delimited by :)
+        
         Returns:
-          * valid EPSG srsName string, or default of EPSG 4326 if not found
-
+        * valid EPSG srsName string, or default of EPSG 4326 if not found
+        
         Notes:
-          * Replace with http://owslib.sourceforge.net/#crs-handling  ???
+        * Replace with http://owslib.sourceforge.net/#crs-handling  ???
         """
         srs = None
         try:
@@ -459,7 +459,8 @@ class SOSConfigurationWidget(OgcConfigurationWidget,
     def constructRequest(self, URL):
         """Return an XML-encoded request dictionary from configuration parameters
 
-        Overwrites base method defined in OgcConfigurationWidget.
+        .. note::
+            Overwrites base method defined in OgcConfigurationWidget.
         """
         result = {}
         sos_url = URL

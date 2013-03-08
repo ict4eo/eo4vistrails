@@ -39,13 +39,10 @@ class Mock(object):
 
 # third-party modules
 MOCK_MODULES = [
-    'rpyc4vistrails.RPyC',
-    'rpyc4vistrails.RPyC.RPyCSafeModule',
-    'rpyc4vistrails.RPyC.RPyCModule',
-    'rpyc4vistrails.ThreadSafe',
-
     'h5py', 'geojson', 'gdal', 'gdalnumeric',
-    'qgis', 'qgis.core',
+
+    'qgis', 'qgis.core', 'qgis.gui', 'qgis.analysis',
+
     'matplotlib',
     'matplotlib.cm',
     'matplotlib.patches',
@@ -55,18 +52,17 @@ MOCK_MODULES = [
     'matplotlib.text',
     'matplotlib.ticker',
 
-    'packages.NumSciPy',
-    'packages.NumSciPy.Array',
-
     'Networkx', 'ogr',
     'owslib', 'owslib.wfs',
-    'PyQt4', 'PyQt4.QtCore',
-    'gui', 'gui.application',
+    'PyQt4', 'PyQt4.QtCore', 'PyQt4.QtGui',
+    'gui', 'gui.application', 'gui.theme',
     'pylab', 'pysal',
     'psycopg2', 'rpyc',
+    'pydap', 'pydap.client',
 
     'core',
     'core.bundles',
+    'core.configuration',
     'core.modules',
     'core.modules.basic_modules',
     'core.modules.constant_configuration',
@@ -74,6 +70,7 @@ MOCK_MODULES = [
     'core.modules.module_configure',
     'core.modules.module_descriptor',
     'core.modules.source_configure',
+    'core.modules.tuple_configuration',
     'core.modules.vistrails_module',
     'core.packagemanager',
     'core.system',
@@ -83,11 +80,25 @@ MOCK_MODULES = [
     'core.vistrail.port_spec',
     'core.vistrail.port_spec.PortSpec',
 
+    'packages.NumSciPy',
+    'packages.NumSciPy.Array',
+
+    'packages.spreadsheet',
+    'packages.spreadsheet.basic_widgets',
+    'packages.spreadsheet.spreadsheet_cell',
+
     'packages.eo4vistrails.rpyc',
     'packages.eo4vistrails.rpyc.RPyC',
     'packages.eo4vistrails.rpyc.RPyCSafeModule',
     'packages.eo4vistrails.rpyc.RPyCHelper',
-    'packages.eo4vistrails.tools.utils.ThreadSafe',
+
+    'packages.rpyc4vistrails',
+    'packages.rpyc4vistrails.ThreadSafe',
+    'packages.rpyc4vistrails.ThreadSafeFold',
+    'packages.rpyc4vistrails.ThreadSafeMap',
+    'packages.rpyc4vistrails.ThreadTestModule',
+    'packages.rpyc4vistrails.Fork',
+
 ]
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = Mock()

@@ -45,15 +45,14 @@ from packages.eo4vistrails.geoinf.datamodels.WebRequest import WebRequest
 
 
 class OGC(NotCacheable):
-    """
-    Provide basic connection service to an OGC (Open Geospatial Consortium)
+    """Provide basic connection service to an OGC (Open Geospatial Consortium)
     web service.
-
+    
     Configuration allows the base URL for the service to be set and called.
     Choosing the appropriate combination of specific service type and other
     parameters, will cause the input port to be set with a specific POST call,
     once the configuration interface is closed.
-
+    
     Running the module will set the (string) values of the URL, data (if any),
     and the resulting QGIS layer, for access via the output ports.
     """

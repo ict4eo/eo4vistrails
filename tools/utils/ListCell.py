@@ -31,7 +31,6 @@ import os.path
 import sys
 from datetime import date, datetime, time
 # third-party
-"""
 from core.bundles import py_import
 from core import debug
 try:
@@ -40,8 +39,7 @@ try:
     xlrd = py_import('xlrd', pkg_dict)
 except Exception, e:
     debug.critical("Exception: %s" % e)
-"""
-import xlrd
+#import xlrd
 from PyQt4 import QtCore, QtGui
 # vistrails
 from core.modules.vistrails_module import Module, ModuleError
@@ -56,10 +54,10 @@ ENCODING = "utf-8"  # will differ in some countries; add as hidden port ???
 
 class ListCell(SpreadsheetCell):
     """ListCell is a custom module to view list-of-lists as an HTML table.
-
+    
     Each outer list is a line in the table; each item in the nested list is a
     cell.
-
+    
     Input ports:
         Heading:
             a heading to display above the table
@@ -72,7 +70,7 @@ class ListCell(SpreadsheetCell):
             side of the table.
         Disabled?
             If True, then the output is not displayed.
-
+    
     Output ports:
         HTML File:
             the HTML file displaying the List
@@ -99,10 +97,9 @@ class ListCell(SpreadsheetCell):
 
 
 class ListCellWidget(QCellWidget):
+    """ListCellWidget has a QTextBrowser to display HTML files
     """
-    ListCellWidget has a QTextBrowser to display HTML files
 
-    """
     def __init__(self, parent=None):
         """ ListCellWidget(parent: QWidget) -> ListCellWidget
         Create a rich text cell without a toolbar

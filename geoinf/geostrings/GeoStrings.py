@@ -57,10 +57,10 @@ class GeoStringConstantWidget(QtGui.QTextEdit, ConstantWidgetMixin):
     need only a QLineEdit or use your own QT widget. There are two things you
     need to pay attention to:
 
-    1) Re-implement the contents() method so we can get the current value
-       stored in the widget.
+    #   Re-implement the contents() method so we can get the current value
+        stored in the widget.
 
-    2) When the user is done with configuration, make sure to call
+    #  When the user is done with configuration, make sure to call
        update_parent() so VisTrails can pass that information to the Provenance
        System. In this example we do that on focusOutEvent and when the user
        presses the return key.

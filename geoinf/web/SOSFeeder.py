@@ -24,8 +24,8 @@
 ## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ##
 ############################################################################
-"""This module forms part of the eo4vistrails capabilities. It is used to
-handle data feeds to an OGC SOS (including InsertObservation & RegisterSensor)
+"""This module is used to handle data feeds to an OGC SOS (including the
+InsertObservation & RegisterSensor services).
 """
 # library
 import copy
@@ -63,15 +63,16 @@ SKIP_EMPTY = True  # ignore any missing properties; do not raise error
 @RPyCSafeModule()
 class SOSFeeder(ThreadSafeMixin, Module):
     """An abstract VisTrails class for creating SOS data feeders.
-
+    
     This base class contains common methods and properties.
-
+    
     The compute() method initialises data for ports that are common to all
     classes; but should be extended (via super) to perform processing specific
     to the inherited class; e.g. extract observation data from the file, and
     POST this to a Sensor Observation Service (SOS).
-
+    
     Input ports:
+    
         OGC_URL:
             the network address of the SOS
         active:
@@ -80,8 +81,9 @@ class SOSFeeder(ThreadSafeMixin, Module):
         missing_data:
             the value that is used as a substitute for any missing values;
             defaults to -9999
-
+    
     Output ports:
+    
         PostData:
             a list of XML strings; each containing data POSTed to the SOS
     """
@@ -111,13 +113,12 @@ class SOSFeeder(ThreadSafeMixin, Module):
     def unicode_csv_reader(self, utf8_data, dialect=csv.excel, **kwargs):
         """Read and encode data from CSV as 'utf-8'.
 
-        NOTE:
+        Note:
             Data from Excel is read as unicode; this is used to maintain
             interoperability between excel data and csv data!
 
         Source:
-            http://stackoverflow.com/questions/904041/\
-            reading-a-utf8-csv-file-with-python
+            `<http://stackoverflow.com/questions/904041/reading-a-utf8-csv-file-with-python>`_
         """
         csv_reader = csv.reader(utf8_data, dialect=dialect, **kwargs)
         for row in csv_reader:
@@ -162,11 +163,10 @@ class SOSFeeder(ThreadSafeMixin, Module):
 
     def set_sheet_list(self, sheets=[]):
         """Sets the list of Excel sheet names for the SOSFeeder.
-
-        Args:
-            sheets: a list
-                the required sheets; either sheet names or sheet numbers.
-                Sheet numbering starts from 1. If None, get all sheets.
+        
+        :param list sheets:
+            the required sheets; either sheet names or sheet numbers.
+            Sheet numbering starts from 1. If None, get all sheets.
         """
         self.sheet_list = []
         if sheets:
@@ -225,8 +225,9 @@ class SOSFeeder(ThreadSafeMixin, Module):
 class InsertObservation(SOSFeeder):
     """Accept an Excel file, extract observation data from it, and POST it to a
     Sensor Observation Service (SOS), as per specified parameters.
-
+    
     Input ports:
+    
         OGC_URL:
             the network address of the SOS
         file_in:
@@ -243,7 +244,7 @@ class InsertObservation(SOSFeeder):
             is POSTed directly to the SOS
         use_foi_as_procedure:
             Boolean port; if True (default is False) then each FOI is used as
-            a different procedure.  Any date from the `procedure` port will be
+            a different procedure.  Any date from the *procedure* port will be
             ignored.
         procedure:
             The physical sensor or analysis process that has recorded or
@@ -281,7 +282,7 @@ class InsertObservation(SOSFeeder):
             of-interest. Each feature is associated with a corresponding
             sensor, with each list item in the form:
                 ID, "name", "co-ordinates", SRS
-            `co-ordinates` can be a single pair of space-separated
+            *co-ordinates* can be a single pair of space-separated
             lat/long values, or a comma-delimited list of such values. SRS is
             optional; if not supplied, the default 'urn:ogc:def:crs:EPSG::4326'
             will be used.
@@ -402,15 +403,15 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
         SOSFeeder.__init__(self)
 
     def load_from_excel(self, sheet_name=None, reset=True):
-        """Read data from a named Excel worksheet, and store in dictionaries
+        """Read data from a named Excel worksheet, and store it in dictionaries
 
-        Args:
-            sheet_name: string
-                name of worksheet in `self.workbook` Excel file
-            reset: Boolean
-                whether all storage dictionaris are reset to null
-
+        :param str sheet_name:
+            name of worksheet in *self.workbook* Excel file
+        :param Boolean reset:
+            whether all storage dictionaris are reset to null
+        
         Uses:
+        
             self.configuration = {
                 'sensor': {'value': xxx, 'rowcol': (row, col)},
                 'procedure': {'value': xxx, 'rowcol': (row, col)},
@@ -1068,14 +1069,15 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
 class RegisterSensor(SOSFeeder):
     """Register a sensor for a Sensor Observation Service (SOS) via a POST of
     the supplied parameters.
-
+    
     Each sensor can be associated with each feature-of-interest (FOI) supplied,
     in which case multiple POST operations may be created.  If the 'Use FOI as
     Sensor' option is set, then all other sensor data is ignored and each FOI
     is also created as a sensor, with an exactly matching FOI.  This option
     may also generate multiple POST requests.
-
+    
     Input ports:
+    
         OGC_URL:
             the network address of the SOS
         active:
@@ -1086,7 +1088,7 @@ class RegisterSensor(SOSFeeder):
             defaults to -9999
         offering:
             The set of related sensors that form part of an offering
-
+            
             ID:
                 the ID of the offering
             name:
@@ -1098,7 +1100,7 @@ class RegisterSensor(SOSFeeder):
             A single physical sensor, computation, simulation, or process
             that has created the observation(s). This is also termed a
             "procedure" in the SOS specification.
-
+            
             ID:
                 the unique identifier for the sensor
             name:
@@ -1117,14 +1119,14 @@ class RegisterSensor(SOSFeeder):
             A list-of-lists, containing the details for a number of sensors,
             with each list item containing data for one sensor in the form:
                 "ID", "name", longitude, latitude, altitude, "SRS"
-
-            These items are as described above under `sensor_details`. SRS is
+            
+            These items are as described above under *sensor_details*. SRS is
             optional; if not supplied, the default will be used.
         coordinates:
             A list-of-lists, containing the details for each coordinate, with
             each nested list with each list in the form:
                 "type", "units"
-
+            
             Coordinates are used to define the units associated with a sensor
             location; including longitude, latitude and altitude.  This is an
             optional port; if no input is supplied the defaults will be used:
@@ -1135,10 +1137,10 @@ class RegisterSensor(SOSFeeder):
             of-interest. Each feature is associated with a corresponding
             sensor, with each list item in the form:
                 ID, "name", "co-ordinates", SRS
-            `co-ordinates` can be a single pair of space-separated
+            *co-ordinates* can be a single pair of space-separated
             lat/long values, or a comma-delimited list of such values. SRS is
             optional; if not supplied, the default will be used (see above).
-
+            
             The co-ordinate list must be wrapped in "" - e.g.
                 ID_1, name_1, "45.12 23.25, 44.13 22.15", SRS_1
         property:
@@ -1149,8 +1151,9 @@ class RegisterSensor(SOSFeeder):
             notation). Each list item has the form:
                 "name", "URN", "units", "type"
             where type is optional and defaults to "Quantity" if omitted.
-
+    
     Output ports:
+    
         PostData:
             a list of XML strings; each containing data for a single POST
         Results:

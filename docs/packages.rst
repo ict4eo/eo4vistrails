@@ -3,8 +3,13 @@ Packages
 ========
 
 .. toctree::
-   :maxdepth: 6
+    :maxdepth: 6
 
-   geoinf
-
-
+    dataanalytics
+    geoinf
+    tools
+    datacube
+    rpyc
+    transform
+    utils
+.. NOT USED

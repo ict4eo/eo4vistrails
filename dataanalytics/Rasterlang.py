@@ -52,7 +52,8 @@ DEBUG = False
 class RasterLangCode(NotCacheable, ModuleHelperMixin, ThreadSafeMixin, RPyCModule):
     """
     This module that executes an arbitrary piece of Python code remotely.
-    TODO: This code is not threadsafe. Terence needs to fix it
+    
+    .. todo:: This code is not threadsafe. Terence van Zyl needs to fix it
     """
     #TODO: If you want a PythonSource execution to fail, call fail(error_message).
     #TODO: If you want a PythonSource execution to be cached, call cache_this().
@@ -65,7 +66,7 @@ class RasterLangCode(NotCacheable, ModuleHelperMixin, ThreadSafeMixin, RPyCModul
 
     def run_code_common(self, locals_, execute, code_str, use_input, use_output,
                         pre_code_string, post_code_string):
-        """TODO: Add docstring.
+        """TODO: Write docstring.
         """
         import core.packagemanager
 
@@ -147,9 +148,10 @@ class RasterLangCode(NotCacheable, ModuleHelperMixin, ThreadSafeMixin, RPyCModul
 
     def run_code_orig(self, code_str, use_input, use_output, pre_code_string, post_code_string):
         """Runs a piece of code as a VisTrails module.
+        
         use_input and use_output control whether to use the inputport
-        and output port dictionary as local variables inside the
-        execution."""
+        and output port dictionary as local variables inside the execution.
+        """
 
         locals_ = locals()
 
@@ -163,8 +165,7 @@ class RasterLangCode(NotCacheable, ModuleHelperMixin, ThreadSafeMixin, RPyCModul
 
 #    def _original_compute(self):
     def compute(self):
-        """
-        Vistrails Module Compute, Entry Point Refer, to Vistrails Docs
+        """Vistrails Module Compute; refer to Vistrails Docs
         """
         #self.sharedMemOutputPorts = {}
         #isRemote, self.conn, v = self.getConnection()
@@ -180,8 +181,7 @@ class RasterLangCode(NotCacheable, ModuleHelperMixin, ThreadSafeMixin, RPyCModul
 
 @RPyCSafeModule()
 class RasterLang(RasterLangCode):
-    """
-    This module remotely executes an arbitrary piece of Python code.
+    """This module remotely executes an arbitrary piece of Python code.
     """
     #TODO: If you want PythonSource execution to fail, call fail(error_message)
     #TODO: If you want a PythonSource execution to be cached, call cache_this()
@@ -431,7 +431,7 @@ from packages.eo4vistrails.tools.utils.DropDownListWidget import ComboBoxWidget
 
 
 class GDALFormatComboBoxWidget(ComboBoxWidget):
-    """TODO Write docstring."""
+    """TODO: Write docstring."""
     _KEY_VALUES = {'HFA': 'HFA', 'GEOTiff': 'GTiff'}
 
 # LinuxComboBox
@@ -443,10 +443,10 @@ GDALFormatComboBox = basic_modules.new_constant('GDAL Format',
 
 
 def writeImage(arrayData, prototype, path, format):
-    """
-    write the given array data to the file 'path' with the given extent.
-
-    if arrayData shape is of length 3, then we have multibands (nbad,rows,cols), otherwise one band
+    """Write the given array data to the file 'path' with the given extent.
+    
+    If arrayData shape is of length 3, then we have multibands (nbad,rows,cols),
+    otherwise one band
     """
 
     driver = gdal.GetDriverByName(format)

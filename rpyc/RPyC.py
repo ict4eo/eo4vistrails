@@ -33,7 +33,7 @@ from core.modules.vistrails_module import Module
 import core.packagemanager
 
 
-class _RPyCModule(Module):
+class RPyCModule(Module):
     """
     This forms the basis for ensuring that rpyc-based modules have the correct
     input ports.
@@ -43,7 +43,7 @@ class _RPyCModule(Module):
         Module.__init__(self)
 
 
-class _RPyCSafeModule(object):
+class RPyCSafeModule():
     """
     RPyCSafeModule executes the compute method on a RPyC node.
 
@@ -61,10 +61,9 @@ class _RPyCSafeModule(object):
 # import either actual, or "dummy" rpyc modules
 manager = core.packagemanager.get_package_manager()
 if manager.has_package('za.co.csir.rpyc4vistrails'):
-    try:
-        from packages.rpyc4vistrails.RPyC import RPyCModule, RPyCSafeModule
-    except:
-        pass
+    from packages.rpyc4vistrails.RPyC import RPyCModule, RPyCSafeModule
+"""
 else:
     RPyCModule = _RPyCModule
     RPyCSafeModule = _RPyCSafeModule
+"""

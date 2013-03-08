@@ -1,33 +1,35 @@
 """
-Copyright 2010 Mark Holmquist and Logan May. All rights reserved.
-
-Redistribution and use in source and binary forms, with or without modification, are
-permitted provided that the following conditions are met:
-
-   1. Redistributions of source code must retain the above copyright notice, this list of
-      conditions and the following disclaimer.
-
-   2. Redistributions in binary form must reproduce the above copyright notice, this list
-      of conditions and the following disclaimer in the documentation and/or other materials
-      provided with the distribution.
-
-THIS SOFTWARE IS PROVIDED BY MARK HOLMQUIST AND LOGAN MAY ``AS IS'' AND ANY EXPRESS OR IMPLIED
-WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL MARK HOLMQUIST OR LOGAN
-MAY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
-ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
-ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-The views and conclusions contained in the software and documentation are those of the
-authors and should not be interpreted as representing official policies, either expressed
-or implied, of Mark Holmquist and Logan May.
+..
+    Copyright 2010 Mark Holmquist and Logan May. All rights reserved.
+    
+    Redistribution and use in source and binary forms, with or without modification, are
+    permitted provided that the following conditions are met:
+    
+       1. Redistributions of source code must retain the above copyright notice, this list of
+          conditions and the following disclaimer.
+    
+       2. Redistributions in binary form must reproduce the above copyright notice, this list
+          of conditions and the following disclaimer in the documentation and/or other materials
+          provided with the distribution.
+    
+    THIS SOFTWARE IS PROVIDED BY MARK HOLMQUIST AND LOGAN MAY ``AS IS'' AND ANY EXPRESS OR IMPLIED
+    WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+    FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL MARK HOLMQUIST OR LOGAN
+    MAY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+    CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+    SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+    ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+    NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+    ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+    
+    The views and conclusions contained in the software and documentation are those of the
+    authors and should not be interpreted as representing official policies, either expressed
+    or implied, of Mark Holmquist and Logan May.
 """
 
 """
-Modified By Terence van Zyl
+..
+    Modified By Terence van Zyl
 """
 # library
 import urllib
@@ -123,6 +125,7 @@ def format(color, style='', bgcolor=''):
 
 
 class SyntaxSourceConfigurationWidget(SourceConfigurationWidget):
+
     def __init__(self, module, controller, syntax,
                  parent=None, has_inputs=True, has_outputs=True, encode=True,
                  input_port_specs=None, output_port_specs=None, displayedComboItems=None):
@@ -170,6 +173,7 @@ class SyntaxSourceConfigurationWidget(SourceConfigurationWidget):
             self.outputPortTable.fixGeometry()
 """
 
+
 class SyntaxEditor(QtGui.QTextEdit):
 
     def __init__(self, parent=None):
@@ -199,7 +203,7 @@ class SyntaxEditor(QtGui.QTextEdit):
             QtGui.QTextEdit.keyPressEvent(self, event)
 
 
-class SyntaxHighlighter (QtGui.QSyntaxHighlighter):
+class SyntaxHighlighter(QtGui.QSyntaxHighlighter):
 
     def __init__(self, document, language):
         QtGui.QSyntaxHighlighter.__init__(self, document)
@@ -424,10 +428,10 @@ class SyntaxHighlighter (QtGui.QSyntaxHighlighter):
         self.rules = [(QtCore.QRegExp(pattern, self.caseSensitivity), index, formatz) for (pattern, index, formatz) in rules]
 
     def highlightBlock(self, text):
-        # Do other syntax formatting
+        """Do other syntax formatting."""
+
         for expression, nth, format in self.rules:
             index = expression.indexIn(text, 0)
-
             while index >= 0:
                 # We actually want the index of the nth match
                 index = expression.pos(nth)

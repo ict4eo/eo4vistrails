@@ -23,8 +23,8 @@
 ### WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ###
 #############################################################################
-"""This module forms part of the eo4vistrails capabilities. It is used to
-handle reading, writing and filtering Excel files.
+"""This module is used to handle reading, writing, changing and filtering
+Excel files.
 """
 # library
 import os
@@ -52,14 +52,15 @@ SHEET_NAME_SIZE = 27  # maximum length of an Excel worksheet name (i.e. 31 - 4)
 @RPyCSafeModule()
 class ExcelBase(ThreadSafeMixin, Module):
     """An abstract VisTrails class for reading and processing an Excel file.
-
+    
     This base class contains common methods and properties.
-
-    The compute() method initialises data for ports that are common to all
-    classes; but should be extended (via super) to perform processing specific
-    to the inherited class.
-
+    
+    .. note:: The compute() method initialises data for ports that are common to
+    all classes; but should be extended (via super) to perform processing which
+    is specific to the inherited class.
+    
     Input ports:
+    
         file_in:
             input Excel file
         file_name_out:
@@ -92,7 +93,9 @@ class ExcelBase(ThreadSafeMixin, Module):
                  *  N: the first N columns
                  *  N, M: all columns from N to M inclusive
                  *  N, M, P: every "Pth" column, between N to M inclusive
+    
     Output ports:
+    
         file_out:
             output Excel file
     """
@@ -288,20 +291,23 @@ edu.utah.sci.vistrails.basic:Boolean)',
 @RPyCSafeModule()
 class ExcelExtractor(ExcelBase):
     """Read Excel file and extract all data either as a dictionary or a list.
-
+    
+    Input ports:
+    
         file_in:
             input Excel file
         sheets:
             a list of worksheet numbers, or names, that must be processed.
             If None, then all sheets will be processed. Sheet numbering starts
             from 1.
-
+    
     Output ports:
+    
         data_list:
             Excel data as a list of lists; each item in the outer list
             corresponds to one worksheet; each inner lists contains the data
             from that worksheet.
-        dictionary
+        dictionary:
             Excel data as a dictionary of dictionaries; each outer dictionary
             is keyed with the name of the Excel worksheet name; and each inner
             dictionary contains the data from that worksheet.
@@ -335,13 +341,14 @@ class ExcelExtractor(ExcelBase):
 class ExcelMerger(ExcelBase):
     """Read Excel file and merge values from adajacent rows/columns according
     to specific parameters.
-
+    
     ExcelMerger will combine items in the set of columns specified and replace
     the item in the first column (of the set) with the combined result.  This
     will be repeated for all of the specified rows of the specified sheets.
     If no columns are specified, then no merger will occur.
-
+    
     Input ports:
+    
         file_in:
             input Excel file
         file_name_out:
@@ -357,30 +364,31 @@ class ExcelMerger(ExcelBase):
                 will be processed. Row numbering starts from 1.
             range:
                 a Boolean indicating if the row numbers specify a range.
-
-            If range is `False`, the row values are just numbers of individual
-            rows. If range is `True`, the following notation applies:
-                 *  N: the first N rows
-                 *  N, M: all rows from N to M inclusive
-                 *  N, M, P: every "Pth" row, between N to M inclusive
+                
+                If range is `False`, the row values are just numbers of individual
+                rows. If range is `True`, the following notation applies:
+                *  N: the first N rows
+                *  N, M: all rows from N to M inclusive
+                *  N, M, P: every "Pth" row, between N to M inclusive
         columns:
             values:
                 a list of column numbers to be processed. If None, then NO
                 columns will be processed. Column numbering starts from 1.
             range:
                 a Boolean indicating if the column numbers specify a range.
-
-            If range is `False`, the column values are just numbers of
-            individual columns. If range is `True`, the following notation
-            applies:
-                 *  N: the first N columns
-                 *  N, M: all columns from N to M inclusive
-                 *  N, M, P: every "Pth" column, between N to M inclusive
+                
+                If range is `False`, the column values are just numbers of
+                individual columns. If range is `True`, the following notation
+                applies:
+                *  N: the first N columns
+                *  N, M: all columns from N to M inclusive
+                *  N, M, P: every "Pth" column, between N to M inclusive
         cell_joiner: string
             the string that is to be used as a spacer between the merged cell
             values (defaults to a single space)
-
+    
     Output ports:
+    
         file_out:
             output Excel file
     """
@@ -424,12 +432,13 @@ class ExcelMerger(ExcelBase):
 @RPyCSafeModule()
 class ExcelSplitter(ExcelBase):
     """Read Excel file and create a new file according to specific parameters.
-
+    
     The new file will have a set of worksheets, created by splitting existing
     sheets along row/columns. For example, if a sheet is split by rows and
     columns, then each "block" within the split will form a new worksheet.
-
+    
     Input ports:
+    
         file_in:
             input Excel file
         file_name_out:
@@ -442,34 +451,30 @@ class ExcelSplitter(ExcelBase):
         rows:
             values:
                 a list of row numbers on which to split a worksheet. Row
-                numbering starts from 1.
+                numbering starts from 1.  If the list is empty, the sheet will
+                be split according to the type of 'cell_match'.
             range:
                 a Boolean indicating if the row numbers specify a range.
-
-            If range is `False`, the row values are just numbers of individual
-            rows. If range is `True`, the following notation applies:
-                 *  N: the first N rows
-                 *  N, M: all rows from N to M inclusive
-                 *  N, M, P: every "Pth" row, between N to M inclusive
-
-            If the list is empty, the sheet will be split according to the
-            type of 'cell_match'.
+                
+                If range is `False`, the row values are just numbers of individual
+                rows. If range is `True`, the following notation applies:
+                *  N: the first N rows
+                *  N, M: all rows from N to M inclusive
+                *  N, M, P: every "Pth" row, between N to M inclusive
         columns:
             values:
                 a list of column numbers on which to split a worksheet. Column
-                numbering starts from 1.
+                numbering starts from 1. If the list is empty, the sheet will
+                be split according to the type of 'cell_match'.
             range:
                 a Boolean indicating if the column numbers specify a range.
-
-            If range is `False`, the column values are just numbers of
-            individual columns. If range is `True`, the following notation
-            applies:
-                 *  N: the first N columns
-                 *  N, M: all columns from N to M inclusive
-                 *  N, M, P: every "Pth" column, between N to M inclusive
-
-            If the list is empty, the sheet will be split according to the
-            type of 'cell_match'.
+                
+                If range is `False`, the column values are just numbers of
+                individual columns. If range is `True`, the following notation
+                applies:
+                *  N: the first N columns
+                *  N, M: all columns from N to M inclusive
+                *  N, M, P: every "Pth" column, between N to M inclusive
         cell_match:
             type:
                 the type of cell value on which the split will take place.
@@ -478,18 +483,19 @@ class ExcelSplitter(ExcelBase):
             value:
                 the cell value (string) on which the split will take place (if
                 'cell_match' is not 'Is Blank')
-
-                for date value, the format used must be 'YYYY-MM-DD HH:MM:SS.x'
-                for example, to find all dates in November 2010, use a value of
-                2010-11, and a "Contains" `type`
+                
+                For date value, the format used must be 'YYYY-MM-DD HH:MM:SS.x'
+                *For example, to find all dates in November 2010, use a value
+                of 2010-11, and a "Contains" `type`*
             case_sensitive:
                 a Boolean switch to determine if the `cell_match` is case
                 sensitive or not (the default is *not* case sensitive)
         split_offset:
             the number of rows, or rows and columns, away from the split point,
             at which the split must take place.
-
+    
     Output ports:
+    
         file_out:
             output Excel file
     """
@@ -726,11 +732,12 @@ edu.utah.sci.vistrails.basic:Integer)',
 @RPyCSafeModule()
 class ExcelChopper(ExcelBase):
     """Read Excel file and remove rows/columns according to parameters.
-
+    
     Note that only values will be reproduced in the new file; all formatting
     (e.g. alignment, font style and colors) will be lost.
-
+    
     Input ports:
+    
         file_in:
             input Excel file
         file_name_out:
@@ -746,27 +753,28 @@ class ExcelChopper(ExcelBase):
                 rows will be removed. Row numbering starts from 1.
             range:
                 a Boolean indicating if the row numbers specify a range.
-
-            If range is `False`, the row values are just numbers of individual
-            rows. If range is `True`, the following notation applies:
-                 *  N: the first N rows
-                 *  N, M: all rows from N to M inclusive
-                 *  N, M, P: every "Pth" row, between N to M inclusive
+                
+                If range is `False`, the row values are just numbers of individual
+                rows. If range is `True`, the following notation applies:
+                *  N: the first N rows
+                *  N, M: all rows from N to M inclusive
+                *  N, M, P: every "Pth" row, between N to M inclusive
         columns:
             values:
                 a list of column numbers to be removed. If None, then no
                 columns will be removed. Column numbering starts from 1.
             range:
                 a Boolean indicating if the column numbers specify a range.
-
-            If range is `False`, the column values are just numbers of
-            individual columns. If range is `True`, the following notation
-            applies:
-                 *  N: the first N columns
-                 *  N, M: all columns from N to M inclusive
-                 *  N, M, P: every "Pth" column, between N to M inclusive
-
+                
+                If range is `False`, the column values are just numbers of
+                individual columns. If range is `True`, the following notation
+                applies:
+                *  N: the first N columns
+                *  N, M: all columns from N to M inclusive
+                *  N, M, P: every "Pth" column, between N to M inclusive
+    
     Output ports:
+    
         file_out:
             output Excel file
     """
@@ -814,8 +822,9 @@ class ExcelChopper(ExcelBase):
 @RPyCSafeModule()
 class ExcelReplacer(ExcelBase):
     """Read Excel file and replace values according to specific parameters.
-
+    
     Input ports:
+    
         file_in:
             input Excel file
         file_name_out:
@@ -831,25 +840,25 @@ class ExcelReplacer(ExcelBase):
                 will be processed. Row numbering starts from 1.
             range:
                 a Boolean indicating if the row numbers specify a range.
-
-            If range is `False`, the row values are just numbers of individual
-            rows. If range is `True`, the following notation applies:
-                 *  N: the first N rows
-                 *  N, M: all rows from N to M inclusive
-                 *  N, M, P: every "Pth" row, between N to M inclusive
+                
+                If range is `False`, the row values are just numbers of individual
+                rows. If range is `True`, the following notation applies:
+                *  N: the first N rows
+                *  N, M: all rows from N to M inclusive
+                *  N, M, P: every "Pth" row, between N to M inclusive
         columns:
             values:
                 a list of column numbers to be processed. If None, then all
                 columns will be processed. Column numbering starts from 1.
             range:
                 a Boolean indicating if the column numbers specify a range.
-
-            If range is `False`, the column values are just numbers of
-            individual columns. If range is `True`, the following notation
-            applies:
-                 *  N: the first N columns
-                 *  N, M: all columns from N to M inclusive
-                 *  N, M, P: every "Pth" column, between N to M inclusive
+                
+                If range is `False`, the column values are just numbers of
+                individual columns. If range is `True`, the following notation
+                applies:
+                *  N: the first N columns
+                *  N, M: all columns from N to M inclusive
+                *  N, M, P: every "Pth" column, between N to M inclusive
         cell_match:
             value:
                 the current cell value that is to be matched (and replaced).
@@ -859,8 +868,9 @@ class ExcelReplacer(ExcelBase):
             the new cell value that is to be used instead of the current.
             Can be None; then the current cell value will be replaced by an
             empty string.
-
+    
     Output ports:
+    
         file_out:
             output Excel file
     """
@@ -918,8 +928,9 @@ edu.utah.sci.vistrails.basic:Boolean)',
 @RPyCSafeModule()
 class ExcelFiller(ExcelBase):
     """Read Excel file and fill in data according to specific parameters.
-
+    
     Input ports:
+    
         file_in:
             input Excel file
         file_name_out:
@@ -935,25 +946,25 @@ class ExcelFiller(ExcelBase):
                 will be processed. Row numbering starts from 1.
             range:
                 a Boolean indicating if the row numbers specify a range.
-
-            If range is `False`, the row values are just numbers of individual
-            rows. If range is `True`, the following notation applies:
-                 *  N: the first N rows
-                 *  N, M: all rows from N to M inclusive
-                 *  N, M, P: every "Pth" row, between N to M inclusive
+                
+                If range is `False`, the row values are just numbers of individual
+                rows. If range is `True`, the following notation applies:
+                *  N: the first N rows
+                *  N, M: all rows from N to M inclusive
+                *  N, M, P: every "Pth" row, between N to M inclusive
         columns:
             values:
                 a list of column numbers to be processed.  If None, then all
                 columns will be processed. Column numbering starts from 1.
             range:
                 a Boolean indicating if the column numbers specify a range.
-
-            If range is `False`, the column values are just numbers of
-            individual columns. If range is `True`, the following notation
-            applies:
-                 *  N: the first N columns
-                 *  N, M: all columns from N to M inclusive
-                 *  N, M, P: every "Pth" column, between N to M inclusive
+                
+                If range is `False`, the column values are just numbers of
+                individual columns. If range is `True`, the following notation
+                applies:
+                *  N: the first N columns
+                *  N, M: all columns from N to M inclusive
+                *  N, M, P: every "Pth" column, between N to M inclusive
         cell_replace: string
             the new cell value that is to be used instead of any empty cell.
         use_last_value: Boolean
@@ -964,8 +975,9 @@ class ExcelFiller(ExcelBase):
         direction:
             the order in which the sheet is processed; down the columns or
             along the rows
-
+    
     Output ports:
+    
         file_out:
             output Excel file
     """
@@ -1036,6 +1048,7 @@ class ExcelFiller(ExcelBase):
 
 class ExcelDirectionComboBoxWidget(ComboBoxWidget):
     """Constants used to decide direction of processing of an Excel file"""
+
     _KEY_VALUES = {'Along Rows': 'rows', 'Down Columns': 'cols'}
 
 ExcelDirectionComboBox = new_constant('Excel Direction',
@@ -1048,6 +1061,7 @@ ExcelDirectionComboBox = new_constant('Excel Direction',
 # not used as at 10/10/2012
 class ExcelSplitComboBoxWidget(ComboBoxWidget):
     """Constants used to decide splits for processing of an Excel file"""
+
     _KEY_VALUES = {'Row & Column': 'both', 'Along a Row': 'row',
                    'Along a Column': 'col'}
 
@@ -1060,6 +1074,7 @@ ExcelSplitComboBox = new_constant('Excel Split',
 
 class ExcelMatchComboBoxWidget(ComboBoxWidget):
     """Constants used to decide what type of match to use in an Excel file"""
+
     _KEY_VALUES = {'Blank Rows & Columns': 'blank', 'Blank Rows': 'rows',
                    'Blank Columns': 'cols', 'Contains': 'contains',
                    'Exact Match': 'exact', 'Starts With': 'starts'}

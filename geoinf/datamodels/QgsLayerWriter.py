@@ -53,7 +53,8 @@ class QgsLayerWriter(Module):
         raise ModuleError(self, msg + ': %s' % str(error))
 
     def compute(self):
-        """Execute the module to create the output"""
+        """Execute the module to create the output
+        """
         try:
             thefile = self.forceGetInputFromPort('file', None)
             thelayer = self.forceGetInputFromPort('value', None)
@@ -125,6 +126,6 @@ class QgsLayerWriter(Module):
 
     def write_raster_layer(self, layer, filename, filetype=None,
                            encoding=None):
-        """TODO IN FUTURE Write a QGIS raster layer to disk
+        """.. todo:: Write a QGIS raster layer to disk
         """
         pass

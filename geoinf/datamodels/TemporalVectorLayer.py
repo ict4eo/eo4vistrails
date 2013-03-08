@@ -70,7 +70,7 @@ class TemporalVectorLayer(QgsVectorLayer):
 
     For example, in the case of a SOS, the data fetched from the server
     will be stored in an O&M schema-based XML file, with the filename
-    `self.results_file`
+    *self.results_file*
 
     Methods are provided to extract data from the GML file and return file(s)
     containing data in various formats; e.g. "flat files" such as CSV, ODV,
@@ -134,13 +134,12 @@ class TemporalVectorLayer(QgsVectorLayer):
 
     def extract_field_data(self, doc, fields):
         """Return a list of field dictionaries from GML field element.
-
-        Requires:
-            a GML document (or section thereof)
-            a list of fields
-
-        Returns:
-            a list with a field dictionary for each field, including:
+        
+        :param str doc: a GML document (or section thereof)
+        :param list field: a list of fields
+        
+        :rtype: a list with a field dictionary for each field, including:
+            
             *   id
             *   name
             *   definition
@@ -175,8 +174,8 @@ class TemporalVectorLayer(QgsVectorLayer):
 
     def extract_procedure(self, doc=None, thefile=None):
         """Return the procedure from either a GML file or Observation element.
-
-        *WARNING*:  This method has not been used or tested...
+        
+        .. warning:: This method has not been used or tested.
         """
         if thefile:
             doc = Parser(file=thefile, namespace="http://www.opengis.net/swe/1.0.1")
@@ -201,12 +200,11 @@ class TemporalVectorLayer(QgsVectorLayer):
 
     def extract_swe_values_GML(self, thefile, line=True):
         """Parse SOS output and extract locations from swe:values as GML data.
-
-        Requires:
-            a GML document (or section thereof)
-            line selection (True/False) - if False, then points are returned
-
-        Returns:
+        
+        :param str doc: a GML document (or section thereof)
+        :param boolean line selection:if False, then points are returned
+        
+        :rtype:
             a string, with lat/lon data wrapped as elements in a GML line
         """
         doc = Parser(file=thefile, namespace="http://www.opengis.net/swe/1.0.1")
@@ -262,17 +260,17 @@ class TemporalVectorLayer(QgsVectorLayer):
 
     def extract_time_series(self, thefile):
         """Parse a SOS GML file and extract time series and other meta data.
-
-        Requires:
+        
+        :param str thefile:
             a GML document (or section thereof)
-
-        Returns:
-            a list, with a dictionary for each member consisting of:
-            *   fields
-            *   observation
-            *   sampling point
-            *   feature
-            *   data
+        
+        :rtype: a list, with a dictionary for each member consisting of:
+        
+        *   fields
+        *   observation
+        *   sampling point
+        *   feature
+        *   data
         """
         doc = Parser(file=thefile, namespace="http://www.opengis.net/swe/1.0.1")
         results = []
@@ -412,6 +410,13 @@ class TemporalVectorLayer(QgsVectorLayer):
     def to_gml(self, filename_out, header=True,
                delimiter=',', quotechar=None, missing_value=None):
         """Transform GML to create a GML representation of all spatial data.
+        
+        :param str filename_out: name of the file to which the data must be written
+        :param boolean header: if header row required (defaults to TRUE)
+        :param str(1) delimiter: character between each field (defaults to ,)
+        :param str(1) quotechar: character; if None then the CSV file writer has the
+            QUOTE_MINIMAL flag
+        :param str missing_value: a place-holder to be subsituted for missing data
         """
         HEADER = """<om:ObservationCollection
                     xmlns:om="http://www.opengis.net/om/1.0"
@@ -441,26 +446,24 @@ class TemporalVectorLayer(QgsVectorLayer):
     def to_csv(self, filename_out, header=True,
                delimiter=',', quotechar=None, missing_value=None):
         """Transform GML to create a CSV representation of the time-series data.
-
-        Requires:
-         *  filename_out - name of the file to which the data must be written
-         *  header flag - if header row required (defaults to TRUE)
-         *  delimiter  - character between each field (defaults to ,)
-         *  quote - character; if None then the CSV file writer has the
+        
+        :param str filename_out: name of the file to which the data must be written
+        :param boolean header: if header row required (defaults to TRUE)
+        :param str delimiter: character between each field (defaults to ,)
+        :param str quotechar: character; if None then the CSV file writer has the
             QUOTE_MINIMAL flag
-         *  missing_value - a place-holder to be subsituted for missing data
-
-        Returns:
-            A list of fully-qualified filenames, containing CSV data.
+        :param str missing_value: a place-holder to be subsituted for missing data
+        
+        :rtype:  A list of fully-qualified filenames, containing CSV data.
             Each 'member' node in the GML file will cause a new CSV file to have
             been created.
-
+        
             The data columns in each CSV file are:
-             *  Observation ID
-             *  Feature ID
-             *  Sample Point ID
-             *  Geometry
-             *  One or more columns with the phenomena/property data; typically
+            *  Observation ID
+            *  Feature ID
+            *  Sample Point ID
+            *  Geometry
+            *  One or more columns with the phenomena/property data; typically
                 with a field name, followed by a time value.  Units (if
                 available in the meta data) are shown in square brackets []
                 after the field name.
@@ -516,20 +519,19 @@ class TemporalVectorLayer(QgsVectorLayer):
 
     def to_odv(self, filename_out, missing_value=-1e10):
         """Transform GML to create a ODV representation of the time-series data.
-
-        Requires:
-         *  filename_out - name of the file to which the data must be written
-         *  missing_value - a place-holder to be subsituted for missing data
-
-        Returns:
-            An ODV generic spreadsheet (text) file. See: http://odv.awi.de/
-
+        
+        :param str filename_out: name of the file to which the data must be written
+        :param str missing_value: a place-holder to be subsituted for missing data
+        
+        :rtype: file
+            An ODV generic spreadsheet (text) file. See: `<http://odv.awi.de/>`_
+            
             The data columns required by each ODV file are:
                 "Cruise", "Station", "Type", "mon/day/yr", "hh:mm",
                 "Lon (°E)", "Lat (°N)", "Bot. Depth [m]", followed by columns
                 for data variables, up to 60 characters, long which should
                 include unit specifications enclosed in brackets [ ].
-
+            
             These correspond to the following fields from the GML:
              *  Cruise > Procedure ID
              *  Type > "*"  (ODV will choose approproiate type upon import)
@@ -627,13 +629,8 @@ class TemporalVectorLayer(QgsVectorLayer):
 
     def to_numpy(self):
         """Transform GML to create a numpy array of the time-series data.
-
-        Requires:
-            None
-
-        Returns:
-            TODO
-
+        
+        .. todo:: Not yet implemented!
         """
         GML_file = self.results_file
         if not GML_file:

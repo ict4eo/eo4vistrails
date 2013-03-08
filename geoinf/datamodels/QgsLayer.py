@@ -62,11 +62,10 @@ EPSGCode = basic_modules.new_constant('EPSG Code',
 #globalQgsLock = RLock()
 
 class QgsMapLayer(Module, NotCacheable):
-    """
-    This module will create a QGIS layer from a file
-
-    Notes:
-        It is not threadsafe and has race conditions on the qgis drivers
+    """Create a QGIS layer from a file
+    
+    .. warning::
+        This is not threadsafe and has race conditions on the QGIS drivers
     """
 
     def __init__(self):
@@ -101,15 +100,15 @@ class QgsMapLayer(Module, NotCacheable):
 
 
 class QgsVectorLayer(QgsMapLayer, qgis.core.QgsVectorLayer):
-    """Create a QGIS vector layer from either a Data Request or a file.
-
-    VectorLayer Drivers (set in the Data Request) can be any of:
-     *  WFS: Web Feature Service
-     *  ogr: multiple vector formats - see http://www.gdal.org/ogr/
-     *  postgres: Postgresql/PostGIS database
-
-    Note that these driver names *are* case-sensitive.
-
+    """Create a QGIS vector layer from either a `DataRequest`_ or a file.
+    
+    VectorLayer drivers (set in the `DataRequest`_) can be any of:
+    
+    *   WFS: Web Feature Service
+    *   ogr: multiple vector formats - see `OGR <http://www.gdal.org/ogr/>`_
+    *   postgres: Postgresql/PostGIS database
+    
+    .. note:: these driver names *are* case-sensitive.
     """
 
     def __init__(self, uri=None, layername=None, driver=None):
@@ -182,11 +181,11 @@ class QgsRasterLayer(QgsMapLayer, qgis.core.QgsRasterLayer):
     """Create a QGIS raster layer from either a Data Request or a file.
 
     RasterLayer Drivers (set in the DataRequest) can be any of:
-     *  WCS: Web Coverage Service
-     *  wms: Web Mapping Service
-     *  gdl: GDAL
+    *   WCS: Web Coverage Service
+    *   wms: Web Mapping Service
+    *   gdl: GDAL
 
-    Note that these driver names *are* case-sensitive.
+    .. note:: these driver names *are* case-sensitive.
 
     """
 

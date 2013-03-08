@@ -64,16 +64,15 @@ class _OgrMemModel():
 
         Expects datasets with one layer, so some arcane formats are out.
 
-        Args:
-            sourceDS:
-                a path to a file; allowable file types are:
-                        {
-                        shapefiles;
-                        csv files;
-                        gml files;
-                        }
-            getStatement:
-                a Select statement
+        :param str sourceDS:
+            a path to a file; allowable file types are:
+                {
+                shapefiles;
+                csv files;
+                gml files;
+                }
+        :param str getStatement:
+            a Select statement
 
         """
         if os.path.exists(sourceDS):
@@ -93,10 +92,9 @@ class _OgrMemModel():
     def loadContentFromDB(self, connstr, getStatement):
         """Loads content off PostGIS or SpatialLite database.
 
-        Args:
-            connstr:
+        :param str connstr:
                 connection string
-            getStatement:
+        :param str getStatement:
                 a Select statement which defines a layer
         """
         conn = ogr.Open(connstr)
@@ -110,7 +108,7 @@ class _OgrMemModel():
         conn = None
 
     def loadContentFromURI(self, webrequest):
-        """Loads content off web service, feed etc, like a WFS, GeoRSS
+        """Loads content off web service, feed etc, e.g. a WFS, GeoRSS
 
         If an OGR WFS driver was used here, the incoming url might not be
         properly setup.  Also, OGR WFS support requires compiling GDAL/OGR
@@ -121,11 +119,10 @@ class _OgrMemModel():
         Rather, it reads in from a temporary file (e.g. a GML file) retrieved
         by urllib or stream data from urllib into the memory model.
 
-        Args:
-            webrequest:
-                a WebRequest Object, which has `url` and `data` attributes.
-                These two variables allow creation of get/post requests, and
-                allow OGR to sensibly deal with the inputs.
+        :param WebRequest webrequest:
+            a WebRequest Object, which has `url` and `data` attributes.
+            These two variables allow creation of get/post requests, and
+            allow OGR to sensibly deal with the inputs.
         """
 
         #to test, just split, but should use elementtree
@@ -182,9 +179,11 @@ class _OgrMemModel():
         _viaCache()
 
     def loadContentFromString(self, geo_string):
-        '''Loads up a string of spatial data of some kind, e.g. GeoJSON, GML.
+        """Loads up a string of spatial data of some type, e.g. GeoJSON, GML.
 
-        Expects GeoStrings objects such as GMLString, GeoJSONString'''
+        :param str geo_string: a GeoString object such as GMLString, GeoJSONString.
+        """
+
         #TODO FIXME: get rid of string truncation by getting conf from the proper widget
         #- for now, make sure strings are small...
 
@@ -404,28 +403,28 @@ class FeatureModelGeometryComparitor(Module):
     Performs geometry comparisons between OGR Geoms.
 
     Assumes same projection. Is only a double input comparison
-    i.e. geomA | geomB. Supports the following comparisons:-
+    i.e. geomA | geomB. Supports the following comparisons:
 
     * geomA | geomB : individual geometries compared -> geomB | None
     * geomA | geomSetB : individual geometry compared to a set of geometries -> [geomB's] | None
     * geomSetA | geomB : set of geometries compared to individual geometry -> [geomA's] | None
     * geomSetA | geomSetB : set of geometries compared to a set of geometries -> [(geomA, geomB)] | None
 
-    Operators supported :-
+    Operators supported:
 
-    Predicates: Contains, Crosses, Disjoint, Equal, Intersect, Overlaps, Touches, Within
+    * Predicates: Contains, Crosses, Disjoint, Equal, Intersect, Overlaps, Touches, Within
 
-    For other purposes later:-
+    For other purposes later:
 
     * Constructors: Buffer, Centroid, Clone, ConvexHull, Difference, Intersection,
-            SymmetricDifference, Union
+        SymmetricDifference, Union
     * Editors: AddPoint, AddPoint_2D, CloseRings, FlattenTo2D, GetPoint, GetPoint_2D,
-            Segmentize, SetCoordinateDimension, SetPoint, SetPoint_2D, Transform,
-            TransformTo
+        Segmentize, SetCoordinateDimension, SetPoint, SetPoint_2D, Transform,
+        TransformTo
     * Calcs: Distance, GetArea, GetBoundary, GetEnvelope,
     * Info: GetCoordinateDimension , GetDimension, GetGeometryCount, GetGeometryName,
-            GetGeometryRef, GetGeometryType, GetPointCount, GetSpatialReference,GetX,
-            GetY, GetZ IsEmpty, IsRing, IsSimple, IsValid
+        GetGeometryRef, GetGeometryType, GetPointCount, GetSpatialReference,GetX,
+        GetY, GetZ IsEmpty, IsRing, IsSimple, IsValid
     """
 
     def __init__(self):
@@ -446,7 +445,7 @@ class FeatureModelGeometryComparitor(Module):
 
 
 def initialize(*args, **keywords):
-    """sets everything up"""
+    """Add module to the Vistrails registry; specify input & output ports."""
     # First create a local alias for the module_registry so that
     # we can refer to it in a shorter way.
     reg = core.modules.module_registry.get_module_registry()

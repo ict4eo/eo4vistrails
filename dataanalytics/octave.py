@@ -24,7 +24,8 @@
 ### WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ###
 #############################################################################
-"""This module ???
+"""
+.. note:: add brief description of what this octave client does
 """
 # library
 from subprocess import call
@@ -42,8 +43,8 @@ from packages.eo4vistrails.tools.utils.ModuleHelperMixin import \
 
 
 class OctaveScript(Module, ModuleHelperMixin):
-    """
-       Executes a Octave script
+    """Execute an Octave script.
+    
        Writes output to output files and reads input from input files
     """
     _input_ports = [('source', '(edu.utah.sci.vistrails.basic:String)'),
@@ -171,8 +172,8 @@ class OctaveScript(Module, ModuleHelperMixin):
                                       postScript=octave_postScript, suffix='.m')
 
 
-
 class OctaveSourceConfigurationWidget(SyntaxSourceConfigurationWidget):
+
     def __init__(self, module, controller, parent=None):
         displayedComboItems = {'String': True,
                                'Float': True,

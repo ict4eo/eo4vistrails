@@ -3,13 +3,16 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
+
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>DataAnalytics &mdash; EO4VisTrails v1.0.0 documentation</title>
+    <title>DataAnalytics &mdash; EO4VisTrails 1.0.0 documentation</title>
+    
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '',
@@ -22,9 +25,9 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="EO4VisTrails v1.0.0 documentation" href="index.html" />
+    <link rel="top" title="EO4VisTrails 1.0.0 documentation" href="index.html" />
     <link rel="up" title="Packages" href="packages.html" />
-    <link rel="next" title="DataCube" href="datacube.html" />
+    <link rel="next" title="GeoInf" href="geoinf.html" />
     <link rel="prev" title="Packages" href="packages.html" /> 
   </head>
   <body>
@@ -38,12 +41,12 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="datacube.html" title="DataCube"
+          <a href="geoinf.html" title="GeoInf"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="packages.html" title="Packages"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">EO4VisTrails v1.0.0 documentation</a> &raquo;</li>
+        <li><a href="index.html">EO4VisTrails 1.0.0 documentation</a> &raquo;</li>
           <li><a href="packages.html" accesskey="U">Packages</a> &raquo;</li> 
       </ul>
     </div>  
@@ -59,26 +62,157 @@
 <ul class="simple">
 </ul>
 </div>
-<span class="target" id="module-dataanalytics"></span><p>This package provides statistical capabilities for eo4vistrails.
-R, SciPy are proposed to be used</p>
-<div class="section" id="module-dataanalytics.rasterlang">
-<span id="rasterlang"></span><h2>RasterLang<a class="headerlink" href="#module-dataanalytics.rasterlang" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="networkx">
-<h3>Networkx<a class="headerlink" href="#networkx" title="Permalink to this headline">¶</a></h3>
-</div>
-<div class="section" id="module-dataanalytics.PySAL">
-<span id="pysal"></span><h3>PySAL<a class="headerlink" href="#module-dataanalytics.PySAL" title="Permalink to this headline">¶</a></h3>
-<p>This module ???</p>
-<dl class="class">
-<dt id="dataanalytics.PySAL.W">
-<em class="property">class </em><tt class="descclassname">dataanalytics.PySAL.</tt><tt class="descname">W</tt><a class="headerlink" href="#dataanalytics.PySAL.W" title="Permalink to this definition">¶</a></dt>
-<dd><p>Container class for the pysal.W class</p>
+<span class="target" id="module-dataanalytics"></span><p>This package enables spatial and statistical analysis capabilities for
+EO4VisTrails.</p>
+<div class="section" id="module-dataanalytics.Rasterlang">
+<span id="rasterlang"></span><h2>RasterLang<a class="headerlink" href="#module-dataanalytics.Rasterlang" title="Permalink to this headline">¶</a></h2>
+<p>This module holds a rpycnode type that can be passed around between modules.</p>
+<dl class="function">
+<dt id="dataanalytics.Rasterlang.writeImage">
+<tt class="descclassname">dataanalytics.Rasterlang.</tt><tt class="descname">writeImage</tt><big>(</big><em>arrayData</em>, <em>prototype</em>, <em>path</em>, <em>format</em><big>)</big><a class="headerlink" href="#dataanalytics.Rasterlang.writeImage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write the given array data to the file &#8216;path&#8217; with the given extent.</p>
+<p>If arrayData shape is of length 3, then we have multibands (nbad,rows,cols),
+otherwise one band</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="dataanalytics.Rasterlang.RasterLangCode">
+<tt class="descclassname">dataanalytics.Rasterlang.</tt><tt class="descname">RasterLangCode</tt><a class="headerlink" href="#dataanalytics.Rasterlang.RasterLangCode" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">&lt;Mock</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x3b4f9d0&gt;</span></tt></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="dataanalytics.Rasterlang.RasterLang">
+<tt class="descclassname">dataanalytics.Rasterlang.</tt><tt class="descname">RasterLang</tt><a class="headerlink" href="#dataanalytics.Rasterlang.RasterLang" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">&lt;Mock</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x3b4fad0&gt;</span></tt></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="dataanalytics.Rasterlang.RasterSourceConfigurationWidget">
+<tt class="descclassname">dataanalytics.Rasterlang.</tt><tt class="descname">RasterSourceConfigurationWidget</tt><a class="headerlink" href="#dataanalytics.Rasterlang.RasterSourceConfigurationWidget" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">&lt;Mock</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x3b4fdd0&gt;</span></tt></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="dataanalytics.Rasterlang.layerAsArray">
+<tt class="descclassname">dataanalytics.Rasterlang.</tt><tt class="descname">layerAsArray</tt><a class="headerlink" href="#dataanalytics.Rasterlang.layerAsArray" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">&lt;Mock</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x3b4fd10&gt;</span></tt></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="dataanalytics.Rasterlang.RasterPrototype">
+<tt class="descclassname">dataanalytics.Rasterlang.</tt><tt class="descname">RasterPrototype</tt><a class="headerlink" href="#dataanalytics.Rasterlang.RasterPrototype" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">&lt;Mock</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x3b4fd90&gt;</span></tt></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="dataanalytics.Rasterlang.arrayAsLayer">
+<tt class="descclassname">dataanalytics.Rasterlang.</tt><tt class="descname">arrayAsLayer</tt><a class="headerlink" href="#dataanalytics.Rasterlang.arrayAsLayer" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">&lt;Mock</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x3b4f310&gt;</span></tt></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="dataanalytics.Rasterlang.SaveArrayToRaster">
+<tt class="descclassname">dataanalytics.Rasterlang.</tt><tt class="descname">SaveArrayToRaster</tt><a class="headerlink" href="#dataanalytics.Rasterlang.SaveArrayToRaster" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">&lt;Mock</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x3d35410&gt;</span></tt></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="dataanalytics.Rasterlang.GDALFormatComboBoxWidget">
+<tt class="descclassname">dataanalytics.Rasterlang.</tt><tt class="descname">GDALFormatComboBoxWidget</tt><a class="headerlink" href="#dataanalytics.Rasterlang.GDALFormatComboBoxWidget" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">&lt;Mock</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x3d356d0&gt;</span></tt></p>
 </dd></dl>
 
 </div>
-<div class="section" id="id1">
-<h3>Rasterlang<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="module-dataanalytics.PySAL">
+<span id="pysal"></span><h2>PySAL<a class="headerlink" href="#module-dataanalytics.PySAL" title="Permalink to this headline">¶</a></h2>
+<p>This module ???</p>
+<dl class="class">
+<dt id="dataanalytics.PySAL.PySALModule">
+<em class="property">class </em><tt class="descclassname">dataanalytics.PySAL.</tt><tt class="descname">PySALModule</tt><a class="headerlink" href="#dataanalytics.PySAL.PySALModule" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="class">
+<dt>
+<em class="property">class </em><tt class="descclassname">dataanalytics.PySAL.</tt><tt class="descname">PySALModule</tt></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="dataanalytics.PySAL.W">
+<tt class="descclassname">dataanalytics.PySAL.</tt><tt class="descname">W</tt><a class="headerlink" href="#dataanalytics.PySAL.W" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">&lt;Mock</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x3b4fe90&gt;</span></tt></p>
+</dd></dl>
+
 </div>
+<div class="section" id="module-dataanalytics.pyDAP">
+<span id="pydap"></span><h2>PyDAP<a class="headerlink" href="#module-dataanalytics.pyDAP" title="Permalink to this headline">¶</a></h2>
+<p>This package is used to access netcdf files from an OpenDAP server.</p>
+<dl class="attribute">
+<dt id="dataanalytics.pyDAP.pyDAP">
+<tt class="descclassname">dataanalytics.pyDAP.</tt><tt class="descname">pyDAP</tt><a class="headerlink" href="#dataanalytics.pyDAP.pyDAP" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">&lt;Mock</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x3eb2ed0&gt;</span></tt></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="dataanalytics.pyDAP.pyDAPConfigurationWidget">
+<tt class="descclassname">dataanalytics.pyDAP.</tt><tt class="descname">pyDAPConfigurationWidget</tt><a class="headerlink" href="#dataanalytics.pyDAP.pyDAPConfigurationWidget" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">&lt;Mock</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x3eb2f90&gt;</span></tt></p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-dataanalytics.rpy2Stats">
+<span id="rpy2stats"></span><h2>rpy2Stats<a class="headerlink" href="#module-dataanalytics.rpy2Stats" title="Permalink to this headline">¶</a></h2>
+<p>This module ???</p>
+<dl class="attribute">
+<dt id="dataanalytics.rpy2Stats.Rpy2Script">
+<tt class="descclassname">dataanalytics.rpy2Stats.</tt><tt class="descname">Rpy2Script</tt><a class="headerlink" href="#dataanalytics.rpy2Stats.Rpy2Script" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">&lt;Mock</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x5a98350&gt;</span></tt></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="dataanalytics.rpy2Stats.RSourceConfigurationWidget">
+<tt class="descclassname">dataanalytics.rpy2Stats.</tt><tt class="descname">RSourceConfigurationWidget</tt><a class="headerlink" href="#dataanalytics.rpy2Stats.RSourceConfigurationWidget" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">&lt;Mock</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x5a984d0&gt;</span></tt></p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-dataanalytics.netcdf4">
+<span id="netcdf4"></span><h2>netcdf4<a class="headerlink" href="#module-dataanalytics.netcdf4" title="Permalink to this headline">¶</a></h2>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">add brief description of what this netCDF client does</p>
+</div>
+<dl class="attribute">
+<dt id="dataanalytics.netcdf4.netcdf4Reader">
+<tt class="descclassname">dataanalytics.netcdf4.</tt><tt class="descname">netcdf4Reader</tt><a class="headerlink" href="#dataanalytics.netcdf4.netcdf4Reader" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">&lt;Mock</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x5d55c90&gt;</span></tt></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="dataanalytics.netcdf4.netcdf4ConfigurationWidget">
+<tt class="descclassname">dataanalytics.netcdf4.</tt><tt class="descname">netcdf4ConfigurationWidget</tt><a class="headerlink" href="#dataanalytics.netcdf4.netcdf4ConfigurationWidget" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">&lt;Mock</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x5d55d10&gt;</span></tt></p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-dataanalytics.octave">
+<span id="octave"></span><h2>octave<a class="headerlink" href="#module-dataanalytics.octave" title="Permalink to this headline">¶</a></h2>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">add brief description of what this octave client does</p>
+</div>
+<dl class="attribute">
+<dt id="dataanalytics.octave.OctaveScript">
+<tt class="descclassname">dataanalytics.octave.</tt><tt class="descname">OctaveScript</tt><a class="headerlink" href="#dataanalytics.octave.OctaveScript" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">&lt;Mock</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x5ea8150&gt;</span></tt></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="dataanalytics.octave.OctaveSourceConfigurationWidget">
+<tt class="descclassname">dataanalytics.octave.</tt><tt class="descname">OctaveSourceConfigurationWidget</tt><a class="headerlink" href="#dataanalytics.octave.OctaveSourceConfigurationWidget" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">&lt;Mock</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x5ea8690&gt;</span></tt></p>
+</dd></dl>
+
 </div>
 </div>
 
@@ -91,12 +225,12 @@ R, SciPy are proposed to be used</p>
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">DataAnalytics</a><ul>
-<li><a class="reference internal" href="#module-dataanalytics.rasterlang">RasterLang</a><ul>
-<li><a class="reference internal" href="#networkx">Networkx</a></li>
+<li><a class="reference internal" href="#module-dataanalytics.Rasterlang">RasterLang</a></li>
 <li><a class="reference internal" href="#module-dataanalytics.PySAL">PySAL</a></li>
-<li><a class="reference internal" href="#id1">Rasterlang</a></li>
-</ul>
-</li>
+<li><a class="reference internal" href="#module-dataanalytics.pyDAP">PyDAP</a></li>
+<li><a class="reference internal" href="#module-dataanalytics.rpy2Stats">rpy2Stats</a></li>
+<li><a class="reference internal" href="#module-dataanalytics.netcdf4">netcdf4</a></li>
+<li><a class="reference internal" href="#module-dataanalytics.octave">octave</a></li>
 </ul>
 </li>
 </ul>
@@ -105,8 +239,8 @@ R, SciPy are proposed to be used</p>
   <p class="topless"><a href="packages.html"
                         title="previous chapter">Packages</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="datacube.html"
-                        title="next chapter">DataCube</a></p>
+  <p class="topless"><a href="geoinf.html"
+                        title="next chapter">GeoInf</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="_sources/dataanalytics.txt"
@@ -115,7 +249,7 @@ R, SciPy are proposed to be used</p>
 <div id="searchbox" style="display: none">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" size="18" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
@@ -139,18 +273,18 @@ R, SciPy are proposed to be used</p>
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="datacube.html" title="DataCube"
+          <a href="geoinf.html" title="GeoInf"
              >next</a> |</li>
         <li class="right" >
           <a href="packages.html" title="Packages"
              >previous</a> |</li>
-        <li><a href="index.html">EO4VisTrails v1.0.0 documentation</a> &raquo;</li>
+        <li><a href="index.html">EO4VisTrails 1.0.0 documentation</a> &raquo;</li>
           <li><a href="packages.html" >Packages</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
-        &copy; Copyright 2012, Meraka.CSIR.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.1.
+        &copy; Copyright 2011-2013, Meraka, CSIR.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
     </div>
   </body>
 </html>

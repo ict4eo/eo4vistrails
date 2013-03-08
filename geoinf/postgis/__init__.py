@@ -25,14 +25,6 @@
 ############################################################################
 """This package provides GIS capabilities for eo4vistrails.
 In particular, it provides PostGIS clients via psycopg2.
-
-This is not an SQL Builder - it assumes you know SQL
-and, in particular, spatial SQL as provided by PostGIS.
-Thus you will need to write raw SQl "by hand".
-
-The package merely provisions a session
-a.k.a. a PostGIS connection and allows random queries to be
-executed against your chosen database.
 """
 
 pass

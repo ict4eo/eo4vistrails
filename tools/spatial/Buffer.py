@@ -24,8 +24,8 @@
 ### WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ###
 #############################################################################
-"""This module forms part of the EO4VisTrails capabilities. It is used to
-provide a buffering process operation for a vector layer.
+"""This module provides a buffering process operation for a vector layer for
+EO4VisTrails.
 """
 # library
 import os
@@ -42,19 +42,20 @@ from packages.eo4vistrails.tools.utils.ThreadSafe import ThreadSafeMixin
 @RPyCSafeModule()
 class Buffer(ThreadSafeMixin, Module):
     """Accept a vector layer and buffer it according to specified parameters.
-
+    
     Input ports:
+    
         list_in:
             a QGIS MapLayer
         buffer:
             the distance for buffering
         dissolve:
             whether or not to merge the buffer with the source features (False)
-
+    
     Output ports:
+        
         shapefile:
             the buffered output as a shapefile
-
     """
 
     def __init__(self):

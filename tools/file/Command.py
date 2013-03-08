@@ -38,7 +38,7 @@ from core.modules.vistrails_module import Module, ModuleError
 
 
 class Command(Module):
-    """ TODO  Add documentation"""
+    """ TODO: write documentation"""
 
     _input_ports = [('command', '(edu.utah.sci.vistrails.basic:String)'),
                     ('input file path', '(edu.utah.sci.vistrails.basic:String)'),

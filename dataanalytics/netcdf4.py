@@ -1,11 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Thu Mar  1 15:12:36 2012
-
-@author: mmtsetfwa
-"""
-
-# -*- coding: utf-8 -*-
 ###########################################################################
 ##
 ## Copyright (C) 2012 CSIR Meraka Institute. All rights reserved.
@@ -31,9 +24,9 @@ Created on Thu Mar  1 15:12:36 2012
 ## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ##
 ############################################################################
-'''
-Add brief description of what this netCDF client does ???
-'''
+"""
+.. note:: add brief description of what this netCDF client does
+"""
 # library
 import sys
 # third party
@@ -57,6 +50,7 @@ import init
 
 class netcdf4Reader(Module):
     """Read netcdf/hdf5 file from OpenDAP server."""
+
     _input_ports = [('ncFile', '(edu.utah.sci.vistrails.basic:File)'),
                     ('varName', '(edu.utah.sci.vistrails.basic:String)'),
                     ('dimLimits', '(edu.utah.sci.vistrails.basic:String)')]

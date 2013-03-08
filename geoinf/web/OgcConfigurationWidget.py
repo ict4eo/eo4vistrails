@@ -26,7 +26,7 @@
 """This module provides general OGC (Open Geospatial Consortium) Web Service
 selection widgets for configuring geoinf.web modules.
 
-This refers primarily to GetCapabilities requests
+This refers primarily to GetCapabilities requests.
 """
 # library
 import pickle
@@ -51,7 +51,7 @@ DEFAULT_URL = ''
 
 
 class OgcCommonWidget(QtGui.QWidget):
-    """TO DO - add docstring"""
+    """TODO write docstring"""
 
     def __init__(self, module, parent=None):
         '''parses modules attributes to fetch parameters'''
@@ -248,7 +248,7 @@ Please check configuration & network\n \
 
 
 class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
-    """TO DO - add docstring"""
+    """TODO write docstring"""
 
     def __init__(self, module, controller, parent=None):
         SpatialTemporalConfigurationWidget.__init__(self, module, controller, parent)

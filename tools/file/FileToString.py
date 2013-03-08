@@ -42,15 +42,16 @@ from packages.eo4vistrails.tools.utils.ThreadSafe import ThreadSafeMixin
 @RPyCSafeModule()
 class FileToString(ThreadSafeMixin, Module):
     """Accept a filer and reads it to a string.
-
+    
     Input ports:
+    
         file:
             the output file created from the string
-
+    
     Output ports:
+    
          string: string
             a standard VisTrails (Python) string
-
     """
 
     _output_ports = [('string', '(edu.utah.sci.vistrails.basic:String)'),]

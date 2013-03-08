@@ -47,10 +47,10 @@ ENCODING = "utf-8"  # will probably differ in some countries ???
 
 
 class ExcelCell(SpreadsheetCell):
-    """
-    ExcelCell is a custom module to view Excel files as HTML tables.
-
+    """ ExcelCell is a custom module to view Excel files as HTML tables.
+    
     Input ports:
+    
         Location:
             the Location of the output display cell
         File:
@@ -70,11 +70,13 @@ class ExcelCell(SpreadsheetCell):
             top and lefthand sides.
         Disabled?
             If True, then the output is not displayed.
-
+    
     Output ports:
+    
         HTML File:
             the HTML file displaying the Excel
     """
+
     def compute(self):
         """ compute() -> None
         Create HTML and dispatch the contents to the VisTrails spreadsheet
@@ -104,10 +106,9 @@ class ExcelCell(SpreadsheetCell):
 
 
 class ExcelCellWidget(QCellWidget):
+    """ExcelCellWidget has a QTextBrowser to display HTML files
     """
-    ExcelCellWidget has a QTextBrowser to display HTML files
 
-    """
     def __init__(self, parent=None):
         """ ExcelCellWidget(parent: QWidget) -> ExcelCellWidget
         Create a rich text cell without a toolbar

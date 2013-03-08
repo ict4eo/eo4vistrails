@@ -163,7 +163,8 @@ class MetaDataBrowser:
 
     def __init__(self, ogr_driver_name):
         """
-        Valid driver names are: ESRI_Shapefile, GTiff, GRASS, PostgreSQL, etc.
+        :param str ogr_driver_name: valid OGR driver names are: ESRI_Shapefile,
+            GTiff, GRASS, PostgreSQL, etc.
         """
         self.ogr_driver_name = ogr_driver_name
         self.driver = ogr.GetDriverByName(ogr_driver_name)
@@ -171,8 +172,9 @@ class MetaDataBrowser:
             raise ValueError("Invalid driver name: %s" % ogr_driver_name)
 
     def get_metadata(self, filename):
-        """
-        Returns a dictionary containing the meta data in the given filename
+        """Return a dictionary containing the meta data in the given filename
+        
+        :param str filename:  name of the file containing a feature
         """
         # fix this to get path from self.placesGroupBox.text() text field
         # replace path with your local path to shapefile
@@ -231,7 +233,7 @@ class FeatureImportConfigurationWidget(OgcConfigurationWidget):
 
 
 def initialize(*args, **keywords):
-    """sets everything up"""
+    """Add module to the Vistrails registry; specify input & output ports."""
     # First create a local alias for the module_registry so that
     # we can refer to it in a shorter way.
     reg = core.modules.module_registry.get_module_registry()

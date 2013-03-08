@@ -23,7 +23,10 @@
 ## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ##
 ############################################################################
-"""This package provides GRASS (http://grass.osgeo.org/) capabilities for eo4vistrails.
+"""This package provides `GRASS <http://grass.osgeo.org>`_ capabilities for
+EO4VisTrails.
+
 GRASS commands are executed via the subprocess module
 """
+
 pass

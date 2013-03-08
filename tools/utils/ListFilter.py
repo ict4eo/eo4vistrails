@@ -24,7 +24,7 @@
 ### WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ###
 #############################################################################
-"""This module forms part of the eo4vistrails capabilities. It is used to
+"""This module forms part of EO4VisTrails capabilities. It is used to
 handle filtering of lists.
 """
 # library
@@ -41,24 +41,23 @@ from listutils import get_filter
 @RPyCSafeModule()
 class ListFilter(ThreadSafeMixin, Module):
     """Accept a list and filter it according to specified filter.
-
+    
     Input ports:
         list_in:
             a standard VisTrails (Python) list
         subset:
             an optional filter (defaults to "0" -the first item in the list)
-
+    
     The "subset" specification uses the following syntax:
-     *  N: a single integer
-     *  N-M: a range of integers
-     *  N, M, ...: multiple different single/range values
-
+    *   N: a single integer
+    *   N-M: a range of integers
+    *   N, M, ...: multiple different single/range values
+    
     Output ports:
         list_out:
             a list containing all filtered items
         string:
             a string'view' of the subsetted list
-
     """
 
     """

@@ -37,12 +37,12 @@ from core.modules.vistrails_module import Module, ModuleError
 
 
 class ArrayModule(object):
-    """TODO Write docstring."""
+    """TODO: Write docstring."""
     my_namespace = 'utils|array'
 
 
 class NDArrayEO(Module, ArrayModule):
-    """ Container class for the numpy.ndarray class """
+    """Container class for the numpy.ndarray class """
 
     def __init__(self):
         Module.__init__(self)

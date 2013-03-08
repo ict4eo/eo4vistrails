@@ -33,16 +33,18 @@ import os
 import os.path
 # third party
 from PyQt4 import QtCore, QtGui
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
-from qgis.core import *
-from qgis.gui import *
+from qgis.core import QgsApplication, QgsRectangle, QgsPoint, QgsRasterLayer, \
+    QgsVectorLayer, QgsMapLayerRegistry, QgsSingleSymbolRenderer, QgsSymbol, \
+    QgsField, QgsGeometry, QgsFeature
+from qgis.gui import QgsMapTool, QgsProjectionSelector, QgsMapToolPan, \
+    QgsMapToolZoom, QgsMapTool, QgsMapCanvasLayer, QgsMessageViewer
 # vistrails
 import core.modules.module_registry
 from core.modules.vistrails_module import Module, ModuleError
 from core.modules.module_configure import StandardModuleConfigurationWidget
 #eo4vistrails
-from packages.eo4vistrails.geoinf.geostrings.GeoStrings import GeoJSONString,  WKTString
+from packages.eo4vistrails.geoinf.geostrings.GeoStrings import GeoJSONString, \
+    WKTString
 from packages.eo4vistrails.geoinf.datamodels.QgsLayer import QgsRasterLayer
 import packages.eo4vistrails.tools.visual
 
@@ -51,14 +53,17 @@ QgsApplication.setPrefixPath("/usr", True)
 QgsApplication.initQgis()
 
 
-class SRSChooserDialog(QDialog):
-    '''inspired by http://code.google.com/p/qspatialite/source/browse/trunk/dialogSRS.py?spec=svn45&r=45'''
+class SRSChooserDialog(QtGui.QDialog):
+    """Inspired by:
+    `<http://code.google.com/p/qspatialite/source/browse/trunk/dialogSRS.py?spec=svn45&r=45>`_
+    """
     def __init__(self, title):
-        QDialog.__init__(self)
+        QtGui.QDialog.__init__(self)
         self.setWindowTitle(title)
-        layout = QVBoxLayout()
+        layout = QtGui.QVBoxLayout()
         self.selector = QgsProjectionSelector(self)
-        buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Close)
+        buttonBox = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok |
+                                           QtGui.QDialogButtonBox.Close)
 
         layout.addWidget(self.selector)
         layout.addWidget(buttonBox)
@@ -100,8 +105,10 @@ class GetFeatureInfoTool(QgsMapTool):
             urOffsetPointX = e.pos().x() + 1
             urOffsetPointY = e.pos().y() + 1
 
-            self.llOffsetPoint = self.toMapCoordinates(QPoint(llOffsetPointX, llOffsetPointY))
-            self.urOffsetPoint = self.toMapCoordinates(QPoint(urOffsetPointX, urOffsetPointY))
+            self.llOffsetPoint = self.toMapCoordinates(QPoint(llOffsetPointX,
+                                                              llOffsetPointY))
+            self.urOffsetPoint = self.toMapCoordinates(QPoint(urOffsetPointX,
+                                                              urOffsetPointY))
 
     def canvasReleaseEvent(self, e):
         if e.button() == QtCore.Qt.LeftButton:
@@ -224,19 +231,19 @@ class FeatureOfInterestDefinerConfigurationWidget(StandardModuleConfigurationWid
         #self.mainLayout.addWidget(self.canvas)
 
         # icons
-        actionAddLayer = QAction(QIcon(self.path_png_icon + \
+        actionAddLayer = QtGui.QAction(QtGui.QIcon(self.path_png_icon + \
                         "/mActionAddLayer.png"), "Add Layer", self)
-        actionZoomIn = QAction(QIcon(self.path_png_icon + \
+        actionZoomIn = QtGui.QtCore.QAction(QtGui.QIcon(self.path_png_icon + \
                         "/mActionZoomIn.png"), "Zoom In", self)
-        actionZoomOut = QAction(QIcon(self.path_png_icon + \
+        actionZoomOut = QtGui.QAction(QtGui.QIcon(self.path_png_icon + \
                         "/mActionZoomOut.png"), "Zoom Out", self)
-        actionPan = QAction(QIcon(self.path_png_icon + \
+        actionPan = QtGui.QAction(QtGui.QIcon(self.path_png_icon + \
                         "/mActionPan.png"), "Pan", self)
-        actionIdentify = QAction(QIcon(self.path_png_icon + \
+        actionIdentify = QtGui.QAction(QtGui.QIcon(self.path_png_icon + \
                         "/mActionIdentify.png"), "Feature Information", self)
 
         # create toolbar
-        self.toolbar = QToolBar()  # "Canvas actions"
+        self.toolbar = QtGui.QToolBar()  # "Canvas actions"
         self.toolbar.addAction(actionAddLayer)
         self.toolbar.addAction(actionZoomIn)
         self.toolbar.addAction(actionZoomOut)
@@ -244,7 +251,7 @@ class FeatureOfInterestDefinerConfigurationWidget(StandardModuleConfigurationWid
         self.toolbar.addAction(actionIdentify)
 
         # create layer explorer pane
-        self.explorer = QDockWidget("Layers")
+        self.explorer = QtGui.QDockWidget("Layers")
         self.explorer.resize(60, 100)
         #~self.explorerListWidget = QtGui.QListWidget()
         #~self.explorerListWidget.setObjectName("listWidget")
@@ -322,7 +329,7 @@ class FeatureOfInterestDefinerConfigurationWidget(StandardModuleConfigurationWid
         #load a backdrop layer
         self.mapCanvasLayers = []
         fname = self.path_bkgimg + '/bluemarblemerged.img'
-        fileInfo = QFileInfo(fname)
+        fileInfo = QtCore.QFileInfo(fname)
         baseName = fileInfo.baseName()
         self.bmLayer = QgsRasterLayer(fname,  baseName)
         QgsMapLayerRegistry.instance().addMapLayer(self.bmLayer)
@@ -502,7 +509,7 @@ class FeatureOfInterestDefinerConfigurationWidget(StandardModuleConfigurationWid
 
         ml_dp = self.mem_layer_obj.dataProvider()
         print "got DP"
-        uuid_gid = QUuid().createUuid().toString()
+        uuid_gid = QtCore.QUuid().createUuid().toString()
         print "got uuid"
         fet = QgsFeature()
         print "got feature with id"
@@ -606,22 +613,27 @@ class FeatureOfInterestDefinerConfigurationWidget(StandardModuleConfigurationWid
 
 
 class FeatureOfInterestDefiner(Module):
-    '''A utility to extract a Feature of Interest expressed as a GeoJSON snippet
+    """A base class to extract a Feature of Interest expressed as a GeoJSON snippet
+    
     - e.g. use case: an Area-Of-Interest to be used as a cookie cutter
            in subsetting or zonal statistics gathering
+    
     - e.g. use case: defining a Line-Of-Interest transect for use in longitudanal analyses
+    
     - e.g. use case: defining a Point-Of-Interest for time-series extraction at a point
-
-    uses a QGIS Map layer to define a feature that is outputted as the AOI
-    - can take a user defined polygon
-    - can take a user defined string, e.g. WKT or GeoJSON
-    - can take a vector layer, from which a feature must be chosen
-    '''
+    
+    Uses a QGIS Map layer to define a feature that is outputted as the AOI. Can
+    take:
+    
+    *   a user defined polygon
+    *   a user defined string, e.g. WKT or GeoJSON
+    *   a vector layer, from which a feature must be chosen
+    """
 
     def __init__(self):
         Module.__init__(self)
 
-    def checkGeom(self,  expected_type):
+    def checkGeom(self, expected_type):
         '''Check the geom to see if it can be instantiated as the expected type
             - enum of {'point','line','polygon'}'''
         testGeom = QgsGeometry().fromWkt(self.wkt)
@@ -647,16 +659,18 @@ class FeatureOfInterestDefiner(Module):
 
 
 class AreaOfInterestDefiner(FeatureOfInterestDefiner):
-    '''
-
+    """A utility to extract a Feature of Interest expressed as a GeoJSON snippet
+    
     use case: an Area-Of-Interest to be used as a cookie cutter
     in subsetting or zonal statistics gathering
-
-    uses a QGIS Map layer to define a feature that is outputted as the AOI
-    - can take a user defined polygon
-    - can take a user defined string, e.g. WKT or GeoJSON
-    - can take a vector layer, from which a feature must be chosen
-    '''
+    
+    Uses a QGIS Map layer to define a feature that is outputted as the AOI. Can
+    take:
+    
+    *   a user defined polygon
+    *   a user defined string, e.g. WKT or GeoJSON
+    *   a vector layer, from which a feature must be chosen
+    """
 
     def __init__(self):
         FeatureOfInterestDefiner.__init__(self)
@@ -675,13 +689,15 @@ class AreaOfInterestDefiner(FeatureOfInterestDefiner):
 
 
 class LineOfInterestDefiner(FeatureOfInterestDefiner):
-    '''Define a Line-Of-Interest transect for use in longitudinal analyses
-
-    uses a QGIS Map layer to define a feature that is outputted as the AOI
-    - can take a user defined polygon
-    - can take a user defined string, e.g. WKT or GeoJSON
-    - can take a vector layer, from which a feature must be chosen
-    '''
+    """Define a Line-Of-Interest transect for use in longitudinal analyses
+    
+    Uses a QGIS Map layer to define a feature that is outputted as the AOI. Can
+    take:
+    
+    *   a user defined polygon
+    *   a user defined string, e.g. WKT or GeoJSON
+    *   a vector layer, from which a feature must be chosen
+    """
 
     def __init__(self):
         FeatureOfInterestDefiner.__init__(self)

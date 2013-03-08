@@ -40,8 +40,9 @@ from core.modules.basic_modules import File, Path, String, Boolean
 
 class FTPReader(Module):
     """Reads a file from an FTP server.
-
+    
     Input ports:
+    
         server:
             the server on which the file is located
         directory:
@@ -59,11 +60,11 @@ class FTPReader(Module):
             optional full name of the file to be stored
             (default is the transfer filename but this is only used if the
             `directory_out` is specified)
-
+    
     Output ports:
+    
         transferred_file:
             a pointer to the file that has been transferred
-
     """
 
     _input_ports = [('server', '(edu.utah.sci.vistrails.basic:String)'),

@@ -43,7 +43,7 @@ class DataRequest(NotCacheable, Module):
 
     The input ports reflect exactly the QgsMapLayer framework inputs,
     because the QGIS framework forms the foundation of the data layer - see:
-    http://qgis.org/api/classQgsMapLayer.html
+    `<http://qgis.org/api/classQgsMapLayer.html>`_
 
     """
 

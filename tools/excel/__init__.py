@@ -23,5 +23,5 @@
 ## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ##
 ############################################################################
-"""This package provides Excel capabilities for eo4vistrails.
+"""This package provides Excel file processing capabilities for EO4VisTrails.
 """

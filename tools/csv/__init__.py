@@ -23,6 +23,6 @@
 ## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ##
 ############################################################################
-"""This package provides CSV file capabilities for eo4vistrails.
+"""This package provides CSV file capabilities for EO4VisTrails.
 """
 pass

@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 # Form implementation generated from reading ui file 'FeatureImport.ui'
 #
 # Created: Tue Nov 30 10:30:09 2010
@@ -57,7 +56,7 @@ from packages.eo4vistrails.geoinf.web.OgcConfigurationWidget import \
 
 #need to import the configuration widget we develop
 class RasterImport(RasterModel):
-    """TO DO - add docstring
+    """TODO - write docstring
 
     """
 
@@ -69,8 +68,7 @@ class RasterImport(RasterModel):
 
 
 class RasterImportCommonWidget(QtGui.QWidget):
-    """TO DO - add docstring
-
+    """TODO - write docstring
     """
 
     def __init__(self, ogc_widget, parent=None):
@@ -140,7 +138,7 @@ class RasterImportCommonWidget(QtGui.QWidget):
                      self.getRasterFileMetaData)
 
     def showDialog(self):
-        """TO DO - add docstring"""
+        """TODO - write docstring"""
         filename = QtGui.QFileDialog.getOpenFileName(
             self, 'Open file', '/home')
         self.placesGroupBox.setText(str(filename))
@@ -180,7 +178,7 @@ class RasterImportConfigurationWidget(OgcConfigurationWidget):
 
 
 def initialize(*args, **keywords):
-    """sets everything up"""
+    """Add module to the Vistrails registry; specify input & output ports."""
     # We'll first create a local alias for the module_registry so that
     # we can refer to it in a shorter way.
     reg = core.modules.module_registry.get_module_registry()

@@ -23,8 +23,9 @@
 ## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ##
 ############################################################################
-"""This package provides transformer modules for eo4vistrails; allowing
-core data streams to be repackaged into standard output formats - in particular
-CSV and HDF.
+"""This package provides transformer modules for EO4VisTrails.
+
+It allows core data streams to be repackaged into standard output formats -
+in particular CSV and HDF.
 """
 pass

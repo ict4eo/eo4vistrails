@@ -23,8 +23,8 @@
 ## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ##
 ############################################################################
-"""This package provides statistical capabilities for eo4vistrails.
-R, SciPy are proposed to be used
+"""This package enables spatial and statistical analysis capabilities for
+EO4VisTrails.
 """
 #import subprocess
 #try:

@@ -40,6 +40,9 @@ from core.utils import PortAlreadyExists
 
 
 class Port():
+    """TODO - write docstring
+    """
+
     #see: /vistrails/core/vistrail/port_spec.py
     def __init__(self, id=None, name=None,
                  sigstring='edu.utah.sci.vistrails.basic:String',
@@ -56,21 +59,21 @@ class Port():
 
 
 class PortConfigurationWidget(StandardModuleConfigurationWidget):
-    """
-    PortConfigurationWidget is the configuration widget for a
-    specifying any number of input (output) ports and the type of each port.
-    Then compose (decompose) a tuple of those inputs as a result.
-
+    """Configuration widget for specifying any number of input (output) ports
+    and the type of each port.
+    
+    The module composes (or decomposes) a tuple of inputs as a result.
+    
     When subclassing StandardModuleConfigurationWidget, there are
     only two things we need to care about:
 
-    1) The builder will provide the VistrailController (through the
+    1. The builder will provide the VistrailController (through the
        constructor) associated with the pipeline the module is in. The
        configuration widget can use the controller to change the
        current vistrail such as delete connections, add/delete module
        port...
 
-    2) The builder also provide the current Module object (through the
+    2. The builder also provide the current Module object (through the
        constructor) of the module. This is the instance of the module
        in the pipeline. Changes to this Module object usually will not
        result a new version in the current Vistrail. Such changes are
@@ -82,9 +85,7 @@ class PortConfigurationWidget(StandardModuleConfigurationWidget):
        module can have different types of input ports at two different
        time in the same vistrail.
 
-    That's it, the rest of the widget will be just like a regular Qt
-    widget.
-
+    The rest of the widget will be just like a regular Qt widget.
     """
     def __init__(self, module, controller, parent=None):
         """ PortConfigurationWidget(module: Module,

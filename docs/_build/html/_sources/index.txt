@@ -9,14 +9,14 @@ Welcome to EO4VisTrails's documentation!
 Contents:
 
 .. toctree::
-   :maxdepth: 5
+   :maxdepth: 3
 
    overview
    packages
    glossary
 
 
-Indices and tables
+Indices and Tables
 ==================
 
 * :ref:`genindex`

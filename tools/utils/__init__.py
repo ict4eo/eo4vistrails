@@ -23,8 +23,6 @@
 ## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ##
 ############################################################################
-"""This package provides core and general purpose utility code for eo4vistrails.
-In particular, provides a generic session object for connecting to cloud environments,
-GIS environments and statistical environments.
+"""This package provides core and general purpose utility code for EO4VisTrails.
 """
 pass

@@ -45,8 +45,9 @@ from packages.eo4vistrails.tools.utils.DropDownListWidget import ComboBoxWidget
 @RPyCSafeModule()
 class VectorLayerToFile(ThreadSafeMixin, Module):
     """Utility for creating a text data file from a temporal vector layer.
-
+    
     Input ports:
+    
         vector_layer:
             a temporal vector layer
         filename:
@@ -56,16 +57,16 @@ class VectorLayerToFile(ThreadSafeMixin, Module):
             pre-set data output type
             * csv - standard CSV (uses column_header_list)
             * odv - ocean data view (uses its own columns; see
-              http://odv.awi.de/
+              `<http://odv.awi.de/>`_
         column_header_list:
             optional list of column headings
         missing_value:
             optional value to be used to replace any missing or null values
-
+    
     Output ports:
+    
         created_file:
             On RPyC nodes, will refer to file(s) on that remote filesystem.
-
     """
 
     _input_ports = [('vector_layer',
@@ -116,6 +117,7 @@ class VectorLayerToFile(ThreadSafeMixin, Module):
 
 class DataWriterTypeComboBoxWidget(ComboBoxWidget):
     """Types of specialised data writing options."""
+
     _KEY_VALUES = {'Ocean Data View': 'odv',
                    'Comma-separated': 'csv',
                    'R data file': 'dat',

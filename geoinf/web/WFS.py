@@ -54,20 +54,20 @@ class WFS(OGC, Module):
 
 
 class WFSCommonWidget(QtGui.QWidget):
-    """The WFS module allows connection to a web-based OGC (Open Geospatial Consortium)
-    web feature service.
-
+    """The WFS module allows connection to a web-based OGC 
+    (Open Geospatial Consortium) web feature service.
+    
     Configuration allows the base URL for the service to be set and called.
     Choosing the appropriate combination of specific service type and other
     parameters, will cause the input port to be set with a specific POST call,
     once the configuration interface is closed.
-
+    
     Running the WFS will cause the specific, parameterised WFS to be called
     and output from the request to be available via the output port(s).
     """
 
     def __init__(self, ogc_widget, spatial_widget, parent=None):
-        """sets parameters for wcs request"""
+        """Sets parameters for wcs request"""
         QtGui.QWidget.__init__(self, parent)
         self.setObjectName("WFSCommonWidget")
         self.parent_widget = ogc_widget
@@ -87,7 +87,7 @@ class WFSCommonWidget(QtGui.QWidget):
             self.removeRequests)
 
     def create_wfs_config_window(self):
-        """TO DO - add docstring"""
+        """Create datacontainers and layout for displaying WFS-related data."""
         # text for combo boxes
         self.SPATIAL_OFFERING = 'Use Feature Bounding Box'
         self.SPATIAL_OWN = 'Use Own Bounding Box'
@@ -203,7 +203,7 @@ class WFSCommonWidget(QtGui.QWidget):
     def getBoundingBoxStringFeature(self):
         """Return a comma-delimited string containing box co-ordinates.
 
-        Result String Format::
+        :rtype:
             top-left X, top-left Y  bottom-right X, bottom-right Y
         """
         bbox = self.spatial_widget.getBoundingBox()
@@ -213,7 +213,7 @@ class WFSCommonWidget(QtGui.QWidget):
     def getBoundingBoxFeature(self):
         """Return a tuple containing box co-ordinates for selected feature.
 
-        Result Tuple Format:
+        :rtype:
             (top-left X, top-left Y, bottom-right X, bottom-right Y)
         """
         return (
@@ -336,8 +336,10 @@ class WFSConfigurationWidget(OgcConfigurationWidget,
         self.tabs.setCurrentIndex(0)
 
     def constructRequest(self, URL):
-        """Returns request details from configuration parameters;
-        overwrites method defined in OgcConfigurationWidget.
+        """Returns request details from configuration parameters.
+        
+        .. note::
+            Overwrites method defined in OgcConfigurationWidget.
         """
         result = {}
         wfs_url = URL

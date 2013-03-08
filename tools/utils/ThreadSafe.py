@@ -40,33 +40,36 @@ import core.packagemanager
 from packages.controlflow.fold import *
 
 
-class _ThreadSafeMixin():
+class ThreadSafeMixin():
     pass
 
 
-class _Fork(_ThreadSafeMixin, NotCacheable, Module):
+class Fork(ThreadSafeMixin, NotCacheable, Module):
     pass
 
 
-class _ThreadSafeFold(_ThreadSafeMixin, Fold):
+class ThreadSafeFold(ThreadSafeMixin, Fold):
     pass
 
 
-class _ThreadSafeMap(_ThreadSafeFold):
+class ThreadSafeMap(ThreadSafeFold):
     pass
 
 
-class _ThreadTestModule(_ThreadSafeMixin, Module):  # NotCacheable,
+class ThreadTestModule(ThreadSafeMixin, Module):  # NotCacheable,
     pass
+
 
 # import either actual, or "dummy" rpyc modules
 manager = core.packagemanager.get_package_manager()
 if manager.has_package('za.co.csir.rpyc4vistrails'):
-    from packages.rpyc4vistrails.ThreadSafe import ThreadSafeMixin, \
-        ThreadSafeFold, ThreadSafeMap, ThreadTestModule, Fork
+    from packages.rpyc4vistrails.ThreadSafe import  \
+        ThreadSafeMixin, ThreadSafeFold, ThreadSafeMap, ThreadTestModule, Fork
+"""
 else:
     ThreadSafeMixin = _ThreadSafeMixin
     ThreadSafeFold = _ThreadSafeFold
     ThreadSafeMap = _ThreadSafeMap
     ThreadTestModule = _ThreadTestModule
     Fork = _Fork
+"""

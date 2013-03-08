@@ -34,12 +34,12 @@ from core.modules.vistrails_module import Module
 # eo4vistrails
 
 
-class GeoJSONModule(object):
+class GeoJSONModule(Module):
     """TOD: Write docstring."""
     pass
 
 
-class GJFeature(GeoJSONModule, Module, Feature):
+class GJFeature(GeoJSONModule, Feature):
     """ Container class for the geojson.Feature class."""
 
     def __init__(self):

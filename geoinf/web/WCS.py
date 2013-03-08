@@ -45,9 +45,7 @@ import init
 
 
 class WCS(OGC, RasterModel):
-    """
-    Override for base OGC service class
-
+    """Override for base OGC service class
     """
 
     def __init__(self):
@@ -57,18 +55,16 @@ class WCS(OGC, RasterModel):
 
 
 class WCSCommonWidget(QtGui.QWidget):
-    """
-    The WCS module establishes and processes connection to a web-based OGC
+    """The WCS module establishes and processes connection to a web-based OGC
     (Open Geospatial Consortium) web coverage service.
-
+    
     Configuration allows the base URL for the service to be set and called.
     Choosing the appropriate combination of specific service type and other
     parameters, will cause the input port to be set with a specific POST call,
     once the configuration interface is closed.
-
+    
     Running the workflow will cause the specific, parameterised WCS to be called
     and output from the request to be available via the output port(s).
-
     """
 
     def __init__(self, ogc_widget, spatial_widget, parent=None):
@@ -92,7 +88,7 @@ class WCSCommonWidget(QtGui.QWidget):
             self.removeRequests)
 
     def create_wcs_config_window(self):
-        """TO DO - add docstring"""
+        """Create datacontainers and layout for displaying WCS-related data."""
         # text for combo boxes
         self.SPATIAL_OFFERING = 'Use Coverage Bounding Box'
         self.SPATIAL_OWN = 'Use Own Bounding Box'
@@ -224,10 +220,9 @@ class WCSCommonWidget(QtGui.QWidget):
         """Remove all details when no WCS is selected."""
         self.clearRequests()
         self.requestLbx.clear()
-        #pass
 
     def clearRequests(self):
-        """To reset the values in the fields"""
+        """Reset all the values in the fields"""
         self.dcLayerId.setText('-')
         self.dcLayerDescription.setText('-')
         self.dcULX.setText('-')
@@ -237,7 +232,6 @@ class WCSCommonWidget(QtGui.QWidget):
         self.dcSRS.setText('-')
         self.dcSRSreq.clear()
         self.dcReqFormat.clear()
-        #self.dcRequestType.clear()
 
     def coverageNameChanged(self):
         """Update offering details containers when new offering selected."""
@@ -310,8 +304,8 @@ class WCSCommonWidget(QtGui.QWidget):
 
     def getBoundingBoxLayer(self):
         """Return a tuple containing box co-ordinates for selected layer.
+        
         Format: top-left X, top-left Y, bottom-left X, bottom-left Y
-
         """
         return (
             self.dcULX.text(),
@@ -363,8 +357,10 @@ class WCSConfigurationWidget(OgcConfigurationWidget):
         self.tabs.setCurrentIndex(0)
 
     def constructRequest(self, URL):
-        """Returns request from configuration parameters;
-        Overwrites method defined in OgcConfigurationWidget.
+        """Returns request from configuration parameters.
+        
+        .. note::
+            Overwrites method defined in OgcConfigurationWidget.
         """
         result = {}
         wcs_url = URL
