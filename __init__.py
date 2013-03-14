@@ -51,7 +51,7 @@ import os.path
 from core.system import packages_directory
 
 # BELOW CAUSES ERROR IN Sphinx documentation
-#sys.path = [os.path.join(packages_directory(), 'eo4vistrails/lib')] + sys.path
+sys.path = [os.path.join(packages_directory(), 'eo4vistrails/lib')] + sys.path
 # BELOW CAUSES ERROR - TODO - check under Windows and Linux
 # resource.setrlimit(resource.RLIMIT_NOFILE,(resource.getrlimit(
 #  resource.RLIMIT_NOFILE)[1], 4096))

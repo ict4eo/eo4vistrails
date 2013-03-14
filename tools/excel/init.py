@@ -70,7 +70,8 @@ def initialize(*args, **keywords):
         from excelcell import ExcelCell  # filename of Vistrails module
         from ExcelUtils import ExcelChopper, ExcelExtractor, ExcelFiller, \
                                ExcelReplacer, ExcelSplitter, ExcelBase, \
-                               ExcelMerger, ExcelDirectionComboBox, \
+                               ExcelInserter, ExcelMerger, \
+                               ExcelDirectionComboBox, \
                                ExcelMatchComboBox, ExcelSplitComboBox
         excel_namespace = "tools|excel"
 
@@ -103,6 +104,8 @@ def initialize(*args, **keywords):
         reg.add_module(ExcelChopper,
                        namespace=excel_namespace)
         reg.add_module(ExcelExtractor,
+                       namespace=excel_namespace)
+        reg.add_module(ExcelInserter,
                        namespace=excel_namespace)
         reg.add_module(ExcelFiller,
                        namespace=excel_namespace)

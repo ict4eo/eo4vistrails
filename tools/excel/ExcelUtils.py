@@ -272,6 +272,9 @@ edu.utah.sci.vistrails.basic:Boolean)',
         self.cols = _cols
         #store lists to be processed
         self.process_rows = self.excel_list(_rows, ranged=self.row_range)
+        self.process_rows_reverse = self.excel_list(_rows,
+                                                    ranged=self.row_range,
+                                                    reverse=True)
         # allow for "popping" in a loop
         self.process_cols = self.excel_list(_cols, ranged=self.col_range,
                                             reverse=True)
@@ -860,10 +863,10 @@ class ExcelReplacer(ExcelBase):
                 *  N, M: all columns from N to M inclusive
                 *  N, M, P: every "Pth" column, between N to M inclusive
         cell_match:
-            value:
-                the current cell value that is to be matched (and replaced).
+            values:
+                a list of cell values that are to be matched (and replaced).
             partial: Boolean
-                if True, then part of a cell's current value will be replaced.
+                if True, then only part of a cell's value has to be matched.
         cell_replace: string
             the new cell value that is to be used instead of the current.
             Can be None; then the current cell value will be replaced by an
@@ -875,14 +878,13 @@ class ExcelReplacer(ExcelBase):
             output Excel file
     """
 
-    # TODO - extend code to allow for multiple current -> single replace; and
-    #                                 multiple current -> multiple replace
+    # TODO - extend code to allow for multiple current -> multiple replace
 
     _input_ports = [
-        ('cell_match', '(edu.utah.sci.vistrails.basic:String,\
+        ('cell_match', '(edu.utah.sci.vistrails.basic:List,\
 edu.utah.sci.vistrails.basic:Boolean)',
             {"defaults": str(["", False]),
-             "labels": str(["value", "partial"])}),
+             "labels": str(["values", "partial"])}),
         ('cell_replace', '(edu.utah.sci.vistrails.basic:String)'),
     ]
 
@@ -891,11 +893,11 @@ edu.utah.sci.vistrails.basic:Boolean)',
 
     def compute(self):
         super(ExcelReplacer, self).compute()
-        cell_current, partial = self.getInputFromPort('cell_match')
+        cell_match_values, cell_match_partial = self.getInputFromPort('cell_match')
         cell_replace = self.forceGetInputFromPort('cell_replace', "")
         results = {}
-        if not cell_current:
-            self.raiseError('Invalid or missing cell_current port')
+        if not cell_match_values or len(cell_match_values) == 0:
+            self.raiseError('Invalid or missing cell_match port')
         # create output dict; one entry per selected sheet name
         for sheet_name in self.xls.sheet_list:
             sheet = self.xls.book.sheet_by_name(sheet_name)
@@ -908,18 +910,20 @@ edu.utah.sci.vistrails.basic:Boolean)',
                                                date_as_tuple=True)
                 if not self.process_rows or row in self.process_rows:
                     for col in self.process_cols:
-                        if partial:
+                        if cell_match_partial:
                             try:
                                 iter(row_list[col])  # test if partial possible
-                                if cell_current in row_list[col]:
-                                    row_list[col] = row_list[col].replace(
-                                                                cell_current,
-                                                                cell_replace)
+                                for cell_current in cell_match_values:
+                                    if cell_current in row_list[col]:
+                                        row_list[col] = row_list[col].replace(
+                                                                    cell_current,
+                                                                    cell_replace)
                             except:
                                 pass
                         else:
-                            if row_list[col] == cell_current:
-                                row_list[col] = cell_replace
+                            for cell_current in cell_match_values:
+                                if row_list[col] == cell_current:
+                                    row_list[col] = cell_replace
                 out_list.append(row_list)
             results[sheet_name] = out_list
         self.save_results(results)
@@ -927,7 +931,8 @@ edu.utah.sci.vistrails.basic:Boolean)',
 
 @RPyCSafeModule()
 class ExcelFiller(ExcelBase):
-    """Read Excel file and fill in data according to specific parameters.
+    """Read Excel file and fill in data in existing cells according to specific
+    parameters.
     
     Input ports:
     
@@ -1041,6 +1046,159 @@ class ExcelFiller(ExcelBase):
                     out_list.append(row_list)
             else:
                 self.raiseError('Invalid direction specification.')
+
+            results[sheet_name] = out_list
+        self.save_results(results)
+
+
+@RPyCSafeModule()
+class ExcelInserter(ExcelBase):
+    """Read Excel file and inserts new data into new rows and/or columns
+    according to specific parameters.
+    
+    Input ports:
+    
+        file_in:
+            input Excel file
+        file_name_out:
+            an optional full directory path and filename to be write; if None
+            then a temporary file will be created
+        sheets:
+            a list of worksheet numbers, or names, that must be processed.
+            If None, then all sheets will be processed. Sheet numbering starts
+            from 1.
+        rows:
+            values:
+                a list of row numbers to be processed. A new row will be
+                inserted before each row listed. If None, then no new rows
+                will be inserted. Row numbering starts from 1.
+            range:
+                a Boolean indicating if the row numbers specify a range.
+                
+                If range is `False`, the row values are just numbers of individual
+                rows. If range is `True`, the following notation applies:
+                *  N: the first N rows
+                *  N, M: all rows from N to M inclusive
+                *  N, M, P: every "Pth" row, between N to M inclusive
+        columns:
+            values:
+                a list of column numbers to be processed.  A new column will be
+                inserted before each column listed. If None, then no new columns
+                will be inserted.  Column numbering starts from 1.
+            range:
+                a Boolean indicating if the column numbers specify a range.
+                
+                If range is `False`, the column values are just numbers of
+                individual columns. If range is `True`, the following notation
+                applies:
+                *  N: the first N columns
+                *  N, M: all columns from N to M inclusive
+                *  N, M, P: every "Pth" column, between N to M inclusive
+        cell_values: list
+            A list of new cell values to be set for each successive cell in
+            the inserted row or column.
+        cell_repeats: list
+            a list of numbers, corresponding to entries in the cell_values list
+            which represent those that need to be repeated over the full range
+            of the inserted row or column. Numbering starts from 1.
+        
+        For example:
+            if cell_values are ['', 'A', 'B', 'C'] and cell_repeats is [3, 4],
+            then the set of values for a 7-column row insert would be:
+                ['', 'A', 'B', 'C', 'B', 'C', 'B']
+    
+    Output ports:
+    
+        file_out:
+            output Excel file
+    """
+
+    _input_ports = [
+        ('cell_values', '(edu.utah.sci.vistrails.basic:List)'),
+        ('cell_repeats', '(edu.utah.sci.vistrails.basic:List)'),
+        ]
+
+    def __init__(self):
+        ExcelBase.__init__(self)
+
+    def generate_values(self, data_list, length=1, repeats=[]):
+        """Create a 'padded' list of items from the data_list.
+        
+        print generate_values(['', 'A', 'B', 'C'], 7, [])
+        print generate_values(['', 'A', 'B', 'C'], 7, [5])
+        print generate_values(['', 'A', 'B', 'C'], 9, [2,4])
+        print generate_values(['', 'A', 'B', 'C'], 10, [2,3,4])
+        print generate_values(['', 'A', 'B', 'C', 'D'], 9, [2,3,4,5])
+        """
+        result = []
+        repeats_list = []
+        if repeats:
+            try:
+                repeats_list = [data_list[i - 1] for i in repeats]
+                size = len(repeats_list)
+            except IndexError:
+                self.raiseError('Invalid values for cell_repeats port')
+        #print "*** repeats", repeats_list
+        if data_list:
+            data = len(data_list)
+            for i in range(length):
+                if i >= len(data_list):
+                    item = None
+                    if repeats_list:
+                        index = (i - data) - (((i - data) / size) * size)
+                        #print "   ", i, i - data, index
+                        item = repeats_list[index]
+                else:
+                    item = data_list[i]
+                result.append(item)
+        return result
+
+    def compute(self):
+        super(ExcelInserter, self).compute()
+        cell_values = self.forceGetInputFromPort('cell_values', [])
+        cell_repeats = self.forceGetInputFromPort('cell_repeats', [])
+        results = {}
+        if not cell_values:
+            self.raiseError('Invalid or missing cell_values port')
+        # create output dict; one entry per selected sheet name
+        for sheet_name in self.xls.sheet_list:
+            sheet = self.xls.book.sheet_by_name(sheet_name)
+            out_list = []
+            if self.process_rows:
+                row_list_new = self.generate_values(cell_values,
+                                                    sheet.ncols,
+                                                    cell_repeats)
+                #print "excelutils:1171", row_list_new
+                for row in range(sheet.nrows):
+                    if row in self.process_rows:
+                        out_list.append(row_list_new)
+                    row_list = self.xls._parse_row(sheet, row,
+                                                   date_as_tuple=True)
+                    out_list.append(row_list)
+            # TODO - for columns....
+            if self.process_cols:
+                self.raiseError('Insert-by-column NOT YET IMPLEMENTED!')
+            """
+            # TODO - for columns....
+            if self.process_cols:
+                current = self.xls._parse_row(sheet, 0, date_as_tuple=True)
+                # process down each column
+                for row in range(sheet.nrows):
+                    if not self.process_rows or row in self.process_rows:
+                        row_list = self.xls._parse_row(sheet, row,
+                                                       date_as_tuple=True)
+                        for col in self.process_cols:
+                            if not row_list[col]:  # blank
+                                if not use_last_value or current[col]:
+                                    row_list[col] = cell_replace
+                                if use_last_value and current[col]:
+                                    row_list[col] = current[col]
+                                    current[col] = row_list[col]
+                            else:
+                                # update "current" with new, non-blank value
+                                current[col] = row_list[col]
+                    out_list.append(row_list)
+            """
 
             results[sheet_name] = out_list
         self.save_results(results)

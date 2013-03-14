@@ -41,7 +41,11 @@ from packages.controlflow.fold import *
 
 
 class ThreadSafeMixin():
-    pass
+    """Placeholder class; overwritten by module from
+    *packages.rpyc4vistrails.ThreadSafe*, if available."""
+
+    def __init__(self):
+        pass
 
 
 class Fork(ThreadSafeMixin, NotCacheable, Module):
