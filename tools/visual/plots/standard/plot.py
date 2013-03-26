@@ -536,7 +536,7 @@ class MultiPlot(ParentPlot):
                 else:
                     raise NameError('plot_type %s  is undefined.' % plot_type)
 
-        pylab.get_current_fig_manager().toolbar.hide()
+        #pylab.get_current_fig_manager().toolbar.hide()
         self.setResult('source', "")
 
 

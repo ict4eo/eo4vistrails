@@ -49,7 +49,7 @@ DATE_FORMAT = 'YYYY-MM-DDTHH:MM:SS'
 SHEET_NAME_SIZE = 27  # maximum length of an Excel worksheet name (i.e. 31 - 4)
 
 
-@RPyCSafeModule()
+#@RPyCSafeModule()
 class ExcelBase(ThreadSafeMixin, Module):
     """An abstract VisTrails class for reading and processing an Excel file.
     
