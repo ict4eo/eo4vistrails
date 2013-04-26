@@ -752,8 +752,10 @@ class ExcelChopper(ExcelBase):
             from 1.
         rows:
             values:
-                a list of row numbers to be removed. If None, then all empty
-                rows will be removed. Row numbering starts from 1.
+                a list of row numbers to be removed (these may be limited by
+                specific *cell match* values that must be met). If None, and
+                no cell_match values are supplied, then all empty rows will
+                be removed. Row numbering starts from 1.
             range:
                 a Boolean indicating if the row numbers specify a range.
                 
@@ -764,8 +766,10 @@ class ExcelChopper(ExcelBase):
                 *  N, M, P: every "Pth" row, between N to M inclusive
         columns:
             values:
-                a list of column numbers to be removed. If None, then no
-                columns will be removed. Column numbering starts from 1.
+                a list of column numbers to be removed (these may be limited by
+                specific *cell match* values that must be met). If None, and
+                no cell_match values are supplied, then no columns will
+                be removed. Column numbering starts from 1.
             range:
                 a Boolean indicating if the column numbers specify a range.
                 
@@ -775,6 +779,14 @@ class ExcelChopper(ExcelBase):
                 *  N: the first N columns
                 *  N, M: all columns from N to M inclusive
                 *  N, M, P: every "Pth" column, between N to M inclusive
+        cell_match:
+            values:
+                a list of cell values that are to be matched and for each, the
+                corresponding rows or columns (specified in the *rows* or
+                *columns* ports) deleted.  If no rows or columns are specified
+                then the default deletion is for the *row* to be deleted.
+            partial: Boolean
+                if True, then only part of a cell's value has to be matched.
     
     Output ports:
     
@@ -782,42 +794,99 @@ class ExcelChopper(ExcelBase):
             output Excel file
     """
 
+    _input_ports = [
+        ('cell_match', '(edu.utah.sci.vistrails.basic:List,\
+edu.utah.sci.vistrails.basic:Boolean)',
+            {"defaults": str(["", False]),
+             "labels": str(["values", "partial"])}),
+    ]
+
     def __init__(self):
         ExcelBase.__init__(self)
 
     def compute(self):
         super(ExcelChopper, self).compute()
+        cell_match_values, cell_match_partial = self.forceGetInputFromPort(
+            'cell_match', ([], False))
         results = {}
         # create output dict; one entry per selected sheet name
         for sheet_name in self.xls.sheet_list:
             sheet = self.xls.book.sheet_by_name(sheet_name)
             out_list = []
             for row in range(sheet.nrows):
-                if row in self.process_rows:
-                    pass  # do not add to output
+                skip_row = False
+                row_list = self.xls._parse_row(sheet, row, date_as_tuple=True)
+                # Case 1: Only check for blank rows
+                if not self.process_rows and not cell_match_values:
+                    if row_list[0] in [None, ''] and check_if_equal(row_list):
+                        skip_row = True
                 else:
-                    row_list = self.xls._parse_row(sheet, row,
-                                                   date_as_tuple=True)
-                    if row_list[0] in [None, ''] \
-                    and check_if_equal(row_list):
-                        pass  # do not add blank row to output
+                    # Case 2: Check for specified rows
+                    if row in self.process_rows and not cell_match_values:
+                        skip_row = True
+                    # Case 3: Check for specified rows AND cell matches
+                    elif row in self.process_rows and cell_match_values:
+                        for row_cell in row_list:
+                            for cell_current in cell_match_values:
+                                if cell_match_partial:
+                                    try:
+                                        if cell_current in row_cell:
+                                            skip_row = True
+                                    except:
+                                        pass
+                                else:
+                                    if cell_current == row_cell:
+                                        skip_row = True
+                    # Case 4: Check for specified cell matches
+                    elif cell_match_values:
+                        for row_cell in row_list:
+                            for cell_current in cell_match_values:
+                                if cell_match_partial:
+                                    try:
+                                        if cell_current in row_cell:
+                                            skip_row = True
+                                    except:
+                                        pass
+                                else:
+                                    if cell_current == row_cell:
+                                        skip_row = True
                     else:
-                        if len(self.process_cols) > 0:
-                            for col in self.process_cols:  # reverse order
-                                try:
-                                    row_list.pop(col)  # remove from output
-                                except:
-                                    pass
-                        else:
-                            # check/remove cols that are blank throughout???
-                            pass
-                            """ This code will not suffice; as it does not
-                            check that the WHOLE column is blank...
-                            for col in range(len(row_list) - 1, 0, -1):
-                                if row_list[col] in [None, '']:
-                                    row_list.pop(col)  # no blanks in output
-                            """
-                        out_list.append(row_list)
+                        pass
+                # COLUMNS
+                if self.process_cols and not skip_row:
+                    print "excelutils:857 - check cols in row#", row
+                    # Case 1: Check for specified cols
+                    if not cell_match_values:
+                        for col in self.process_cols:
+                            if col < sheet.ncols:
+                                row_list.pop(col)  # remove col
+                    # Case 2: Check for specified matches
+                    else:
+                        for col in self.process_cols:  # reverse order
+                            if col < sheet.ncols:
+                                if cell_match_partial:
+                                    try:
+                                        iter(row_list[col])  # is partial possible
+                                        for cell_current in cell_match_values:
+                                            if cell_current in row_list[col]:
+                                                row_list.pop(col)  # remove col
+                                    except:
+                                        pass
+                                else:
+                                    for cell_current in cell_match_values:
+                                        if cell_current == row_list[col]:
+                                            row_list.pop(col)  # remove from output
+
+                                    # check/remove cols that are blank OR matched throughout???
+                                    #pass
+                                    """ This code will not suffice; as it does not
+                                    check that the WHOLE column is blank or matched...
+                                    for col in range(len(row_list) - 1, 0, -1):
+                                        if row_list[col] in [None, '']:
+                                            row_list.pop(col)  # no blanks in output
+                                    """
+                if not skip_row:
+                    out_list.append(row_list)
             results[sheet_name] = out_list
         self.save_results(results)
 
@@ -903,27 +972,28 @@ edu.utah.sci.vistrails.basic:Boolean)',
             sheet = self.xls.book.sheet_by_name(sheet_name)
             # allow all columns to be processed by default
             if not self.process_cols:
-                self.process_cols = range(0, sheet.ncols)
+                self.process_cols = range(sheet.ncols)
             out_list = []
             for row in range(sheet.nrows):
                 row_list = self.xls._parse_row(sheet, row,
                                                date_as_tuple=True)
                 if not self.process_rows or row in self.process_rows:
                     for col in self.process_cols:
-                        if cell_match_partial:
-                            try:
-                                iter(row_list[col])  # test if partial possible
+                        if col < sheet.ncols:
+                            if cell_match_partial:
+                                try:
+                                    iter(row_list[col])  # is partial possible
+                                    for cell_current in cell_match_values:
+                                        if cell_current in row_list[col]:
+                                            row_list[col] = row_list[col].replace(
+                                                                cell_current,
+                                                                cell_replace)
+                                except:
+                                    pass
+                            else:
                                 for cell_current in cell_match_values:
-                                    if cell_current in row_list[col]:
-                                        row_list[col] = row_list[col].replace(
-                                                                    cell_current,
-                                                                    cell_replace)
-                            except:
-                                pass
-                        else:
-                            for cell_current in cell_match_values:
-                                if row_list[col] == cell_current:
-                                    row_list[col] = cell_replace
+                                    if cell_current == row_list[col]:
+                                        row_list[col] = cell_replace
                 out_list.append(row_list)
             results[sheet_name] = out_list
         self.save_results(results)
