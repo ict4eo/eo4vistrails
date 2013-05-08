@@ -52,17 +52,26 @@ class StringToFile(ThreadSafeMixin, Module):
             from the string (if negative, slices the last N chars)
         overwrite: boolean
             if not True (default), then existing file will not be overwritten
+        append: boolean
+            if True (default), then existing file will be appended to
+            (if overwrite is True, this setting will be ignored)
     
     Output ports:
     
         file:
             the output file created from the string
+            
+    Notes:
+        
+        If string is None, then no output will be written; otherwise an error will
+        be raised.
     """
 
     _input_ports = [('string', '(edu.utah.sci.vistrails.basic:String)'),
                     ('filename', '(edu.utah.sci.vistrails.basic:String)'),
                     ('chars', '(edu.utah.sci.vistrails.basic:Integer)'),
-                    ('overwrite', '(edu.utah.sci.vistrails.basic:Boolean)')]
+                    ('overwrite', '(edu.utah.sci.vistrails.basic:Boolean)'),
+                    ('append', '(edu.utah.sci.vistrails.basic:Boolean)')]
     _output_ports = [('file', '(edu.utah.sci.vistrails.basic:File)'),]
 
     def __init__(self):
@@ -83,21 +92,26 @@ class StringToFile(ThreadSafeMixin, Module):
         _filename = self.getInputFromPort('filename')
         _chars = self.forceGetInputFromPort('chars', 0)
         _overwrite = self.forceGetInputFromPort('overwrite', True)
+        _append = self.forceGetInputFromPort('append', True)
 
         if _chars and _string and abs(_chars) < len(_string):
             if _chars > 0:
                 # items from the beginning through chars-1
                 _string = _string[:_chars]
             else:
-                # last chars in the string
+                # last chars in the string (default is all if 0 chars)
                 _string = _string[_chars:]
 
         try:
-            if not _overwrite and os.path.isfile(_filename):
+            if not _overwrite and os.path.isfile(_filename) and not _append:
                 self.raiseError('File already exists')
-            text_file = open(_filename, 'w')
+            if _append and not _overwrite and os.path.isfile(_filename):
+                text_file = open(_filename, 'a')
+            else:
+                text_file = open(_filename, 'w')
             try:
-                text_file.write(_string)
+                if _string:
+                    text_file.write(_string)
             except TypeError, e:
                 self.raiseError("Unable to write to file", e)
             text_file.close()
