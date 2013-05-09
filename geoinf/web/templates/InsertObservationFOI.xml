@@ -95,9 +95,11 @@
                      tokenSeparator="{{ separator.token|default(',', true) }}"
                      blockSeparator="{{ separator.block|default('`', true) }}" />
      </swe:encoding>
-     {% if values and values is iterable %}<swe:values>{% for dataset in values %}{% if dataset is iterable %}{{ foi.id }}{{ separator.token|default(',', true) }}{% for data in dataset %}{{ data|default(missing, true) }}{% if not loop.last %}{{ separator.token|default(',', true) }}{% endif %}{% endfor %}{{ separator.block|default('`', true) }}{% endif %}{% endfor %}</swe:values>{% endif %}
- 
+
+     {% if values and values is iterable %}<swe:values>{% for dataset in values %}{% if dataset is iterable %}{{ foi.id }}{{ separator.token|default(',', true) }}{% for data in dataset %}{{ data|replace(None, missing) }}{% if not loop.last %}{{ separator.token|default(',', true) }}{% endif %}{% endfor %}{{ separator.block|default('`', true) }}{% endif %}{% endfor %}</swe:values>{% endif %}
+
     </swe:DataArray>
+
    </om:result>
 
   </om:Observation>

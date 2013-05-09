@@ -167,7 +167,7 @@ edu.utah.sci.vistrails.basic:Boolean)',
          *  N, M: a list from N-1 to M-1
          *  N, M, P: a list from N to M, with an interval of P
         """
-        #print "excelutils:166", items, len(items), type(items[0]), ranged
+        #print "excelutils:170", items, len(items), type(items[0]), ranged
         offset = 1
         if zero_base:
             offset = 0
@@ -629,7 +629,7 @@ edu.utah.sci.vistrails.basic:Integer)',
             self.split_offset = self.forceGetInputFromPort('split_offset')
         else:
             self.split_offset = (0, 0)
-        #print "excelutils:624", type(self.split_offset), self.split_offset
+        #print "excelutils:632", type(self.split_offset), self.split_offset
 
         # switch to sensible default (???) if a value is filled in
         if self.cell_value and not self.cell_match:
@@ -663,7 +663,7 @@ edu.utah.sci.vistrails.basic:Integer)',
                     if not self.process_rows or row in self.process_rows:
                         row_list = self.xls._parse_row(self.sheet, row,
                                                        date_as_tuple=True)
-                        #print "excelutils 658", row, row_list[0]
+                        #print "excelutils 668", row, row_list[0]
                         if row == 0 or (row_list and row_list[0] in [None, '']\
                         and check_if_equal(row_list)):  # all blanks!
                             found_blank_rows = True
@@ -706,14 +706,14 @@ edu.utah.sci.vistrails.basic:Integer)',
                                          block[0][0:SHEET_NAME_SIZE]))
             for r, row in enumerate(range(block[1][0], block[2][0])):
                 sheet = self.xls.book.sheet_by_name(block[0])
-                #print "excelutils:701", row, ":", block[1][1], block[2][1]
+                #print "excelutils:710", row, ":", block[1][1], block[2][1]
                 row_slice = sheet.row_slice(row, block[1][1], block[2][1])
                 worksheet_row = worksheet.row(r)
                 for col_index, col_cell in enumerate(row_slice):
                     value = self.xls.parse_cell_value(col_cell.ctype,
                                                       col_cell.value,
                                                       date_as_datetime=True)
-                    #print "excelutils:709",r,col_index,":",col_cell.ctype,value
+                    #print "excelutils:719",r,col_index,":",col_cell.ctype,value
                     if col_cell.ctype == 3:  # date
                         style = xlwt.XFStyle()
                         style.num_format_str = DATE_FORMAT
@@ -854,7 +854,7 @@ edu.utah.sci.vistrails.basic:Boolean)',
                         pass
                 # COLUMNS
                 if self.process_cols and not skip_row:
-                    print "excelutils:857 - check cols in row#", row
+                    #print "excelutils:857 - check cols in row#", row
                     # Case 1: Check for specified cols
                     if not cell_match_values:
                         for col in self.process_cols:
@@ -1208,7 +1208,7 @@ class ExcelInserter(ExcelBase):
                 size = len(repeats_list)
             except IndexError:
                 self.raiseError('Invalid values for cell_repeats port')
-        #print "*** repeats", repeats_list
+        #print "excelutils:1211 repeats", repeats_list
         if data_list:
             data = len(data_list)
             for i in range(length):
@@ -1216,7 +1216,6 @@ class ExcelInserter(ExcelBase):
                     item = None
                     if repeats_list:
                         index = (i - data) - (((i - data) / size) * size)
-                        #print "   ", i, i - data, index
                         item = repeats_list[index]
                 else:
                     item = data_list[i]
@@ -1238,7 +1237,7 @@ class ExcelInserter(ExcelBase):
                 row_list_new = self.generate_values(cell_values,
                                                     sheet.ncols,
                                                     cell_repeats)
-                #print "excelutils:1171", row_list_new
+                #print "excelutils:1241", row_list_new
                 for row in range(sheet.nrows):
                     if row in self.process_rows:
                         out_list.append(row_list_new)

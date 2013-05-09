@@ -30,6 +30,7 @@ InsertObservation & RegisterSensor services).
 # library
 import copy
 import csv
+import logging
 import os
 import os.path
 from jinja2 import Environment, PackageLoader, FileSystemLoader
@@ -52,12 +53,14 @@ import init
 SRS_DEFAULT = u'urn:ogc:def:crs:EPSG::4326'
 USE_TIMEFIELD = True  # allows 'time' to be inserted as an extra property
 MISSING_DATA = '-9999'  # default replacement for a missing observation value
-TRUE = 'True'
-FALSE = 'False'
-REGISTER_SENSOR = 'RegisterSensor.xml'
-INSERT_OBSERVATION = 'InsertObservation.xml'
-INSERT_OBSERVATION_FOI = 'InsertObservationFOI.xml'
+TRUE = 'True'  # value to be passed to SOS for a True boolean
+FALSE = 'False'  # value to be passed to SOS for a False boolean
+REGISTER_SENSOR = 'RegisterSensor.xml'  # name of Jinja template
+INSERT_OBSERVATION = 'InsertObservation.xml'  # name of Jinja template
+INSERT_OBSERVATION_FOI = 'InsertObservationFOI.xml'  # name of Jinja template
 SKIP_EMPTY = True  # ignore any missing properties; do not raise error
+DEBUG = True  # if True, will log key operations to user's home dir.
+LOG_LEVEL = logging.INFO  # ascending: DEBUG, INFO, WARNING, ERROR, CRITICAL
 
 
 @RPyCSafeModule()
@@ -100,6 +103,14 @@ class SOSFeeder(ThreadSafeMixin, Module):
         ThreadSafeMixin.__init__(self)
         Module.__init__(self)
         self.webRequest = WebRequest()
+        if DEBUG:
+            logfile = os.path.join(os.path.expanduser('~'), 'sosfeeder.log')
+            logging.basicConfig(
+                filename=logfile, 
+                format='%(asctime)s %(name)-8s %(levelname)-8s %(message)s',
+                datefmt='%y-%m-%d %H:%M',                                
+                level=LOG_LEVEL,
+                filemode='w')
 
     def raiseError(self, msg, error=''):
         """Raise a VisTrails error with traceback display."""
@@ -517,7 +528,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                     pass
                 return False
             
-            #print "sosfeed:520 add_foi", foi_ID
+            #print "sosfeed:530 add_foi", foi_ID
             try:
                 ID = unicode(foi_ID)  # convert Excel int to unicode
             except:
@@ -531,7 +542,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                     foi_ID_entry = feature
                     break
             if foi_ID_entry:
-                #print "sosfeed:533", foi_ID_entry
+                #print "sosfeed:543", foi_ID_entry
                 ID = foi_ID_entry.get('id')
                 # convert coords "list of tuples with unicode strings"
                 coords = []
@@ -556,7 +567,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                     'coords': coords,
                     'col': col,
                     'row': row}
-                #print "sosfeed:557", foi_ID_entry.get('srs'), self.fois[ID]['srs']
+                #print "sosfeed:570", foi_ID_entry.get('srs'), self.fois[ID]['srs']
                 self.validate_srs(self.fois[ID]['srs'], line=row)
 
         def add_date(_date, row=None, col=None):
@@ -593,7 +604,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                    self.properties[0]['row'] is None:
                     return self.properties[0].get('name')
             for property in self.properties:
-                #print "sosfeed:597", row,col,property['col'],property['row']
+                #print "sosfeed:607", row,col,property['col'],property['row']
                 if property['col'] == col or property['row'] == row:
                     return property.get('name')
             return None
@@ -615,7 +626,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                 return self.error_codes.get(lookup)
             return None
 
-        def sos_cell_value(sheet, row_num, col_num, property):
+        def sos_cell_value(sheet, row_num, col_num, property_type):
             """Return a value appropriate for insertion in the SOS.
 
             Mismatches between property type codes and type of data in a
@@ -644,14 +655,20 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
             ctype = sheet.cell(row_num, col_num).ctype
             prop_type = 'Quantity'  # default
             for prop in self.properties:
-                if prop['name'] == property:
+                if prop['name'] == property_type:
                     prop_type = prop['type'] or 'Quantity'
-            #print "sosfeed:649", row_num, col_num, ctype, prop_type, value
+            #print "sosfeed:660 IN", row_num, col_num, ctype, prop_type, value
             if prop_type in ['Quantity', 'Count']:
                 if ctype in [0, 5]:
                     value = None
                 elif ctype == 1:
-                    value = get_sos_error_code(value)
+                    try:
+                        value = int(value)  # might be int in string
+                    except ValueError, TypeError:
+                        try:
+                            value = float(value)  # might be float in string
+                        except:
+                            value = get_sos_error_code(value)
             elif prop_type  in ['Category', 'Text']:
                 if ctype == 1:
                     value = self.escaped(value)  # e.g. replace "<" with &#lt;
@@ -691,7 +708,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                     value = None
             else:
                 self.raiseError('Unknown SWE property type: "%s"' % prop_type)
-            #print "   sosfeed:694", value
+            #print "sosfeed:711 OUT", row_num, col_num, ctype, prop_type, value
             return value
 
         # initialize
@@ -745,7 +762,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
         else:
             self.raiseError('Feature settings not configured properly!')
         if not self.fois:
-            pprint.pprint(self.fois)  # print
+            pprint.pprint(self.fois)
             self.raiseError(
                 """Cannot link features in input file '%s' to feature list!
              Please check feature list and/or settings for input file.""" % \
@@ -812,15 +829,18 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
         # observation data values
         self.values = {}
         for row_num in range(self.data_row, sh.nrows):
+            #print "sosfeed:832, row col-range", row_num, self.data_col, sh.ncols
             for col_num in range(self.data_col, sh.ncols):
-                # keys
                 foi = get_foi_ID(row_num, col_num)
-                vdate = get_vdate(row_num, col_num)
-                property = get_property_name(row_num, col_num)
-                #print "sosfeed:817 FoiDateProp", foi, vdate, property
-                if foi and vdate and property:
-                    value = sos_cell_value(sh, row_num, col_num, property)
-                    self.values[(foi, vdate.get('date'), property)] = value
+                vdate = get_vdate(row_num, col_num) # {'date':?,'col':?,'row':?}
+                _property = get_property_name(row_num, col_num)
+                if foi and vdate and _property:
+                    value = sos_cell_value(sh, row_num, col_num, _property)
+                    if DEBUG:
+                        logging.debug("RowCol-DatePropVal: %s %s - %s '%s' %s" % (
+                            str(row_num), str(col_num),
+                            vdate.get('date'), _property, value))
+                    self.values[(foi, vdate.get('date'), _property)] = value
 
     def create_XML(self, sheet_name=None, data={},
                    template_name=INSERT_OBSERVATION):
@@ -880,15 +900,17 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
         return data  # XML from Jinja template
 
     def create_results(self):
-        """Create list of XML POST datasets for each feature of interest.
+        """Create list of XML POST datasets.
         """
         results = []
         for sheet_name in self.sheet_list:
             # load data from worksheet into dictionaries
             self.load_from_excel(sheet_name)
+            #print "sosfeed:908 values", self.values
             if not self.fois:
                 self.raiseError('No features-of-interest available')
             for key, foi in self.fois.iteritems():
+                #print "sosfeed:912 key/foi", key, foi
                 data = {}
                 data['values'] = []
                 data['core'] = self.core
@@ -900,36 +922,48 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
 
                 token = data['separator']['token']
 
-                # decide which approach to use
+                # decide which approach to use; 
+                #   each FOI as procedure (for 52N SWE client), OR
+                #   one procedure with multiple FOI
                 if self.foi_as_procedure:
-                    for _date in self.unique_dates:
-                        value_set = [_date, ]
-                        for prop in self.unique_properties:
-                            key = (foi.get('id'), _date, prop.get('name'))
-                            val = self.values.get(key)
-                            #print "sosfeed:908", foi.get('id'), _date, prop.get('name'), val
-                            value_set.append(val)
-                    data['values'].append(value_set)
-                    #print "sosfeed:911", data['values']
                     if USE_TIMEFIELD:
                         # add time (date?) as "always present"
                         data['properties'].insert(0, {
                             'name': "Time",
                             'type': "Time",
                             'urn': "urn:ogc:data:time:iso8601"})
-                    XML = self.create_XML(sheet_name=sheet_name, data=data,
-                                    template_name=INSERT_OBSERVATION_FOI)
-                    if XML:
-                        results.append(XML)
-                        #print "\nsosfeed:923\n", XML
+                    # one POST per date per FOI
+                    for _date in self.unique_dates:
+                        data['values'] = []
+                        value_set = [_date, ]
+                        for prop in self.unique_properties:
+                            _key = (foi.get('id'), _date, prop.get('name'))
+                            _val = self.values.get(_key)
+                            if DEBUG:
+                                logging.info("INSERT: %s %s %s %s" % (
+                                    foi.get('id'), _date, prop.get('name'), _val))
+                            value_set.append(_val)
+                        data['values'].append(value_set)
+                        #print "sosfeed:945 date/values", _date, data['values']
+                        XML = self.create_XML(sheet_name=sheet_name, 
+                                              data=data,
+                                        template_name=INSERT_OBSERVATION_FOI)
+                        if XML:
+                            results.append(XML)
+                            if DEBUG:
+                                logging.info("foi_as_procedure: %s" % foi.get('id'))
+                                logging.info("foi_insert_date : %s" % _date)
+                                logging.info("XML:\n%s" % XML)
                 else:
                     for _date in self.unique_dates:
                         value_set = [_date, ]
                         for prop in self.unique_properties:
-                            key = (foi.get('id'), _date, prop.get('name'))
-                            val = self.values.get(key)
-                            #print "sosfeed:925", foi.get('id'), _date, prop.get('name'), val
-                            value_set.append(val)
+                            _key = (foi.get('id'), _date, prop.get('name'))
+                            _val = self.values.get(_key)
+                            if DEBUG:
+                                logging.debug("INSERT: %s %s %s %s" % (
+                                    foi.get('id'), _date, prop.get('name'), _val))
+                            value_set.append(_val)
                         data['values'].append(value_set)
                     if USE_TIMEFIELD:
                         # add time (date?) as "always present"
@@ -940,7 +974,9 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                     XML = self.create_XML(sheet_name=sheet_name, data=data)
                     if XML:
                         results.append(XML)
-                        #print "\nsosfeed:941\n", XML
+                        if DEBUG:
+                            logging.info("plain foi: %s" % foi.get('id'))
+                            logging.info("XML:\n%s" % XML)
             return results
 
     def compute(self):
@@ -1033,7 +1069,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
         self.property_lookup = {}
         if _property:
             for item in _property:
-                #print "sosfeed:1034 prop item", len(item), item
+                #print "sosfeed:1074 prop item", len(item), item
                 if item:
                     if len(item) >= 3:
                         _dict = dict(zip(xrange(len(item)), item))
@@ -1049,7 +1085,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
         self.feature_lookup = []
         if _feature:
             for key, item in enumerate(_feature):
-                #print "sosfeed:1045 key len item", key, len(item), item
+                #print "sosfeed:1088 key len item", key, len(item), item
                 if item:
                     if len(item) >= 3:
                         _dict = dict(zip(xrange(len(item)), item))
@@ -1062,7 +1098,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                         self.feature_lookup.append(feature)
                     else:
                         self.raiseError("Insufficient FOI values in each and/or every list")
-        #print "sosfeed:1063", _feature, self.feature_lookup
+        #print "sosfeed:1113", _feature, self.feature_lookup
 
         # create configuration dictionary
         self.configuration = {
@@ -1080,7 +1116,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
         # process configuration and generate output
         try:
             results = self.create_results()
-            #print "sosfeed:1075", results
+            #print "sosfeed:1118", results
             # output POST data, if port is linked to another module
             if init.OGC_POST_DATA_PORT in self.outputPorts:
                 self.setResult(init.OGC_POST_DATA_PORT, results)
@@ -1234,7 +1270,7 @@ edu.utah.sci.vistrails.basic:String)',
                 self.raiseError('Unable to create XML for POST: %s' % e)
             if XML:
                 results.append(XML)
-                #print "\nSOSfeed:1235\n", XML
+                #print "\nSOSfeed:1275\n", XML
         return results
 
     def create_XML(self, sheet_name=None, data={}, template_name=REGISTER_SENSOR):
@@ -1286,7 +1322,7 @@ edu.utah.sci.vistrails.basic:String)',
         try:
             #foi = data.get('foi')
             #for f in foi:
-            #    #print "sosfeed:1289  srs:", type(f.get('srs')), f.get('srs')
+            #    #print "sosfeed:1329  srs:", type(f.get('srs')), f.get('srs')
             data = template.render(sensor=data.get('sensor'),
                                    offering=data.get('offering'),
                                    foi=data.get('foi'),
@@ -1368,7 +1404,7 @@ edu.utah.sci.vistrails.basic:String)',
         self.coords = []
         if _coords:
             for item in _coords:
-                #print "sosfeed:1360 coords item", len(item), item
+                #print "sosfeed:1407 coords item", len(item), item
                 if item:
                     if len(item) >= 2:
                         _dict = dict(zip(xrange(len(item)), item))
@@ -1387,7 +1423,7 @@ edu.utah.sci.vistrails.basic:String)',
         self.foi = []
         if _FOI:
             for key, item in enumerate(_FOI):
-                #print "sosfeed:1386 foi item", key, len(item), item
+                #print "sosfeed:1426 foi item", key, len(item), item
                 if item:
                     if len(item) >= 3:
                         _dict = dict(zip(xrange(len(item)), item))
@@ -1430,7 +1466,7 @@ edu.utah.sci.vistrails.basic:String)',
         self.property = []
         if _property:
             for item in _property:
-                #print "sosfeed:1421 prop item", len(item), item
+                #print "sosfeed:1462 prop item", len(item), item
                 if item:
                     if len(item) >= 3:
                         _dict = dict(zip(xrange(len(item)), item))
