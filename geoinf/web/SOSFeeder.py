@@ -30,6 +30,7 @@ InsertObservation & RegisterSensor services).
 # library
 import copy
 import csv
+import datetime
 import logging
 import os
 import os.path
@@ -59,8 +60,9 @@ REGISTER_SENSOR = 'RegisterSensor.xml'  # name of Jinja template
 INSERT_OBSERVATION = 'InsertObservation.xml'  # name of Jinja template
 INSERT_OBSERVATION_FOI = 'InsertObservationFOI.xml'  # name of Jinja template
 SKIP_EMPTY = True  # ignore any missing properties; do not raise error
-DEBUG = True  # if True, will log key operations to user's home dir.
+LOG = True  # if True, will create logger & write file to user's home dir.
 LOG_LEVEL = logging.INFO  # ascending: DEBUG, INFO, WARNING, ERROR, CRITICAL
+LOG_FILENAME = 'sosfeeder.log'
 
 
 @RPyCSafeModule()
@@ -103,8 +105,8 @@ class SOSFeeder(ThreadSafeMixin, Module):
         ThreadSafeMixin.__init__(self)
         Module.__init__(self)
         self.webRequest = WebRequest()
-        if DEBUG:
-            logfile = os.path.join(os.path.expanduser('~'), 'sosfeeder.log')
+        if LOG:
+            logfile = os.path.join(os.path.expanduser('~'), LOG_FILENAME)
             logging.basicConfig(
                 filename=logfile, 
                 format='%(asctime)s %(name)-8s %(levelname)-8s %(message)s',
@@ -234,8 +236,8 @@ class SOSFeeder(ThreadSafeMixin, Module):
 
 
 class InsertObservation(SOSFeeder):
-    """Accept an Excel file, extract observation data from it, and POST it to a
-    Sensor Observation Service (SOS), as per specified parameters.
+    """Accept an Excel file, extract observation data from it, and POSTs it 
+    to a Sensor Observation Service (SOS), as per specified parameters.
     
     Input ports:
     
@@ -515,7 +517,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
             
             def clean_match(string1='', string2=''):
                 """Perform a 'clean' (no extra whitespace; case-insensitive)
-                match between of two strings
+                match between two strings
                 
                 Return:
                     True if strings match
@@ -610,7 +612,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
             return None
 
         def get_vdate(row=None, col=None):
-            # constant date
+            # fixed date
             if len(self.dates) == 1:
                 if self.dates[0]['col'] is None and \
                 self.dates[0]['row'] is None:
@@ -648,7 +650,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                 Time: time field
 
             Notes:
-                For sake of simplicity, text values (Quantity and Text) are
+                For sake of simplicity, text values (Category and Text) are
                 treated the same way, as are numerics (Quantity and Count).
             """
             value = sheet.cell(row_num, col_num).value
@@ -765,7 +767,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
             pprint.pprint(self.fois)
             self.raiseError(
                 """Cannot link features in input file '%s' to feature list!
-             Please check feature list and/or settings for input file.""" % \
+            Please check feature list and/or settings for input file.""" % \
                    self.file_in.name)            
             
         # properties
@@ -836,7 +838,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                 _property = get_property_name(row_num, col_num)
                 if foi and vdate and _property:
                     value = sos_cell_value(sh, row_num, col_num, _property)
-                    if DEBUG:
+                    if LOG:
                         logging.debug("RowCol-DatePropVal: %s %s - %s '%s' %s" % (
                             str(row_num), str(col_num),
                             vdate.get('date'), _property, value))
@@ -844,7 +846,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
 
     def create_XML(self, sheet_name=None, data={},
                    template_name=INSERT_OBSERVATION):
-        """Create the XML for an InsertObservation POST using a Jinja template
+        """Create the XML for an InsertObservation POST via a Jinja template
         """
         template = self.env.get_template(template_name)
         """        """
@@ -939,7 +941,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                         for prop in self.unique_properties:
                             _key = (foi.get('id'), _date, prop.get('name'))
                             _val = self.values.get(_key)
-                            if DEBUG:
+                            if LOG:
                                 logging.info("INSERT: %s %s %s %s" % (
                                     foi.get('id'), _date, prop.get('name'), _val))
                             value_set.append(_val)
@@ -950,17 +952,17 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                                         template_name=INSERT_OBSERVATION_FOI)
                         if XML:
                             results.append(XML)
-                            if DEBUG:
-                                logging.info("foi_as_procedure: %s" % foi.get('id'))
-                                logging.info("foi_insert_date : %s" % _date)
-                                logging.info("XML:\n%s" % XML)
+                            if LOG:
+                                logging.debug("foi_as_procedure: %s" % foi.get('id'))
+                                logging.debug("foi_insert_date : %s" % _date)
+                                logging.info("InsertObservation XML:\n%s" % XML)
                 else:
                     for _date in self.unique_dates:
                         value_set = [_date, ]
                         for prop in self.unique_properties:
                             _key = (foi.get('id'), _date, prop.get('name'))
                             _val = self.values.get(_key)
-                            if DEBUG:
+                            if LOG:
                                 logging.debug("INSERT: %s %s %s %s" % (
                                     foi.get('id'), _date, prop.get('name'), _val))
                             value_set.append(_val)
@@ -974,9 +976,9 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                     XML = self.create_XML(sheet_name=sheet_name, data=data)
                     if XML:
                         results.append(XML)
-                        if DEBUG:
+                        if LOG:
                             logging.info("plain foi: %s" % foi.get('id'))
-                            logging.info("XML:\n%s" % XML)
+                            logging.info("InsertObservation XML:\n%s" % XML)
             return results
 
     def compute(self):
@@ -1266,15 +1268,18 @@ edu.utah.sci.vistrails.basic:String)',
                 data['foi'] = self.foi
             try:
                 XML = self.create_XML(sheet_name=None, data=data)
+                if XML:
+                    results.append(XML)
+                if LOG:
+                    logging.debug("sensor_foi: %s" % self.foi)
+                    logging.debug("sensor_offering : %s" % self.offering)
+                    logging.info("RegisterSensor XML:\n%s" % XML)
             except Exception, e:
                 self.raiseError('Unable to create XML for POST: %s' % e)
-            if XML:
-                results.append(XML)
-                #print "\nSOSfeed:1275\n", XML
         return results
 
     def create_XML(self, sheet_name=None, data={}, template_name=REGISTER_SENSOR):
-        """Create the XML for a RegisterSensor POST using a Jinja template
+        """Create the XML for a RegisterSensor POST via a Jinja template
         """
         template = self.env.get_template(template_name)
         # test data
