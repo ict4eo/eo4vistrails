@@ -32,6 +32,6 @@ EO4VisTrails.
 #    revision = out[out.find('Revision'):out.find('\n', out.find('Revision'))][10:]
 #except:
 #    revision = 0
-revision = 14
+revision = 16
 version='0.1.%s' % revision
 pass

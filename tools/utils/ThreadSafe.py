@@ -65,10 +65,17 @@ class ThreadTestModule(ThreadSafeMixin, Module):  # NotCacheable,
 
 
 # import either actual, or "dummy" rpyc modules
-manager = core.packagemanager.get_package_manager()
-if manager.has_package('za.co.csir.rpyc4vistrails'):
+#needs same aggresive approach as seen in RPYC
+#manager = core.packagemanager.get_package_manager()
+#if manager.has_package('za.co.csir.rpyc4vistrails'):
+#    from packages.rpyc4vistrails.ThreadSafe import  \
+#        ThreadSafeMixin, ThreadSafeFold, ThreadSafeMap, ThreadTestModule, Fork
+
+try:
     from packages.rpyc4vistrails.ThreadSafe import  \
         ThreadSafeMixin, ThreadSafeFold, ThreadSafeMap, ThreadTestModule, Fork
+except ImportError:
+    pass
 """
 else:
     ThreadSafeMixin = _ThreadSafeMixin

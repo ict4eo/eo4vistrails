@@ -179,7 +179,7 @@ class RasterLangCode(NotCacheable, ModuleHelperMixin, ThreadSafeMixin, RPyCModul
         self.run_code_orig(s, True, True, self.preCodeString, self.postCodeString)
 
 
-@RPyCSafeModule()
+@RPyCSafeModule(['packages.eo4vistrails','packages.eo4vistrails.dataanalytics'])
 class RasterLang(RasterLangCode):
     """This module remotely executes an arbitrary piece of Python code.
     """
@@ -281,7 +281,7 @@ class RasterSourceConfigurationWidget(SyntaxSourceConfigurationWidget):
             displayedComboItems=displayedComboItems)
 
 
-@RPyCSafeModule()
+@RPyCSafeModule(['packages.eo4vistrails','packages.eo4vistrails.dataanalytics'])
 class layerAsArray(ThreadSafeMixin, RPyCModule):
     """ Container class for the connected components command """
 
@@ -354,7 +354,7 @@ class RasterPrototype(ThreadSafeMixin, Module):
         self.geotransform = (self.xmin, self.xres, 0, self.ymax, 0, -self.yres)
 
 
-@RPyCSafeModule()
+@RPyCSafeModule(['packages.eo4vistrails','packages.eo4vistrails.dataanalytics'])
 class arrayAsLayer(ThreadSafeMixin, RPyCModule):
     """ Container class for the connected components command """
 
@@ -384,7 +384,7 @@ class arrayAsLayer(ThreadSafeMixin, RPyCModule):
         self.setResult("raster layer", outlayer)
 
 
-@RPyCSafeModule()
+@RPyCSafeModule(['packages.eo4vistrails','packages.eo4vistrails.dataanalytics'])
 class SaveArrayToRaster(NotCacheable, ThreadSafeMixin, RPyCModule):
     """ Container class for the connected components command """
 

@@ -59,9 +59,17 @@ class RPyCSafeModule():
 
 
 # import either actual, or "dummy" rpyc modules
-manager = core.packagemanager.get_package_manager()
-if manager.has_package('za.co.csir.rpyc4vistrails'):
+#Correct way to do this but in order to work on a remote node we need a mroe aggressive solution
+#manager = core.packagemanager.get_package_manager()
+#if manager.has_package('za.co.csir.rpyc4vistrails'):
+#    from packages.rpyc4vistrails.RPyC import RPyCModule, RPyCSafeModule
+
+#So we just try import and if it fails we just catch the exception and carry on
+try:
     from packages.rpyc4vistrails.RPyC import RPyCModule, RPyCSafeModule
+except ImportError:
+    pass
+    
 """
 else:
     RPyCModule = _RPyCModule
