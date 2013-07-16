@@ -29,7 +29,12 @@ in the formats defined by QGIS.
 """
 # library
 # third party
+try:
+    from osgeo import gdal
+except:
+    import gdal
 import qgis.core
+import numpy
 from PyQt4.QtCore import QFileInfo
 # vistrails
 from core.modules import basic_modules
@@ -185,7 +190,7 @@ class QgsRasterLayer(QgsMapLayer, qgis.core.QgsRasterLayer):
     *   wms: Web Mapping Service
     *   gdl: GDAL
 
-    .. note:: these driver names *are* case-sensitive.
+    .. note:: These driver names *are* case-sensitive.
 
     """
 
@@ -205,6 +210,7 @@ class QgsRasterLayer(QgsMapLayer, qgis.core.QgsRasterLayer):
             theFile = self.forceGetInputFromPort('file', None)
             dataReq = self.forceGetInputFromPort('datarequest', None)
             theProj = self.forceGetInputFromPort('EPSG Code', None)
+            band_number = self.forceGetInputFromPort('band', None)
 
             """
             print "Qgslayer:200-dataReq", dataReq, type(dataReq)
@@ -237,6 +243,23 @@ class QgsRasterLayer(QgsMapLayer, qgis.core.QgsRasterLayer):
                 #globalQgsLock.release()
                 if theProj:
                     self.setCrs(qgis.core.QgsCoordinateReferenceSystem(theProj))
+
+                if band_number:
+                    datasource = gdal.Open(thefilepath)
+                    band = datasource.GetRasterBand(band_number)
+                    if band:
+                        nodata = band.GetNoDataValue()
+                        data = band.ReadAsArray()
+                        # Convert the data to float if necessary, 
+                        # otherwise cannot substitute nodata values with NaN
+                        if not numpy.issubdtype(data.dtype, float):
+                            data = data.astype(numpy.float32)
+                        data[data == nodata] = numpy.NaN
+                        #print "QgsLayer:258", type(data)
+                        self.setResult('numpy_data_array', data)  # NDArrayEO
+                    else:
+                        e = 'Unable to process band number %s' % band_number
+                        raise ModuleError(self, e)
 
             elif isQGISSuported:
                 #globalQgsLock.acquire()

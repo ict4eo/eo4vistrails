@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 ############################################################################
-###
-### Copyright (C) 2010 CSIR Meraka Institute. All rights reserved.
+##
+## Copyright (C) 2010 CSIR Meraka Institute. All rights reserved.
 ###
 ### This full package extends VisTrails, providing GIS/Earth Observation
 ### ingestion, pre-processing, transformation, analytic and visualisation

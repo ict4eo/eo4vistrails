@@ -214,6 +214,7 @@ def initialize(*args, **keywords):
                        "service_version",
                        (core.modules.basic_modules.String,
                         'Web Map Service version - default 1.1.1'))
+
     #output ports
     reg.add_output_port(RasterModel,
                         "GDALDataset",

@@ -33,18 +33,20 @@ def initialize(*args, **keywords):
     """
     Set everything up for vistrails; called from the top level initialize
     """
+    import numpy
     import os
     # third party
     import qgis.core
     # vistrails
     from core.modules.module_registry import get_module_registry
-    from core.modules.basic_modules import Boolean, String, File, Variant
+    from core.modules.basic_modules import Boolean, String, File, Variant, Integer
     # eo4vistrails
     from packages.eo4vistrails.geoinf.datamodels.FeatureImport import \
         FeatureImport, FeatureImportConfigurationWidget
     from packages.eo4vistrails.geoinf.datamodels.RasterImport import \
         RasterImport, RasterImportConfigurationWidget
     from packages.eo4vistrails.geoinf.geostrings.GeoStrings import GeoString
+    from packages.eo4vistrails.tools.utils.Array import NDArrayEO
     # local
     from DataRequest import DataRequest
     from Feature import FeatureModel, FileFeatureModel, MemFeatureModel
@@ -148,8 +150,12 @@ def initialize(*args, **keywords):
     reg.add_module(QgsLayer.QgsRasterLayer,
                    name="RasterLayer",
                    namespace=data_namespace)
+    reg.add_input_port(QgsLayer.QgsRasterLayer, "band",
+                       (Integer, 'Raster image band number'))
     reg.add_output_port(QgsLayer.QgsRasterLayer, "value",
                         QgsLayer.QgsRasterLayer)
+    reg.add_output_port(QgsLayer.QgsRasterLayer, 'numpy_data_array',
+                        (NDArrayEO, "Raster data as numpy array"))   
 
     # ... temporal
     reg.add_module(TemporalVectorLayer,
