@@ -1,32 +1,35 @@
 # -*- coding: utf-8 -*-
 ############################################################################
-###
-### Copyright (C) 2010 CSIR Meraka Institute. All rights reserved.
-###
-### This full package extends VisTrails, providing GIS/Earth Observation
-### ingestion, pre-processing, transformation, analytic and visualisation
-### capabilities . Included is the abilty to run code transparently in
-### OpenNebula cloud environments. There are various software
-### dependencies, but all are FOSS.
-###
-### This file may be used under the terms of the GNU General Public
-### License version 2.0 as published by the Free Software Foundation
-### and appearing in the file LICENSE.GPL included in the packaging of
-### this file.  Please review the following to ensure GNU General Public
-### Licensing requirements will be met:
-### http://www.opensource.org/licenses/gpl-license.php
-###
-### If you are unsure which license is appropriate for your use (for
-### instance, you are interested in developing a commercial derivative
-### of VisTrails), please contact us at vistrails@sci.utah.edu.
-###
-### This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-### WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-###
-#############################################################################
+##
+## Copyright (C) 2012 CSIR Meraka Institute. All rights reserved.
+##
+## This full package extends VisTrails, providing GIS/Earth Observation
+## ingestion, pre-processing, transformation, analytic and visualisation
+## capabilities . Included is the abilty to run code transparently in
+## OpenNebula cloud environments. There are various software
+## dependencies, but all are FOSS.
+##
+## This file may be used under the terms of the GNU General Public
+## License version 2.0 as published by the Free Software Foundation
+## and appearing in the file LICENSE.GPL included in the packaging of
+## this file.  Please review the following to ensure GNU General Public
+## Licensing requirements will be met:
+## http://www.opensource.org/licenses/gpl-license.php
+##
+## If you are unsure which license is appropriate for your use (for
+## instance, you are interested in developing a commercial derivative
+## of VisTrails), please contact us at vistrails@sci.utah.edu.
+##
+## This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
+## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+##
+##########################################################################
 """This module forms part of EO4VisTrails capabilities - it is used to
 handle XML file processing.
 """
+
+import codecs
+from StringIO import StringIO
 
 #all namespaces used by geospatial XML file
 NAMESPACES = {
@@ -101,10 +104,17 @@ def patch_well_known_namespaces(etree_module):
             "http://www.opengis.net/swe/1.0.1":             "swe",
             "http://www.opengis.net/sampling/1.0":          "sa"})
 
+
+import xml.etree.ElementTree as etree
+patch_well_known_namespaces(etree)
+
+"""
 try:
     # Python < 2.5 with ElementTree installed
-    import elementtree.ElementTree as etree
+    #import elementtree.ElementTree as etree
+    import xml.etree.ElementTree as etree
     patch_well_known_namespaces(etree)
+    print "Parser:112 using:", etree
 except ImportError:
     try:
         # Python 2.5 with ElementTree included
@@ -116,7 +126,7 @@ except ImportError:
         except ImportError:
             raise RuntimeError(
                 'You need either ElementTree or lxml to use Parser!')
-
+"""
 
 class Parser(object):
     """This module provides utility methods to parse an XML datastream.
@@ -124,19 +134,24 @@ class Parser(object):
 
     def __init__(self, file=None, url=None, data=None, namespace=KEY_NAMESPACE):
         self.url = url
-        self.file = file
+        self.file = file  # name of file
+        print "parser:138 file", file, type(file)
         self.data = data
         self.namespace = namespace or KEY_NAMESPACE
         self.xml = None
         if self.file:
-            f = open(self.file)
-            self.xml = etree.fromstring(f.read())
+            #f = codecs.open(self.file, 'r', 'utf-8')
+            #f = open(self.file)
+            #self.xml = etree.fromstring(f.read())
+            self.xml = etree.parse(self.file)
         elif self.data:
-            self.xml = etree.fromstring(data)
+            #self.xml = etree.fromstring(data)
+            self.xml = etree.parse(StringIO(data))
         elif self.url:
             pass
             #TO DO: add capability to open XML from a URL -
             #       see lib/owslib/ows.py - def openURL()
+            #ENSURE that stream can handle UTF-8 characters
 
     def tag(self, item, namespace=None):
         """Return a tag as an element object, based on XML document."""

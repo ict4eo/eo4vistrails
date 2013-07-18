@@ -86,7 +86,6 @@ class TemporalVectorLayer(QgsVectorLayer):
 
     def compute(self):
         """Execute the module to create the output"""
-        fileObj = None
         try:
             thefile = self.forceGetInputFromPort('file', None)
             dataReq = self.forceGetInputFromPort('dataRequest', None)
@@ -150,7 +149,7 @@ class TemporalVectorLayer(QgsVectorLayer):
             for index, field in enumerate(fields):
                 field_set = {}
                 name = doc.elem_attr_value(field, 'name')
-                units = None
+                units = ''
                 if len(field) > 0:  # no.of nodes
                     child = field[0]  # any of: Time/Quantity/Text/Category
                     defn = doc.elem_attr_value(child, 'definition')
@@ -159,7 +158,7 @@ class TemporalVectorLayer(QgsVectorLayer):
                     field_set['name'] = name or defn
                     # units
                     uom = doc.elem_tag(child, 'uom')
-                    field_set['units'] = doc.elem_attr_value(uom, 'code') or ''
+                    field_set['units'] = doc.elem_attr_value(uom, 'code') or units
                 field_list.append(field_set)
         return field_list
 
@@ -194,7 +193,7 @@ class TemporalVectorLayer(QgsVectorLayer):
         try:
             bnd_up = doc.tag_value('boundedBy/Envelope/upperCorner').split()
             bnd_lo = doc.tag_value('boundedBy/Envelope/lowerCorner').split()
-            return (bnd_up + bnd_up)
+            return (bnd_up + bnd_lo)
         except:
             return ()
 

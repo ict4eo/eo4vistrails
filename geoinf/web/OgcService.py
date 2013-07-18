@@ -74,17 +74,17 @@ class OGC(NotCacheable):
         """Execute the module to create the output"""
 
         def write_gml_data(data):
-            """Write GML data to file; return pointer to file object."""
+            """Write UTF-8 encoded GML data to Vistrails-created temporary file
+            
+            Returns:
+                file object, or None"""
             if data:
-                #print "ogcservice:80 data", type(data), "\n", data
-                fileObj = self.interpreter.filePool.create_file(suffix=".gml")
-                _file = open(fileObj.name, "w")
-                try:
-                    _file.writelines(data)  # WAS self.webRequest.data ???
-                except:
-                    _file.writelines(data.encode('UTF-8'))  # convert to unico
+                #print "ogcservice:82 data", type(data), "\n", data
+                file_obj = self.interpreter.filePool.create_file(suffix=".gml")
+                _file = open(file_obj.name, "w")
+                _file.writelines(data.encode('UTF-8'))  # convert to unicode
                 _file.close()
-                return fileObj
+                return file_obj
             else:
                 return None
 
