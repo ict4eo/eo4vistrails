@@ -1,29 +1,29 @@
 # -*- coding: utf-8 -*-
-############################################################################
-###
-### Copyright (C) 2010 CSIR Meraka Institute. All rights reserved.
-###
-### This full package extends VisTrails, providing GIS/Earth Observation
-### ingestion, pre-processing, transformation, analytic and visualisation
-### capabilities . Included is the abilty to run code transparently in
-### OpenNebula cloud environments. There are various software
-### dependencies, but all are FOSS.
-###
-### This file may be used under the terms of the GNU General Public
-### License version 2.0 as published by the Free Software Foundation
-### and appearing in the file LICENSE.GPL included in the packaging of
-### this file.  Please review the following to ensure GNU General Public
-### Licensing requirements will be met:
-### http://www.opensource.org/licenses/gpl-license.php
-###
-### If you are unsure which license is appropriate for your use (for
-### instance, you are interested in developing a commercial derivative
-### of VisTrails), please contact us at vistrails@sci.utah.edu.
-###
-### This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-### WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-###
-#############################################################################
+##############################################################################
+##
+## Copyright (C) 2010 CSIR Meraka Institute. All rights reserved.
+##
+## This full package extends VisTrails, providing GIS/Earth Observation
+## ingestion, pre-processing, transformation, analytic and visualisation
+## capabilities . Included is the abilty to run code transparently in
+## OpenNebula cloud environments. There are various software
+## dependencies, but all are FOSS.
+##
+## This file may be used under the terms of the GNU General Public
+## License version 2.0 as published by the Free Software Foundation
+## and appearing in the file LICENSE.GPL included in the packaging of
+## this file.  Please review the following to ensure GNU General Public
+## Licensing requirements will be met:
+## http://www.opensource.org/licenses/gpl-license.php
+##
+## If you are unsure which license is appropriate for your use (for
+## instance, you are interested in developing a commercial derivative
+## of VisTrails), please contact us at vistrails@sci.utah.edu.
+##
+## This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
+## WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+##
+##############################################################################
 """This module provides a data structure for creating and storing vector data,
 as well as associated attribute data (typically time-series data), based on the
 format defined by QGIS, from different input data types.
@@ -406,6 +406,17 @@ class TemporalVectorLayer(QgsVectorLayer):
                 results.append(result)
         return results
 
+    def encode_list(self, _list, encoding='UTF-8'):
+        items = []
+        if _list:
+            for item in _list:
+                try:
+                    items.append(
+                        item.encode(encoding=encoding, errors='ignore'))
+                except:
+                    items.append(item)
+        return items
+
     def to_gml(self, filename_out, header=True,
                delimiter=',', quotechar=None, missing_value=None):
         """Transform GML to create a GML representation of all spatial data.
@@ -444,7 +455,7 @@ class TemporalVectorLayer(QgsVectorLayer):
 
     def to_csv(self, filename_out, header=True,
                delimiter=',', quotechar=None, missing_value=None):
-        """Transform GML to create a CSV representation of the time-series data.
+        """Transform GML to create a UTF-8 encoded CSV of the time-series data.
         
         :param str filename_out: name of the file to which the data must be written
         :param boolean header: if header row required (defaults to TRUE)
@@ -467,19 +478,20 @@ class TemporalVectorLayer(QgsVectorLayer):
                 available in the meta data) are shown in square brackets []
                 after the field name.
         """
+
         GML_file = self.results_file
         if not GML_file:
             self.raiseError('No GML file specified from which to extract data')
         results = self.extract_time_series(GML_file)  # get data & metadata
-        #print "TVL:441", results[0], results[1]
+        #print "TVL:484", results[0], results[1]
         if results and results[0]['fields']:
             quoting = csv.QUOTE_NONNUMERIC
             file_out = open(filename_out, "w")
             if quotechar:
                 csv_writer = csv.writer(file_out,
-                                    delimiter=delimiter,
-                                    quotechar=quotechar,
-                                    quoting=quoting)
+                                        delimiter=delimiter,
+                                        quotechar=quotechar,
+                                        quoting=quoting)
             else:
                 csv_writer = csv.writer(file_out,
                                         delimiter=delimiter,
@@ -495,21 +507,21 @@ class TemporalVectorLayer(QgsVectorLayer):
                     else:
                         _field += ' []'
                     common.append(_field)
-                csv_writer.writerow(common)
+                csv_writer.writerow(self.encode_list(common))
 
             for result in results:
                 # write to file
                 for index, datum in enumerate(result['data']):
                     if missing_value:
                         for key, item in enumerate(datum):
-                            #print "TVL:500", type(item), item
+                            #print "TVL:515", type(item), item
                             if not item or item in GML_NO_DATA_LIST:
                                 datum[key] = missing_value
                     datum.insert(0, result['feature']['geometry'])
                     datum.insert(0, result['sampling_point']['id'])
                     datum.insert(0, result['feature']['id'])
                     datum.insert(0, result['observation']['id'])
-                    csv_writer.writerow(datum)
+                    csv_writer.writerow(self.encode_list(datum))
 
             file_out.close()
             return file_out
@@ -581,7 +593,7 @@ class TemporalVectorLayer(QgsVectorLayer):
                         _field += ' []'
                     header.append(_field)
             reverse_key_fields = sorted(key_fields, reverse=True)
-            csv_writer.writerow(header)
+            csv_writer.writerow(self.encode_list(header))
 
             #print "TVL:586", results[0]['fields'], key_fields
             for index, result in enumerate(results):
@@ -594,7 +606,7 @@ class TemporalVectorLayer(QgsVectorLayer):
                             except TypeError:
                                 pass  # ignore non-strings
                     # extract key field values from datum
-                    #print "TVL:596 datum", datum
+                    #print "TVL:609 datum", datum
                     time = day = lat = lon = None
                     depth = 0
                     for key, value in enumerate(datum):
@@ -602,7 +614,10 @@ class TemporalVectorLayer(QgsVectorLayer):
                             if key_fields[key] == 0:  # time
                                 date_time = get_date_and_time(datum[key],
                                                               date_format="%m/%d/%Y")
-                                day, time = date_time[0], date_time[1]
+                                if date_time:
+                                    day, time = date_time[0], date_time[1]
+                                else:
+                                    day, time = None, None                                    
                             # NOTE !!! no formatting is performed on lat/lon fields...
                             if key_fields[key] == 1:  # lat
                                 lat = datum[key]
@@ -612,7 +627,8 @@ class TemporalVectorLayer(QgsVectorLayer):
                                 depth = datum[key]
                     # remove key field values from datum array, in REVERSE position
                     for kf in reverse_key_fields:
-                        datum.pop(kf)
+                        if datum:
+                            datum.pop(kf)
                     # add in key field values at the start of the datum array
                     datum.insert(0, depth)
                     datum.insert(0, lat)
@@ -623,7 +639,7 @@ class TemporalVectorLayer(QgsVectorLayer):
                     datum.insert(0, result['sampling_point']['id'])
                     datum.insert(0, result['observation']['procedure'])
                     #datum.insert(0, result['observation']['id'])
-                    csv_writer.writerow(datum)
+                    csv_writer.writerow(self.encode_list(datum))
             return file_out
 
     def to_numpy(self):
