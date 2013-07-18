@@ -105,16 +105,10 @@ def patch_well_known_namespaces(etree_module):
             "http://www.opengis.net/sampling/1.0":          "sa"})
 
 
-import xml.etree.ElementTree as etree
-patch_well_known_namespaces(etree)
-
-"""
 try:
     # Python < 2.5 with ElementTree installed
-    #import elementtree.ElementTree as etree
-    import xml.etree.ElementTree as etree
+    import elementtree.ElementTree as etree
     patch_well_known_namespaces(etree)
-    print "Parser:112 using:", etree
 except ImportError:
     try:
         # Python 2.5 with ElementTree included
@@ -126,7 +120,6 @@ except ImportError:
         except ImportError:
             raise RuntimeError(
                 'You need either ElementTree or lxml to use Parser!')
-"""
 
 class Parser(object):
     """This module provides utility methods to parse an XML datastream.
@@ -135,7 +128,7 @@ class Parser(object):
     def __init__(self, file=None, url=None, data=None, namespace=KEY_NAMESPACE):
         self.url = url
         self.file = file  # name of file
-        print "parser:138 file", file, type(file)
+        #print "parser:131 file", file, type(file)
         self.data = data
         self.namespace = namespace or KEY_NAMESPACE
         self.xml = None
