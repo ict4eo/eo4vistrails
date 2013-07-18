@@ -161,20 +161,26 @@ class TemporalWidget(QtGui.QWidget):
         #self.setLayout(self.gridLayout)
         self.tFramesLayout.addWidget(QtGui.QLabel('Start date'), 0, 0)
         self.tFramesLayout.addWidget(QtGui.QLabel('End date'), 1, 0)
-
+        
+        current_date_time = QtCore.QDateTime.currentDateTime()
+        current_date = QtCore.QDate.currentDate()
         #setting the start date-time widget and addding it to the window
-        self.myTimeStart = QtGui.QDateTimeEdit(self)
+        self.myTimeStart = QtGui.QDateTimeEdit(current_date_time.addDays(-365))
         self.tFramesLayout.addWidget(self.myTimeStart, 0, 1)
         cal1 = QtGui.QCalendarWidget()
-        self.myTimeStart.setCalendarWidget(cal1)
+        cal1.setFirstDayOfWeek(QtCore.Qt.Monday)
+        cal1.setSelectedDate(current_date.addDays(-365))
         self.myTimeStart.setCalendarPopup(True)
-
+        self.myTimeStart.setCalendarWidget(cal1)
+        
         #setting the end date-time widget and addding it to the window
-        self.myTimeEnd = QtGui.QDateTimeEdit(self)
+        self.myTimeEnd = QtGui.QDateTimeEdit(current_date_time)
         self.tFramesLayout.addWidget(self.myTimeEnd, 1, 1)
         cal2 = QtGui.QCalendarWidget()
-        self.myTimeEnd.setCalendarWidget(cal2)
+        cal2.setFirstDayOfWeek(QtCore.Qt.Monday)
+        cal2.setSelectedDate(current_date)
         self.myTimeEnd.setCalendarPopup(True)
+        self.myTimeEnd.setCalendarWidget(cal2)
 
         # need to set time format validation functionality
         endDateTime = QtCore.QDateTime()
@@ -252,17 +258,17 @@ class TemporalWidget(QtGui.QWidget):
     def getTimeBegin(self):
         """ TO DO: calculate UTC time string from GUI widgets."""
         """        """
-        foo = self.myTimeStart.value()
-        print "STConfigWidget:257", foo, type(foo)
-        bar = QDateTime.fromString(self.myTimeStart.value(), "yyyy-MM-ddThh:mm:ss")
-        print "STConfigWidget:259", bar, type(bar)
-
-        return '2005-09-01T00:00:00'
+        foo = self.myTimeStart.dateTime()  # same as Python date/time
+        #print "SpatTimeConfigWidget:257", foo, type(foo)
+        #bar = QDateTime.fromString(self.myTimeStart.value(), "yyyy-MM-ddThh:mm:ss")
+        bar = foo.toUTC()
+        #print "SpatTimeConfigWidget:259", bar, type(bar), str(bar)
+        return '2001-01-01T00:00:00'
 
     def getTimeEnd(self):
         """ TO DO: calculate UTC time string from GUI widgets."""
         # dummy - example format
-        return '2005-09-30T23:59:00'
+        return '2013-06-30T23:59:00'
 
 
 class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
