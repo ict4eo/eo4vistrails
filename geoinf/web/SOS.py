@@ -495,6 +495,7 @@ class SOSConfigurationWidget(OgcConfigurationWidget,
         except:
             offering = None
         try:
+            #print "SOS:498", self.config.cbTime.currentText()
             time_limit = self.config.cbTime.currentText()
         except:
             time_limit = None
@@ -560,12 +561,12 @@ class SOSConfigurationWidget(OgcConfigurationWidget,
                 return None, None
             if time_limit:  # time params
                 if time_limit == self.config.TIME_OWN:
-                    # see SpatialTemporalConfigurationWidget
+                    # in SpatialTemporalConfigurationWidget
                     time_range = self.getTimeInterval()
                 elif time_limit == self.config.TIME_OFFERING:
-                    # see SpatialTemporalConfigurationWidget
+                    # local function
                     time_range = self.config.getTimeIntervalOffering()
-                # FIXME this code causes errors with ARC SOS ???
+                #print "SOS:570 limit/range", time_limit, time_range
                 data += '<eventTime>\n <ogc:TM_During>\n' + \
                     '  <ogc:PropertyName>om:samplingTime</ogc:PropertyName>' + \
                     '  <gml:TimePeriod>\n' + \
@@ -574,16 +575,6 @@ class SOSConfigurationWidget(OgcConfigurationWidget,
                     '   <gml:endPosition>' + time_range[1] + \
                     '</gml:endPosition>\n' + \
                     '  </gml:TimePeriod>\n </ogc:TM_During>\n</eventTime>\n'
-                """
-                #this code does still not work with ARC SOS
-                data += '<eventTime>\n' + \
-                    '  <gml:TimePeriod>\n' + \
-                    '   <gml:beginPosition>' + time_range[0] + \
-                    '</gml:beginPosition>\n' + \
-                    '   <gml:endPosition>' + time_range[1] + \
-                    '</gml:endPosition>\n' + \
-                    '  </gml:TimePeriod></eventTime>\n'
-                """
             if procedure:
                 if not mode:
                     self.showWarning(WARNING_MUST %

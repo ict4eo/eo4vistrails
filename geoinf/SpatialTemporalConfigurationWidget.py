@@ -30,6 +30,7 @@ geoinf modules.
 from PyQt4 import QtCore, QtGui
 from core.modules.module_configure import StandardModuleConfigurationWidget
 from core.modules.module_registry import get_module_registry
+from core.modules.vistrails_module import ModuleError
 from core.utils import PortAlreadyExists
 from core.utils import VistrailsInternalError
 
@@ -182,12 +183,6 @@ class TemporalWidget(QtGui.QWidget):
         self.myTimeEnd.setCalendarPopup(True)
         self.myTimeEnd.setCalendarWidget(cal2)
 
-        # need to set time format validation functionality
-        endDateTime = QtCore.QDateTime()
-        myDateTime = endDateTime.currentDateTime()
-        self.myTimeStart.setDateTime(myDateTime)
-        self.myTimeEnd.setDateTime(myDateTime)
-
         """Code that enables the Slider widget on out temporal tab. this enables
         the user to set the interval for required data """
         """TO DO:
@@ -248,27 +243,15 @@ class TemporalWidget(QtGui.QWidget):
             self.minuteLcd,
             QtCore.SLOT('display(int)'))
 
-    """TIME
-    QDateTime::toString ( const QString & format )
-    yyyy-MM-ddThh:mm:ss
-    or to UTC
-    oldTime = QDateTime::fromString("2010-03-01T07:29:20","yyyy-MM-ddThh:mm:ss").toUTC();
-    """
-
     def getTimeBegin(self):
-        """ TO DO: calculate UTC time string from GUI widgets."""
-        """        """
-        foo = self.myTimeStart.dateTime()  # same as Python date/time
-        #print "SpatTimeConfigWidget:257", foo, type(foo)
-        #bar = QDateTime.fromString(self.myTimeStart.value(), "yyyy-MM-ddThh:mm:ss")
-        bar = foo.toUTC()
-        #print "SpatTimeConfigWidget:259", bar, type(bar), str(bar)
-        return '2001-01-01T00:00:00'
+        _time = self.myTimeStart.dateTime()
+        py_time = _time.toPyDateTime()  # same as Python date/time
+        return py_time.strftime("%Y-%m-%dT%H:%M:%S")
 
     def getTimeEnd(self):
-        """ TO DO: calculate UTC time string from GUI widgets."""
-        # dummy - example format
-        return '2013-06-30T23:59:00'
+        _time = self.myTimeEnd.dateTime()
+        py_time = _time.toPyDateTime()  # same as Python date/time
+        return py_time.strftime("%Y-%m-%dT%H:%M:%S")
 
 
 class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
