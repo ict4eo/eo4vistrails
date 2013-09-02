@@ -61,12 +61,15 @@ class SOS(OGC, FeatureModel):
 class SosCommonWidget(QtGui.QWidget):
     """SOS-specific parameters can be obtained, displayed and selected."""
 
-    def __init__(self, module, ogc_widget, parent=None):
+    def __init__(self, module, ogc_widget, temporal_widget, spatial_widget,
+                 parent=None):
         QtGui.QWidget.__init__(self, parent)
         self.setObjectName("SosCommonWidget")
         self.module = module
         self.parent_widget = ogc_widget
         self.contents = None  # only set in self.loadOfferings()
+        self.temporal_widget = temporal_widget
+        self.spatial_widget = spatial_widget
         self.create_config_window()
 
         # listen for signals emitted by OgcCommonWidget class
@@ -163,12 +166,14 @@ class SosCommonWidget(QtGui.QWidget):
 
         self.boundingLayout.addStretch()  # force items upwards -doesnt work??
 
+        # display the start/end times of the selected offering
         self.timeGroupBox = QtGui.QGroupBox("")
         self.timeGroupBox.setFlat(True)
         self.timeLayout = QtGui.QVBoxLayout()
         self.timeGroupBox.setLayout(self.timeLayout)
         self.detailsLayout.addWidget(self.timeGroupBox, 2, 1)
         self.lblStartTime = QtGui.QLabel('-')
+        #print "SOS:176 Offering Time Start", self.lblStartTime.text()
         self.timeLayout.addWidget(self.lblStartTime)
         self.timeLayout.addWidget(QtGui.QLabel('to:'))
         self.lblEndTime = QtGui.QLabel('-')
@@ -212,7 +217,7 @@ class SosCommonWidget(QtGui.QWidget):
 
     def getBoundingBoxOffering(self):
         """Return a tuple containing box co-ordinates.
-        
+
         Format: top-left X, top-left Y, bottom-left X, bottom-left Y
         """
         return (
@@ -222,11 +227,25 @@ class SosCommonWidget(QtGui.QWidget):
             self.lblBR_Y.text())
 
     def getTimeIntervalOffering(self):
-        """Return a tuple containing start / end in universal time."""
+        """Return a tuple containing start/end strings of offering (UTC)."""
+        codec16 = QtCore.QTextCodec.codecForName("UTF-16")
+        start = unicode(codec16.fromUnicode(self.lblStartTime.text()), 'UTF-16')
+        end = unicode(codec16.fromUnicode(self.lblEndTime.text()), 'UTF-16')
+        #print "SOS:234", type(start), start, end
+        return (start, end)
 
-        return (
-            self.lblStartTime.text(),
-            self.lblEndTime.text(),)
+    def setTimeIntervalOffering(self, tr):
+        """Set all the time displays to reflect the new time range (UTC)."""
+        time_limit = self.cbTime.currentText()
+        #print "SOS:238 Time Limit & Range", tr, time_limit
+        # offering time range on SOS metadata tab
+        if tr[0]:
+            self.lblStartTime.setText(tr[0])
+        if tr[1]:
+            self.lblEndTime.setText(tr[1])
+        if time_limit != self.TIME_OWN:
+            # set temporal widget to match offering time range
+            self.temporal_widget.setTimeInterval(tr[0], tr[1])
 
     def restoreConfiguration(self, configuration):
         """Restore all configuration choices previously made.
@@ -280,12 +299,6 @@ class SosCommonWidget(QtGui.QWidget):
             if set_listbox(self.lbxOfferings, config.get('offering')):
                 self.offeringsChanged()
 
-            tr = config.get('time_range') or (None, None)
-            if tr[0]:
-                self.lblStartTime.setText(tr[0])
-            if tr[1]:
-                self.lblEndTime.setText(tr[1])
-
             set_combobox(self.cbProcedure, config.get('procedure'))
             set_combobox(self.cbRequest, config.get('request'))
             set_combobox(self.cbResponseFormat, config.get('format'))
@@ -293,8 +306,11 @@ class SosCommonWidget(QtGui.QWidget):
             set_combobox(self.cbResultModel, config.get('model'))
             set_listbox(self.lbObservedProperty, config.get('obs_prop'))
             set_combobox(self.cbFOI, config.get('foi'))
-            set_combobox(self.cbTime, config.get('time_limit'))
             set_combobox(self.cbSpatial, config.get('spatial_limit'))
+            set_combobox(self.cbTime, config.get('time_limit'))
+            tr = config.get('time_range') or (None, None)
+            #print "SOS:312 (config restore) Time Rng", tr
+            self.setTimeIntervalOffering(tr)
 
     def removeOfferings(self):
         """Remove all offering details when no SOS is selected."""
@@ -309,8 +325,9 @@ class SosCommonWidget(QtGui.QWidget):
         self.lblBR_X.setText('-')
         self.lblBR_Y.setText('-')
         self.lblSRS.setText('-')
-        self.lblStartTime.setText('-')
-        self.lblEndTime.setText('-')
+        self.lblEndTime = QtGui.QLabel('-')
+        self.lblStartTime = QtGui.QLabel('-')
+        #self.temporal_widget.resetTime()  # STC widget
         self.cbProcedure.clear()
         self.cbRequest.clear()
         self.cbResponseFormat.clear()
@@ -330,7 +347,7 @@ class SosCommonWidget(QtGui.QWidget):
         else:
             selected_offering = None
         if self.parent_widget.service and \
-            self.parent_widget.service.service_valid and self.contents:
+           self.parent_widget.service.service_valid and self.contents:
             for content in self.contents:
                 if selected_offering == content.id:
                     # description
@@ -345,8 +362,9 @@ class SosCommonWidget(QtGui.QWidget):
                         self.cbRequest.addItem(service)
                     # update other offering details...
                     if content.time:
-                        self.lblStartTime.setText(str(content.time[0]))
-                        self.lblEndTime.setText(str(content.time[1]))
+                        #print "SOS:365 (offering change) Time Rng", content.time
+                        self.setTimeIntervalOffering((content.time[0],
+                                                      content.time[1]))
                     if content.bounding_box:
                         self.lblTL_X.setText(str(content.bounding_box[0]))
                         self.lblTL_Y.setText(str(content.bounding_box[1]))
@@ -382,7 +400,7 @@ class SosCommonWidget(QtGui.QWidget):
         if self.parent_widget.service and self.parent_widget.service.service_valid:
             self.removeOfferings()  # clear current data
             self.contents = self.parent_widget.service.service.__dict__['contents']
-            #print "SOS self.contents", self.contents
+            #print "SOS:401 self.contents", self.contents
             for content in self.contents:
                 item = QtGui.QListWidgetItem(content.id)
                 self.lbxOfferings.addItem(item)
@@ -398,7 +416,10 @@ class SOSConfigurationWidget(OgcConfigurationWidget,
                                                    controller, parent)
         OgcConfigurationWidget.__init__(self, module, controller, parent)
         # pass in parent widget i.e. OgcCommonWidget class
-        self.config = SosCommonWidget(self.module, self.ogc_common_widget)
+        self.config = SosCommonWidget(self.module,
+                                      self.ogc_common_widget,
+                                      self.temporal_widget,
+                                      self.spatial_widget)
 
         # retrieve values from input ports (created in OgcConfigurationWidget)
         self.config.parent_widget.capabilities = self.getPortValue(init.OGC_CAPABILITIES_PORT)
@@ -432,13 +453,13 @@ class SOSConfigurationWidget(OgcConfigurationWidget,
 
     def get_valid_srs(self, srsURN):
         """Return a valid EPSG srsName according to OGC 09-048r3
-        
+
         Accepts:
         * valid srs string in URN form (delimited by :)
-        
+
         Returns:
         * valid EPSG srsName string, or default of EPSG 4326 if not found
-        
+
         Notes:
         * Replace with http://owslib.sourceforge.net/#crs-handling  ???
         """
@@ -500,6 +521,12 @@ class SOSConfigurationWidget(OgcConfigurationWidget,
         except:
             time_limit = None
         try:
+            time_range = self.config.getTimeIntervalOffering()
+            #print "SOS:525 Default Off. Time Range", type(time_range), time_range
+        except:
+            # default (null) values for configuration storage
+            time_range = (None, None)
+        try:
             spatial_limit = self.config.cbSpatial.currentText()
         except:
             spatial_limit = None
@@ -509,8 +536,6 @@ class SOSConfigurationWidget(OgcConfigurationWidget,
         WARNING_NOT = '%s must NOT be chosen for a "%s" request.'
         WARNING_CHOICE = 'Either %s or %s must be chosen for a "%s" request.'
         WARNING_ONLY_ONE = 'Cannot select both %s and %s for a "%s" request.'
-        # default (null) values for configuration storage
-        time_range = (None, None)
         # process by request type
         if rType == 'DescribeSensor':
             if procedure:
@@ -562,11 +587,12 @@ class SOSConfigurationWidget(OgcConfigurationWidget,
             if time_limit:  # time params
                 if time_limit == self.config.TIME_OWN:
                     # in SpatialTemporalConfigurationWidget
-                    time_range = self.getTimeInterval()
+                    time_range = self.temporal_widget.getTimeInterval()  # STC
+                    #print "SOS:591 Own Time Range", type(time_range), time_range
                 elif time_limit == self.config.TIME_OFFERING:
                     # local function
                     time_range = self.config.getTimeIntervalOffering()
-                #print "SOS:570 limit/range", time_limit, time_range
+                    #print "SOS:596 Sos Time Range", type(time_range), time_range
                 data += '<eventTime>\n <ogc:TM_During>\n' + \
                     '  <ogc:PropertyName>om:samplingTime</ogc:PropertyName>' + \
                     '  <gml:TimePeriod>\n' + \
@@ -632,7 +658,7 @@ class SOSConfigurationWidget(OgcConfigurationWidget,
             if mode:
                 data += '<responseMode>' + mode + '</responseMode>\n'
 
-        # add wrappers
+        # add wrappers - this is a NEW if-else sequence!
         if rType == 'DescribeSensor':
             header = \
             """<DescribeSensor service="SOS" version="1.0.0"
@@ -670,6 +696,7 @@ class SOSConfigurationWidget(OgcConfigurationWidget,
             raise ModuleError(
                 self,
                 'Unknown SOS request type' + ': %s' % str(rType))
+
         # xml header
         data = '<?xml version="1.0" encoding="UTF-8"?>\n' + data
         #print "SOS:656 - data:\n", data  # show line breaks for testing !!!
@@ -680,6 +707,7 @@ class SOSConfigurationWidget(OgcConfigurationWidget,
         # ensure that any variables stored here always have default values
         # and that they are converted from PyQt4.QtCore.QString types
         request = self.config.cbRequest.currentText() or ''
+        # SAVE configuration selection for reuse by 
         result['configuration'] = {
             'procedure': str(procedure),
             'format': str(format),
@@ -711,5 +739,3 @@ http://schemas.opengis.net/sos/1.0.0/sosGetCapabilities.xsd" service="SOS" updat
 </ows:Sections>
 </GetCapabilities>
     '''
-
-

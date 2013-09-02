@@ -35,6 +35,9 @@ from core.utils import PortAlreadyExists
 from core.utils import VistrailsInternalError
 
 
+DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S"
+
+
 class SpatioTemporalConfigurationWidgetTabs(QtGui.QTabWidget):
     """Geoinf Configuration Tab Widgets
     are added via the addTab method of the QTabWidget
@@ -125,13 +128,11 @@ class SpatialWidget(QtGui.QWidget):
 
 class TemporalWidget(QtGui.QWidget):
     """Set temporal bounds and interval parameters for querying datasets
-
     """
 
-    """TO DO:
-        use "onChange" methods to call a validation method -
-        check that the start date is not later than the end date
-    """
+    #TO DO:
+    #    use "onChange" methods to call a validation method -
+    #    check that the start date is not later than the end date
 
     def __init__(self, parent=None):
         QtGui.QWidget.__init__(self, parent)
@@ -162,26 +163,28 @@ class TemporalWidget(QtGui.QWidget):
         #self.setLayout(self.gridLayout)
         self.tFramesLayout.addWidget(QtGui.QLabel('Start date'), 0, 0)
         self.tFramesLayout.addWidget(QtGui.QLabel('End date'), 1, 0)
-        
+
         current_date_time = QtCore.QDateTime.currentDateTime()
         current_date = QtCore.QDate.currentDate()
         #setting the start date-time widget and addding it to the window
         self.myTimeStart = QtGui.QDateTimeEdit(current_date_time.addDays(-365))
+        #print "STC:170 (create_temp_config_window) MyTimeStr", self.myTimeStart.text()
         self.tFramesLayout.addWidget(self.myTimeStart, 0, 1)
-        cal1 = QtGui.QCalendarWidget()
-        cal1.setFirstDayOfWeek(QtCore.Qt.Monday)
-        cal1.setSelectedDate(current_date.addDays(-365))
+        self.cal1 = QtGui.QCalendarWidget()
+        self.cal1.setFirstDayOfWeek(QtCore.Qt.Monday)
+        self.cal1.setSelectedDate(current_date.addDays(-365))
         self.myTimeStart.setCalendarPopup(True)
-        self.myTimeStart.setCalendarWidget(cal1)
-        
+        self.myTimeStart.setCalendarWidget(self.cal1)
+
         #setting the end date-time widget and addding it to the window
         self.myTimeEnd = QtGui.QDateTimeEdit(current_date_time)
+        #print "STC:180 (create_temp_config_window) MyTimeEnd", self.myTimeEnd.text()
         self.tFramesLayout.addWidget(self.myTimeEnd, 1, 1)
-        cal2 = QtGui.QCalendarWidget()
-        cal2.setFirstDayOfWeek(QtCore.Qt.Monday)
-        cal2.setSelectedDate(current_date)
+        self.cal2 = QtGui.QCalendarWidget()
+        self.cal2.setFirstDayOfWeek(QtCore.Qt.Monday)
+        self.cal2.setSelectedDate(current_date)
         self.myTimeEnd.setCalendarPopup(True)
-        self.myTimeEnd.setCalendarWidget(cal2)
+        self.myTimeEnd.setCalendarWidget(self.cal2)
 
         """Code that enables the Slider widget on out temporal tab. this enables
         the user to set the interval for required data """
@@ -244,14 +247,64 @@ class TemporalWidget(QtGui.QWidget):
             QtCore.SLOT('display(int)'))
 
     def getTimeBegin(self):
-        _time = self.myTimeStart.dateTime()
-        py_time = _time.toPyDateTime()  # same as Python date/time
-        return py_time.strftime("%Y-%m-%dT%H:%M:%S")
+        """Return a string with begin time in UTC format."""
+        _time = self.myTimeStart.toString(DATETIME_FORMAT)
+        #print "STC:251 gettimeStart", type(_time), _time
+        return _time
+        #py_time = _time.toPyDateTime()  # same as Python date/time
+        #return py_time.strftime(DATETIME_FORMAT)
 
     def getTimeEnd(self):
+        """Return a string with end time in UTC format."""
+        """Return a string with begin time in UTC format."""
+        _time = self.myTimeEnd.toString(DATETIME_FORMAT)
+        #print "STC:260 gettimeEnd", type(_time), _time
+        return _time
+        """
         _time = self.myTimeEnd.dateTime()
         py_time = _time.toPyDateTime()  # same as Python date/time
-        return py_time.strftime("%Y-%m-%dT%H:%M:%S")
+        return py_time.strftime(DATETIME_FORMAT)
+        """
+
+    def getTimeInterval(self):
+        """Return a tuple containing begin / end time strings in UTC format."""
+        return (
+            self.getTimeBegin(),
+            self.getTimeEnd())
+
+    def setTimeInterval(self, begin=None, end=None):
+        """Set the time values for the widgets based on date/time objects.
+
+        Also try using string->date conversion
+        """
+        #print "STC:280 begin end", type(begin), begin, end
+        try:
+            if begin:
+                self.myTimeStart = QtGui.QDateTimeEdit(begin)
+            if end:
+                self.myTimeEnd = QtGui.QDateTimeEdit(end)
+        except:
+            #try:
+            # try to convert strings into dates
+            if begin:
+                self.myTimeStart = QtCore.QDateTime.fromString(
+                    begin, DATETIME_FORMAT)
+            if end:
+                self.myTimeEnd = QtCore.QDateTime.fromString(
+                    end, DATETIME_FORMAT)
+            #except:
+            #    pass
+        #print "STC:297 ", type(self.myTimeStart)
+        #print "STC:298 (set time interval) MyTimeS", self.myTimeStart.toString(QtCore.Qt.ISODate)
+        #print "STC:299 (set time interval) MyTimeE", self.myTimeEnd.toString(QtCore.Qt.ISODate)
+
+    def resetTime(self):
+        """Set the default time values for the widgets."""
+        current_date_time = QtCore.QDateTime.currentDateTime()
+        self.myTimeStart = QtGui.QDateTimeEdit(current_date_time.addDays(-365))
+        self.myTimeEnd = QtGui.QDateTimeEdit(current_date_time)
+        #print "STC:306 (reset time) MyTimeS", self.myTimeStart.toString(QtCore.Qt.ISODate)
+        #print "STC:307 (reset time) MyTimeE", self.myTimeEnd.toString(QtCore.Qt.ISODate)
 
 
 class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
