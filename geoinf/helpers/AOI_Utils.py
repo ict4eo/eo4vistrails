@@ -34,8 +34,9 @@ import os.path
 # third party
 from PyQt4 import QtCore, QtGui
 from qgis.core import QgsApplication, QgsRectangle, QgsPoint, QgsRasterLayer, \
-    QgsVectorLayer, QgsMapLayerRegistry, QgsSingleSymbolRenderer, QgsSymbol, \
-    QgsField, QgsGeometry, QgsFeature
+    QgsVectorLayer, QgsMapLayerRegistry, QgsField, QgsGeometry, QgsFeature
+from qgis.core import QgsSymbolV2 as QgsSymbol  # 1.8 to 2.0 API
+from qgis.core import QgsSingleSymbolRendererV2 as QgsSingleSymbolRenderer  # 1.8 to 2.0 API
 from qgis.gui import QgsMapTool, QgsProjectionSelector, QgsMapToolPan, \
     QgsMapToolZoom, QgsMapTool, QgsMapCanvasLayer, QgsMessageViewer
 # vistrails
