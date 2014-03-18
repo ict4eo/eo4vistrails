@@ -1,7 +1,7 @@
 def initialize(*args, **keywords):
 
     from core.modules.module_registry import get_module_registry
-    from packages.matplotlib.bases import MplPlot, MplPlotConfigurationWidget
+    from packages.matplotlib.bases import MplPlot#, MplPlotConfigurationWidget
     from vistrails.packages.eo4vistrails.tools.visual.plots.standard.plot import \
         ParentPlot, SinglePlot, Histogram, MultiPlot, \
         MatplotlibMarkerComboBox, MatplotlibPlotTypeComboBox, \
@@ -30,9 +30,9 @@ def initialize(*args, **keywords):
                    abstract=True)
 
     # active modules
-    reg.add_module(SinglePlot, namespace=namespace,
-                   configureWidgetType=MplPlotConfigurationWidget)
-    reg.add_module(Histogram, namespace=namespace,
-                   configureWidgetType=MplPlotConfigurationWidget)
-    reg.add_module(MultiPlot, namespace=namespace,
-                   configureWidgetType=MplPlotConfigurationWidget)
+    reg.add_module(SinglePlot, namespace=namespace)
+                   #, configureWidgetType=MplPlotConfigurationWidget)
+    reg.add_module(Histogram, namespace=namespace)
+                   #, configureWidgetType=MplPlotConfigurationWidget)
+    reg.add_module(MultiPlot, namespace=namespace)
+                   #, configureWidgetType=MplPlotConfigurationWidget)

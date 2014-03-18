@@ -45,7 +45,7 @@ from core.modules.vistrails_module import Module, ModuleError
 from vistrails.packages.eo4vistrails.geoinf.datamodels.WebRequest import WebRequest
 from vistrails.packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
 from vistrails.packages.eo4vistrails.tools.utils.ThreadSafe import ThreadSafeMixin
-import vistrails.packages.eo4vistrails.tools.utils.datetimeutils as datetimeutils
+from vistrails.packages.eo4vistrails.tools.utils import datetimeutils
 from vistrails.packages.eo4vistrails.tools.utils.listutils import uniqify
 #names of ports as constants
 import init

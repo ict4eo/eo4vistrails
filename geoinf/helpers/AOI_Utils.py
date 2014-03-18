@@ -146,8 +146,8 @@ class FeatureOfInterestDefinerConfigurationWidget(StandardModuleConfigurationWid
         #self.module = module
         self.setObjectName("FeatureOfInterestDefinerWidget")
         self.parent_widget = module
-        self.path_png_icon = packages.eo4vistrails.geoinf.visual.__path__[0]
-        self.path_bkgimg = packages.eo4vistrails.geoinf.visual.__path__[0]
+        self.path_png_icon = vistrails.packages.eo4vistrails.geoinf.visual.__path__[0]
+        self.path_bkgimg = vistrails.packages.eo4vistrails.geoinf.visual.__path__[0]
         self.create_config_window()
 
     def create_config_window(self):

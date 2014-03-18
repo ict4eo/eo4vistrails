@@ -176,13 +176,15 @@ def initialize(*args, **keywords):
 
     if core.requirements.python_module_exists('rpy2'):
         try:
-            import rpy2.robjects  # test if R (R_HOME) installed/defined
+            from rpy2 import robjects  # test if R (R_HOME) installed/defined
             import rpy2Stats  # filename of Vistrails module
             r_namespace = "scripting|r"
             reg.add_module(rpy2Stats.Rpy2Script,
                        name="Rpy2Script",
                        namespace=r_namespace,
                        configureWidgetType=rpy2Stats.RSourceConfigurationWidget)
+        except ImportError:
+            missing('R', 'Rpy2Script')
         except RuntimeError:
             missing('R', 'Rpy2Script')
     else:

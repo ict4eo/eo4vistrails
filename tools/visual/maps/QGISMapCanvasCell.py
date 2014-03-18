@@ -49,9 +49,10 @@ from packages.spreadsheet.spreadsheet_cell import QCellWidget
 #from vistrails.packages.eo4vistrails.tools.utils.ThreadSafe import ThreadSafeMixin
 # local
 import vistrails.packages.eo4vistrails.tools.visual.maps
+from vistrails.packages.eo4vistrails.tools import visual
 
 
-path_png_icon = packages.eo4vistrails.tools.visual.__path__[0]
+path_png_icon = visual.__path__[0]
 # TODO - move this elsewhere ... higher than local init.py
 QgsApplication.setPrefixPath("/usr", True)
 QgsApplication.initQgis()
