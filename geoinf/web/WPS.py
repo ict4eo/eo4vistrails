@@ -57,7 +57,7 @@ from core.modules.vistrails_module import Module, new_module, NotCacheable,\
 from core.utils import PortAlreadyExists
 from core.modules.basic_modules import String
 # eo4vistrails
-from packages.eo4vistrails.geoinf.datamodels import QgsLayer
+from vistrails.packages.eo4vistrails.geoinf.datamodels import QgsLayer
 # local
 import init
 from PortConfigurationWidget import Port, PortConfigurationWidget

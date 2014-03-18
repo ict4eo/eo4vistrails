@@ -46,9 +46,9 @@ import core.system
 from packages.spreadsheet.basic_widgets import SpreadsheetCell
 from packages.spreadsheet.spreadsheet_cell import QCellWidget
 # eo4vistrails
-#from packages.eo4vistrails.tools.utils.ThreadSafe import ThreadSafeMixin
+#from vistrails.packages.eo4vistrails.tools.utils.ThreadSafe import ThreadSafeMixin
 # local
-import packages.eo4vistrails.tools.visual.maps
+import vistrails.packages.eo4vistrails.tools.visual.maps
 
 
 path_png_icon = packages.eo4vistrails.tools.visual.__path__[0]

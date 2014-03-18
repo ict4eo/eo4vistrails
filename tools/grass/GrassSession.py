@@ -42,9 +42,9 @@ Also see:
 # library
 # third-party
 # vistrails
-from packages.eo4vistrails.tools.utils.session import Session
+from vistrails.packages.eo4vistrails.tools.utils.session import Session
 # eo4vistrails
-from packages.eo4vistrails.geoinf.SpatialTemporalConfigurationWidget import \
+from vistrails.packages.eo4vistrails.geoinf.SpatialTemporalConfigurationWidget import \
     SpatialTemporalConfigurationWidget
 # local
 

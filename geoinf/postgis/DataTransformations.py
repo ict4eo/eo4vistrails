@@ -34,8 +34,8 @@ from psycopg2 import ProgrammingError
 # vistrails
 from core.modules.vistrails_module import Module, ModuleError
 # eo4vistrails
-from packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
-from packages.eo4vistrails.tools.utils.ThreadSafe import ThreadSafeMixin
+from vistrails.packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
+from vistrails.packages.eo4vistrails.tools.utils.ThreadSafe import ThreadSafeMixin
 # local
 
 

@@ -33,7 +33,7 @@ import os.path
 # vistrails
 from core.modules.vistrails_module import Module, ModuleError
 # eo4vistrails
-from packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
+from vistrails.packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
 # local
 from ThreadSafe import ThreadSafeMixin
 from listutils import get_filter

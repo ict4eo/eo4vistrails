@@ -36,11 +36,11 @@ from PyQt4.QtCore import QFileInfo
 from core.modules.vistrails_module import \
      NotCacheable, ModuleError
 # eo4vistrails
-from packages.eo4vistrails.geoinf.datamodels.QgsLayer import \
+from vistrails.packages.eo4vistrails.geoinf.datamodels.QgsLayer import \
     QgsVectorLayer, QgsRasterLayer
-from packages.eo4vistrails.geoinf.datamodels.TemporalVectorLayer import \
+from vistrails.packages.eo4vistrails.geoinf.datamodels.TemporalVectorLayer import \
     TemporalVectorLayer
-from packages.eo4vistrails.geoinf.datamodels.WebRequest import WebRequest
+from vistrails.packages.eo4vistrails.geoinf.datamodels.WebRequest import WebRequest
 # local
 
 

@@ -43,8 +43,8 @@ from core.modules.vistrails_module import ModuleError, NotCacheable, Module
 from core.modules.source_configure import SourceConfigurationWidget
 from core.modules import basic_modules
 # eo4vistrails
-from packages.eo4vistrails.tools.utils.ThreadSafe import ThreadSafeMixin
-from packages.eo4vistrails.rpyc.RPyC import RPyCModule, RPyCSafeModule
+from vistrails.packages.eo4vistrails.tools.utils.ThreadSafe import ThreadSafeMixin
+from vistrails.packages.eo4vistrails.rpyc.RPyC import RPyCModule, RPyCSafeModule
 # local
 from subprocess import call, Popen, PIPE
 

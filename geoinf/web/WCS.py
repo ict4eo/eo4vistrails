@@ -34,10 +34,10 @@ from PyQt4 import QtCore, QtGui
 from core.modules.vistrails_module import Module, new_module, NotCacheable, \
     ModuleError
 # eo4vistrails
-from packages.eo4vistrails.geoinf.datamodels.Raster import RasterModel
-from packages.eo4vistrails.geoinf.SpatialTemporalConfigurationWidget import \
+from vistrails.packages.eo4vistrails.geoinf.datamodels.Raster import RasterModel
+from vistrails.packages.eo4vistrails.geoinf.SpatialTemporalConfigurationWidget import \
     SpatialTemporalConfigurationWidget, SpatialWidget
-from packages.eo4vistrails.geoinf.datamodels.WebRequest import WebRequest
+from vistrails.packages.eo4vistrails.geoinf.datamodels.WebRequest import WebRequest
 # local
 from OgcConfigurationWidget import OgcConfigurationWidget
 from OgcService import OGC

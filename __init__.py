@@ -49,6 +49,7 @@ import sys
 import os.path
 #import resource - LINUX specific; causes error under Windows
 from core.system import packages_directory
+import vistrails.packages as packages
 
 # BELOW CAUSES ERROR IN Sphinx documentation
 sys.path = [os.path.join(packages_directory(), 'eo4vistrails/lib')] + sys.path

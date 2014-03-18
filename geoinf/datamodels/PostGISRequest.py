@@ -34,7 +34,7 @@ from qgis.core import QgsDataSourceURI
 # eo4vistrails
 from core.modules.vistrails_module import Module, NotCacheable, ModuleError
 # local
-from packages.eo4vistrails.geoinf.datamodels.DataRequest import DataRequest
+from vistrails.packages.eo4vistrails.geoinf.datamodels.DataRequest import DataRequest
 
 
 class PostGISRequest(DataRequest, QgsDataSourceURI):

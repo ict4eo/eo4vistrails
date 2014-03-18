@@ -41,11 +41,11 @@ except:
 # vistrails
 from core.modules.vistrails_module import Module, ModuleError
 # eo4vistrails
-from packages.eo4vistrails.tools.utils.Parser import Parser
-from packages.eo4vistrails.tools.utils.ThreadSafe import ThreadSafeMixin
-from packages.eo4vistrails.tools.utils.datetimeutils import parse_datetime,\
+from vistrails.packages.eo4vistrails.tools.utils.Parser import Parser
+from vistrails.packages.eo4vistrails.tools.utils.ThreadSafe import ThreadSafeMixin
+from vistrails.packages.eo4vistrails.tools.utils.datetimeutils import parse_datetime,\
                                                       get_date_and_time
-from packages.eo4vistrails.rpyc.RPyC import RPyCModule, RPyCSafeModule
+from vistrails.packages.eo4vistrails.rpyc.RPyC import RPyCModule, RPyCSafeModule
 # local
 from QgsLayer import QgsVectorLayer
 from DataRequest import DataRequest

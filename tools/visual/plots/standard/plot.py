@@ -47,11 +47,11 @@ from core.modules import basic_modules
 from core.modules.basic_modules import File, String, Boolean
 from core.modules.vistrails_module import Module, ModuleError, NotCacheable, \
                                           InvalidOutput
-from packages.pylab.plot import MplPlot, MplPlotConfigurationWidget
+from packages.matplotlib.bases import MplPlot, MplPlotConfigurationWidget
 # eo4vistrails
-from packages.eo4vistrails.tools.utils.datetimeutils import list_to_dates
-from packages.eo4vistrails.tools.utils.DropDownListWidget import ComboBoxWidget
-from packages.eo4vistrails.tools.visual.plots.windrose.windrose import \
+from vistrails.packages.eo4vistrails.tools.utils.datetimeutils import list_to_dates
+from vistrails.packages.eo4vistrails.tools.utils.DropDownListWidget import ComboBoxWidget
+from vistrails.packages.eo4vistrails.tools.visual.plots.windrose.windrose import \
     WindroseAxes
 # local
 

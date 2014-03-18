@@ -33,14 +33,14 @@ def initialize(*args, **keywords):
 
     from packages.spreadsheet import basic_widgets
 
-    from packages.eo4vistrails.geoinf.datamodels.QgsLayer import QgsMapLayer,\
+    from vistrails.packages.eo4vistrails.geoinf.datamodels.QgsLayer import QgsMapLayer,\
         QgsVectorLayer, QgsRasterLayer
-    from packages.eo4vistrails.geoinf.datamodels.TemporalVectorLayer import \
+    from vistrails.packages.eo4vistrails.geoinf.datamodels.TemporalVectorLayer import \
         TemporalVectorLayer
-    from packages.eo4vistrails.tools.visual.maps.QGISMapCanvasCell import \
+    from vistrails.packages.eo4vistrails.tools.visual.maps.QGISMapCanvasCell import \
         QGISMapCanvasCell
-    from packages.eo4vistrails.tools.visual.maps.SOSMobile import SOSMobile
-    from packages.eo4vistrails.tools.visual.maps.LayerStyling import \
+    from vistrails.packages.eo4vistrails.tools.visual.maps.SOSMobile import SOSMobile
+    from vistrails.packages.eo4vistrails.tools.visual.maps.LayerStyling import \
         LayerStyling, VectorLayerStyling, RasterLayerStyling, \
         QgsRasterLayerDrawingStyleComboBox
 

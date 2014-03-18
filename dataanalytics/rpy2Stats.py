@@ -42,13 +42,13 @@ r = robjects.r
 # vistrails
 from core.modules.vistrails_module import ModuleError
 from core.modules.basic_modules import List
-from packages.NumSciPy.Array import NDArray
+from vistrails.packages.NumSciPy.Array import NDArray
 # eo4vistrails
-from packages.eo4vistrails.tools.utils.synhigh import \
+from vistrails.packages.eo4vistrails.tools.utils.synhigh import \
     SyntaxSourceConfigurationWidget
-from packages.eo4vistrails.tools.utils.ModuleHelperMixin import \
+from vistrails.packages.eo4vistrails.tools.utils.ModuleHelperMixin import \
     ModuleHelperMixin
-from packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
+from vistrails.packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
 
 
 @RPyCSafeModule()

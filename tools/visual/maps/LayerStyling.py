@@ -41,15 +41,15 @@ from core.modules.vistrails_module import Module, ModuleError, NotCacheable, \
                                           InvalidOutput
 import core.system
 # eo4vistrails
-from packages.eo4vistrails.geoinf.datamodels.QgsLayer import QgsVectorLayer,\
+from vistrails.packages.eo4vistrails.geoinf.datamodels.QgsLayer import QgsVectorLayer,\
     QgsRasterLayer
-from packages.eo4vistrails.geoinf.datamodels.TemporalVectorLayer import \
+from vistrails.packages.eo4vistrails.geoinf.datamodels.TemporalVectorLayer import \
     TemporalVectorLayer
-from packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
-from packages.eo4vistrails.tools.utils.DropDownListWidget import ComboBoxWidget
-from packages.eo4vistrails.tools.utils.ThreadSafe import ThreadSafeMixin
+from vistrails.packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
+from vistrails.packages.eo4vistrails.tools.utils.DropDownListWidget import ComboBoxWidget
+from vistrails.packages.eo4vistrails.tools.utils.ThreadSafe import ThreadSafeMixin
 # local
-import packages.eo4vistrails.tools.visual.maps
+import vistrails.packages.eo4vistrails.tools.visual.maps
 
 
 class LayerStyling(Module):

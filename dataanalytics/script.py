@@ -32,8 +32,8 @@ from os import fdopen
 # third-party
 # vistrails
 # eo4vistrails
-from packages.eo4vistrails.rpyc.RPyC import RPyCModule
-from packages.eo4vistrails.tools.utils.ThreadSafe import ThreadSafeMixin
+from vistrails.packages.eo4vistrails.rpyc.RPyC import RPyCModule
+from vistrails.packages.eo4vistrails.tools.utils.ThreadSafe import ThreadSafeMixin
 
 
 class Script(ThreadSafeMixin, RPyCModule):

@@ -27,12 +27,12 @@
 # library
 import core
 # vistrails
-from packages.NumSciPy.Array import NDArray
+from vistrails.packages.NumSciPy.Array import NDArray
 # eo4vistrails
-from packages.eo4vistrails.geoinf.datamodels.QgsLayer import QgsVectorLayer
+from vistrails.packages.eo4vistrails.geoinf.datamodels.QgsLayer import QgsVectorLayer
 # local#from utils.session import Session
 #moved to datamodelsfrom PostGISRequest import PostGISRequest
-from packages.eo4vistrails.geoinf.datamodels.PostGISRequest import PostGISRequest
+from vistrails.packages.eo4vistrails.geoinf.datamodels.PostGISRequest import PostGISRequest
 from PostGIS import *
 from pgLoadersDumpers import *
 from DataTransformations import InputStream, pgSQLMergeInsert

@@ -35,7 +35,7 @@ from PyQt4 import QtCore, QtGui
 # vistrails
 from core.modules.vistrails_module import ModuleError
 # eo4vistrails
-from packages.eo4vistrails.geoinf.SpatialTemporalConfigurationWidget \
+from vistrails.packages.eo4vistrails.geoinf.SpatialTemporalConfigurationWidget \
     import SpatialTemporalConfigurationWidget
 # local
 from Common import OgcService

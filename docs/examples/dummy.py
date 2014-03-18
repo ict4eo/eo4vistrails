@@ -34,8 +34,8 @@
 # vistrails
 from core.modules.vistrails_module import Module, ModuleError, ModuleErrors
 # eo4vistrails
-#from packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
-#from packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
+#from vistrails.packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
+#from vistrails.packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin
 # local
 
 

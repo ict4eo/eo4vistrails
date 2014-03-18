@@ -35,11 +35,11 @@ def initialize(*args, **keywords):
         Dictionary, Variant
     import core
     # eo4vistrails
-    from packages.eo4vistrails.geoinf.datamodels.QgsLayer import \
+    from vistrails.packages.eo4vistrails.geoinf.datamodels.QgsLayer import \
         QgsMapLayer, QgsVectorLayer, QgsRasterLayer
-    from packages.eo4vistrails.geoinf.datamodels.TemporalVectorLayer import \
+    from vistrails.packages.eo4vistrails.geoinf.datamodels.TemporalVectorLayer import \
         TemporalVectorLayer
-    from packages.eo4vistrails.geoinf.datamodels.WebRequest import WebRequest
+    from vistrails.packages.eo4vistrails.geoinf.datamodels.WebRequest import WebRequest
     # local
     from FTP import FTPReader
     from WPS import WPS, WPSConfigurationWidget

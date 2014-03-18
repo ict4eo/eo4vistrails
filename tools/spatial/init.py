@@ -2,7 +2,7 @@ def initialize(*args, **keywords):
     from core.modules.module_registry import get_module_registry
     from core.modules import basic_modules
     from core.modules.basic_modules import File, Float, String, Boolean
-    from packages.eo4vistrails.geoinf.datamodels.QgsLayer import QgsVectorLayer
+    from vistrails.packages.eo4vistrails.geoinf.datamodels.QgsLayer import QgsVectorLayer
 
     from Buffer import Buffer
 

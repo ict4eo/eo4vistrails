@@ -40,9 +40,9 @@ from PyQt4.QtCore import QFileInfo
 from core.modules import basic_modules
 from core.modules.vistrails_module import Module, ModuleError, NotCacheable
 # eo4vistrails
-from packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
-from packages.eo4vistrails.tools.utils.ThreadSafe import ThreadSafeMixin
-from packages.eo4vistrails.tools.utils.DropDownListWidget import ComboBoxWidget
+from vistrails.packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
+from vistrails.packages.eo4vistrails.tools.utils.ThreadSafe import ThreadSafeMixin
+from vistrails.packages.eo4vistrails.tools.utils.DropDownListWidget import ComboBoxWidget
 # local
 from threading import Thread, currentThread, RLock
 from DataRequest import DataRequest

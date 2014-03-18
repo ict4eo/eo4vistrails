@@ -35,7 +35,7 @@ from PyQt4 import QtCore, QtGui, Qt
 from core.modules.vistrails_module import Module, ModuleError
 from core.modules.module_configure import StandardModuleConfigurationWidget
 # dependent packages
-from packages.NumSciPy.Array import NDArray
+from vistrails.packages.NumSciPy.Array import NDArray
 # eo4vistrails
 # local
 from pydap.client import open_url, open_dods

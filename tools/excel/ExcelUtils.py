@@ -38,10 +38,10 @@ import xlwt
 from core.modules.basic_modules import File, String, Boolean, new_constant
 from core.modules.vistrails_module import Module, ModuleError
 # eo4vistrails
-from packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
-from packages.eo4vistrails.tools.utils.ThreadSafe import ThreadSafeMixin
-from packages.eo4vistrails.tools.utils.DropDownListWidget import ComboBoxWidget
-from packages.eo4vistrails.tools.utils.listutils import check_if_equal
+from vistrails.packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
+from vistrails.packages.eo4vistrails.tools.utils.ThreadSafe import ThreadSafeMixin
+from vistrails.packages.eo4vistrails.tools.utils.DropDownListWidget import ComboBoxWidget
+from vistrails.packages.eo4vistrails.tools.utils.listutils import check_if_equal
 # local
 from readexcel import read_excel
 

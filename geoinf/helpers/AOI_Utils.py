@@ -44,10 +44,10 @@ import core.modules.module_registry
 from core.modules.vistrails_module import Module, ModuleError
 from core.modules.module_configure import StandardModuleConfigurationWidget
 #eo4vistrails
-from packages.eo4vistrails.geoinf.geostrings.GeoStrings import GeoJSONString, \
+from vistrails.packages.eo4vistrails.geoinf.geostrings.GeoStrings import GeoJSONString, \
     WKTString
-from packages.eo4vistrails.geoinf.datamodels.QgsLayer import QgsRasterLayer
-import packages.eo4vistrails.tools.visual
+from vistrails.packages.eo4vistrails.geoinf.datamodels.QgsLayer import QgsRasterLayer
+import vistrails.packages.eo4vistrails.tools.visual
 
 
 QgsApplication.setPrefixPath("/usr", True)

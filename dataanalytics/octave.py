@@ -36,9 +36,9 @@ import urllib
 # vistrails
 from core.modules.vistrails_module import ModuleError, Module
 # eo4vistrails
-from packages.eo4vistrails.tools.utils.synhigh import \
+from vistrails.packages.eo4vistrails.tools.utils.synhigh import \
     SyntaxSourceConfigurationWidget
-from packages.eo4vistrails.tools.utils.ModuleHelperMixin import \
+from vistrails.packages.eo4vistrails.tools.utils.ModuleHelperMixin import \
     ModuleHelperMixin
 
 
@@ -84,7 +84,7 @@ class OctaveScript(Module, ModuleHelperMixin):
         Overrides supers method"""
         import scipy.io
         import numpy
-        from packages.NumSciPy.Array import NDArray
+        from vistrails.packages.NumSciPy.Array import NDArray
 
         # Lets get the script fromn theinput port named source
         octave_script = urllib.unquote(str(self.forceGetInputFromPort('source', '')))

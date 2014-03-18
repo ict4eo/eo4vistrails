@@ -2,8 +2,8 @@ def initialize(*args, **keywords):
     from core.modules.module_registry import get_module_registry
     from core.modules import basic_modules
     from core.modules.basic_modules import File, Float, String
-    from packages.eo4vistrails.geoinf.datamodels.QgsLayer import QgsRasterLayer
-    from packages.eo4vistrails.geoinf.geostrings.GeoStrings import \
+    from vistrails.packages.eo4vistrails.geoinf.datamodels.QgsLayer import QgsRasterLayer
+    from vistrails.packages.eo4vistrails.geoinf.geostrings.GeoStrings import \
         GeoJSONString, WKTString
     from AOI_Utils import FeatureOfInterestDefiner, \
                           FeatureOfInterestDefinerConfigurationWidget, \

@@ -37,14 +37,14 @@ import gdal
 from gdal import gdalconst
 # vistrails
 from core.modules.vistrails_module import ModuleError, NotCacheable, Module
-from packages.NumSciPy.Array import NDArray
+from vistrails.packages.NumSciPy.Array import NDArray
 # eo4vistrails
-from packages.eo4vistrails.rpyc.RPyC import RPyCModule, RPyCSafeModule
-from packages.eo4vistrails.tools.utils.ThreadSafe import ThreadSafeMixin
-from packages.eo4vistrails.tools.utils.synhigh import \
+from vistrails.packages.eo4vistrails.rpyc.RPyC import RPyCModule, RPyCSafeModule
+from vistrails.packages.eo4vistrails.tools.utils.ThreadSafe import ThreadSafeMixin
+from vistrails.packages.eo4vistrails.tools.utils.synhigh import \
     SyntaxSourceConfigurationWidget
-from packages.eo4vistrails.geoinf.datamodels.QgsLayer import QgsRasterLayer
-from packages.eo4vistrails.tools.utils.ModuleHelperMixin import ModuleHelperMixin
+from vistrails.packages.eo4vistrails.geoinf.datamodels.QgsLayer import QgsRasterLayer
+from vistrails.packages.eo4vistrails.tools.utils.ModuleHelperMixin import ModuleHelperMixin
 
 DEBUG = False
 
@@ -116,7 +116,7 @@ class RasterLangCode(NotCacheable, ModuleHelperMixin, ThreadSafeMixin, RPyCModul
     def setInputResults(self, locals_, inputDict):
         """TODO: Add docstring.
         """
-        from packages.NumSciPy.Array import NDArray
+        from vistrails.packages.NumSciPy.Array import NDArray
 
         inputDict = dict([(k, self.getInputFromPort(k)) for k in self.inputPorts])
         del inputDict['source']
@@ -132,7 +132,7 @@ class RasterLangCode(NotCacheable, ModuleHelperMixin, ThreadSafeMixin, RPyCModul
     def setOutputResults(self, locals_, outputDict):
         """TODO: Add docstring.
         """
-        from packages.NumSciPy.Array import NDArray
+        from vistrails.packages.NumSciPy.Array import NDArray
 
         for k in outputDict.iterkeys():
             try:
@@ -427,7 +427,7 @@ class SaveArrayToRaster(NotCacheable, ThreadSafeMixin, RPyCModule):
         self.setResult('output file path', outfile)
 
 from core.modules import basic_modules
-from packages.eo4vistrails.tools.utils.DropDownListWidget import ComboBoxWidget
+from vistrails.packages.eo4vistrails.tools.utils.DropDownListWidget import ComboBoxWidget
 
 
 class GDALFormatComboBoxWidget(ComboBoxWidget):

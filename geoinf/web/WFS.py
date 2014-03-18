@@ -35,7 +35,7 @@ from core.modules.module_configure import StandardModuleConfigurationWidget
 from core.modules.vistrails_module import Module, ModuleError, \
                                           new_module, NotCacheable
 # eo4vistrails
-from packages.eo4vistrails.geoinf.SpatialTemporalConfigurationWidget import \
+from vistrails.packages.eo4vistrails.geoinf.SpatialTemporalConfigurationWidget import \
     SpatialTemporalConfigurationWidget, SpatialWidget
 # local
 from OgcConfigurationWidget import OgcConfigurationWidget

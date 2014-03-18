@@ -41,12 +41,12 @@ def initialize(*args, **keywords):
     from core.modules.module_registry import get_module_registry
     from core.modules.basic_modules import Boolean, String, File, Variant, Integer
     # eo4vistrails
-    from packages.eo4vistrails.geoinf.datamodels.FeatureImport import \
+    from vistrails.packages.eo4vistrails.geoinf.datamodels.FeatureImport import \
         FeatureImport, FeatureImportConfigurationWidget
-    from packages.eo4vistrails.geoinf.datamodels.RasterImport import \
+    from vistrails.packages.eo4vistrails.geoinf.datamodels.RasterImport import \
         RasterImport, RasterImportConfigurationWidget
-    from packages.eo4vistrails.geoinf.geostrings.GeoStrings import GeoString
-    from packages.eo4vistrails.tools.utils.Array import NDArrayEO
+    from vistrails.packages.eo4vistrails.geoinf.geostrings.GeoStrings import GeoString
+    from vistrails.packages.eo4vistrails.tools.utils.Array import NDArrayEO
     # local
     from DataRequest import DataRequest
     from Feature import FeatureModel, FileFeatureModel, MemFeatureModel
