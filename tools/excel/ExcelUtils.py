@@ -714,7 +714,7 @@ edu.utah.sci.vistrails.basic:Integer)',
             row_start = min(block[1][0], sheet.nrows)
             row_end = min(block[2][0], sheet.nrows)
             for r, row in enumerate(range(row_start, row_end)):
-                print "excelutils:715 sheet", sheet.name, "row", row 
+                #print "excelutils:715 sheet", sheet.name, "row", row 
                 col_start = min(block[1][1], sheet.ncols)
                 col_end = min(block[2][1], sheet.ncols)
                 row_slice = sheet.row_slice(row, col_start, col_end)

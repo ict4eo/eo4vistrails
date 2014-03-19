@@ -130,7 +130,7 @@ class read_excel(object):
         #  DATE 3 float
         #  BOOLEAN 4 int; 1 means TRUE, 0 means FALSE
         #  ERROR 5
-        print "readexcel:133", type, value
+        #print "readexcel:133", type, value
         if type == 2:
             if value == int(value):
                 value = int(value)
@@ -185,7 +185,7 @@ class read_excel(object):
     def _parse_row_type(self, sheet, row_index, date_as_tuple=False):
         """Sanitize incoming Excel data; return list of (value, type) tuples"""
         values = []
-        print "readexcel:184 sheet, row_index", sheet.name, row_index
+        #print "readexcel:184 sheet, row_index", sheet.name, row_index
         for type, value in zip(
                 sheet.row_types(row_index), sheet.row_values(row_index)):
             try:
