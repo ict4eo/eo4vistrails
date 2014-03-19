@@ -570,7 +570,10 @@ edu.utah.sci.vistrails.basic:Integer)',
                 else:
                     value = 'false'
             elif col_value[1] == 5:
-                value = xlrd.error_text_from_code[col_value[0]]
+                try:
+                    value = xlrd.error_text_from_code[col_value[0]]
+                except KeyError:
+                    value = col_value[0]
             elif col_value[1] == 0:  # empty
                 value = ""
             else:
@@ -656,8 +659,11 @@ edu.utah.sci.vistrails.basic:Integer)',
                                                            'starts']:
                     if not self.process_rows or row in self.process_rows:
                         # get list of row (value, type)
-                        row_list = self.xls._parse_row_type(self.sheet, row,
-                                                        date_as_tuple=True)
+                        try:
+                            row_list = self.xls._parse_row_type(self.sheet, row,
+                                                            date_as_tuple=True)
+                        except Exception, e:
+                            raise Exception(e)
                         self.process_row(row, row_list)
                 elif self.cell_match in ['blank', 'rows']:
                     if not self.process_rows or row in self.process_rows:
@@ -704,16 +710,20 @@ edu.utah.sci.vistrails.basic:Integer)',
             worksheet = workbook.add_sheet("%s_%s" %
                                         (row_index + 1,
                                          block[0][0:SHEET_NAME_SIZE]))
-            for r, row in enumerate(range(block[1][0], block[2][0])):
-                sheet = self.xls.book.sheet_by_name(block[0])
-                #print "excelutils:710", row, ":", block[1][1], block[2][1]
-                row_slice = sheet.row_slice(row, block[1][1], block[2][1])
+            sheet = self.xls.book.sheet_by_name(block[0])
+            row_start = min(block[1][0], sheet.nrows)
+            row_end = min(block[2][0], sheet.nrows)
+            for r, row in enumerate(range(row_start, row_end)):
+                print "excelutils:715 sheet", sheet.name, "row", row 
+                col_start = min(block[1][1], sheet.ncols)
+                col_end = min(block[2][1], sheet.ncols)
+                row_slice = sheet.row_slice(row, col_start, col_end)
                 worksheet_row = worksheet.row(r)
                 for col_index, col_cell in enumerate(row_slice):
                     value = self.xls.parse_cell_value(col_cell.ctype,
                                                       col_cell.value,
                                                       date_as_datetime=True)
-                    #print "excelutils:719",r,col_index,":",col_cell.ctype,value
+                    #print "excelutils:723",r,col_index,":",col_cell.ctype,value
                     if col_cell.ctype == 3:  # date
                         style = xlwt.XFStyle()
                         style.num_format_str = DATE_FORMAT

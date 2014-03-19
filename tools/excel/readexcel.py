@@ -130,11 +130,16 @@ class read_excel(object):
         #  DATE 3 float
         #  BOOLEAN 4 int; 1 means TRUE, 0 means FALSE
         #  ERROR 5
+        print "readexcel:133", type, value
         if type == 2:
             if value == int(value):
                 value = int(value)
         elif type == 3:
-            datetuple = xlrd.xldate_as_tuple(value, self.book.datemode)
+            try:
+                datetuple = xlrd.xldate_as_tuple(value, self.book.datemode)
+            except xlrd.xldate.XLDateAmbiguous:
+                raise Exception(
+                    "Ambiguous date: Cannot process value '%s'" % value)
             if date_as_tuple:
                 value = datetuple
             elif date_as_datetime:
@@ -151,7 +156,10 @@ class read_excel(object):
                 else:  # full date
                     value = "%04d/%02d/%02d %02d:%02d:%02d" % datetuple
         elif type == 5:
-            value = xlrd.error_text_from_code[value]
+            try:
+                value = xlrd.error_text_from_code[value]
+            except KeyError:
+                value = value
         return value
 
     def _parse_column(self, sheet, col_index, date_as_tuple=False):
@@ -177,10 +185,15 @@ class read_excel(object):
     def _parse_row_type(self, sheet, row_index, date_as_tuple=False):
         """Sanitize incoming Excel data; return list of (value, type) tuples"""
         values = []
+        print "readexcel:184 sheet, row_index", sheet.name, row_index
         for type, value in zip(
                 sheet.row_types(row_index), sheet.row_values(row_index)):
-            value = self.parse_cell_value(type, value, date_as_tuple)
-            values.append((value, type))
+            try:
+                value = self.parse_cell_value(type, value, date_as_tuple)
+                values.append((value, type))
+            except Exception, e:
+                raise Exception('Error in sheet "%s" in row %s:\n%s' % \
+                    (sheet.name, row_index, e))
         return values
 
     def iter_dict(self, sheet_name, date_as_tuple=False):
