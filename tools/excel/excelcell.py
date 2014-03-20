@@ -261,34 +261,37 @@ class ExcelCellWidget(QCellWidget):
                     fyle.write('<td style="%s" align="center">%s</td>' %
                                (ref_style, str(row_n + 1)))
                 for col_n in range(0, book.sheet_by_name(name).ncols):
-                    value = book.sheet_by_name(name).cell(row_n, col_n).value
-                    type = book.sheet_by_name(name).cell(row_n, col_n).ctype
-                    # check for styling
                     style = ''
-                    xfx = book.sheet_by_name(name).cell_xf_index(row_n, col_n)
-                    xf = book.xf_list[xfx]
-                    cell_font = font[xf.font_index]
-                    if cell_font.italic:
-                        style += ' font-style: italic;'
-                    if cell_font.weight > 400:
-                        style += ' font-weight: bold;'  # 700
-                    if cell_font.underline_type:
-                        style += ' text-decoration: underline;'
-                    if cell_font.struck_out:
-                        style += ' text-decoration:line-through;'
-                    # font color
-                    font_color = book.colour_map[cell_font.colour_index]
-                    if font_color:
-                        style += ' color:rgb(%s,%s,%s);' % font_color
-                    # cell color
-                    bgx = xf.background.pattern_colour_index
-                    cell_color = book.colour_map[bgx]
-                    if cell_color:
-                        style += ' background-color:rgb(%s,%s,%s);' % cell_color
-                    # text align
-                    align = xf.alignment.hor_align
-                    if align:
-                        style += alignment.get(align) or ''
+                    type = None
+                    try:
+                        value = book.sheet_by_name(name).cell(row_n, col_n).value
+                        type = book.sheet_by_name(name).cell(row_n, col_n).ctype
+                        xfx = book.sheet_by_name(name).cell_xf_index(row_n, col_n)
+                        xf = book.xf_list[xfx]
+                        cell_font = font[xf.font_index]
+                        if cell_font.italic:
+                            style += ' font-style: italic;'
+                        if cell_font.weight > 400:
+                            style += ' font-weight: bold;'  # 700
+                        if cell_font.underline_type:
+                            style += ' text-decoration: underline;'
+                        if cell_font.struck_out:
+                            style += ' text-decoration:line-through;'
+                        # font color
+                        font_color = book.colour_map[cell_font.colour_index]
+                        if font_color:
+                            style += ' color:rgb(%s,%s,%s);' % font_color
+                        # cell color
+                        bgx = xf.background.pattern_colour_index
+                        cell_color = book.colour_map[bgx]
+                        if cell_color:
+                            style += ' background-color:rgb(%s,%s,%s);' % cell_color
+                        # text align
+                        align = xf.alignment.hor_align
+                        if align:
+                            style += alignment.get(align) or ''
+                    except IndexError:
+                        value = None
                     # check data types
                     # 0:EMPTY; 1:TEXT (a Unicode string); 2:NUMBER (float);
                     # 3:DATE (float); 4:BOOLEAN (1 TRUE, 0 FALSE); 5: ERROR
