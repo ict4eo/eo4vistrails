@@ -38,8 +38,8 @@ from gui.theme import CurrentTheme
 from PyQt4 import QtGui, QtCore
 # vistrails
 from core.modules.vistrails_module import ModuleError
-from core.modules.source_configure import SourceConfigurationWidget
-from core.modules.tuple_configuration import PortTable, PortTableItemDelegate
+from gui.modules.source_configure import SourceConfigurationWidget
+from gui.modules.tuple_configuration import PortTable, PortTableItemDelegate
 from core.modules.module_registry import get_module_registry
 # eo4vistrails
 # local

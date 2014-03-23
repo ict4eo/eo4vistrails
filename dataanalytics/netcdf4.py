@@ -41,7 +41,7 @@ import numpy
 from PyQt4 import QtCore, QtGui, Qt
 # vistrails
 from core.modules.vistrails_module import Module, ModuleError
-from core.modules.module_configure import StandardModuleConfigurationWidget
+from gui.modules.module_configure import StandardModuleConfigurationWidget
 # eo4vistrails
 # local
 from netcdf4FormDesign import Ui_netcdf4Form

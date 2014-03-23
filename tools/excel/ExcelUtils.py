@@ -822,7 +822,11 @@ edu.utah.sci.vistrails.basic:Boolean)',
         # create output dict; one entry per selected sheet name
         for sheet_name in self.xls.sheet_list:
             sheet = self.xls.book.sheet_by_name(sheet_name)
+            #print "\n\nexcelutils:825 COMPUTE START ", cell_match_values, 
             out_list = []
+            # track which columns should be "popped" and process these in a 
+            # second iteration; because column match could be half-way down
+            col_pop_set = set()
             for row in range(sheet.nrows):
                 skip_row = False
                 row_list = self.xls._parse_row(sheet, row, date_as_tuple=True)
@@ -847,8 +851,9 @@ edu.utah.sci.vistrails.basic:Boolean)',
                                 else:
                                     if cell_current == row_cell:
                                         skip_row = True
-                    # Case 4: Check for specified cell matches
-                    elif cell_match_values:
+                    # Case 4: Check for specified cell matches for default case
+                    #         of processing rows
+                    elif cell_match_values and not self.process_cols:
                         for row_cell in row_list:
                             for cell_current in cell_match_values:
                                 if cell_match_partial:
@@ -864,7 +869,7 @@ edu.utah.sci.vistrails.basic:Boolean)',
                         pass
                 # COLUMNS
                 if self.process_cols and not skip_row:
-                    #print "excelutils:857 - check cols in row#", row
+                    #print "excelutils:873 - check cols in row#", row
                     # Case 1: Check for specified cols
                     if not cell_match_values:
                         for col in self.process_cols:
@@ -878,14 +883,20 @@ edu.utah.sci.vistrails.basic:Boolean)',
                                     try:
                                         iter(row_list[col])  # is partial possible
                                         for cell_current in cell_match_values:
-                                            if cell_current in row_list[col]:
-                                                row_list.pop(col)  # remove col
+                                            if row_list[col]:
+                                                #print "excelutils:887: %s : %15s : %s" % (col,  cell_current, row_list[col])
+                                                if cell_current in row_list[col]:
+                                                    col_pop_set.add(col)  # flag for removal
                                     except:
                                         pass
                                 else:
                                     for cell_current in cell_match_values:
-                                        if cell_current == row_list[col]:
-                                            row_list.pop(col)  # remove from output
+                                        #print "excelutils:895:", col, cell_current, row_list[col]
+                                        try:
+                                            if cell_current == row_list[col]:
+                                                col_pop_set.add(col)  # flag for removal
+                                        except IndexError:
+                                            pass  # ignore incorrectly sized sheet
 
                                     # check/remove cols that are blank OR matched throughout???
                                     #pass
@@ -897,6 +908,11 @@ edu.utah.sci.vistrails.basic:Boolean)',
                                     """
                 if not skip_row:
                     out_list.append(row_list)
+            # now remove any flagged columns from interim list of output rows
+            if col_pop_set:
+                for row in out_list:
+                    for col in reversed(list(col_pop_set)):
+                        row.pop(col)
             results[sheet_name] = out_list
         self.save_results(results)
 
@@ -944,12 +960,21 @@ class ExcelReplacer(ExcelBase):
         cell_match:
             values:
                 a list of cell values that are to be matched (and replaced).
+            results:
+                a list (of same length as values) of cell values that are to be 
+                the replacements. If blank, the single value in cell_replace 
+                will be used.  References to actual cell values can be used
+                in the form {A:#} where `A` is the column reference, and 
+                `#` is the row reference number.
             partial: Boolean
                 if True, then only part of a cell's value has to be matched.
         cell_replace: string
             the new cell value that is to be used instead of the current.
-            Can be None; then the current cell value will be replaced by an
-            empty string.
+            If None (empty), then the current cell value will be replaced by an
+            empty string. If cell_match results are supplied, cell_replace will
+            only be used as fallback. References to an actual cell value can be 
+            used, in the form {A:#} where `A` is the column reference, 
+            and `#` is the row reference number.
     
     Output ports:
     
@@ -957,26 +982,41 @@ class ExcelReplacer(ExcelBase):
             output Excel file
     """
 
-    # TODO - extend code to allow for multiple current -> multiple replace
+    # TODO - extend code to allow for cell lookup in the replacement
 
     _input_ports = [
         ('cell_match', '(edu.utah.sci.vistrails.basic:List,\
-edu.utah.sci.vistrails.basic:Boolean)',
-            {"defaults": str(["", False]),
-             "labels": str(["values", "partial"])}),
+edu.utah.sci.vistrails.basic:List,edu.utah.sci.vistrails.basic:Boolean)',
+            {"defaults": str(["", "", False]),
+             "labels": str(["values", "results", "partial"])}),
         ('cell_replace', '(edu.utah.sci.vistrails.basic:String)'),
     ]
 
     def __init__(self):
         ExcelBase.__init__(self)
 
+    def list_get(self, l, idx, default):
+        try:
+            return l[idx]
+        except IndexError:
+            return default
+
     def compute(self):
         super(ExcelReplacer, self).compute()
-        cell_match_values, cell_match_partial = self.getInputFromPort('cell_match')
+        cell_match_values, cell_match_results, cell_match_partial = \
+            self.getInputFromPort('cell_match')
         cell_replace = self.forceGetInputFromPort('cell_replace', "")
+        is_cell_ref = False
+        if cell_replace:
+            if cell_replace[0] == '{' and cell_replace[:-1] == '}':
+                is_cell_ref = True
         results = {}
+        # validate inputs
         if not cell_match_values or len(cell_match_values) == 0:
             self.raiseError('Invalid or missing cell_match port')
+        if cell_match_values and cell_match_results:
+            if len(cell_match_values) != len(cell_match_results):
+                self.raiseError('Invalid cell_match: number of items in values must equal results!')
         # create output dict; one entry per selected sheet name
         for sheet_name in self.xls.sheet_list:
             sheet = self.xls.book.sheet_by_name(sheet_name)
@@ -990,20 +1030,23 @@ edu.utah.sci.vistrails.basic:Boolean)',
                 if not self.process_rows or row in self.process_rows:
                     for col in self.process_cols:
                         if col < sheet.ncols:
-                            if cell_match_partial:
+                            if cell_match_partial:  # is partial possible
                                 try:
-                                    iter(row_list[col])  # is partial possible
-                                    for cell_current in cell_match_values:
+                                    iter(row_list[col])  
+                                    for key, cell_current in enumerate(cell_match_values):
+                                        replace = self.list_get(
+                                            cell_match_results, key, cell_replace)
                                         if cell_current in row_list[col]:
                                             row_list[col] = row_list[col].replace(
-                                                                cell_current,
-                                                                cell_replace)
+                                                cell_current, replace)
                                 except:
                                     pass
                             else:
-                                for cell_current in cell_match_values:
+                                for key, cell_current in enumerate(cell_match_values):
                                     if cell_current == row_list[col]:
-                                        row_list[col] = cell_replace
+                                        replace = self.list_get(
+                                            cell_match_results, key, cell_replace)
+                                        row_list[col] = replace
                 out_list.append(row_list)
             results[sheet_name] = out_list
         self.save_results(results)

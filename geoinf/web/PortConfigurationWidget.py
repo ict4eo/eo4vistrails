@@ -33,7 +33,7 @@ This refers primarily to GetCapabilities requests
 from PyQt4 import QtCore, QtGui
 # vistrails
 from core import debug
-from core.modules.module_configure import StandardModuleConfigurationWidget
+from gui.modules.module_configure import StandardModuleConfigurationWidget
 from core.modules.module_registry import get_module_registry
 from core.utils import PortAlreadyExists
 # eo4vistrails

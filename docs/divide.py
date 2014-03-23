@@ -5,7 +5,7 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 # vistrails
 from core.modules.vistrails_module import Module, ModuleError
-from core.modules.module_configure import StandardModuleConfigurationWidget
+from gui.modules.module_configure import StandardModuleConfigurationWidget
 
 version = "0.9.0"
 name = "Divide"

@@ -50,7 +50,7 @@ from qgis.core import QgsFeature, QgsRectangle, QgsMapLayerRegistry,\
     QgsDataSourceURI
 # vistrails
 from core.modules.module_descriptor import ModuleDescriptor
-from core.modules.module_configure import StandardModuleConfigurationWidget
+from gui.modules.module_configure import StandardModuleConfigurationWidget
 from core.modules.module_registry import get_module_registry
 from core.modules.vistrails_module import Module, new_module, NotCacheable,\
     ModuleError

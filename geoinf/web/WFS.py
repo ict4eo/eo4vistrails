@@ -31,7 +31,7 @@
 # third party
 from PyQt4 import QtCore, QtGui
 # vistrails
-from core.modules.module_configure import StandardModuleConfigurationWidget
+from gui.modules.module_configure import StandardModuleConfigurationWidget
 from core.modules.vistrails_module import Module, ModuleError, \
                                           new_module, NotCacheable
 # eo4vistrails

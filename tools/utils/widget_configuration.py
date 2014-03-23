@@ -28,7 +28,7 @@ ModuleConfigurationWidget.
 """
 
 # vistrails
-from core.modules.module_configure import StandardModuleConfigurationWidget
+from gui.modules.module_configure import StandardModuleConfigurationWidget
 
 
 class ExtendedModuleConfigurationWidget(StandardModuleConfigurationWidget):

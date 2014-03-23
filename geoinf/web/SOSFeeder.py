@@ -407,7 +407,7 @@ edu.utah.sci.vistrails.basic:Integer)',
              "labels": str(["value", "row", "column", "offset"])}),
         ('observations', '(edu.utah.sci.vistrails.basic:Integer,\
 edu.utah.sci.vistrails.basic:Integer)',
-            {"defaults": str([1, 1]),
+            {"defaults": str(["1", "1"]),
              "labels": str(["row", "column"])}),
         ('separators', '(edu.utah.sci.vistrails.basic:String,\
 edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
@@ -988,9 +988,13 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
             self.workbook = xlrd.open_workbook(self.file_in.name, 
                                                formatting_info=True)
         except:
-            self.raiseError(
-                "The Excel file '%s' has not been specified or is not valid" % \
-                self.file_in.name)
+            if self.file_in and self.file_in.name:
+                self.raiseError(
+                    "The Excel file '%s' has not been specified or is not valid" % \
+                    self.file_in.name)
+            else:
+                self.raiseError(
+                    "The Excel file has not been specified or is not valid")
         # get data sheets
         self.sheets = self.make_list(self.forceGetInputListFromPort('sheets'))
         self.set_sheet_list(self.sheets)

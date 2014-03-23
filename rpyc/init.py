@@ -36,7 +36,7 @@ def initialize(*args, **keywords):
     to ensure that registration with VisTrails takes place."""
     from core.modules.module_registry import get_module_registry
     import core.requirements
-    from core.modules.python_source_configure import \
+    from gui.modules.python_source_configure import \
         PythonSourceConfigurationWidget
     from core.modules import basic_modules
 

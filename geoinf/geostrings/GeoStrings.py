@@ -32,7 +32,7 @@ from PyQt4 import QtCore, QtGui
 # vistrails
 from core.modules import basic_modules
 from core.utils import any, expression
-from core.modules.constant_configuration import ConstantWidgetMixin
+from gui.modules.constant_configuration import ConstantWidgetMixin
 # eo4vistrails
 
 
