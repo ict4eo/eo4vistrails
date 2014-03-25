@@ -121,21 +121,18 @@ class ListCellWidget(QCellWidget):
         self.fileSrc = None
         self.list_in, self.file_HTML, self.fileReference, self.columnWidths, \
             self.tableHeading = inputPorts
-        if self.list_in:
-            html_file = self.create_html()
-            if html_file:
-                try:
-                    fi = open(html_file.name, "r")
-                except IOError:
-                    self.browser.setText("Cannot create/load the HTML file!")
-                    return
-                self.browser.setHtml(fi.read())
-                fi.close()
-                self.fileSrc = html_file.name
-            else:
-                self.browser.setText("The HTML table could not be created!")
+        html_file = self.create_html()
+        if html_file:
+            try:
+                fi = open(html_file.name, "r")
+            except IOError:
+                self.browser.setText("Cannot create/load the HTML file!")
+                return
+            self.browser.setHtml(fi.read())
+            fi.close()
+            self.fileSrc = html_file.name
         else:
-            self.browser.setText("No list is specified for display!")
+            self.browser.setText("The HTML table could not be created!")
 
     def dumpToFile(self, filename):
         """ dumpToFile(filename) -> None
@@ -202,7 +199,7 @@ class ListCellWidget(QCellWidget):
                      2: ' text-align: center;',
                      3: ' text-align: right;',
                     }
-        # append data to output list
+        # append data
         output = []
         output.append('<html>')
         output.append('\n<head>')
@@ -211,28 +208,30 @@ class ListCellWidget(QCellWidget):
         output.append('<body>')
         if self.tableHeading:
             output.append('<h1>%s</h1>' % self.tableHeading)
-        output.append('  <table%s>\n' % table_borders)
-
-        for row_n, row in enumerate(self.list_in):
-            if row and not self.is_sequence(row):
-                row = [row, ]
-            output.append('    <tr>\n      ')
-            if self.fileReference:  # show grid row labels
-                output.append('<td style="%s" align="center">%s</td>' %
-                           (ref_style, str(row_n + 1)))
-            for col_n, value in enumerate(row):
-                style = alignment[1]
-                # change alignment for numbers
-                try:
-                    float(value)
-                    style = alignment[3]
-                except:
-                    pass
-                # create cell with formatting
-                output.append('<td style="%s">%s</td>' %
-                           (style, value or '&#160;'))
-            output.append('    </tr>\n')
-        output.append('  </table>\n')
+        if self.list_in:
+            output.append('  <table%s>\n' % table_borders)
+            for row_n, row in enumerate(self.list_in):
+                if row and not self.is_sequence(row):
+                    row = [row, ]
+                output.append('    <tr>\n      ')
+                if self.fileReference:  # show grid row labels
+                    output.append('<td style="%s" align="center">%s</td>' %
+                               (ref_style, str(row_n + 1)))
+                for col_n, value in enumerate(row):
+                    style = alignment[1]
+                    # change alignment for numbers
+                    try:
+                        float(value)
+                        style = alignment[3]
+                    except:
+                        pass
+                    # create cell with formatting
+                    output.append('<td style="%s">%s</td>' %
+                               (style, value or '&#160;'))
+                output.append('    </tr>\n')
+            output.append('  </table>\n')
+        else:
+            output.append('<p>No list is specified for display!</p>')
         output.append('</body>\n')
         output.append('</html>\n')
         # write output list (as string) to file and return

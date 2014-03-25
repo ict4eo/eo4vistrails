@@ -537,10 +537,10 @@ edu.utah.sci.vistrails.basic:Integer)',
         for block in self.blocks:
             # alter limits on unaltered existing blocks
             if block[1][0] < row and block[3][0]:
-                block[2][0] = row - 1
+                block[2][0] = row #- 1
                 block[3][0] = False
             if block[1][1] < col and block[3][1]:
-                block[2][1] = col - 1
+                block[2][1] = col #- 1
                 block[3][1] = False
             if [row, col] == block[1]:
                 duplicate = True  # can only be one block per top,left cell
