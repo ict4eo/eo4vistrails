@@ -84,7 +84,11 @@ class StringToFile(ThreadSafeMixin, Module):
         import traceback
         traceback.print_exc()
         if error:
-            raise ModuleError(self, str(msg) + ': %s' % str(error))
+            try:
+                raise ModuleError(self, str(msg) + ': %s' % error)
+            except:
+                print msg, error
+                raise ModuleError(self, 'Unable to show error: please check console!')
         else:
             raise ModuleError(self, str(msg))
 

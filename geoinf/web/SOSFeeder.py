@@ -61,7 +61,7 @@ INSERT_OBSERVATION = 'InsertObservation.xml'  # name of Jinja template
 INSERT_OBSERVATION_FOI = 'InsertObservationFOI.xml'  # name of Jinja template
 SKIP_EMPTY = True  # ignore any missing properties; do not raise error
 LOG = True  # if True, will create logger & write file to user's home dir.
-LOG_LEVEL = logging.INFO  # ascending: DEBUG, INFO, WARNING, ERROR, CRITICAL
+LOG_LEVEL = logging.DEBUG  # ascending: DEBUG, INFO, WARNING, ERROR, CRITICAL
 LOG_FILENAME = 'sosfeeder.log'
 
 
@@ -129,7 +129,7 @@ class SOSFeeder(ThreadSafeMixin, Module):
         if show:
             pass
         if log:
-            pass
+            logging.warning(msg)
 
     def unicode_csv_reader(self, utf8_data, dialect=csv.excel, **kwargs):
         """Read and encode data from CSV as 'utf-8'.
@@ -500,9 +500,12 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
             except AttributeError:
                 self.raiseError('Property "%s" is not in the correct format'\
                                 % name)
-            if not prop and not SKIP_EMPTY:
-                self.raiseError('Unable to locate property "%s" in the lookup'\
-                                % name)
+            if not prop:
+                msg = 'Unable to locate property "%s" in the lookup' % name
+                if not SKIP_EMPTY:
+                    self.raiseError(msg)
+                else:
+                    logging.warning(msg)
             if prop:
                 if len(prop) >= 3:
                     self.properties.append({
@@ -845,8 +848,8 @@ Please check feature list and/or settings for file.""" % \
         # observation data values
         self.values = {}
         for row_num in range(self.data_row, sh.nrows):
-            #print "sosfeed:832, row col-range", row_num, self.data_col, sh.ncols
             for col_num in range(self.data_col, sh.ncols):
+                #print "sosfeed:851 row %3s of %3s: col %3s of %3s" % (row_num, sh.nrows, col_num, sh.ncols)
                 foi = get_foi_ID(row_num, col_num)
                 vdate = get_vdate(row_num, col_num) # {'date':?,'col':?,'row':?}
                 _property = get_property_name(row_num, col_num)
@@ -924,7 +927,8 @@ Please check feature list and/or settings for file.""" % \
         for sheet_name in self.sheet_list:
             # load data from worksheet into dictionaries
             sheet_data = self.load_from_excel(sheet_name)
-            print "\n\nsosfeed:923 sheet:", sheet_name, "data:", sheet_data
+            if LOG:
+                logging.debug("sheet/data: %s %s" % (sheet_name, sheet_data))
             if not self.fois:
                 self.set_warning('No features-of-interest available for %s' % sheet_name)
             if sheet_data and self.fois:
@@ -957,13 +961,14 @@ Please check feature list and/or settings for file.""" % \
                             value_set = [_date, ]
                             for prop in self.unique_properties:
                                 _key = (foi.get('id'), _date, prop.get('name'))
-                                _val = self.values.get(_key)
+                                _val = self.values.get(_key) or None  # no empty strings!
                                 if LOG:
                                     logging.info("INSERT: %s %s %s %s" % (
                                         foi.get('id'), _date, prop.get('name'), _val))
                                 value_set.append(_val)
                             data['values'].append(value_set)
-                            print "sosfeed:961 foi/date/values", foi.get('id'), _date, data['values']
+                            if LOG:
+                                logging.debug("foi/date/values %s %s %s" % (foi.get('id'), _date, data['values']))
                             XML = self.create_XML(sheet_name=sheet_name, 
                                                   data=data,
                                             template_name=INSERT_OBSERVATION_FOI)
@@ -1154,7 +1159,8 @@ Please check feature list and/or settings for file.""" % \
                     dataset.append(data)
                 # output results of POSTs, if port is linked to another module
                 if init.DATA_PORT in self.outputPorts:
-                    self.setResult(init.DATA_PORT, dataset)
+                    data_out = u''.join(dataset)  # convert to string (TODO - port to list???)
+                    self.setResult(init.DATA_PORT, data_out)
         except Exception, ex:
             self.raiseError(ex)
 
