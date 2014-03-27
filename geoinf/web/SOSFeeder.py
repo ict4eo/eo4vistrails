@@ -545,7 +545,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                     pass
                 return False
             
-            #print "sosfeed:534 add_foi", foi_ID
+            #print "sosfeed:548 add_foi", foi_ID
             try:
                 ID = unicode(foi_ID)  # convert Excel int to unicode
             except:
@@ -559,7 +559,7 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                     foi_ID_entry = feature
                     break
             if foi_ID_entry:
-                #print "sosfeed:548", foi_ID_entry
+                #print "sosfeed:562", foi_ID_entry
                 ID = foi_ID_entry.get('id')
                 # convert coords "list of tuples with unicode strings"
                 coords = []
@@ -586,6 +586,9 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
                     'row': row}
                 #print "sosfeed:573", foi_ID_entry.get('srs'), self.fois[ID]['srs']
                 self.validate_srs(self.fois[ID]['srs'], line=row)
+            else:
+                #print "sosfeed:590", foi_ID
+                self.fois_missing.append(foi_ID)
 
         def add_date(_date, row=None, col=None):
             """Add a date string to the date list."""
@@ -761,6 +764,8 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
             offset = 0
         # features
         self.fois = {}
+        self.fois_missing = []
+        #pprint.pprint(config['foi'])
         if config['foi']['value']:
             foi_ID = config['foi']['value']
             add_foi(self.escaped(foi_ID))
@@ -781,12 +786,11 @@ edu.utah.sci.vistrails.basic:String,edu.utah.sci.vistrails.basic:String)',
         else:
             self.raiseError('Feature settings not configured properly!')
         if not self.fois:
-            pprint.pprint(self.fois)
+            #pprint.pprint(self.fois)
             self.raiseError(
-                """Cannot link features in input file '%s' to feature list!\n
-Please check feature list and/or settings for file.""" % \
-                   self.file_in.name)            
-            
+                """Cannot link features %s in input file '%s' to feature list!
+Please check the feature list and/or settings for file.""" % \
+                   (u', '.join(self.fois_missing), self.file_in.name))           
         # properties
         self.properties = []
         self.unique_properties = []
