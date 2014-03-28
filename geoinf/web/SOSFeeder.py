@@ -1531,6 +1531,8 @@ edu.utah.sci.vistrails.basic:String)',
                     dataset.append(data)
                 # output results of POSTs, if port is linked to another module
                 if init.DATA_PORT in self.outputPorts:
-                    self.setResult(init.DATA_PORT, dataset)
+                    data_out = u''.join(dataset)  # convert to string (TODO - port to list???)
+                    self.setResult(init.DATA_PORT, data_out)
         except Exception, ex:
             self.raiseError(ex.message)
+
