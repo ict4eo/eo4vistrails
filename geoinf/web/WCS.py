@@ -397,6 +397,7 @@ class WCSConfigurationWidget(OgcConfigurationWidget):
                 # see WcsCommonWidget (this module)
                 self.bbox = self.wcs_config_widget.getBoundingBoxStringCoverage()
             else:
+                # FIXME no exception here...
                 traceback.print_exc()
                 raise ModuleError(
                     self,

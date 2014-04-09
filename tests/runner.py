@@ -136,5 +136,5 @@ class Runner():
         try:
             controller.execute_current_workflow(custom_aliases=aliases)
         except RuntimeError:
-            print "Workflow %s faied..." % flow
+            print "Workflow %s failed..." % flow
     '''

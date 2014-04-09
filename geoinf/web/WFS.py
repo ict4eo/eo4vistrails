@@ -392,6 +392,7 @@ class WFSConfigurationWidget(OgcConfigurationWidget,
                     # see WfsCommonWidget (this module)
                     bbox = self.config.getBoundingBoxStringFeature()
                 else:
+                    # FIXME no exception here...
                     traceback.print_exc()
                     raise ModuleError(
                         self,

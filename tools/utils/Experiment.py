@@ -30,6 +30,7 @@
 #Created on Thu Aug 25 09:46:42 2011 @author: tvzyl
 
 from core.modules.vistrails_module import Module, NotCacheable
+from core.upgradeworkflow import UpgradeWorkflowHandler
 from time import time
 
 
@@ -59,7 +60,7 @@ class Timer(NotCacheable, Module):
         Module.__init__(self)
         self.start_time = 0
 
-    def handle_module_upgrade_request(controller, module_id, pipeline):
+    def handle_module_upgrade_request(self, controller, module_id, pipeline):
         module_remap = {'Workflow Timer':
                         [(None, '0.1.3', 'WorkflowTimer', {})],
                         }

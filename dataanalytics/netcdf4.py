@@ -66,7 +66,7 @@ class netcdf4Reader(Module):
             #??? varName = self.getInputFromPort("varName")
             dimLimits = self.getInputFromPort("dimLimits")
             self.inputFile = Dataset(str(nc4File.name), 'r')
-            part_1 = self.inputFile.variables[str(varName)]
+            #??? part_1 = self.inputFile.variables[str(varName)]
             result = eval("part_1%s" % dimLimits)
             self.setResult("data", result)
             #self.inputFile.close()

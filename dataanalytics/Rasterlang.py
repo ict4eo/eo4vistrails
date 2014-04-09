@@ -37,6 +37,7 @@ import gdal
 from gdal import gdalconst
 # vistrails
 from core.modules.vistrails_module import ModuleError, NotCacheable, Module
+from core.utils import VistrailsInternalError
 from vistrails.packages.NumSciPy.Array import NDArray
 # eo4vistrails
 from vistrails.packages.eo4vistrails.rpyc.RPyC import RPyCModule, RPyCSafeModule

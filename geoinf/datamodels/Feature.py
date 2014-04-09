@@ -161,7 +161,7 @@ class _OgrMemModel():
             """TO DO Add docstring"""
             temp_filepath = core.system.default_dot_vistrails() + "/eo4vistrails/ogr/"
             if not os.path.exists(temp_filepath):
-                os.mkdirs(temp_filepath)
+                os.mkdir(temp_filepath)
             temp_filename = temp_filepath + hashlib.sha1(urllib.quote_plus(webrequest.url + getStatement)).hexdigest() + outputtype
             #core.system.touch(temp_filename)
             postdata = urllib.urlencode({'request': getStatement})
@@ -192,7 +192,7 @@ class _OgrMemModel():
             temp_filepath = core.system.default_dot_vistrails() + "/eo4vistrails/ogr/"
 
             if not os.path.exists(temp_filepath):
-                os.mkdirs(temp_filepath)
+                os.mkdir(temp_filepath)
 
             t = str(type(geo_string))
             tl = t.split("'")
@@ -361,6 +361,7 @@ class FileFeatureModel(File):
 
     @staticmethod
     def get_widget_class():
+        from gui.modules.constant_configuration import FileChooserWidget
         return FileChooserWidget
 
     def _ogr_format_check(self, fmt):

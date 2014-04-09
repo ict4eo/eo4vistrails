@@ -42,6 +42,7 @@ Also see:
 # library
 # third-party
 # vistrails
+import core.modules.module_registry
 from vistrails.packages.eo4vistrails.tools.utils.session import Session
 # eo4vistrails
 from vistrails.packages.eo4vistrails.geoinf.SpatialTemporalConfigurationWidget import \
