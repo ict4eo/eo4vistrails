@@ -39,8 +39,8 @@ from PyQt4 import QtGui
 from settings import VISTRAILS_HOME
 # vistrails
 sys.path.append(VISTRAILS_HOME)
-import vistrails.core.requirements
-vistrails.core.requirements.check_pyqt4()
+import vistrails.gui.requirements
+vistrails.gui.requirements.require_pyqt4_api2()
 import vistrails.gui.application
 from vistrails.core.db.locator import FileLocator
 from vistrails.core.console_mode import run
