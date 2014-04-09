@@ -110,7 +110,7 @@ class _GdalMemModel():
         capabilities to it for later reference.
         """
         #first, get a temporary file location that is writeable
-        temp_filepath = vistrails.core.system.default_dot_vistrails() + \
+        temp_filepath = vistrails.core.system.current_dot_vistrails() + \
                         "/eo4vistrails/gdal/"
         if not os.path.exists(temp_filepath):
             os.mkdir(temp_filepath)
@@ -148,7 +148,7 @@ class _GdalMemModel():
                 return ".gml"
 
         def _viaCache():
-            temp_filepath = vistrails.core.system.default_dot_vistrails() + \
+            temp_filepath = vistrails.core.system.current_dot_vistrails() + \
                             "/eo4vistrails/gdal/"
             if not os.path.exists(temp_filepath):
                 os.mkdir(temp_filepath)

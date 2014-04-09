@@ -159,7 +159,7 @@ class _OgrMemModel():
 
         def _viaCache():
             """TO DO Add docstring"""
-            temp_filepath = vistrails.core.system.default_dot_vistrails() + "/eo4vistrails/ogr/"
+            temp_filepath = vistrails.core.system.current_dot_vistrails() + "/eo4vistrails/ogr/"
             if not os.path.exists(temp_filepath):
                 os.mkdir(temp_filepath)
             temp_filename = temp_filepath + hashlib.sha1(urllib.quote_plus(webrequest.url + getStatement)).hexdigest() + outputtype
@@ -189,7 +189,7 @@ class _OgrMemModel():
 
         # Write string to temp file, then load it up
         def _viaCache():
-            temp_filepath = vistrails.core.system.default_dot_vistrails() + "/eo4vistrails/ogr/"
+            temp_filepath = vistrails.core.system.current_dot_vistrails() + "/eo4vistrails/ogr/"
 
             if not os.path.exists(temp_filepath):
                 os.mkdir(temp_filepath)
