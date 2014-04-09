@@ -33,7 +33,7 @@ import pickle
 # third party
 from PyQt4 import QtCore, QtGui
 # vistrails
-from core.modules.vistrails_module import ModuleError
+from vistrails.core.modules.vistrails_module import ModuleError
 # eo4vistrails
 from vistrails.packages.eo4vistrails.geoinf.SpatialTemporalConfigurationWidget \
     import SpatialTemporalConfigurationWidget
@@ -339,7 +339,7 @@ class OgcConfigurationWidget(SpatialTemporalConfigurationWidget):
                     self,
                     'Unknown or invalid OgcConfigurationWidget request: %s' %
                         str(self.request_type))
-            # see: gui.vistrails_controller.py
+            # see: vistrails.gui.vistrails_controller.py
             #print "OgcConfigurationWidget:333/n", functions
             self.controller.update_ports_and_functions(
                 self.module.id, [], [], functions)

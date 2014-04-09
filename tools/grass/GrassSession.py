@@ -42,7 +42,7 @@ Also see:
 # library
 # third-party
 # vistrails
-import core.modules.module_registry
+import vistrails.core.modules.module_registry
 from vistrails.packages.eo4vistrails.tools.utils.session import Session
 # eo4vistrails
 from vistrails.packages.eo4vistrails.geoinf.SpatialTemporalConfigurationWidget import \
@@ -91,5 +91,5 @@ def initialize(*args, **keywords):
     """Add module to the VisTrails registry."""
     # We'll first create a local alias for the module_registry so that
     # we can refer to it in a shorter way.
-    reg = core.modules.module_registry.get_module_registry()
+    reg = vistrails.core.modules.module_registry.get_module_registry()
     reg.add_module(GrassSession)

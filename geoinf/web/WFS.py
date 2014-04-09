@@ -31,8 +31,8 @@
 # third party
 from PyQt4 import QtCore, QtGui
 # vistrails
-from gui.modules.module_configure import StandardModuleConfigurationWidget
-from core.modules.vistrails_module import Module, ModuleError, \
+from vistrails.gui.modules.module_configure import StandardModuleConfigurationWidget
+from vistrails.core.modules.vistrails_module import Module, ModuleError, \
                                           new_module, NotCacheable
 # eo4vistrails
 from vistrails.packages.eo4vistrails.geoinf.SpatialTemporalConfigurationWidget import \

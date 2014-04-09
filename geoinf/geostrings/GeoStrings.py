@@ -30,9 +30,9 @@ understand what kind of data is being passed into a method as a string.
 # third-party
 from PyQt4 import QtCore, QtGui
 # vistrails
-from core.modules import basic_modules
-from core.utils import any, expression
-from gui.modules.constant_configuration import ConstantWidgetMixin
+from vistrails.core.modules import basic_modules
+from vistrails.core.utils import any, expression
+from vistrails.gui.modules.constant_configuration import ConstantWidgetMixin
 # eo4vistrails
 
 
@@ -67,7 +67,7 @@ class GeoStringConstantWidget(QtGui.QTextEdit, ConstantWidgetMixin):
 
     """
     def __init__(self, param, parent=None):
-        """__init__(param: core.vistrail.module_param.ModuleParam,
+        """__init__(param: vistrails.core.vistrail.module_param.ModuleParam,
                     parent: QWidget)
 
         Initialize the line edit with its contents. Content type is limited

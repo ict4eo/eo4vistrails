@@ -40,9 +40,9 @@ import psycopg2
 from psycopg2 import ProgrammingError
 from PyQt4 import QtCore, QtGui
 # vistrails
-from core.modules.vistrails_module import ModuleError, NotCacheable, Module
-from gui.modules.source_configure import SourceConfigurationWidget
-from core.system import touch
+from vistrails.core.modules.vistrails_module import ModuleError, NotCacheable, Module
+from vistrails.gui.modules.source_configure import SourceConfigurationWidget
+from vistrails.core.system import touch
 from vistrails.packages.NumSciPy.Array import NDArray
 # eo4vistrails
 from vistrails.packages.eo4vistrails.geoinf.datamodels.QgsLayer import QgsVectorLayer

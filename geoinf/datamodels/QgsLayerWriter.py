@@ -33,7 +33,7 @@ import qgis.core
 from PyQt4.QtCore import QFileInfo
 from qgis.core import QgsVectorFileWriter, QgsCoordinateReferenceSystem
 # vistrails
-from core.modules.vistrails_module import Module, ModuleError
+from vistrails.core.modules.vistrails_module import Module, ModuleError
 # eo4vistrails
 # local
 

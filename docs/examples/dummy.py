@@ -32,7 +32,7 @@
 # third-party
 
 # vistrails
-from core.modules.vistrails_module import Module, ModuleError, ModuleErrors
+from vistrails.core.modules.vistrails_module import Module, ModuleError, ModuleErrors
 # eo4vistrails
 #from vistrails.packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
 #from vistrails.packages.eo4vistrails.utils.ThreadSafe import ThreadSafeMixin

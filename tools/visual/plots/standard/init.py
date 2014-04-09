@@ -1,7 +1,7 @@
 def initialize(*args, **keywords):
 
-    from core.modules.module_registry import get_module_registry
-    from packages.matplotlib.bases import MplPlot#, MplPlotConfigurationWidget
+    from vistrails.core.modules.module_registry import get_module_registry
+    from vistrails.packages.matplotlib.bases import MplPlot#, MplPlotConfigurationWidget
     from vistrails.packages.eo4vistrails.tools.visual.plots.standard.plot import \
         ParentPlot, SinglePlot, Histogram, MultiPlot, \
         MatplotlibMarkerComboBox, MatplotlibPlotTypeComboBox, \

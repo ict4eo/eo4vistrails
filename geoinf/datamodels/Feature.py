@@ -34,16 +34,16 @@ import os.path
 import urllib
 import hashlib
 # third-party
-import gui.application
+import vistrails.gui.application
 try:
     from osgeo import ogr
 except:
     import ogr
 # vistrails
-import core.modules.module_registry
-import core.system
-from core.modules.vistrails_module import Module, ModuleError
-from core.modules.basic_modules import File
+import vistrails.core.modules.module_registry
+import vistrails.core.system
+from vistrails.core.modules.vistrails_module import Module, ModuleError
+from vistrails.core.modules.basic_modules import File
 # eo4vistrails
 
 
@@ -159,7 +159,7 @@ class _OgrMemModel():
 
         def _viaCache():
             """TO DO Add docstring"""
-            temp_filepath = core.system.default_dot_vistrails() + "/eo4vistrails/ogr/"
+            temp_filepath = vistrails.core.system.default_dot_vistrails() + "/eo4vistrails/ogr/"
             if not os.path.exists(temp_filepath):
                 os.mkdir(temp_filepath)
             temp_filename = temp_filepath + hashlib.sha1(urllib.quote_plus(webrequest.url + getStatement)).hexdigest() + outputtype
@@ -189,7 +189,7 @@ class _OgrMemModel():
 
         # Write string to temp file, then load it up
         def _viaCache():
-            temp_filepath = core.system.default_dot_vistrails() + "/eo4vistrails/ogr/"
+            temp_filepath = vistrails.core.system.default_dot_vistrails() + "/eo4vistrails/ogr/"
 
             if not os.path.exists(temp_filepath):
                 os.mkdir(temp_filepath)
@@ -361,7 +361,7 @@ class FileFeatureModel(File):
 
     @staticmethod
     def get_widget_class():
-        from gui.modules.constant_configuration import FileChooserWidget
+        from vistrails.gui.modules.constant_configuration import FileChooserWidget
         return FileChooserWidget
 
     def _ogr_format_check(self, fmt):
@@ -449,7 +449,7 @@ def initialize(*args, **keywords):
     """Add module to the Vistrails registry; specify input & output ports."""
     # First create a local alias for the module_registry so that
     # we can refer to it in a shorter way.
-    reg = core.modules.module_registry.get_module_registry()
+    reg = vistrails.core.modules.module_registry.get_module_registry()
     reg.add_module(FeatureModel)
     #input ports
 

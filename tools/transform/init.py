@@ -1,6 +1,6 @@
 def initialize(*args, **keywords):
-    from core.modules.module_registry import get_module_registry
-    from core.modules import basic_modules
+    from vistrails.core.modules.module_registry import get_module_registry
+    from vistrails.core.modules import basic_modules
 
     #modules in this package
     from TemporalLayerTransformer import SpatialTemporalTransform

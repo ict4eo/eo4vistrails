@@ -28,7 +28,7 @@
 eo4vistrails.
 """
 # vistrails
-from core.modules.vistrails_module import \
+from vistrails.core.modules.vistrails_module import \
     Module, new_module, NotCacheable, ModuleError, ModuleErrors
 
 

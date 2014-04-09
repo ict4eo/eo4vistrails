@@ -35,11 +35,11 @@ import qgis.core
 import qgis.gui
 from PyQt4 import QtCore, QtGui
 # vistrails
-from core.modules import basic_modules
-import core.modules.module_registry
-from core.modules.vistrails_module import Module, ModuleError, NotCacheable, \
+from vistrails.core.modules import basic_modules
+import vistrails.core.modules.module_registry
+from vistrails.core.modules.vistrails_module import Module, ModuleError, NotCacheable, \
                                           InvalidOutput
-import core.system
+import vistrails.core.system
 # eo4vistrails
 from vistrails.packages.eo4vistrails.geoinf.datamodels.QgsLayer import QgsVectorLayer,\
     QgsRasterLayer

@@ -40,11 +40,11 @@ from PyQt4.QtGui import *
 from qgis.core import *
 from qgis.gui import *
 # vistrails
-import core.modules.module_registry
-from core.modules.vistrails_module import Module, ModuleError
-import core.system
-from packages.spreadsheet.basic_widgets import SpreadsheetCell
-from packages.spreadsheet.spreadsheet_cell import QCellWidget
+import vistrails.core.modules.module_registry
+from vistrails.core.modules.vistrails_module import Module, ModuleError
+import vistrails.core.system
+from vistrails.packages.spreadsheet.basic_widgets import SpreadsheetCell
+from vistrails.packages.spreadsheet.spreadsheet_cell import QCellWidget
 # eo4vistrails
 #from vistrails.packages.eo4vistrails.tools.utils.ThreadSafe import ThreadSafeMixin
 # local

@@ -31,9 +31,9 @@ handle writing of specialised text data files, with or without header rows.
 import os
 import os.path
 # vistrails
-from core.modules.vistrails_module import Module, ModuleError
-from core.modules import basic_modules
-from core.modules.basic_modules import File, String, Boolean
+from vistrails.core.modules.vistrails_module import Module, ModuleError
+from vistrails.core.modules import basic_modules
+from vistrails.core.modules.basic_modules import File, String, Boolean
 # eo4vistrails
 from vistrails.packages.eo4vistrails.geoinf.datamodels.TemporalVectorLayer import \
     TemporalVectorLayer

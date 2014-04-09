@@ -44,10 +44,10 @@ from osgeo import ogr, gdal, osr
 from PyQt4 import QtCore, QtGui
 from scipy import *
 # vistrails
-import core.modules.module_registry
-import core.system
-from core.modules.vistrails_module import Module, new_module, NotCacheable, \
-    ModuleError
+import vistrails.core.modules.module_registry
+import vistrails.core.system
+from vistrails.core.modules.vistrails_module import Module, new_module, \
+    NotCacheable, ModuleError
 # eo4vistrails
 from vistrails.packages.eo4vistrails.geoinf.datamodels.Raster import RasterModel
 from vistrails.packages.eo4vistrails.geoinf.web.OgcConfigurationWidget import \
@@ -181,14 +181,14 @@ def initialize(*args, **keywords):
     """Add module to the Vistrails registry; specify input & output ports."""
     # We'll first create a local alias for the module_registry so that
     # we can refer to it in a shorter way.
-    reg = core.modules.module_registry.get_module_registry()
+    reg = vistrails.core.modules.module_registry.get_module_registry()
     reg.add_module(RasterModel)
     """
     #input ports
     #reg.add_input_port(
         RasterModel,
         "service_version",
-        (core.modules.basic_modules.String,
+        (vistrails.core.modules.basic_modules.String,
         'Web Map Service version - default 1.1.1'))
     """
     #output ports

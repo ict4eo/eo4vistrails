@@ -37,8 +37,8 @@ import qgis.core
 import numpy
 from PyQt4.QtCore import QFileInfo
 # vistrails
-from core.modules import basic_modules
-from core.modules.vistrails_module import Module, ModuleError, NotCacheable
+from vistrails.core.modules import basic_modules
+from vistrails.core.modules.vistrails_module import Module, ModuleError, NotCacheable
 # eo4vistrails
 from vistrails.packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
 from vistrails.packages.eo4vistrails.tools.utils.ThreadSafe import ThreadSafeMixin

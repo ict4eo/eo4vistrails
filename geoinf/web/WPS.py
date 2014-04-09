@@ -49,16 +49,16 @@ from PyQt4 import QtXml, QtCore, QtGui, QtSql
 from qgis.core import QgsFeature, QgsRectangle, QgsMapLayerRegistry,\
     QgsDataSourceURI, QgsVectorFileWriter
 # vistrails
-from core.modules.module_descriptor import ModuleDescriptor
-from gui.modules.module_configure import StandardModuleConfigurationWidget
-from core.modules.module_registry import get_module_registry
-from core.modules.vistrails_module import Module, new_module, NotCacheable,\
-    ModuleError
-from core.utils import PortAlreadyExists
-from core.modules.basic_modules import String
+from vistrails.core.modules.module_descriptor import ModuleDescriptor
+from vistrails.gui.modules.module_configure import StandardModuleConfigurationWidget
+from vistrails.core.modules.module_registry import get_module_registry
+from vistrails.core.modules.vistrails_module import Module, new_module, \
+    NotCacheable, ModuleError
+from vistrails.core.utils import PortAlreadyExists
+from vistrails.core.modules.basic_modules import String
 # eo4vistrails
 from vistrails.packages.eo4vistrails.geoinf.datamodels import QgsLayer
-from vistrails.packages.eo4vistrails.geoinf.datamodels.QgsLayer import QgsVectorLayer, \
+from vistrails.packages.eo4vistrails.geoinf.datamodels.QgsLayer import QgsVectorLayer,\
     QgsRasterLayer
 # local
 import init

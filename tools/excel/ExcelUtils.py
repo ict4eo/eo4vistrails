@@ -35,8 +35,8 @@ from datetime import date, datetime, time
 import xlrd
 import xlwt
 # vistrails
-from core.modules.basic_modules import File, String, Boolean, new_constant
-from core.modules.vistrails_module import Module, ModuleError
+from vistrails.core.modules.basic_modules import File, String, Boolean, new_constant
+from vistrails.core.modules.vistrails_module import Module, ModuleError
 # eo4vistrails
 from vistrails.packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
 from vistrails.packages.eo4vistrails.tools.utils.ThreadSafe import ThreadSafeMixin

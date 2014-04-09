@@ -28,10 +28,10 @@
 def initialize(*args, **keywords):
     """TO DO: Add doc string"""
 
-    from core.modules.module_registry import get_module_registry
-    from core.modules import basic_modules
+    from vistrails.core.modules.module_registry import get_module_registry
+    from vistrails.core.modules import basic_modules
 
-    from packages.spreadsheet import basic_widgets
+    from vistrails.packages.spreadsheet import basic_widgets
 
     from vistrails.packages.eo4vistrails.geoinf.datamodels.QgsLayer import QgsMapLayer,\
         QgsVectorLayer, QgsRasterLayer

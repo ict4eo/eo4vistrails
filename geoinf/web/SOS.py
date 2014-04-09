@@ -35,7 +35,7 @@ from PyQt4 import QtCore, QtGui
 #from qgis.core import *
 #from qgis.gui import *
 # vistrails
-from core.modules.vistrails_module import Module, ModuleError
+from vistrails.core.modules.vistrails_module import Module, ModuleError
 # eo4vistrails
 from vistrails.packages.eo4vistrails.geoinf.datamodels.Feature import FeatureModel
 from vistrails.packages.eo4vistrails.tools.utils.ModuleHelperMixin import ModuleHelperMixin

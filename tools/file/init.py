@@ -28,11 +28,11 @@
 with VisTrails takes place
 """
 
-from core.modules.module_registry import get_module_registry
+from vistrails.core.modules.module_registry import get_module_registry
 
 def initialize(*args, **keywords):
-    from core.modules import basic_modules
-    from core.modules.vistrails_module import Module
+    from vistrails.core.modules import basic_modules
+    from vistrails.core.modules.vistrails_module import Module
 
     from Command import Command
     from DirUtils import ListDirContent

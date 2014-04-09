@@ -32,7 +32,7 @@ handle data and PostGIS requests for processing inside vistrails.
 from qgis.core import QgsDataSourceURI
 # vistrails
 # eo4vistrails
-from core.modules.vistrails_module import Module, NotCacheable, ModuleError
+from vistrails.core.modules.vistrails_module import Module, NotCacheable, ModuleError
 # local
 from vistrails.packages.eo4vistrails.geoinf.datamodels.DataRequest import DataRequest
 

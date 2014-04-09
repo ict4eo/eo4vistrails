@@ -30,7 +30,7 @@
 # third-party
 from geojson import Feature
 # vistrails
-from core.modules.vistrails_module import Module
+from vistrails.core.modules.vistrails_module import Module
 # eo4vistrails
 
 

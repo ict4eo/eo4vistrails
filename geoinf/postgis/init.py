@@ -25,8 +25,8 @@
 ############################################################################
 
 # library
-import core.modules.module_registry
-from core.modules import basic_modules
+import vistrails.core.modules.module_registry
+from vistrails.core.modules import basic_modules
 # vistrails
 from vistrails.packages.NumSciPy.Array import NDArray
 # eo4vistrails
@@ -44,7 +44,7 @@ def initialize(*args, **keywords):
     #print "in my postgis init process"
     # We'll first create a local alias for the module_registry so that
     # we can refer to it in a shorter way.
-    reg = core.modules.module_registry.get_module_registry()
+    reg = vistrails.core.modules.module_registry.get_module_registry()
     postgis_namespace = "data|postGIS"
 
     """ #moved to datamodels

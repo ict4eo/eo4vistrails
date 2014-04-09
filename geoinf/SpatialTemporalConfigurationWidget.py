@@ -28,11 +28,11 @@ geoinf modules.
 """
 
 from PyQt4 import QtCore, QtGui
-from gui.modules.module_configure import StandardModuleConfigurationWidget
-from core.modules.module_registry import get_module_registry
-from core.modules.vistrails_module import ModuleError
-from core.utils import PortAlreadyExists
-from core.utils import VistrailsInternalError
+from vistrails.gui.modules.module_configure import StandardModuleConfigurationWidget
+from vistrails.core.modules.module_registry import get_module_registry
+from vistrails.core.modules.vistrails_module import ModuleError
+from vistrails.core.utils import PortAlreadyExists
+from vistrails.core.utils import VistrailsInternalError
 
 
 DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S"

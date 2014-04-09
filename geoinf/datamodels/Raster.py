@@ -38,11 +38,11 @@ try:
 except:
     import gdal
 # vistrails
-import core.modules.module_registry
-from core.modules.vistrails_module import Module, ModuleError
-from core.modules.basic_modules import File
-import core.system
-import gui.application
+import vistrails.core.modules.module_registry
+from vistrails.core.modules.vistrails_module import Module, ModuleError
+from vistrails.core.modules.basic_modules import File
+import vistrails.core.system
+import vistrails.gui.application
 # eo4vistrails
 # local
 from .Feature import FeatureModel
@@ -110,7 +110,7 @@ class _GdalMemModel():
         capabilities to it for later reference.
         """
         #first, get a temporary file location that is writeable
-        temp_filepath = core.system.default_dot_vistrails() + \
+        temp_filepath = vistrails.core.system.default_dot_vistrails() + \
                         "/eo4vistrails/gdal/"
         if not os.path.exists(temp_filepath):
             os.mkdir(temp_filepath)
@@ -148,12 +148,12 @@ class _GdalMemModel():
                 return ".gml"
 
         def _viaCache():
-            temp_filepath = core.system.default_dot_vistrails() + \
+            temp_filepath = vistrails.core.system.default_dot_vistrails() + \
                             "/eo4vistrails/gdal/"
             if not os.path.exists(temp_filepath):
                 os.mkdir(temp_filepath)
             temp_filename = temp_filepath + hashlib.sha1(urllib.quote_plus(uri + getStatement)).hexdigest() + outputtype
-            #core.system.touch(temp_filename)
+            #vistrails.core.system.touch(temp_filename)
             postdata = urllib.urlencode({'request': getStatement})
             print postdata
             u = urllib.urlretrieve(url=uri, filename=temp_filename, data=postdata,)
@@ -208,13 +208,13 @@ class RasterModel(Module):
 def initialize(*args, **keywords):
     """Add module to the Vistrails registry; specify input & output ports."""
     # create alias for the module_registry to refer to it in a shorter way.
-    reg = core.modules.module_registry.get_module_registry()
+    reg = vistrails.core.modules.module_registry.get_module_registry()
     reg.add_module(RasterModel)
     #input ports
     #"""
     reg.add_input_port(FeatureModel,
                        "service_version",
-                       (core.modules.basic_modules.String,
+                       (vistrails.core.modules.basic_modules.String,
                         'Web Map Service version - default 1.1.1'))
 
     #output ports

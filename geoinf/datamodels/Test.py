@@ -27,11 +27,11 @@
 """
 
 import os
-import core.system
-import core.modules.module_registry
-from core.modules.vistrails_module import Module, ModuleError
+import vistrails.core.system
+import vistrails.core.modules.module_registry
+from vistrails.core.modules.vistrails_module import Module, ModuleError
 
-import core.modules.basic_modules
+import vistrails.core.modules.basic_modules
 
 
 class TestModel():

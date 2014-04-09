@@ -34,7 +34,7 @@ import urllib
 import urllib2
 # third-party
 # vistrails
-from core.modules.vistrails_module import ModuleError
+from vistrails.core.modules.vistrails_module import ModuleError
 # eo4vistrails
 # local
 from DataRequest import DataRequest

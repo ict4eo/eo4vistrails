@@ -33,8 +33,7 @@ import random
 # third-party
 from PyQt4.QtCore import QFileInfo
 # vistrails
-from core.modules.vistrails_module import \
-     NotCacheable, ModuleError
+from vistrails.core.modules.vistrails_module import NotCacheable, ModuleError
 # eo4vistrails
 from vistrails.packages.eo4vistrails.geoinf.datamodels.QgsLayer import \
     QgsVectorLayer, QgsRasterLayer

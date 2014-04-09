@@ -34,9 +34,9 @@ from datetime import date, datetime, time
 import xlrd
 from PyQt4 import QtCore, QtGui
 # vistrails
-from core.modules.vistrails_module import Module, ModuleError
-from packages.spreadsheet.basic_widgets import SpreadsheetCell
-from packages.spreadsheet.spreadsheet_cell import QCellWidget
+from vistrails.core.modules.vistrails_module import Module, ModuleError
+from vistrails.packages.spreadsheet.basic_widgets import SpreadsheetCell
+from vistrails.packages.spreadsheet.spreadsheet_cell import QCellWidget
 import shutil
 
 ENCODING = "utf-8"  # will probably differ in some countries ???

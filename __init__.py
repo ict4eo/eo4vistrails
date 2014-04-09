@@ -48,7 +48,7 @@ flags = {}
 import sys
 import os.path
 #import resource - LINUX specific; causes error under Windows
-from core.system import packages_directory
+from vistrails.core.system import packages_directory
 import vistrails.packages as packages
 
 # BELOW CAUSES ERROR IN Sphinx documentation
@@ -64,44 +64,44 @@ def set_flag(module_name):
 
 
 def package_requirements():
-    import core.requirements
+    from vistrails.core import requirements
     # WARNING
-    if not core.requirements.python_module_exists('owslib'):
+    if not requirements.python_module_exists('owslib'):
         print "%s is missing" % 'owslib'  # ??? still true
     # MUST EXIST
-    if not core.requirements.python_module_exists('qgis'):
-        raise core.requirements.MissingRequirement('qgis')
-    if not core.requirements.python_module_exists('osgeo'):
-        raise core.requirements.MissingRequirement('osgeo')
-    if not core.requirements.python_module_exists('numpy'):
-        raise core.requirements.MissingRequirement('numpy')
+    if not requirements.python_module_exists('qgis'):
+        raise requirements.MissingRequirement('qgis')
+    if not requirements.python_module_exists('osgeo'):
+        raise requirements.MissingRequirement('osgeo')
+    if not requirements.python_module_exists('numpy'):
+        raise requirements.MissingRequirement('numpy')
     # OPTIONAL (test in local init files to ensure that modules are not activated)
-    if not core.requirements.python_module_exists('psycopg2'):
+    if not requirements.python_module_exists('psycopg2'):
         set_flag('psycopg2')
-    if not core.requirements.python_module_exists('pysal'):
+    if not requirements.python_module_exists('pysal'):
         set_flag('pysal')
-    if not core.requirements.python_module_exists('rpyc'):
+    if not requirements.python_module_exists('rpyc'):
         set_flag('rpyc')
-    if not core.requirements.python_module_exists('octave'):
+    if not requirements.python_module_exists('octave'):
         set_flag('octave')
-    if not core.requirements.python_module_exists('rpy2stats'):
+    if not requirements.python_module_exists('rpy2stats'):
         set_flag('rpy2stats')
-    if not core.requirements.python_module_exists('pyDAP'):
+    if not requirements.python_module_exists('pyDAP'):
         set_flag('pyDAP')
-    if not core.requirements.python_module_exists('netcdf4'):
+    if not requirements.python_module_exists('netcdf4'):
         set_flag('netcdf4')
-    if not core.requirements.python_module_exists('xlrd'):
+    if not requirements.python_module_exists('xlrd'):
         set_flag('xlrd')
-    if not core.requirements.python_module_exists('xlwt'):
+    if not requirements.python_module_exists('xlwt'):
         set_flag('xlwt')
 
-    #if not core.requirements.python_module_exists('qtermwidget'):
-    #    raise core.requirements.MissingRequirement('qtermwidget')
+    #if not requirements.python_module_exists('qtermwidget'):
+    #    raise requirements.MissingRequirement('qtermwidget')
 
 
 def package_dependencies():
-    import core.packagemanager
-    manager = core.packagemanager.get_package_manager()
+    from vistrails.core.packagemanager import get_package_manager
+    manager = get_package_manager()
     if manager.has_package('za.co.csir.rpyc4vistrails'):
         return ['za.co.csir.rpyc4vistrails',
                 'edu.utah.sci.vistrails.spreadsheet',

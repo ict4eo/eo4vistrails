@@ -39,7 +39,7 @@ try:
 except:
     import ogr
 # vistrails
-from core.modules.vistrails_module import Module, ModuleError
+from vistrails.core.modules.vistrails_module import Module, ModuleError
 # eo4vistrails
 from vistrails.packages.eo4vistrails.tools.utils.Parser import Parser
 from vistrails.packages.eo4vistrails.tools.utils.ThreadSafe import ThreadSafeMixin

@@ -38,8 +38,8 @@ def initialize(*args, **keywords):
     # third party
     import qgis.core
     # vistrails
-    from core.modules.module_registry import get_module_registry
-    from core.modules.basic_modules import Boolean, String, File, Variant, Integer
+    from vistrails.core.modules.module_registry import get_module_registry
+    from vistrails.core.modules.basic_modules import Boolean, String, File, Variant, Integer
     # eo4vistrails
     from vistrails.packages.eo4vistrails.geoinf.datamodels.FeatureImport import \
         FeatureImport, FeatureImportConfigurationWidget

@@ -29,7 +29,7 @@
 """
 #Created on Thu Aug 25 09:46:42 2011 @author: tvzyl
 
-from core.modules.vistrails_module import Module, ModuleError
+from vistrails.core.modules.vistrails_module import Module, ModuleError
 import random
 
 

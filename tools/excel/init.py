@@ -26,8 +26,8 @@
 """This package provides Excel capabilities.
 """
 
-from core.bundles import py_import
-from core import debug
+from vistrails.core.bundles import py_import
+from vistrails.core import debug
 try:
     pkg_dict = {'linux-ubuntu': 'python-xlrd',
                 'linux-fedora': 'python-xlrd'}
@@ -58,14 +58,14 @@ def widgetName():
 def initialize(*args, **keywords):
     """Called by higher level inits to ensure that registration with
     VisTrails takes place."""
-    from core.modules.module_registry import get_module_registry
-    import core.requirements
-    from core.modules import basic_modules
-    from packages.spreadsheet import basic_widgets
+    from vistrails.core.modules.module_registry import get_module_registry
+    import vistrails.core.requirements
+    from vistrails.core.modules import basic_modules
+    from vistrails.packages.spreadsheet import basic_widgets
     reg = get_module_registry()
 
-    if core.requirements.python_module_exists('xlrd') and \
-       core.requirements.python_module_exists('xlwt'):
+    if vistrails.core.requirements.python_module_exists('xlrd') and \
+       vistrails.core.requirements.python_module_exists('xlwt'):
 
         from excelcell import ExcelCell  # filename of Vistrails module
         from ExcelUtils import ExcelChopper, ExcelExtractor, ExcelFiller, \
