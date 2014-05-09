@@ -41,9 +41,9 @@ from qgis.core import QgsSingleSymbolRendererV2 as QgsSingleSymbolRenderer  # 1.
 from qgis.gui import QgsMapTool, QgsProjectionSelector, QgsMapToolPan, \
     QgsMapToolZoom, QgsMapTool, QgsMapCanvasLayer, QgsMessageViewer, QgsMapCanvas
 # vistrails
-import core.modules.module_registry
-from core.modules.vistrails_module import Module, ModuleError
-from gui.modules.module_configure import StandardModuleConfigurationWidget
+import vistrails.core.modules.module_registry
+from vistrails.core.modules.vistrails_module import Module, ModuleError
+from vistrails.gui.modules.module_configure import StandardModuleConfigurationWidget
 #eo4vistrails
 from vistrails.packages.eo4vistrails.geoinf.geostrings.GeoStrings import GeoJSONString, \
     WKTString
@@ -449,6 +449,7 @@ class FeatureOfInterestDefinerConfigurationWidget(StandardModuleConfigurationWid
         if foi_type == 'pointofinterestdefiner':
             layer = QgsVectorLayer("Point", "Point of Interest",  "memory")
 
+        # FIXME QGis undefined
         if foi_type == 'areaofinterestdefiner':
             sym = QgsSymbol(QGis.Polygon)
             sym.setColor(QtCore.Qt.black)
@@ -739,7 +740,7 @@ class PointOfInterestDefiner(FeatureOfInterestDefiner):
 #    """sets everything up"""
 #    # We'll first create a local alias for the module_registry so that
 #    # we can refer to it in a shorter way.
-#    reg = core.modules.module_registry.get_module_registry()
+#    reg = vistrails.core.modules.module_registry.get_module_registry()
 #    reg.add_module(FeatureOfInterestDefiner, configureWidgetType=FeatureOfInterestDefinerWidget,  namespace="utils",  abstract = True)
 #    reg.add_module(AreaOfInterestDefiner, configureWidgetType=FeatureOfInterestDefinerWidget, namespace="utils")
 #    reg.add_module(LineOfInterestDefiner, configureWidgetType=FeatureOfInterestDefinerWidget, namespace="utils")

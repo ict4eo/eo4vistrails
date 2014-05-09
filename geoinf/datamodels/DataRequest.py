@@ -32,7 +32,7 @@ as a base module for building requests.
 from qgis.core import QgsDataSourceURI
 # vistrails
 # eo4vistrails
-from core.modules.vistrails_module import Module, NotCacheable, ModuleError
+from vistrails.core.modules.vistrails_module import Module, NotCacheable, ModuleError
 # local
 
 

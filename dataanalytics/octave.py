@@ -34,7 +34,7 @@ from os import fdopen
 import urllib
 # third-party
 # vistrails
-from core.modules.vistrails_module import ModuleError, Module
+from vistrails.core.modules.vistrails_module import ModuleError, Module
 # eo4vistrails
 from vistrails.packages.eo4vistrails.tools.utils.synhigh import \
     SyntaxSourceConfigurationWidget

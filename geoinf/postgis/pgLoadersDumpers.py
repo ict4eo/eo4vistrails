@@ -39,9 +39,9 @@ These modules rely on the presence of psql, and essentially wrap:
 
 from PyQt4 import QtCore, QtGui
 # vistrails
-from core.modules.vistrails_module import ModuleError, NotCacheable, Module
-from gui.modules.source_configure import SourceConfigurationWidget
-from core.modules import basic_modules
+from vistrails.core.modules.vistrails_module import ModuleError, NotCacheable, Module
+from vistrails.gui.modules.source_configure import SourceConfigurationWidget
+from vistrails.core.modules import basic_modules
 # eo4vistrails
 from vistrails.packages.eo4vistrails.tools.utils.ThreadSafe import ThreadSafeMixin
 from vistrails.packages.eo4vistrails.rpyc.RPyC import RPyCModule, RPyCSafeModule

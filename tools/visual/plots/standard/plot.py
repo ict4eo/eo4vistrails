@@ -39,15 +39,15 @@ import urllib
 # third party
 from numpy import array, ma
 # vistrails
-from core.bundles import py_import
-import core.modules
-import core.modules.module_registry
-from core import debug
-from core.modules import basic_modules
-from core.modules.basic_modules import File, String, Boolean
-from core.modules.vistrails_module import Module, ModuleError, NotCacheable, \
-                                          InvalidOutput
-from packages.matplotlib.bases import MplPlot#, MplPlotConfigurationWidget
+from vistrails.core.bundles import py_import
+import vistrails.core.modules
+import vistrails.core.modules.module_registry
+from vistrails.core import debug
+from vistrails.core.modules import basic_modules
+from vistrails.core.modules.basic_modules import File, String, Boolean
+from vistrails.core.modules.vistrails_module import Module, ModuleError, \
+                                          NotCacheable, InvalidOutput
+from vistrails.packages.matplotlib.bases import MplPlot#, MplPlotConfigurationWidget
 # eo4vistrails
 from vistrails.packages.eo4vistrails.tools.utils.datetimeutils import list_to_dates
 from vistrails.packages.eo4vistrails.tools.utils.DropDownListWidget import ComboBoxWidget

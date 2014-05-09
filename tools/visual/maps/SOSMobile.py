@@ -39,9 +39,9 @@ from PyQt4 import QtCore, QtGui
 from qgis.core import *
 from qgis.gui import *
 # vistrails
-import core.modules.module_registry
-from core.modules.vistrails_module import Module, ModuleError
-import core.system
+import vistrails.core.modules.module_registry
+from vistrails.core.modules.vistrails_module import Module, ModuleError
+import vistrails.core.system
 # eo4vistrails
 from vistrails.packages.eo4vistrails.geoinf.datamodels.TemporalVectorLayer import \
     TemporalVectorLayer

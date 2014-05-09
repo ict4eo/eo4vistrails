@@ -85,7 +85,7 @@ except:
 
 
 def initialize(*args, **keywords):
-    import core.requirements
+    import vistrails.core.requirements
     '''sets everything up'''
     # VisTrails cannot currently automatically detect your derived
     # classes, and the ports that they support as input and
@@ -108,7 +108,7 @@ def initialize(*args, **keywords):
     csv_init.initialize(*args, **keywords)
     excel_init.initialize(*args, **keywords)
     file_init.initialize(*args, **keywords)
-    if core.requirements.python_module_exists('psycopg2'):
+    if vistrails.core.requirements.python_module_exists('psycopg2'):
         #brings in PostGIS modules
         try:
             from geoinf.postgis import init as postgis_init

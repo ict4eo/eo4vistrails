@@ -31,8 +31,8 @@ Service (WCS) Client via owslib.
 # third party
 from PyQt4 import QtCore, QtGui
 # vistrails
-from core.modules.vistrails_module import Module, new_module, NotCacheable, \
-    ModuleError
+from vistrails.core.modules.vistrails_module import Module, new_module, \
+    NotCacheable, ModuleError
 # eo4vistrails
 from vistrails.packages.eo4vistrails.geoinf.datamodels.Raster import RasterModel
 from vistrails.packages.eo4vistrails.geoinf.SpatialTemporalConfigurationWidget import \

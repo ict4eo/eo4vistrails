@@ -28,9 +28,9 @@
 is not available, "dummy" modules that allow other code to continue to work.
 """
 
-from core.modules import basic_modules
-from core.modules.vistrails_module import Module
-import core.packagemanager
+from vistrails.core.modules import basic_modules
+from vistrails.core.modules.vistrails_module import Module
+import vistrails.core.packagemanager
 
 
 class RPyCModule(Module):
@@ -60,13 +60,13 @@ class RPyCSafeModule():
 
 # import either actual, or "dummy" rpyc modules
 #Correct way to do this but in order to work on a remote node we need a mroe aggressive solution
-#manager = core.packagemanager.get_package_manager()
+#manager = vistrails.core.packagemanager.get_package_manager()
 #if manager.has_package('za.co.csir.rpyc4vistrails'):
-#    from packages.rpyc4vistrails.RPyC import RPyCModule, RPyCSafeModule
+#    from vistrails.packages.rpyc4vistrails.RPyC import RPyCModule, RPyCSafeModule
 
 #So we just try import and if it fails we just catch the exception and carry on
 try:
-    from packages.rpyc4vistrails.RPyC import RPyCModule, RPyCSafeModule
+    from vistrails.packages.rpyc4vistrails.RPyC import RPyCModule, RPyCSafeModule
 except ImportError:
     pass
     

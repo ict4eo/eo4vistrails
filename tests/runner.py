@@ -39,12 +39,12 @@ from PyQt4 import QtGui
 from settings import VISTRAILS_HOME
 # vistrails
 sys.path.append(VISTRAILS_HOME)
-import core.requirements
-core.requirements.check_pyqt4()
-import gui.application
-from core.db.locator import FileLocator
-from core.console_mode import run
-from core import debug
+import vistrails.gui.requirements
+vistrails.gui.requirements.require_pyqt4_api2()
+import vistrails.gui.application
+from vistrails.core.db.locator import FileLocator
+from vistrails.core.console_mode import run
+from vistrails.core import debug
 
 
 class Runner():
@@ -58,7 +58,7 @@ class Runner():
                 if True, will run VisTrails in caching mode
         """
         # vistrails initialization
-        self.gui_app = gui.application
+        self.gui_app = vistrails.gui.application
         self.active = keep_active
         self.options = {'useCache': use_cache}
         try:
@@ -96,7 +96,7 @@ class Runner():
                 in the vistrail file
         """
         # api must be imported after vistrails initialization
-        import api
+        import vistrails.api
         location = path or os.getcwd()
         flow = os.path.join(location, workflow)
         #print "102 Running %s" % (flow)
@@ -125,7 +125,7 @@ class Runner():
                 if not supplied, use current directory
         """
         # api must be imported after vistrails initialization
-        import api
+        from vistrails import api
         location = path or os.getcwd()
         flow = os.path.join(location, workflow)
         #print "92 Running %s" % (flow)

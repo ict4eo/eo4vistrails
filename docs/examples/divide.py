@@ -4,8 +4,8 @@ from PyQt4 import QtCore, QtGui
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 # vistrails
-from core.modules.vistrails_module import Module, ModuleError
-from gui.modules.module_configure import StandardModuleConfigurationWidget
+from vistrails.core.modules.vistrails_module import Module, ModuleError
+from vistrails.gui.modules.module_configure import StandardModuleConfigurationWidget
 
 version = "0.9.0"
 name = "Divide"
@@ -107,7 +107,7 @@ class DivideConfigurationWidget(StandardModuleConfigurationWidget):
 
 
 def initialize(*args, **keywords):
-    from core.modules.module_registry import get_module_registry
+    from vistrails.core.modules.module_registry import get_module_registry
 
     reg = get_module_registry()
     reg.add_module(Divide,

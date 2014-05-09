@@ -40,7 +40,7 @@ import pprint
 # third-party
 import xlrd
 # vistrails
-from core.modules.vistrails_module import Module, ModuleError
+from vistrails.core.modules.vistrails_module import Module, ModuleError
 # eo4vistrails
 from vistrails.packages.eo4vistrails.geoinf.datamodels.WebRequest import WebRequest
 from vistrails.packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule

@@ -36,8 +36,8 @@ import gdalnumeric
 import gdal
 from gdal import gdalconst
 # vistrails
-from core.modules.vistrails_module import ModuleError, NotCacheable, Module
-from core.utils import VistrailsInternalError
+from vistrails.core.modules.vistrails_module import ModuleError, NotCacheable, Module
+from vistrails.core.utils import VistrailsInternalError
 from vistrails.packages.NumSciPy.Array import NDArray
 # eo4vistrails
 from vistrails.packages.eo4vistrails.rpyc.RPyC import RPyCModule, RPyCSafeModule
@@ -69,7 +69,7 @@ class RasterLangCode(NotCacheable, ModuleHelperMixin, ThreadSafeMixin, RPyCModul
                         pre_code_string, post_code_string):
         """TODO: Write docstring.
         """
-        import core.packagemanager
+        import vistrails.core.packagemanager
 
         def fail(msg):
             raise ModuleError(self, msg)
@@ -89,11 +89,11 @@ class RasterLangCode(NotCacheable, ModuleHelperMixin, ThreadSafeMixin, RPyCModul
 
         #TODO:Figure out how we get a registry and a package manager
         try:
-            _m = core.packagemanager.get_package_manager()
+            _m = vistrails.core.packagemanager.get_package_manager()
         except VistrailsInternalError:
             _m = None
 
-        from core.modules.module_registry import get_module_registry
+        from vistrails.core.modules.module_registry import get_module_registry
         try:
             reg = get_module_registry()
         except VistrailsInternalError:
@@ -171,7 +171,7 @@ class RasterLangCode(NotCacheable, ModuleHelperMixin, ThreadSafeMixin, RPyCModul
         #self.sharedMemOutputPorts = {}
         #isRemote, self.conn, v = self.getConnection()
 
-        from core.modules import basic_modules
+        from vistrails.core.modules import basic_modules
         s = basic_modules.urllib.unquote(str(self.forceGetInputFromPort('source', '')))
 
         if s == '':
@@ -180,7 +180,7 @@ class RasterLangCode(NotCacheable, ModuleHelperMixin, ThreadSafeMixin, RPyCModul
         self.run_code_orig(s, True, True, self.preCodeString, self.postCodeString)
 
 
-@RPyCSafeModule(['packages.eo4vistrails','packages.eo4vistrails.dataanalytics'])
+@RPyCSafeModule(['vistrails.packages.eo4vistrails','vistrails.packages.eo4vistrails.dataanalytics'])
 class RasterLang(RasterLangCode):
     """This module remotely executes an arbitrary piece of Python code.
     """
@@ -282,7 +282,7 @@ class RasterSourceConfigurationWidget(SyntaxSourceConfigurationWidget):
             displayedComboItems=displayedComboItems)
 
 
-@RPyCSafeModule(['packages.eo4vistrails','packages.eo4vistrails.dataanalytics'])
+@RPyCSafeModule(['vistrails.packages.eo4vistrails','vistrails.packages.eo4vistrails.dataanalytics'])
 class layerAsArray(ThreadSafeMixin, RPyCModule):
     """ Container class for the connected components command """
 
@@ -355,7 +355,7 @@ class RasterPrototype(ThreadSafeMixin, Module):
         self.geotransform = (self.xmin, self.xres, 0, self.ymax, 0, -self.yres)
 
 
-@RPyCSafeModule(['packages.eo4vistrails','packages.eo4vistrails.dataanalytics'])
+@RPyCSafeModule(['vistrails.packages.eo4vistrails','vistrails.packages.eo4vistrails.dataanalytics'])
 class arrayAsLayer(ThreadSafeMixin, RPyCModule):
     """ Container class for the connected components command """
 
@@ -385,7 +385,7 @@ class arrayAsLayer(ThreadSafeMixin, RPyCModule):
         self.setResult("raster layer", outlayer)
 
 
-@RPyCSafeModule(['packages.eo4vistrails','packages.eo4vistrails.dataanalytics'])
+@RPyCSafeModule(['vistrails.packages.eo4vistrails','vistrails.packages.eo4vistrails.dataanalytics'])
 class SaveArrayToRaster(NotCacheable, ThreadSafeMixin, RPyCModule):
     """ Container class for the connected components command """
 
@@ -427,7 +427,7 @@ class SaveArrayToRaster(NotCacheable, ThreadSafeMixin, RPyCModule):
 
         self.setResult('output file path', outfile)
 
-from core.modules import basic_modules
+from vistrails.core.modules import basic_modules
 from vistrails.packages.eo4vistrails.tools.utils.DropDownListWidget import ComboBoxWidget
 
 

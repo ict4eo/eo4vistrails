@@ -36,7 +36,7 @@ try:
 except:
     import ogr
 # vistrails
-from core.modules.vistrails_module import \
+from vistrails.core.modules.vistrails_module import \
     Module, new_module, NotCacheable, ModuleError, ModuleErrors
 # eo4vistrails
 from vistrails.packages.eo4vistrails.tools.utils.Parser import Parser

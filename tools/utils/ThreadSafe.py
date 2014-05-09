@@ -34,15 +34,15 @@ from PyQt4 import QtGui, QtCore
 import copy
 import sys
 # vistrails
-from core.modules.vistrails_module import Module, NotCacheable, \
+from vistrails.core.modules.vistrails_module import Module, NotCacheable, \
         InvalidOutput, ModuleError, ModuleBreakpoint, ModuleErrors
-import core.packagemanager
-from packages.controlflow.fold import *
+import vistrails.core.packagemanager
+from vistrails.packages.controlflow.fold import *
 
 
 class ThreadSafeMixin():
     """Placeholder class; overwritten by module from
-    *packages.rpyc4vistrails.ThreadSafe*, if available."""
+    *vistrails.packages.rpyc4vistrails.ThreadSafe*, if available."""
 
     def __init__(self):
         pass
@@ -66,13 +66,13 @@ class ThreadTestModule(ThreadSafeMixin, Module):  # NotCacheable,
 
 # import either actual, or "dummy" rpyc modules
 #needs same aggresive approach as seen in RPYC
-#manager = core.packagemanager.get_package_manager()
+#manager = vistrails.core.packagemanager.get_package_manager()
 #if manager.has_package('za.co.csir.rpyc4vistrails'):
-#    from packages.rpyc4vistrails.ThreadSafe import  \
+#    from vistrails.packages.rpyc4vistrails.ThreadSafe import  \
 #        ThreadSafeMixin, ThreadSafeFold, ThreadSafeMap, ThreadTestModule, Fork
 
 try:
-    from packages.rpyc4vistrails.ThreadSafe import  \
+    from vistrails.packages.rpyc4vistrails.ThreadSafe import  \
         ThreadSafeMixin, ThreadSafeFold, ThreadSafeMap, ThreadTestModule, Fork
 except ImportError:
     pass

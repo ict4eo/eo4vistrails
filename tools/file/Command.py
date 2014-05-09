@@ -32,7 +32,7 @@
 import random
 # third-party
 # vistrails
-from core.modules.vistrails_module import Module, ModuleError
+from vistrails.core.modules.vistrails_module import Module, ModuleError
 # eo4vistrails
 # local
 

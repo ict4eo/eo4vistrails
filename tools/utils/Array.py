@@ -30,9 +30,9 @@
 # third-party
 import numpy
 # vistrails
-import core.modules
-import core.modules.module_registry
-from core.modules.vistrails_module import Module, ModuleError
+import vistrails.core.modules
+import vistrails.core.modules.module_registry
+from vistrails.core.modules.vistrails_module import Module, ModuleError
 # eo4vistrails
 
 

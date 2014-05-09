@@ -28,7 +28,7 @@
 with VisTrails takes place
 """
 
-from core.modules.module_registry import get_module_registry
+from vistrails.core.modules.module_registry import get_module_registry
 
 
 def registerControl(module):
@@ -43,9 +43,9 @@ def registerControl(module):
 
 
 def initialize(*args, **keywords):
-    from core.modules import basic_modules
-    from packages.spreadsheet import basic_widgets
-    from core.modules.vistrails_module import Module
+    from vistrails.core.modules import basic_modules
+    from vistrails.packages.spreadsheet import basic_widgets
+    from vistrails.core.modules.vistrails_module import Module
 
     import DropDownListWidget
     from Array import NDArrayEO

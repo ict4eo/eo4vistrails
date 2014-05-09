@@ -40,8 +40,8 @@ except:
     pass
 r = robjects.r
 # vistrails
-from core.modules.vistrails_module import ModuleError
-from core.modules.basic_modules import List
+from vistrails.core.modules.vistrails_module import ModuleError
+from vistrails.core.modules.basic_modules import List
 from vistrails.packages.NumSciPy.Array import NDArray
 # eo4vistrails
 from vistrails.packages.eo4vistrails.tools.utils.synhigh import \
@@ -119,20 +119,20 @@ class Rpy2Script(Script, ModuleHelperMixin):
         #assigning converted R result to output port
         for k in outputDict.iterkeys():
             if k in robjects.globalenv.keys() and robjects.globalenv[k] != None:
-                    if str(self.getPortType(k)) == "<class 'core.modules.vistrails_module.Dictionary'>":
+                    if str(self.getPortType(k)) == "<class 'vistrails.core.modules.vistrails_module.Dictionary'>":
                         self.setResult(k, robjects.globalenv[k][0])
-                    elif str(self.getPortType(k)) == "<class 'packages.eo4vistrails.tools.utils.Array.NDArray'>":
+                    elif str(self.getPortType(k)) == "<class 'vistrails.packages.eo4vistrails.tools.utils.Array.NDArray'>":
                         self.setResult(k, robjects.globalenv[k][0])
-                    elif str(self.getPortType(k)) == "<class 'core.modules.vistrails_module.String'>":
+                    elif str(self.getPortType(k)) == "<class 'vistrails.core.modules.vistrails_module.String'>":
                         self.setResult(k, robjects.globalenv[k][0])
-                    elif str(self.getPortType(k)) == "<class 'core.modules.vistrails_module.Integer'>":
+                    elif str(self.getPortType(k)) == "<class 'vistrails.core.modules.vistrails_module.Integer'>":
                         self.setResult(k, robjects.globalenv[k][0])
-                    elif str(self.getPortType(k)) == "<class 'core.modules.vistrails_module.Float'>":
+                    elif str(self.getPortType(k)) == "<class 'vistrails.core.modules.vistrails_module.Float'>":
                         self.setResult(k, robjects.globalenv[k][0])
-                    elif str(self.getPortType(k)) == "<class 'core.modules.vistrails_module.Boolean'>":
+                    elif str(self.getPortType(k)) == "<class 'vistrails.core.modules.vistrails_module.Boolean'>":
                         self.setResult(k, robjects.globalenv[k][0])
-                    elif str(self.getPortType(k)) == "<class 'core.modules.vistrails_module.List'>" \
-                    or str(self.getPortType(k)) == "<class 'packages.NumSciPy.Array.NDArray'>":
+                    elif str(self.getPortType(k)) == "<class 'vistrails.core.modules.vistrails_module.List'>" \
+                    or str(self.getPortType(k)) == "<class 'vistrails.packages.NumSciPy.Array.NDArray'>":
                         if debug:
                             print "setting output numpy array"
                         outArray = NDArray()

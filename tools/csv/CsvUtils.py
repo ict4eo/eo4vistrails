@@ -38,7 +38,7 @@ import csv
 import os
 import os.path
 # vistrails
-from core.modules.vistrails_module import Module, ModuleError
+from vistrails.core.modules.vistrails_module import Module, ModuleError
 # eo4vistrails
 from vistrails.packages.eo4vistrails.rpyc.RPyC import RPyCSafeModule
 from vistrails.packages.eo4vistrails.tools.utils.ThreadSafe import ThreadSafeMixin

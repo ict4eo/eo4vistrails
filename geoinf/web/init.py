@@ -23,15 +23,15 @@ TEMPORAL_VECTOR_PORT = "TemporalVectorLayer"
 MAP_LAYER_PORT = "QgsMapLayer"
 DATA_RESULT_PORT = "WPS_data"
 
-from core.upgradeworkflow import UpgradeWorkflowHandler
+from vistrails.core.upgradeworkflow import UpgradeWorkflowHandler
 
 
 def initialize(*args, **keywords):
     """
     Set everything up for vistrails; called from the top level initialize
     """
-    from core.modules.module_registry import get_module_registry
-    from core.modules.basic_modules import Boolean, File, Float, String, \
+    from vistrails.core.modules.module_registry import get_module_registry
+    from vistrails.core.modules.basic_modules import Boolean, File, Float, String, \
         Dictionary, Variant
     # eo4vistrails
     from vistrails.packages.eo4vistrails.geoinf.datamodels.QgsLayer import \

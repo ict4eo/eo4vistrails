@@ -29,8 +29,8 @@ cloud environments, GIS environments and statistical environments.
 It is primarily organisational in nature.
 """
 
-import core.modules.module_registry
-from core.modules.vistrails_module import Module, ModuleError
+import vistrails.core.modules.module_registry
+from vistrails.core.modules.vistrails_module import Module, ModuleError
 
 
 class Session(Module):
@@ -47,6 +47,6 @@ def initialize(*args, **keywords):
     """Set everything up"""
 #    # We'll first create a local alias for the module_registry so that
 #    # we can refer to it in a shorter way.
-#    reg = core.modules.module_registry.get_module_registry()
+#    reg = vistrails.core.modules.module_registry.get_module_registry()
 #    reg.add_module(Session)
     pass

@@ -30,8 +30,8 @@ data analytics (including scripting) to VisTrails.
 #History
 #Terence van Zyl, 15 Dec 2010, Version 1.0
 
-from core.bundles import py_import
-from core import debug
+from vistrails.core.bundles import py_import
+from vistrails.core import debug
 
 """This auto-import does not work because net NOT in Ubuntu repo: March 2013"""
 try:
@@ -90,13 +90,13 @@ def warning(package_name, module_name):
 def initialize(*args, **keywords):
     """Called by higher level inits to ensure that registration with
     VisTrails takes place."""
-    from core.modules.module_registry import get_module_registry
-    import core.requirements
-    from core.modules import basic_modules
+    from vistrails.core.modules.module_registry import get_module_registry
+    import vistrails.core.requirements
+    from vistrails.core.modules import basic_modules
 
     reg = get_module_registry()
 
-    if core.requirements.python_module_exists('pysal'):
+    if vistrails.core.requirements.python_module_exists('pysal'):
         import PySAL  # filename of Vistrails module
         pysal_namespace = "scripting|pysal"
         #Add PySAL
@@ -174,7 +174,7 @@ def initialize(*args, **keywords):
                    namespace=octave_namespace,
                    configureWidgetType=octave.OctaveSourceConfigurationWidget)
 
-    if core.requirements.python_module_exists('rpy2'):
+    if vistrails.core.requirements.python_module_exists('rpy2'):
         try:
             from rpy2 import robjects  # test if R (R_HOME) installed/defined
             import rpy2Stats  # filename of Vistrails module
@@ -190,7 +190,7 @@ def initialize(*args, **keywords):
     else:
         missing('rpy2', 'Rpy2Script')
 
-    if core.requirements.python_module_exists('pydap'):
+    if vistrails.core.requirements.python_module_exists('pydap'):
         import pyDAP  # filename of Vistrails module
         pydap_namespace = "data|datacube"
         reg.add_module(pyDAP.pyDAP,
@@ -200,7 +200,7 @@ def initialize(*args, **keywords):
     else:
         missing('pydap', 'pyDAPClient')
 
-    if not core.requirements.python_module_exists('netCDF4'):
+    if not vistrails.core.requirements.python_module_exists('netCDF4'):
         warning('netCDF4', 'netcdfClient')
     # module still usable with fallback to scipy reader (only ver. 3 format)
     import netcdf4  # filename of Vistrails module

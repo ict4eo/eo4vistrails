@@ -32,9 +32,9 @@ import os
 import socket
 # third-party
 # vistrails
-from core.modules.vistrails_module import Module, ModuleError
-from core.modules import basic_modules
-from core.modules.basic_modules import File, Path, String, Boolean
+from vistrails.core.modules.vistrails_module import Module, ModuleError
+from vistrails.core.modules import basic_modules
+from vistrails.core.modules.basic_modules import File, Path, String, Boolean
 # eo4vistrails
 
 

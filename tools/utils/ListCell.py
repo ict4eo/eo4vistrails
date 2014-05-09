@@ -31,8 +31,8 @@ import os.path
 import sys
 from datetime import date, datetime, time
 # third-party
-from core.bundles import py_import
-from core import debug
+from vistrails.core.bundles import py_import
+from vistrails.core import debug
 try:
     pkg_dict = {'linux-ubuntu': 'python-xlrd',
                 'linux-fedora': 'python-xlrd'}
@@ -42,9 +42,9 @@ except Exception, e:
 #import xlrd
 from PyQt4 import QtCore, QtGui
 # vistrails
-from core.modules.vistrails_module import Module, ModuleError
-from packages.spreadsheet.basic_widgets import SpreadsheetCell
-from packages.spreadsheet.spreadsheet_cell import QCellWidget
+from vistrails.core.modules.vistrails_module import Module, ModuleError
+from vistrails.packages.spreadsheet.basic_widgets import SpreadsheetCell
+from vistrails.packages.spreadsheet.spreadsheet_cell import QCellWidget
 import shutil
 
 ENCODING = "utf-8"  # will differ in some countries; add as hidden port ???

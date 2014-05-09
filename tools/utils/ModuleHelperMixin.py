@@ -39,7 +39,7 @@ class ModuleHelperMixin(object):
                         if str(type(i.port_specs[j].signature[0][0])) == "<netref class '__builtin__.type'>":
                             str_type = str(i.port_specs[j].signature[0][0])
                             str_type = str_type.split("'")[1]
-                            if str_type != 'core.modules.vistrails_module.Module':
+                            if str_type != 'vistrails.core.modules.vistrails_module.Module':
                                 str_type = str_type.replace('vistrails_module', 'basic_modules')
                             exec('import %s' % str_type.rsplit('.', 1)[0])
                             return eval(str_type)

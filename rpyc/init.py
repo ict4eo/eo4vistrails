@@ -34,17 +34,17 @@ RPyC package adds multicore parallel and distributed processing to VisTrails.
 def initialize(*args, **keywords):
     """This method is called by higher-level ones,
     to ensure that registration with VisTrails takes place."""
-    from core.modules.module_registry import get_module_registry
-    import core.requirements
-    from gui.modules.python_source_configure import \
+    from vistrails.core.modules.module_registry import get_module_registry
+    import vistrails.core.requirements
+    from vistrails.gui.modules.python_source_configure import \
         PythonSourceConfigurationWidget
-    from core.modules import basic_modules
+    from vistrails.core.modules import basic_modules
 
     import RPyC
     reg = get_module_registry()
     rpyc_namespace = "rpyc"
 
-    manager = core.packagemanager.get_package_manager()
+    manager = vistrails.core.packagemanager.get_package_manager()
     if manager.has_package('za.co.csir.rpyc4vistrails'):
         #Dummy Module Mixed into all RPYCSafeModules
         #reg.add_module(RPyC.RPyCModule,
