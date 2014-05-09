@@ -101,7 +101,7 @@ class pyDAPConfigurationWidget(StandardModuleConfigurationWidget):
                      self.readData)
         self.connect(self.ui.cancelButton,
                      QtCore.SIGNAL("clicked()"),
-                     SLOT("close()"))
+                     QtCore.SLOT("close()"))
 
     #Populate netcdf file variables and dimensions into list to use to create tree for browsing file structure
     def createRequest(self):
@@ -121,7 +121,7 @@ class pyDAPConfigurationWidget(StandardModuleConfigurationWidget):
             dimensions = []
             i = i + 1
         self.ui.textMetadata.setText(str(self.data.attributes))
-        self.model = QStandardItemModel()
+        self.model = QtGui.QStandardItemModel()
         self.addItems(self.model, listOfTuples)
         self.ui.treeView.setModel(self.model)
         self.model.setHorizontalHeaderLabels([self.tr("File Variables, Dims")])

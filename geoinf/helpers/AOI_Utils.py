@@ -28,6 +28,7 @@
 """
 
 # library
+import math
 import sys
 import os
 import os.path
@@ -38,7 +39,7 @@ from qgis.core import QgsApplication, QgsRectangle, QgsPoint, QgsRasterLayer, \
 from qgis.core import QgsSymbolV2 as QgsSymbol  # 1.8 to 2.0 API
 from qgis.core import QgsSingleSymbolRendererV2 as QgsSingleSymbolRenderer  # 1.8 to 2.0 API
 from qgis.gui import QgsMapTool, QgsProjectionSelector, QgsMapToolPan, \
-    QgsMapToolZoom, QgsMapTool, QgsMapCanvasLayer, QgsMessageViewer
+    QgsMapToolZoom, QgsMapTool, QgsMapCanvasLayer, QgsMessageViewer, QgsMapCanvas
 # vistrails
 import core.modules.module_registry
 from core.modules.vistrails_module import Module, ModuleError
@@ -70,8 +71,8 @@ class SRSChooserDialog(QtGui.QDialog):
         layout.addWidget(buttonBox)
         self.setLayout(layout)
 
-        self.connect(buttonBox, SIGNAL("accepted()"), self.accept)
-        self.connect(buttonBox, SIGNAL("rejected()"), self.reject)
+        self.connect(buttonBox, QtCore.SIGNAL("accepted()"), self.accept)
+        self.connect(buttonBox, QtCore.SIGNAL("rejected()"), self.reject)
 
     def epsg(self):
         return str(self.selector.selectedEpsg())
@@ -86,7 +87,7 @@ class SRSChooserDialog(QtGui.QDialog):
         if not self.selector.selectedProj4String().isEmpty():
             return self.proj4string()
 
-        return QString()
+        return QtCore.QString()
 
 
 class GetFeatureInfoTool(QgsMapTool):
@@ -106,9 +107,9 @@ class GetFeatureInfoTool(QgsMapTool):
             urOffsetPointX = e.pos().x() + 1
             urOffsetPointY = e.pos().y() + 1
 
-            self.llOffsetPoint = self.toMapCoordinates(QPoint(llOffsetPointX,
+            self.llOffsetPoint = self.toMapCoordinates(QtCore.QPoint(llOffsetPointX,
                                                               llOffsetPointY))
-            self.urOffsetPoint = self.toMapCoordinates(QPoint(urOffsetPointX,
+            self.urOffsetPoint = self.toMapCoordinates(QtCore.QPoint(urOffsetPointX,
                                                               urOffsetPointY))
 
     def canvasReleaseEvent(self, e):
@@ -126,14 +127,15 @@ class GetFeatureInfoTool(QgsMapTool):
             self.button.setChecked(False)
         QgsMapTool.deactivate(self)
 
+    @staticmethod
     def rbcircle(rb, center, edgePoint, N):
-        r = sqrt(center.sqrDist(edgePoint))
+        r = math.sqrt(center.sqrDist(edgePoint))
         rb.reset(True)
         for itheta in range(N + 1):
-            theta = itheta * (2.0 * pi / N)
+            theta = itheta * (2.0 * math.pi / N)
             # Only the QgsRubberband geometry is modified
-            rb.addPoint(QgsPoint(center.x() + r * cos(theta),
-                                 center.y() + r * sin(theta)))
+            rb.addPoint(QgsPoint(center.x() + r * math.cos(theta),
+                                 center.y() + r * math.sin(theta)))
         return
 
 
@@ -146,6 +148,7 @@ class FeatureOfInterestDefinerConfigurationWidget(StandardModuleConfigurationWid
         #self.module = module
         self.setObjectName("FeatureOfInterestDefinerWidget")
         self.parent_widget = module
+        # FIXME these modules don't exist
         self.path_png_icon = vistrails.packages.eo4vistrails.geoinf.visual.__path__[0]
         self.path_bkgimg = vistrails.packages.eo4vistrails.geoinf.visual.__path__[0]
         self.create_config_window()
@@ -228,13 +231,13 @@ class FeatureOfInterestDefinerConfigurationWidget(StandardModuleConfigurationWid
 
         ## create canvas
         self.canvas = QgsMapCanvas()
-        self.canvas.setCanvasColor(QColor(200, 200, 255))
+        self.canvas.setCanvasColor(QtGui.QColor(200, 200, 255))
         #self.mainLayout.addWidget(self.canvas)
 
         # icons
         actionAddLayer = QtGui.QAction(QtGui.QIcon(self.path_png_icon + \
                         "/mActionAddLayer.png"), "Add Layer", self)
-        actionZoomIn = QtGui.QtCore.QAction(QtGui.QIcon(self.path_png_icon + \
+        actionZoomIn = QtGui.QAction(QtGui.QIcon(self.path_png_icon + \
                         "/mActionZoomIn.png"), "Zoom In", self)
         actionZoomOut = QtGui.QAction(QtGui.QIcon(self.path_png_icon + \
                         "/mActionZoomOut.png"), "Zoom Out", self)
@@ -321,10 +324,10 @@ class FeatureOfInterestDefinerConfigurationWidget(StandardModuleConfigurationWid
         self.connect(self.crsChooseButton, QtCore.SIGNAL('clicked(bool)'), self.getSRS)
         self.connect(self.bbToMapButton, QtCore.SIGNAL('clicked(bool)'), self.bbToMapBB)
         self.connect(self.asTxtToMapButton, QtCore.SIGNAL('clicked(bool)'), self.bbToMapTxt)
-        self.connect(actionAddLayer, SIGNAL("activated()"), self.addLayer)
-        self.connect(actionZoomIn, SIGNAL("activated()"), self.zoomIn)
-        self.connect(actionZoomOut, SIGNAL("activated()"), self.zoomOut)
-        self.connect(actionPan, SIGNAL("activated()"), self.pan)
+        self.connect(actionAddLayer, QtCore.SIGNAL("activated()"), self.addLayer)
+        self.connect(actionZoomIn, QtCore.SIGNAL("activated()"), self.zoomIn)
+        self.connect(actionZoomOut, QtCore.SIGNAL("activated()"), self.zoomOut)
+        self.connect(actionPan, QtCore.SIGNAL("activated()"), self.pan)
         self.connect(actionIdentify, QtCore.SIGNAL("triggered()"), self.identifyFeature)
 
         #load a backdrop layer
@@ -405,7 +408,7 @@ class FeatureOfInterestDefinerConfigurationWidget(StandardModuleConfigurationWid
     #map tool functions
     def addLayer(self):
         """TO DO: Add doc string"""
-        fileName = QFileDialog.getOpenFileName(
+        fileName = QtGui.QFileDialog.getOpenFileName(
             parent=None,
             caption="Select Vector Overlay Layer",
             filter="Vector Files (*.shp *.geojson *.gml)")
@@ -448,23 +451,23 @@ class FeatureOfInterestDefinerConfigurationWidget(StandardModuleConfigurationWid
 
         if foi_type == 'areaofinterestdefiner':
             sym = QgsSymbol(QGis.Polygon)
-            sym.setColor(Qt.black)
-            sym.setFillColor(Qt.green)
-            sym.setFillStyle(Qt.Dense6Pattern)
+            sym.setColor(QtCore.Qt.black)
+            sym.setFillColor(QtCore.Qt.green)
+            sym.setFillStyle(QtCore.Qt.Dense6Pattern)
             sym.setLineWidth(0.5)
             sr = QgsSingleSymbolRenderer(QGis.Polygon)
         if foi_type == 'lineofinterestdefiner':
             sym = QgsSymbol(QGis.Line)
-            sym.setColor(Qt.black)
-            sym.setFillColor(Qt.green)
-            sym.setFillStyle(Qt.SolidPattern)
+            sym.setColor(QtCore.Qt.black)
+            sym.setFillColor(QtCore.Qt.green)
+            sym.setFillStyle(QtCore.Qt.SolidPattern)
             sym.setLineWidth(0.5)
             sr = QgsSingleSymbolRenderer(QGis.Line)
         if foi_type == 'pointofinterestdefiner':
             sym = QgsSymbol(QGis.Point)
-            sym.setColor(Qt.black)
-            sym.setFillColor(Qt.green)
-            sym.setFillStyle(Qt.SolidPattern)
+            sym.setColor(QtCore.Qt.black)
+            sym.setFillColor(QtCore.Qt.green)
+            sym.setFillStyle(QtCore.Qt.SolidPattern)
             sym.setLineWidth(0.3)
             sym.setPointSize(4)
             sym.setNamedPointSymbol("hard:triangle")
@@ -476,7 +479,7 @@ class FeatureOfInterestDefinerConfigurationWidget(StandardModuleConfigurationWid
             print "invalid layer"
             return
         ml_dp = layer.dataProvider()
-        ml_dp.addAttributes([QgsField("gid", QVariant.String)])
+        ml_dp.addAttributes([QgsField("gid", QtCore.QVariant.String)])
         # add layer to the registry
         self.mem_layer_obj = QgsMapLayerRegistry.instance().addMapLayer(layer)
 

@@ -421,10 +421,10 @@ class SpatialTemporalConfigurationWidget(StandardModuleConfigurationWidget):
 
         """
         try:
-            if float(spatial_widget.bbox_tlx.text()) and \
-               float(spatial_widget.bbox_tly.text()) and \
-               float(spatial_widget.bbox_brx.text()) and \
-               float(spatial_widget.bbox_bry.text()):
+            if float(self.spatial_widget.bbox_tlx.text()) and \
+               float(self.spatial_widget.bbox_tly.text()) and \
+               float(self.spatial_widget.bbox_brx.text()) and \
+               float(self.spatial_widget.bbox_bry.text()):
                 return (
                     self.spatial_widget.bbox_tlx.text(),
                     self.spatial_widget.bbox_tly.text(),

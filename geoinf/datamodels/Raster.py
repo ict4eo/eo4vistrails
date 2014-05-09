@@ -45,6 +45,7 @@ import core.system
 import gui.application
 # eo4vistrails
 # local
+from .Feature import FeatureModel
 
 
 class _GdalMemModel():
@@ -76,6 +77,7 @@ class _GdalMemModel():
         else:
             raise ValueError("Path to GDAL dataset does not exist")
 
+    # FIXME this method doesn't compile
     def loadContentFromURI(self, uri, getStatement=""):
         """Loads content off web service, feed etc.; e.g., a WCS
         

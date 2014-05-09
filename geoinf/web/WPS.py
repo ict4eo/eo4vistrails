@@ -47,7 +47,7 @@ from urlparse import urlparse
 #from qgis.gui import *  # poor practice; breaks RTD docs
 from PyQt4 import QtXml, QtCore, QtGui, QtSql
 from qgis.core import QgsFeature, QgsRectangle, QgsMapLayerRegistry,\
-    QgsDataSourceURI
+    QgsDataSourceURI, QgsVectorFileWriter
 # vistrails
 from core.modules.module_descriptor import ModuleDescriptor
 from gui.modules.module_configure import StandardModuleConfigurationWidget
@@ -58,6 +58,8 @@ from core.utils import PortAlreadyExists
 from core.modules.basic_modules import String
 # eo4vistrails
 from vistrails.packages.eo4vistrails.geoinf.datamodels import QgsLayer
+from vistrails.packages.eo4vistrails.geoinf.datamodels.QgsLayer import QgsVectorLayer, \
+    QgsRasterLayer
 # local
 import init
 from PortConfigurationWidget import Port, PortConfigurationWidget
@@ -102,8 +104,8 @@ def xmlExecuteRequestInputStart(identifier, namespace=False, title=None):
         string += "<wps:Data>\n"
         return string
     else:
-        self.raiseError('Invalid Layer Identifier',\
-                        'Unable to create ows:Identifier')
+        raise ValueError('Invalid Layer Identifier',\
+                         'Unable to create ows:Identifier')
 
 
 def xmlExecuteRequestInputEnd():
@@ -1374,7 +1376,7 @@ class WPSConfigurationWidget(PortConfigurationWidget):
             max_val = value_element.elementsByTagNameNS(
                 "http://www.opengis.net/ows/1.1", "MaximumValue").at(0).toElement().text()
             for n in range(int(min_val), int(max_val) + 1):
-                myVal = QtGui.QString()
+                myVal = QtCore.QString()
                 myVal.append(str(n))
                 valList.append(myVal)
         # Manage a value list defined by single values
@@ -1432,7 +1434,7 @@ class WPSMessageBox(QtGui.QMessageBox):
         self.setMaximumWidth(16777215)
         self.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
 
-        textEdit = self.findChild(QTextEdit)
+        textEdit = self.findChild(QtGui.QTextEdit)
         if textEdit != None:
             textEdit.setMinimumHeight(300)
             textEdit.setMaximumHeight(16777215)

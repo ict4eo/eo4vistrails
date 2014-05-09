@@ -33,7 +33,6 @@ def initialize(*args, **keywords):
     from core.modules.module_registry import get_module_registry
     from core.modules.basic_modules import Boolean, File, Float, String, \
         Dictionary, Variant
-    import core
     # eo4vistrails
     from vistrails.packages.eo4vistrails.geoinf.datamodels.QgsLayer import \
         QgsMapLayer, QgsVectorLayer, QgsRasterLayer

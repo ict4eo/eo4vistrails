@@ -25,7 +25,8 @@
 ############################################################################
 
 # library
-import core
+import core.modules.module_registry
+from core.modules import basic_modules
 # vistrails
 from vistrails.packages.NumSciPy.Array import NDArray
 # eo4vistrails
@@ -57,19 +58,19 @@ def initialize(*args, **keywords):
     reg.add_module(PostGisSession,
                    namespace=postgis_namespace)
     reg.add_input_port(PostGisSession, 'postgisHost',
-                       (core.modules.basic_modules.String,
+                       (basic_modules.String,
         'The hostname or IP address of the machine hosting your database'))
     reg.add_input_port(PostGisSession, 'postgisPort',
-                       (core.modules.basic_modules.String,
+                       (basic_modules.String,
         'The port postgres is using on the machine hosting your database. Default 5432'))
     reg.add_input_port(PostGisSession, 'postgisUser',
-                       (core.modules.basic_modules.String,
+                       (basic_modules.String,
         'The username for accessing your database'))
     reg.add_input_port(PostGisSession, 'postgisPassword',
-                       (core.modules.basic_modules.String,
+                       (basic_modules.String,
         'The password for user for accessing your database'))
     reg.add_input_port(PostGisSession, 'postgisDatabase',
-                       (core.modules.basic_modules.String,
+                       (basic_modules.String,
         'The actual database you will work with'))
     #supports passing of session object around
     reg.add_output_port(PostGisSession, 'PostGisSession', PostGisSession)
@@ -82,7 +83,7 @@ def initialize(*args, **keywords):
     reg.add_input_port(PostGisFeatureReturningCursor,
                        'PostGisSessionObject', PostGisSession)
     reg.add_input_port(PostGisFeatureReturningCursor,
-                       'source', core.modules.basic_modules.String)
+                       'source', basic_modules.String)
     reg.add_output_port(PostGisFeatureReturningCursor,
                         'PostGISRequest', PostGISRequest)
     reg.add_output_port(PostGisFeatureReturningCursor,
@@ -99,7 +100,7 @@ def initialize(*args, **keywords):
     reg.add_input_port(PostGisNumpyReturningCursor,
                        "PostGisSessionObject", PostGisSession)
     reg.add_input_port(PostGisNumpyReturningCursor,
-                       "source", core.modules.basic_modules.String)
+                       "source", basic_modules.String)
     reg.add_output_port(PostGisNumpyReturningCursor,
                         'nummpyArray', NDArray)
     #supports ControlFlow ExecuteInOrder
@@ -114,9 +115,9 @@ def initialize(*args, **keywords):
     reg.add_input_port(PostGisBasicReturningCursor,
                        "PostGisSessionObject", PostGisSession)
     reg.add_input_port(PostGisBasicReturningCursor,
-                       "source", core.modules.basic_modules.String)
+                       "source", basic_modules.String)
     reg.add_output_port(PostGisBasicReturningCursor,
-                        'records', core.modules.basic_modules.List)
+                        'records', basic_modules.List)
     #supports ControlFlow ExecuteInOrder
     reg.add_output_port(PostGisBasicReturningCursor,
                         'self', PostGisBasicReturningCursor)
@@ -129,9 +130,9 @@ def initialize(*args, **keywords):
     reg.add_input_port(PostGisNonReturningCursor,
                        "PostGisSessionObject", PostGisSession)
     reg.add_input_port(PostGisNonReturningCursor,
-                       "source", core.modules.basic_modules.String)
+                       "source", basic_modules.String)
     reg.add_output_port(PostGisNonReturningCursor,
-                        'status', core.modules.basic_modules.List)
+                        'status', basic_modules.List)
     #supports ControlFlow ExecuteInOrder
     reg.add_output_port(PostGisNonReturningCursor,
                         'self', PostGisNonReturningCursor)
@@ -153,11 +154,11 @@ def initialize(*args, **keywords):
     reg.add_input_port(reprojectPostGISTable,
                        "PostGisSessionObject", PostGisSession)
     reg.add_input_port(reprojectPostGISTable,
-                       "target_table", core.modules.basic_modules.String)
+                       "target_table", basic_modules.String)
     reg.add_input_port(reprojectPostGISTable,
-                       "new_srs", core.modules.basic_modules.Integer)
+                       "new_srs", basic_modules.Integer)
     reg.add_output_port(reprojectPostGISTable,
-                        'status', core.modules.basic_modules.List)
+                        'status', basic_modules.List)
 
     #for the loaders/dumpers
     reg.add_module(Shape2PostGIS,
@@ -166,17 +167,17 @@ def initialize(*args, **keywords):
     reg.add_input_port(Shape2PostGIS,
                        "PostGisSessionObject", PostGisSession)
     reg.add_input_port(Shape2PostGIS,
-                       "InputShapefile", core.modules.basic_modules.String)
+                       "InputShapefile", basic_modules.String)
     reg.add_input_port(Shape2PostGIS,
-                       "TableName", core.modules.basic_modules.String)
+                       "TableName", basic_modules.String)
     reg.add_input_port(Shape2PostGIS,
-                       "EPSG_SRS", core.modules.basic_modules.String)
+                       "EPSG_SRS", basic_modules.String)
     reg.add_input_port(Shape2PostGIS,
-                       "Index", core.modules.basic_modules.Boolean)
+                       "Index", basic_modules.Boolean)
     reg.add_input_port(Shape2PostGIS,
-                       "Simplify", core.modules.basic_modules.Boolean)
+                       "Simplify", basic_modules.Boolean)
     reg.add_input_port(Shape2PostGIS,
-                       "Encoding", core.modules.basic_modules.String,
+                       "Encoding", basic_modules.String,
                        optional=True)
 
     # Data records from file data

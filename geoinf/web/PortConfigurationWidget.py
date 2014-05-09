@@ -35,7 +35,7 @@ from PyQt4 import QtCore, QtGui
 from core import debug
 from gui.modules.module_configure import StandardModuleConfigurationWidget
 from core.modules.module_registry import get_module_registry
-from core.utils import PortAlreadyExists
+from core.utils import PortAlreadyExists, VistrailsInternalError
 # eo4vistrails
 
 

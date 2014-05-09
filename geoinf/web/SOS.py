@@ -631,6 +631,7 @@ class SOSConfigurationWidget(OgcConfigurationWidget,
                     # see SosCommonWidget (this module)
                     bbox = self.config.getBoundingBoxOffering()
                 else:
+                    # FIXME no exception here...
                     traceback.print_exc()
                     raise ModuleError(
                         self,
